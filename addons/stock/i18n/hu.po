@@ -7615,11 +7615,6 @@ msgid "and simply enter a minimum and maximum quantity."
 msgstr "és egyszerűen csak adja meg a minimum és maximum mennyiséget."
 
 #. module: stock
-#: model:ir.model,name:stock.model_barcode_rule
-msgid "barcode.rule"
-msgstr "barcode.rule"
-
-#. module: stock
 #: model:ir.ui.view,arch_db:stock.inventory_planner
 msgid "configuration menu"
 msgstr "beállítások menü"

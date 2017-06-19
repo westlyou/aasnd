@@ -7200,11 +7200,6 @@ msgid "and simply enter a minimum and maximum quantity."
 msgstr "简要的输入最小和最大数量"
 
 #. module: stock
-#: model:ir.model,name:stock.model_barcode_rule
-msgid "barcode.rule"
-msgstr "barcode.rule"
-
-#. module: stock
 #: model:ir.ui.view,arch_db:stock.inventory_planner
 msgid "configuration menu"
 msgstr "配置按钮"

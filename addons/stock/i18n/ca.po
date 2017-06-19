@@ -7343,10 +7343,6 @@ msgstr ""
 msgid "and simply enter a minimum and maximum quantity."
 msgstr ""
 
-#. module: stock
-#: model:ir.model,name:stock.model_barcode_rule
-msgid "barcode.rule"
-msgstr "barcode.rule"
 
 #. module: stock
 #: model:ir.ui.view,arch_db:stock.inventory_planner
