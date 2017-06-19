@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-extend="UserMenu">
+        <t t-jquery="ul.dropdown-menu" t-operation="replace">
+            <ul class="dropdown-menu">
+                <li style="display:none"><a href="#" data-menu="documentation">Documentation</a></li>
+                <li style="display:none"><a href="#" data-menu="support">Support</a></li>
+                <li class="divider"/>
+                <li><a href="#" data-menu="settings">Preferences</a></li>
+                <li style="display:none"><a href="#" data-menu="account">My Odoo.com account</a></li>
+                <li><a href="#" data-menu="logout">Log out</a></li>
+            </ul>
+        </t>
+    </t>
+
+    <div t-name="AASExportDialog" class="o_export">
+        <p>
+            这个向导将会导出所有符合搜索条件的记录到一个Excel文件中 \n
+                        您可以导出所有或者您事先设置好的字段.
+        </p>
+        <div class="o_export_panel">
+            <div class="o_left_panel">
+                <h4>可用字段</h4>
+                <div class="o_left_field_panel"/>
+            </div>
+            <div class="o_center_panel">
+                <button type="button" class="btn btn-sm btn-default o_add_field">添加</button>
+                <button type="button" class="btn btn-sm btn-default o_remove_field">删除</button>
+                <button type="button" class="btn btn-sm btn-default o_remove_all_field">清空</button>
+                <button type="button" class="btn btn-sm btn-default o_move_up">上移</button>
+                <button type="button" class="btn btn-sm btn-default o_move_down">下移</button>
+            </div>
+            <div class="o_right_panel">
+                <h4>
+                    <a href="#" class="pull-right o_toggle_save_list">保存字段列表</a> 导出字段
+                </h4>
+                <div class="o_save_list"/>
+                <div class="o_exported_lists"/>
+                <select class="o_fields_list" multiple="multiple"></select>
+            </div>
+        </div>
+    </div>
+    <p t-name="AASExport.DomainMessage">
+        <strong t-if="!record.ids_to_export">请注意：不仅仅被选中的记录，那些符合搜索条件的记录也将会被导出</strong>
+        <strong t-if="record.ids_to_export">请注意只有选中的记录才会被导出</strong>
+    </p>
+    <div t-name="AASExport.TreeItems" t-foreach="fields" t-as="field" t-att-data-id="field.id" class="o_export_tree_item" tabindex="-1"> <!-- tabindex make the div focusable -->
+        <span class="o_tree_column"><t t-esc="field.string"/></span>
+    </div>
+    <t t-name="AASExport.SaveList">
+        <label>另存为：</label> <input type="text"/><button type="button" class="btn btn-sm btn-default">确定</button>
+    </t>
+    <t t-name="AASExport.SavedList">
+        <label>已保存：</label>
+        <select class="o_exported_lists_select">
+            <option></option>
+            <t t-foreach="existing_exports" t-as="export">
+                <option t-att-value="export.id"><t t-esc="export.name"/></option>
+            </t>
+        </select>
+        <button type="button" class="btn btn-sm btn-default o_delete_exported_list">删除</button>
+    </t>
+
+</templates>
