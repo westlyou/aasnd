@@ -181,5 +181,5 @@
           </p>
         </field>
     </record>
-    <menuitem action="action_inventory_form" id="menu_action_inventory_form" parent="menu_stock_inventory_control" sequence="30"/>
+    <!--<menuitem action="action_inventory_form" id="menu_action_inventory_form" parent="menu_stock_inventory_control" sequence="30"/>-->
 </odoo>

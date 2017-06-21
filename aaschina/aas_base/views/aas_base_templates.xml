@@ -7,4 +7,46 @@
         </xpath>
     </template>
 
+    <template id="layout" inherit_id="web.layout" name="AAS WEB Window HEAD">
+        <xpath expr="//link[@rel='shortcut icon']" position="replace">
+            <link rel="shortcut icon" href="/aas_base/static/src/images/favicon.ico" type="image/x-icon"/>
+        </xpath>
+    </template>
+
+    <template id="aas_menu_secondary" inherit_id="web.menu_secondary" name="AAS Menu Secondary">
+        <xpath expr="//div[@class='o_sub_menu_footer']" position="replace">
+            <div class="o_sub_menu_footer">智强信息技术支持</div>
+        </xpath>
+    </template>
+
+    <template id="aas_login_email" inherit_id="web.login" name="AAS Login Email">
+        <xpath expr="//label[@for='login']" position="replace">
+            <label for="login" class="control-label">登录名/邮箱</label>
+        </xpath>
+    </template>
+
+    <template id="aas_login_layout" inherit_id="web.login_layout" name="AAS Login Layout">
+
+        <xpath expr="//div[@class='row'][1]" position="attributes">
+            <attribute name="style">margin-top:50px;</attribute>
+        </xpath>
+
+        <xpath expr="//div[@class='col-md-6 col-md-offset-3 o_database_list']//div[last()]" position="replace">
+
+            <!-- <div class="text-center" t-if="not disable_footer">
+                   <t t-if="not disable_database_manager"> <a href="/web/database/manager">管理数据库</a> | </t>
+                   <a href="#" target="_blank">智强信息技术支持</a>
+               </div> -->
+        </xpath>
+
+        <xpath expr="//div[@class='row'][1]" position="after">
+            <div style="position:fixed; left:0; bottom:0; right:0; height:30px; width:100%; text-align:center;">
+                <span>
+                    Copyright © 安费诺先进传感器 &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <a href="http://www.miitbeian.gov.cn" target="_blank">苏ICP备16061622</a>
+                </span>
+            </div>
+        </xpath>
+
+    </template>
+
 </odoo>

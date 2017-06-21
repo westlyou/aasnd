@@ -145,7 +145,8 @@
         <field name="res_model">stock.quant</field>
     </record>
 
-    <menuitem id="menu_quants" name="Inventory Valuation" parent="stock.menu_warehouse_report" sequence="120" action="quantsact"/>
+    <!--<menuitem id="menu_quants" name="Inventory Valuation" parent="stock.menu_warehouse_report" sequence="120" action="quantsact"/>-->
+    <menuitem id="menu_aas_stock_quants" name="库存查询" parent="stock.menu_aas_stock_inventory" sequence="3" action="quantsact"/>
 
     <record id="quant_package_search_view" model="ir.ui.view">
         <field name="name">stock.quant.package.search</field>
@@ -246,7 +247,7 @@
         </field>
     </record>
 
-    <menuitem id="menu_package" name="Packages" parent="menu_stock_inventory_control" action="action_package_view" groups="stock.group_tracking_lot" sequence="102"/>
-    <menuitem id="menu_packagings" name="Package Types" parent="stock.menu_packages_config" action="product.action_packaging_view" groups="product.group_stock_packaging"/>
+    <!--<menuitem id="menu_package" name="Packages" parent="menu_stock_inventory_control" action="action_package_view" groups="stock.group_tracking_lot" sequence="102"/>
+    <menuitem id="menu_packagings" name="Package Types" parent="stock.menu_packages_config" action="product.action_packaging_view" groups="product.group_stock_packaging"/>-->
 
 </odoo>

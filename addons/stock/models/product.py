@@ -387,7 +387,7 @@ class ProductTemplate(models.Model):
     tracking = fields.Selection([
         ('serial', 'By Unique Serial Number'),
         ('lot', 'By Lots'),
-        ('none', 'No Tracking')], string="Tracking", default='none', required=True)
+        ('none', 'No Tracking')], string="Tracking", default='lot', required=True)
     description_picking = fields.Text('Description on Picking', translate=True)
     qty_available = fields.Float(
         'Quantity On Hand', compute='_compute_quantities', search='_search_qty_available',

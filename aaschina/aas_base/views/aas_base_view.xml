@@ -2,6 +2,9 @@
 <odoo>
     <data>
 
+        <menuitem id="menu_aas_base_itsettings" name="AASIT"  sequence="100" groups="group_aas_it"/>
+        <menuitem id="menu_aas_base_itsettings_list"  name="AASIT" parent="menu_aas_base_itsettings" sequence="1" groups="group_aas_it"/>
+
         <record id="view_general_configuration" model="ir.ui.view">
             <field name="name">base.config.settings.web.window.title</field>
             <field name="model">base.config.settings</field>
@@ -17,6 +20,50 @@
                 </xpath>
             </field>
         </record>
+
+        <record id="view_tree_aas_base_cron" model="ir.ui.view">
+            <field name="name">aas.base.cron.tree</field>
+            <field name="model">aas.base.cron</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="name"/>
+                    <field name="cron_method"/>
+                    <field name="start_time"/>
+                    <field name="thend_time"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_search_aas_base_cron" model="ir.ui.view">
+            <field name="name">aas.base.cron.search</field>
+            <field name="model">aas.base.cron</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="cron_method" string="方法" filter_domain="[('cron_method','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="方法" context="{'group_by':'cron_method'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_base_cron" model="ir.actions.act_window">
+            <field name="name">自动任务</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.base.cron</field>
+            <field name="limit">50</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_base_cron"/>
+            <field name="search_view_id" ref="view_search_aas_base_cron"/>
+        </record>
+
+        <menuitem id="menu_aas_base_itsettings_cron"  name="自动任务" action="action_aas_base_cron"
+                          parent="menu_aas_base_itsettings_list" sequence="11" groups="group_aas_it"/>
+
+
 
     </data>
 </odoo>

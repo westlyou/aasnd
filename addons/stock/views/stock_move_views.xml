@@ -344,6 +344,8 @@
             </field>
         </record>
 
-<menuitem action="stock_move_action" id="stock_move_menu" parent="stock.menu_warehouse_report" sequence="130"/>
+<!--<menuitem action="stock_move_action" id="stock_move_menu" parent="stock.menu_warehouse_report" sequence="130"/>-->
+        <menuitem action="stock_move_action" id="menu_aas_stock_move" parent="stock.menu_aas_stock_inventory"
+                  sequence="2" name="库存移动"/>
 
 </odoo>

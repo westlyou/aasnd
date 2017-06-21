@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_label_printer" model="ir.ui.view">
+            <field name="name">aas.label.printere.tree</field>
+            <field name="model">aas.label.printer</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="host"/>
+                    <field name="port"/>
+                    <field name="model_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_label_printer" model="ir.ui.view">
+            <field name="name">aas.label.printer.form</field>
+            <field name="model">aas.label.printer</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="host"/>
+                            </group>
+                            <group>
+                                <field name="model_id" options="{'no_create':true}"/>
+                                <field name="port"/>
+                                <field name="completeurl" invisible="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="打印字段">
+                                <field name="field_lines">
+                                    <tree editable="top">
+                                        <field name="field_id" options="{'no_create':true}"
+                                               domain="[('model_id','=',parent.model_id),('ttype','not in',['one2many','many2many'])]"/>
+                                        <field name="field_name" readonly="1"/>
+                                        <field name="field_type" readonly="1"/>
+                                        <field name="print_name"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_label_printer" model="ir.ui.view">
+            <field name="name">aas.label.printer.search</field>
+            <field name="model">aas.label.printer</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="host" string="主机" filter_domain="[('host','ilike',self)]"/>
+                    <field name="port" string="端口" filter_domain="[('port','ilike',self)]"/>
+                    <field name="model_id" string="标签对象" filter_domain="[('model_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="主机" context="{'group_by':'host'}"/>
+                        <filter string="端口" context="{'group_by':'port'}"/>
+                        <filter string="标签对象" context="{'group_by':'model_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_label_printer" model="ir.actions.act_window">
+            <field name="name">标签打印机</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.label.printer</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_label_printer"/>
+            <field name="search_view_id" ref="view_search_aas_label_printer"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加标签打印机</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_label_printer" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_label_printer"/>
+            <field name="act_window_id" ref="action_aas_label_printer"/>
+        </record>
+
+        <record id="act_view_form_aas_label_printer" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_label_printer"/>
+            <field name="act_window_id" ref="action_aas_label_printer"/>
+        </record>
+
+        <menuitem id="menu_aas_label_printer"  name="打印机" action="action_aas_label_printer"
+                          parent="menu_aas_base_itsettings_list" sequence="1" groups="group_aas_it"/>
+
+    </data>
+</odoo>

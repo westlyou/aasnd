@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_aas_base_cron_aasit,aas.base.cron aasit,model_aas_base_cron,group_aas_it,1,0,0,0
+access_aas_label_printer_aasit,aas.label.printer aasit,model_aas_label_printer,group_aas_it,1,1,1,1
+access_aas_label_printer_lines_aasit,aas.label.printer.lines aasit,model_aas_label_printer_lines,group_aas_it,1,1,1,1

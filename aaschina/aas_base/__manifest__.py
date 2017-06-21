@@ -13,8 +13,13 @@
     'website': 'http://www.zhiq.info',
     'depends': ['web', 'base_setup'],
     'data': [
+        'data/aas_base_schedule.xml',
+        'data/aas_base_sequence.xml',
+        'security/aas_base_security.xml',
+        'security/ir.model.access.csv',
         'views/aas_base_templates.xml',
-        'views/aas_base_view.xml'
+        'views/aas_base_view.xml',
+        'views/aas_label_view.xml'
     ],
     'qweb':[
         'static/src/xml/aas_base.xml'

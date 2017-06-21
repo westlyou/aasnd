@@ -93,9 +93,12 @@
               </p>
             </field>
         </record>
-        <menuitem action="action_warehouse_form" id="menu_action_warehouse_form" 
+        <!--<menuitem action="action_warehouse_form" id="menu_action_warehouse_form"
             groups="base.group_no_one,stock.group_stock_multi_warehouses"
-            parent="menu_warehouse_config" sequence="1"/>
+            parent="menu_warehouse_config" sequence="1"/>-->
+
+        <menuitem action="action_warehouse_form" id="menu_aas_stock_warehouse_form" name="仓库"
+            groups="stock.group_stock_manager" parent="menu_aas_stock_warehouse" sequence="1"/>
 
         <!-- Order Point -->
         <record id="do_view_procurement_op" model="ir.actions.act_window">
@@ -199,10 +202,10 @@
               </p><p>You can define your minimum stock rules, so that Odoo will automatically create draft manufacturing orders or request for quotations according to the stock level. Once the virtual stock of a product (= stock on hand minus all confirmed orders and reservations) is below the minimum quantity, Odoo will generate a procurement request to increase the stock up to the maximum quantity.</p>
             </field>
         </record>
-        <menuitem
+        <!--<menuitem
             id="menu_reordering_rules_config"
             action="action_orderpoint_form"
-            name="Reordering Rules" parent="menu_stock_inventory_control" sequence="10"/>
+            name="Reordering Rules" parent="menu_stock_inventory_control" sequence="10"/>-->
 
         <act_window
             context="{'search_default_warehouse_id': active_id, 'default_warehouse_id': active_id}"
