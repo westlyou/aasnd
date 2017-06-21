@@ -53,16 +53,14 @@
                                 <field name="locked"/>
                                 <field name="locked_order"/>
                                 <field name="parent_id"/>
-                                <field name="origin_id"/>
                                 <field name="pack_user"/>
                             </group>
                             <group>
-                                <field name="date_code"/>
+                                <field name="origin_id"/>
                                 <field name="qualified"/>
                                 <field name="stocked"/>
                                 <field name="prioritized"/>
                                 <field name="customer_code"/>
-                                <field name="origin_order"/>
                                 <field name="stock_date"/>
                                 <field name="warranty_date"/>
                                 <field name="onshelf_time"/>
@@ -71,6 +69,8 @@
                         </group>
                         <group>
                             <group>
+                                <field name="date_code"/>
+                                <field name="origin_order"/>
                                 <field name="partner_id"/>
                                 <field name="company_id"/>
                             </group>

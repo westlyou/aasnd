@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_receive_deliver" model="ir.ui.view">
+            <field name="name">aas.receive.deliver.tree</field>
+            <field name="model">aas.receive.deliver</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="action_year" />
+                    <field name="action_month" />
+                    <field name="product_id" />
+                    <field name="location_id" />
+                    <field name="product_lot" />
+                    <field name="begin_qty" />
+                    <field name="receive_qty" />
+                    <field name="deliver_qty" />
+                    <field name="final_qty" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_search_aas_receive_deliver" model="ir.ui.view">
+            <field name="name">aas.receive.deliver.search</field>
+            <field name="model">aas.receive.deliver</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="action_year" string="年份" filter_domain="[('action_year','ilike',self)]"/>
+                    <field name="action_month" string="月份" filter_domain="[('action_month','ilike',self)]"/>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="location_id" string="库位" filter_domain="[('location_id','ilike',self)]"/>
+                    <field name="product_lot" string="批次" filter_domain="[('product_lot','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="年份" context="{'group_by':'action_year'}"/>
+                        <filter string="月份" context="{'group_by':'action_month'}"/>
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="库位" context="{'group_by':'location_id'}"/>
+                        <filter string="批次" context="{'group_by':'product_lot'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_receive_deliver" model="ir.actions.act_window">
+            <field name="name">收发汇总</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.receive.deliver</field>
+            <field name="limit">50</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_receive_deliver"/>
+            <field name="search_view_id" ref="view_search_aas_receive_deliver"/>
+        </record>
+
+        <menuitem id="menu_aas_receive_deliver"  name="收发汇总" action="action_aas_receive_deliver"
+                          parent="stock.menu_aas_stock_inventory" sequence="4"/>
+
+    </data>
+</odoo>
