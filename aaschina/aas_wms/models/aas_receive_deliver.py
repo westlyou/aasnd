@@ -26,6 +26,7 @@ class AASReceiveDeliver(models.Model):
     receive_qty = fields.Float(string=u'接收数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     deliver_qty = fields.Float(string=u'发出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     final_qty = fields.Float(string=u'期末数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
     @api.model
     def create(self, vals):
@@ -34,10 +35,14 @@ class AASReceiveDeliver(models.Model):
 
     @api.model
     def action_receive(self, product_id, location_id, product_lot, receive_qty, action_year=None, action_month=None):
+        templocation = self.env['stock.location'].browse(location_id)
+        if templocation.usage != 'internal':
+            raise UserError(u'非内部库位无需汇总！')
+        company_id = self.env.user.company_id.id
         if not action_year or not action_month:
             today = date.today()
             action_year, action_month = today.year, today.month
-        action_domain = [('product_id', '=', product_id), ('location_id', '=', location_id), ('product_lot', '=', product_lot)]
+        action_domain = [('product_id', '=', product_id), ('location_id', '=', location_id), ('product_lot', '=', product_lot), ('company_id', '=', company_id)]
         month_domain = [('action_year', '=', action_year), ('action_month', '=', action_month)]
         receipt = self.env['aas.receive.deliver'].search(action_domain+month_domain, limit=1)
         if receipt:
@@ -59,10 +64,14 @@ class AASReceiveDeliver(models.Model):
 
     @api.model
     def action_deliver(self, product_id, location_id, product_lot, deliver_qty, action_year=None, action_month=None):
+        templocation = self.env['stock.location'].browse(location_id)
+        if templocation.usage != 'internal':
+            raise UserError(u'非内部库位无需汇总！')
+        company_id = self.env.user.company_id.id
         if not action_year or not action_month:
             today = date.today()
             action_year, action_month = today.year, today.month
-        action_domain = [('product_id', '=', product_id), ('location_id', '=', location_id), ('product_lot', '=', product_lot)]
+        action_domain = [('product_id', '=', product_id), ('location_id', '=', location_id), ('product_lot', '=', product_lot), ('company_id', '=', company_id)]
         month_domain = [('action_year', '=', action_year), ('action_month', '=', action_month)]
         receipt = self.env['aas.receive.deliver'].search(action_domain+month_domain, limit=1)
         if receipt:

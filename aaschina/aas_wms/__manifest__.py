@@ -15,7 +15,8 @@
     'data': [
         'security/ir.model.access.csv',
         'views/aas_product_label_view.xml',
-        'views/aas_receive_deliver_view.xml'
+        'views/aas_receive_deliver_view.xml',
+        'views/aas_stock_receipt_view.xml'
     ],
     'qweb':[],
     'installable': True,

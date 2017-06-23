@@ -24,7 +24,7 @@ class AASProductLabel(models.Model):
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='set null')
     location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='restrict')
     state = fields.Selection(selection=LABEL_STATE, string=u'状态', default='normal', copy=False)
-    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null')
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
     date_code = fields.Char(string='DateCode')
     qualified = fields.Boolean(string=u'是否合格', default=True)
@@ -52,14 +52,6 @@ class AASProductLabel(models.Model):
     warranty_date = fields.Date(string=u'质保日期', help=u'质保时间段，货物最后有效的日期，过期将自动冻结')
 
     journal_lines = fields.One2many(comodel_name='aas.product.label.journal', inverse_name='label_id', string=u'查存卡', copy=False)
-
-    @api.model
-    def default_get(self, fields_list):
-        defaults = super(AASProductLabel,self).default_get(fields_list)
-        company_id = self.env.user.company_id
-        if company_id:
-            defaults['company_id'] = company_id.id
-        return defaults
 
 
     @api.model
@@ -294,6 +286,14 @@ class AASProductLabel(models.Model):
             for mkey, mval in movevals.items():
                 movelist |= self.env['stock.move'].create(mval)
             movelist.action_done()
+
+
+    @api.multi
+    def unlink(self):
+        for record in self:
+            if record.state != 'draft':
+                raise UserError(u'标签已在正常业务中使用，不可以删除！')
+        return super(AASProductLabel, self).unlink()
 
 
 
