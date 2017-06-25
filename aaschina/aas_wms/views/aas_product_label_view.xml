@@ -2,7 +2,7 @@
 <odoo>
     <data>
 
-        <menuitem id="menu_aas_product_label"  name="产品标签" parent="stock.menu_stock_root"
+        <menuitem id="menu_aas_product_label"  name="标签" parent="stock.menu_stock_root"
                   sequence="1" groups="stock.group_stock_user,stock.group_stock_manager"/>
 
         <record id="view_tree_aas_product_label" model="ir.ui.view">

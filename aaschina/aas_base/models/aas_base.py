@@ -53,6 +53,15 @@ class IRSequence(models.Model):
 
 
 
+class RESPartner(models.Model):
+    _inherit = 'res.partner'
+
+    @api.model
+    def create(self, vals):
+        if ('tz' not in vals) or (not vals.get('tz')):
+            vals['tz'] = 'Asia/Shanghai'
+        return super(RESPartner, self).create(vals)
+
 
 CONFIG_PARAM_WEB_WINDOW_TITLE = "web.base.title"
 

@@ -11,12 +11,17 @@
     """,
     'author': 'Luforn',
     'website': 'http://www.zhiq.info',
-    'depends': ['stock'],
+    'depends': ['stock', 'aas_base'],
     'data': [
+        'data/aas_wms_data.xml',
+        'data/aas_wms_sequence.xml',
         'security/ir.model.access.csv',
+        'views/aas_stock_models_view.xml',
         'views/aas_product_label_view.xml',
         'views/aas_receive_deliver_view.xml',
-        'views/aas_stock_receipt_view.xml'
+        'views/aas_stock_receipt_view.xml',
+        'views/aas_stock_receipt_inside_view.xml',
+        'views/aas_stock_receipt_outside_view.xml'
     ],
     'qweb':[],
     'installable': True,

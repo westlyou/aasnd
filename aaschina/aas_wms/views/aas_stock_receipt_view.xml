@@ -24,22 +24,6 @@
             </field>
         </record>
 
-        <record id="view_tree_aas_stock_receipt" model="ir.ui.view">
-            <field name="name">aas.stock.receipt.tree</field>
-            <field name="model">aas.stock.receipt</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                <tree>
-                    <field name="name"/>
-                    <field name="order_user"/>
-                    <field name="order_time"/>
-                    <field name="done_time"/>
-                    <field name="state"/>
-                    <field name="partner_id"/>
-                </tree>
-            </field>
-        </record>
-
         <record id="view_search_aas_stock_receipt_line" model="ir.ui.view">
             <field name="name">aas.stock.receipt.line.search</field>
             <field name="model">aas.stock.receipt.line</field>
@@ -47,6 +31,7 @@
                 <search>
                     <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
                     <field name="state" string="状态" filter_domain="[('state','ilike',self)]"/>
+                    <field name="receipt_id" string="收货单" filter_domain="[('receipt_id','ilike',self)]"/>
                     <field name="origin_order" string="来源单据" filter_domain="[('origin_order','ilike',self)]"/>
                     <separator/>
                     <filter string="已关联标签" domain="[('label_related', '=', True)]"/>
@@ -55,316 +40,78 @@
                     <group expand="0" string="分组">
                         <filter string="产品" context="{'group_by':'product_id'}"/>
                         <filter string="状态" context="{'group_by':'state'}"/>
+                        <filter string="收货单" context="{'group_by':'receipt_id'}"/>
                         <filter string="来源单据" context="{'group_by':'origin_order'}"/>
                     </group>
                 </search>
             </field>
         </record>
 
-        <record id="view_tree_aas_stock_receipt_line" model="ir.ui.view">
-            <field name="name">aas.stock.receipt.line.tree</field>
-            <field name="model">aas.stock.receipt.line</field>
+
+        <record id="view_tree_aas_stock_receipt_move_report" model="ir.ui.view">
+            <field name="name">aas.stock.receipt.move.report.tree</field>
+            <field name="model">aas.stock.receipt.move.report</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree create="false" edit="false" delete="false">
-                    <field name="product_id"/>
-                    <field name="product_uom"/>
-                    <field name="product_qty"/>
-                    <field name="receipt_qty"/>
-                    <field name="doing_qty"/>
-                    <field name="origin_order"/>
-                    <field name="state"/>
+                <tree>
+                    <field name="product_id" />
+                    <field name="product_uom" />
+                    <field name="product_lot" />
+                    <field name="product_qty" />
+                    <field name="receipt_type" />
+                    <field name="receipt_user" />
+                    <field name="receipt_date" />
+                    <field name="location_src_id" />
+                    <field name="location_dest_id" />
+                    <field name="origin_order" />
+                    <field name="partner_id" />
                 </tree>
             </field>
         </record>
 
-        <!-- 采购收货 -->
-
-        <record id="view_form_aas_stock_receipt_purchase" model="ir.ui.view">
-            <field name="name">aas.stock.receipt.purchase.form</field>
-            <field name="model">aas.stock.receipt</field>
-            <field name="type">form</field>
+        <record id="view_search_aas_stock_receipt_move_report" model="ir.ui.view">
+            <field name="name">aas.stock.receipt.move.report.search</field>
+            <field name="model">aas.stock.receipt.move.report</field>
             <field name="arch" type="xml">
-                <form>
-                    <header>
-                        <button name="action_confirm_purchase" type="object" string="收货确认" class="oe_highlight"/>
-                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,receipt,done,cancle"/>
-                    </header>
-                    <sheet>
-                        <group>
-                            <group>
-                                <field name="name"/>
-                                <field name="partner_id"/>
-                            </group>
-                        </group>
-                        <group>
-                            <group>
-                                <field name="order_user"/>
-                                <field name="order_time"/>
-                            </group>
-                            <group>
-                                <field name="receipt_type"/>
-                                <field name="done_time"/>
-                            </group>
-                        </group>
-                        <notebook>
-                            <page string="收货明细">
-                                <field name="receipt_lines" attrs="{'readonly': [('state','!=','draft')]}">
-                                    <tree editable="top">
-                                        <field name="product_id" options="{'no_create':true}" required="1"/>
-                                        <field name="product_uom" readonly="1"/>
-                                        <field name="product_qty" required="1"/>
-                                        <field name="receipt_qty" readonly="1"/>
-                                        <field name="doing_qty" readonly="1"/>
-                                        <field name="label_related" readonly="1"/>
-                                    </tree>
-                                    <form>
-                                        <grou>
-                                            <group>
-                                                <field name="product_id"/>
-                                                <field name="product_uom"/>
-                                                <field name="label_related"/>
-                                            </group>
-                                            <group>
-                                                <field name="product_qty"/>
-                                                <field name="receipt_qty"/>
-                                                <field name="doing_qty"/>
-                                            </group>
-                                        </grou>
-                                    </form>
-                                </field>
-                            </page>
-                            <page string="收货标签">
-                                <field name="label_lines" readonly="1">
-                                    <tree>
-                                        <field name="label_id"/>
-                                        <field name="product_id"/>
-                                        <field name="product_uom"/>
-                                        <field name="product_lot"/>
-                                        <field name="product_qty"/>
-                                        <field name="origin_order"/>
-                                        <field name="checked"/>
-                                    </tree>
-                                    <from>
-                                        <group>
-                                            <group> <field name="label_id"/> </group>
-                                        </group>
-                                        <group>
-                                            <group>
-                                                <field name="product_id"/>
-                                                <field name="product_uom"/>
-                                                <field name="product_lot"/>
-                                            </group>
-                                            <group>
-                                                <field name="product_qty"/>
-                                                <field name="origin_order"/>
-                                                <field name="checked"/>
-                                            </group>
-                                        </group>
-                                    </from>
-                                </field>
-                            </page>
-                            <page string="收货作业">
-                                <field name="operation_lines" readonly="1">
-                                    <tree>
-                                        <field name="rlabel_id"/>
-                                        <field name="product_id"/>
-                                        <field name="product_uom"/>
-                                        <field name="product_lot"/>
-                                        <field name="product_qty"/>
-                                        <field name="push_user"/>
-                                        <field name="push_time"/>
-                                        <field name="push_onshelf"/>
-                                    </tree>
-                                    <form>
-                                        <group>
-                                            <field name="rlabel_id"/>
-                                            <field name="product_id"/>
-                                            <field name="product_uom"/>
-                                            <field name="product_lot"/>
-                                        </group>
-                                        <group>
-                                            <field name="product_qty"/>
-                                            <field name="push_user"/>
-                                            <field name="push_time"/>
-                                            <field name="push_onshelf"/>
-                                        </group>
-                                    </form>
-                                </field>
-                            </page>
-                            <page string="执行明细">
-                                <field name="move_lines" readonly="1">
-                                    <tree>
-                                        <field name="product_id"/>
-                                        <field name="product_uom"/>
-                                        <field name="product_lot"/>
-                                        <field name="product_qty"/>
-                                        <field name="receipt_time"/>
-                                        <field name="receipt_user"/>
-                                        <field name="location_src_id"/>
-                                        <field name="location_dest_id"/>
-                                    </tree>
-                                    <form>
-                                        <group>
-                                            <group>
-                                                <field name="product_id"/>
-                                                <field name="product_uom"/>
-                                                <field name="product_lot"/>
-                                                <field name="product_qty"/>
-                                            </group>
-                                            <group>
-                                                <field name="receipt_time"/>
-                                                <field name="receipt_user"/>
-                                                <field name="location_src_id"/>
-                                                <field name="location_dest_id"/>
-                                            </group>
-                                        </group>
-                                    </form>
-                                </field>
-                            </page>
-                        </notebook>
-                    </sheet>
-                </form>
+                <search>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="product_lot" string="批次" filter_domain="[('product_lot','ilike',self)]"/>
+                    <field name="receipt_type" string="收货类型" filter_domain="[('receipt_type','ilike',self)]"/>
+                    <field name="receipt_user" string="收货员工" filter_domain="[('receipt_user','ilike',self)]"/>
+                    <field name="receipt_date" string="收货日期" filter_domain="[('receipt_date','ilike',self)]"/>
+                    <field name="location_src_id" string="来源库位" filter_domain="[('location_src_id','ilike',self)]"/>
+                    <field name="location_dest_id" string="目标库位" filter_domain="[('location_dest_id','ilike',self)]"/>
+                    <field name="origin_order" string="来源单据" filter_domain="[('origin_order','ilike',self)]"/>
+                    <field name="partner_id" string="业务伙伴" filter_domain="[('partner_id','ilike',self)]"/>
+                    <separator/>
+                    <filter string="今天" domain="[('receipt_date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                    <filter string="本月" domain="[('receipt_date', '&amp;lt:=', context_today().strftime('%Y-%m-01')), ('receipt_date', '&amp;lt:', (context_today() + relativedelta(months=1)).strftime('%Y-%m-01'))]"/>
+                    <group expand="0" string="分组">
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="批次" context="{'group_by':'product_lot'}"/>
+                        <filter string="收货类型" context="{'group_by':'receipt_type'}"/>
+                        <filter string="收货员工" context="{'group_by':'receipt_user'}"/>
+                        <filter string="来源库位" context="{'group_by':'location_src_id'}"/>
+                        <filter string="目标库位" context="{'group_by':'location_dest_id'}"/>
+                        <filter string="来源单据" context="{'group_by':'origin_order'}"/>
+                        <filter string="业务伙伴" context="{'group_by':'partner_id'}"/>
+                    </group>
+                </search>
             </field>
         </record>
 
-        <record id="action_aas_stock_receipt_purchase" model="ir.actions.act_window">
-            <field name="name">采购收货</field>
+        <record id="action_aas_stock_receipt_move_report" model="ir.actions.act_window">
+            <field name="name">收货报表</field>
             <field name="type">ir.actions.act_window</field>
-            <field name="res_model">aas.stock.receipt</field>
+            <field name="res_model">aas.stock.receipt.move.report</field>
             <field name="limit">50</field>
-            <field name="view_mode">form,tree</field>
-            <field name="view_id" ref="view_tree_aas_stock_receipt"/>
-            <field name="search_view_id" ref="view_search_aas_stock_receipt"/>
-            <field name="domain">[('receipt_type', '=', 'purchase')]</field>
-            <field name="context">{'default_receipt_type': 'purchase'}</field>
-            <field name="help" type="html">
-                <p class="oe_view_nocontent_create"> 单击添加采购收货</p>
-            </field>
-        </record>
-
-        <record id="act_view_tree_aas_stock_receipt_purchase" model="ir.actions.act_window.view">
-            <field name="sequence" eval="1"/>
             <field name="view_mode">tree</field>
-            <field name="view_id" ref="view_tree_aas_stock_receipt"/>
-            <field name="act_window_id" ref="action_aas_stock_receipt_purchase"/>
+            <field name="view_id" ref="view_tree_aas_stock_receipt_move_report"/>
+            <field name="search_view_id" ref="view_search_aas_stock_receipt_move_report"/>
         </record>
 
-        <record id="act_view_form_aas_stock_receipt_purchase" model="ir.actions.act_window.view">
-            <field name="sequence" eval="2"/>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="view_form_aas_stock_receipt_purchase"/>
-            <field name="act_window_id" ref="action_aas_stock_receipt_purchase"/>
-        </record>
-
-        <menuitem id="menu_aas_stock_receipt_purchase"  name="采购收货" action="action_aas_stock_receipt_purchase"
-                          parent="menu_aas_stock_receipt" sequence="1" groups="stock.group_stock_user,stock.group_stock_manager"/>
-
-        <record id="view_form_aas_stock_receipt_line" model="ir.ui.view">
-            <field name="name">aas.stock.receipt.line.purchase.form</field>
-            <field name="model">aas.stock.receipt.line</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form create="false" edit="false" delete="false">
-                    <header>
-                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,tocheck,checked,done,cancle"/>
-                    </header>
-                    <sheet>
-                        <group>
-                            <group>
-                                <field name="product_id"/>
-                                <field name="product_uom"/>
-                            </group>
-                            <group>
-                                <field name="product_qty"/>
-                                <field name="origin_order"/>
-                            </group>
-                        </group>
-                        <group>
-                            <group>
-                                <field name="receipt_qty"/>
-                                <field name="doing_qty"/>
-                            </group>
-                        </group>
-                        <notebook>
-                            <page string="收货标签">
-                                <field name="label_list" readonly="1">
-                                    <tree>
-                                        <field name="label_id"/>
-                                        <field name="product_id"/>
-                                        <field name="product_uom"/>
-                                        <field name="product_lot"/>
-                                        <field name="product_qty"/>
-                                        <field name="origin_order"/>
-                                        <field name="checked"/>
-                                    </tree>
-                                    <form>
-                                        <group>
-                                            <group> <field name="label_id"/> </group>
-                                        </group>
-                                        <group>
-                                            <group>
-                                                <field name="product_id"/>
-                                                <field name="product_uom"/>
-                                                <field name="product_lot"/>
-                                            </group>
-                                            <group>
-                                                <field name="product_qty"/>
-                                                <field name="origin_order"/>
-                                                <field name="checked"/>
-                                            </group>
-                                        </group>
-                                    </form>
-                                </field>
-                            </page>
-                            <page string="收货作业">
-                                <field name="operation_list">
-                                    <tree editable="top">
-                                        <field name="rlabel_id"/>
-                                        <field name="product_id"/>
-                                        <field name="product_uom"/>
-                                        <field name="product_lot"/>
-                                        <field name="product_qty"/>
-                                        <field name="push_user"/>
-                                        <field name="push_time"/>
-                                        <field name="push_onshelf"/>
-                                    </tree>
-                                    <form>
-                                        <group>
-                                            <field name="rlabel_id"/>
-                                            <field name="product_id"/>
-                                            <field name="product_uom"/>
-                                            <field name="product_lot"/>
-                                        </group>
-                                        <group>
-                                            <field name="product_qty"/>
-                                            <field name="push_user"/>
-                                            <field name="push_time"/>
-                                            <field name="push_onshelf"/>
-                                        </group>
-                                    </form>
-                                </field>
-                            </page>
-                        </notebook>
-                    </sheet>
-                </form>
-            </field>
-        </record>
-
-        <record id="action_aas_stock_receipt_line_purchase" model="ir.actions.act_window">
-            <field name="name">采购明细</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">aas.stock.receipt.line</field>
-            <field name="limit">50</field>
-            <field name="view_mode">form,tree</field>
-            <field name="view_id" ref="view_tree_aas_stock_receipt_line"/>
-            <field name="search_view_id" ref="view_search_aas_stock_receipt_line"/>
-            <field name="domain">[('receipt_type', '=', 'purchase')]</field>
-            <field name="context">{'default_receipt_type': 'purchase'}</field>
-        </record>
-
-        <menuitem id="menu_aas_stock_receipt_line_purchase"  name="采购明细" action="action_aas_stock_receipt_line_purchase"
-                          parent="menu_aas_stock_receipt" sequence="2" groups="stock.group_stock_user,stock.group_stock_manager"/>
+        <menuitem id="menu_aas_stock_receipt_move_report"  name="收货报表" action="action_aas_stock_receipt_move_report"
+                          parent="stock.menu_aas_stock_inventory" sequence="2" groups="stock.group_stock_user,stock.group_stock_manager"/>
 
     </data>
 </odoo>

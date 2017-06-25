@@ -74,7 +74,8 @@ class AASProductLabel(models.Model):
         journalvals.update({'balance_qty': self.product_qty, 'journal_qty': self.product_qty})
         if self.company_id:
             journalvals['company_id'] = self.company_id.id
-        self.env['aas.product.label.journal'].create(journalvals)
+        if self.location_id.usage == 'internal' and self.stocked and self.state in ['normal', 'frozen']:
+            self.env['aas.product.label.journal'].create(journalvals)
 
 
     @api.one
