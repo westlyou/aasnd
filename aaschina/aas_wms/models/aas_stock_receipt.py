@@ -21,7 +21,7 @@ class AASStockReceipt(models.Model):
     _order = "id desc"
 
     name = fields.Char(string=u'名称', copy=False)
-    order_user = fields.Many2one(comodel_name='res.users', string=u'下单人员', ondelete='restrict')
+    order_user = fields.Many2one(comodel_name='res.users', string=u'下单人员', ondelete='restrict', default=lambda self: self.env.user)
     order_time = fields.Datetime(string=u'下单时间', default=fields.Datetime.now)
     receipt_type = fields.Selection(selection=RECEIPT_TYPE, string=u'收货类型')
     state = fields.Selection(selection=RECEIPT_STATE, string=u'状态', default='draft')
@@ -34,6 +34,12 @@ class AASStockReceipt(models.Model):
     label_lines = fields.One2many(comodel_name='aas.stock.receipt.label', inverse_name='receipt_id', string=u'收货标签')
     operation_lines = fields.One2many(comodel_name='aas.stock.receipt.operation', inverse_name='receipt_id', string=u'收货作业')
     move_lines = fields.One2many(comodel_name='aas.stock.receipt.move', inverse_name='receipt_id', string=u'执行明细')
+
+
+    @api.model
+    def create(self, vals):
+        vals['name'] = self.env['ir.sequence'].next_by_code('aas.stock.receipt')
+        return super(AASStockReceipt, self).create(vals)
 
     @api.one
     def action_refresh_push_location(self):
@@ -57,6 +63,8 @@ class AASStockReceipt(models.Model):
             if rline.state != 'draft':
                 continue
             rline.action_confirm()
+        if self.state == 'draft':
+            self.write({'state': 'confirm'})
 
 
 class AASStockReceiptLine(models.Model):
@@ -72,7 +80,7 @@ class AASStockReceiptLine(models.Model):
     label_related = fields.Boolean(string=u'标签关联', default=False)
     receipt_type = fields.Selection(selection=RECEIPT_TYPE, string=u'收货类型')
     state = fields.Selection(selection=RECEIPT_STATE, string=u'状态', default='draft')
-    push_location = fields.Many2one(comodel_name='stock.location', string=u'最新上架库位')
+    push_location = fields.Many2one(comodel_name='stock.location', string=u'推荐库位', help=u'最近上架库位')
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null')
     location_id = fields.Many2one(comodel_name='stock.location', string=u'收货库位', ondelete='restrict')
     warehouse_id = fields.Many2one(comodel_name='stock.warehouse', string=u'收货仓库', ondelete='restrict')
@@ -85,6 +93,23 @@ class AASStockReceiptLine(models.Model):
     _sql_constraints = [
         ('uniq_receipt_line', 'unique (receipt_id, product_id, origin_order)', u'请不要在同一单据上对相同产品重复收货！')
     ]
+
+    @api.model
+    def action_before_create(self, vals):
+        if ('location_id' not in vals) or (not vals.get('location_id')):
+            mainbase = self.env['stock.warehouse'].get_default_warehouse()
+            vals['warehouse_id'], vals['location_id'] = mainbase.id, mainbase.wh_input_stock_loc_id.id
+        vals['company_id'] = self.env.user.company_id.id
+        product_id = self.env['product.product'].browse(vals.get('product_id'))
+        vals['product_uom'] = product_id.uom_id.id
+        receipt_id = self.env['aas.stock.receipt'].browse(vals.get('receipt_id'))
+        vals['receipt_type'] = receipt_id.receipt_type
+
+    @api.model
+    def create(self, vals):
+        self.action_before_create(vals)
+        return super(AASStockReceiptLine, self).create(vals)
+
 
     @api.one
     def action_refresh_push_location(self):
@@ -109,7 +134,7 @@ class AASStockReceiptLine(models.Model):
                     'origin_order': self.origin_order, 'receipt_type': self.receipt_type, 'partner_id': self.receipt_id.receipt_id and self.receipt_id.receipt_id.id,
                     'receipt_user': self.env.user.id, 'location_src_id': label.location_id.id, 'location_dest_id': self.location_id.id, 'product_qty': label.product_qty, 'company_id': self.company_id.id
                 }
-        self.label_list.write({'location_id': self.location_id.id, 'stocked': True})
+        self.label_list.write({'location_id': self.location_id.id, 'stocked': True, 'state': 'normal'})
         self.write({'state': 'confirm'})
         move_lines, receiptvals = [], {}
         for mkey, mval in movedict.items():
@@ -118,6 +143,45 @@ class AASStockReceiptLine(models.Model):
         if receipt.state == 'draft' and all([rline.state not in ['draft', 'cancel'] for rline in receipt.receipt_lines]):
             receiptvals['state'] = 'confirm'
         receipt.write(receiptvals)
+
+    @api.multi
+    def action_label_list(self):
+        self.ensure_one()
+        if self.label_related:
+            action = self.env.ref('aas_wms.action_aas_stock_receipt_label')
+            form = self.env.ref('aas_wms.view_form_aas_stock_receipt_label')
+            tree = self.env.ref('aas_wms.view_tree_aas_stock_receipt_label')
+            result = {
+                'name': action.name,
+                'type': action.type,
+                'views': [[tree.id, 'tree'], [form.id, 'form']],
+                'target': action.target,
+                'context': action.context,
+                'res_model': action.res_model,
+            }
+            if self.label_list and len(self.label_list) > 0:
+                result['domain'] = "[('id','in',%s)]" % self.label_list.ids
+            else:
+                result = {'type': 'ir.actions.act_window_close'}
+            return result
+        else:
+            wizard = self.env['aas.stock.receipt.product.wizard'].create({
+                'receipt_line_id': self.id, 'receipt_product_id': self.product_id.id, 'receipt_product_uom': self.product_uom.id,
+                'receipt_product_qty': self.product_qty, 'receipt_need_warranty': self.product_id.need_warranty
+            })
+            view_form = self.env.ref('aas_wms.view_form_aas_stock_receipt_product_lot_wizard')
+            return {
+                'name': u"批次明细",
+                'type': 'ir.actions.act_window',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_model': 'aas.stock.receipt.product.wizard',
+                'views': [(view_form.id, 'form')],
+                'view_id': view_form.id,
+                'target': 'new',
+                'res_id': wizard.id,
+                'context': self.env.context
+            }
 
 
 
@@ -139,7 +203,6 @@ class AASStockReceiptLabel(models.Model):
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     label_location = fields.Many2one(comodel_name='stock.location', string=u'来源库位', ondelete='restrict')
     product_qty = fields.Float(string=u'上架数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    operation_list = fields.One2many(comodel_name='aas.stock.receipt.operation', inverse_name='rlabel_id', string=u'收货作业')
 
     _sql_constraints = [
         ('uniq_receipt_label', 'unique (receipt_id, label_id)', u'请不要重复添加标签！')

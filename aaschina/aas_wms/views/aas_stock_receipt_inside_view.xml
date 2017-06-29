@@ -57,6 +57,7 @@
                                         <field name="receipt_qty" readonly="1"/>
                                         <field name="doing_qty" readonly="1"/>
                                         <field name="label_related" readonly="1"/>
+                                        <button name="action_label_list" string="标签清单" type="object" icon="fa-list"/>
                                     </tree>
                                     <form>
                                         <grou>
@@ -163,6 +164,9 @@
                                     </form>
                                 </field>
                             </page>
+                            <page string="备注信息">
+                                <field name="remark"/>
+                            </page>
                         </notebook>
                     </sheet>
                 </form>
@@ -200,6 +204,9 @@
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,tocheck,checked,done,cancle"/>
                     </header>
                     <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_label_list" type="object" class="oe_stat_button" icon="fa-list" string="收货标签"/>
+                        </div>
                         <group>
                             <group>
                                 <field name="product_id" readonly="1"/>
@@ -212,10 +219,11 @@
                         </group>
                         <group>
                             <group>
-                                <field name="push_location" readonly="1"/>
+
                                 <field name="receipt_qty" readonly="1"/>
                                 <field name="doing_qty" readonly="1"/>
                                 <field name="receipt_id" invisible="1"/>
+                                <field name="push_location" readonly="1"/>
                             </group>
                         </group>
                         <notebook>

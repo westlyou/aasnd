@@ -200,14 +200,16 @@ class AASProductLabel(models.Model):
 
     @api.multi
     def action_journal_location(self, location_id):
-        for record in self:
-            if record.location_id.id == location_id:
-                continue
-            journalvals = {'label_id': record.id, 'journal_qty': record.product_qty, 'balance_qty': record.product_qty}
-            journalvals.update({'location_src_id': record.location_id.id, 'location_dest_id': location_id})
-            if record.company_id:
-                journalvals['company_id'] = record.company_id.id
-            self.env['aas.product.label.journal'].create(journalvals)
+        temp_location = self.env['stock.location'].browse(location_id)
+        if temp_location.usage=='internal':
+            for record in self:
+                if record.location_id.id == location_id:
+                    continue
+                journalvals = {'label_id': record.id, 'journal_qty': record.product_qty, 'balance_qty': record.product_qty}
+                journalvals.update({'location_src_id': record.location_id.id, 'location_dest_id': location_id})
+                if record.company_id:
+                    journalvals['company_id'] = record.company_id.id
+                self.env['aas.product.label.journal'].create(journalvals)
 
 
     @api.multi

@@ -161,6 +161,9 @@
                                     </form>
                                 </field>
                             </page>
+                            <page string="备注信息">
+                                <field name="remark"/>
+                            </page>
                         </notebook>
                     </sheet>
                 </form>

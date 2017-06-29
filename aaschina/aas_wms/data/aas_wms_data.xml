@@ -3,4 +3,14 @@
     <data noupdate="1">
         <function name="action_upgrade_aas_stock_warehouse" model="stock.warehouse"/>
     </data>
+    <data>
+
+        <record id="stock_location_sundry" model="stock.location">
+            <field name="name">杂项库位</field>
+            <field name="location_id" ref="stock.stock_location_locations_virtual"/>
+            <field name="usage">view</field>
+            <field name="company_id"></field>
+        </record>
+
+    </data>
 </odoo>

@@ -16,7 +16,7 @@ class IRSequence(models.Model):
     _inherit = "ir.sequence"
 
     loop_type = fields.Selection(selection=[('year', u'年'), ('month', u'月'), ('day', u'日')], string=u'循环类型')
-    loop_time = fields.Date(string=u'循环日期', default=fields.Datetime.now)
+    loop_time = fields.Datetime(string=u'循环日期', default=fields.Datetime.now)
 
     @api.one
     def alert_sequence(self, number_increment=None, number_next=None):
@@ -38,7 +38,8 @@ class IRSequence(models.Model):
             return super(IRSequence, self).next_by_code(sequence_code)
         currenttime, looptime = datetime.now().strftime('%Y-%m-%d'), temp_sequence.loop_time
         tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
-        looptime = pytz.timezone('UTC').localize(looptime, is_dst=False).astimezone(pytz.timezone(tz_name)).strftime('%Y-%m-%d')
+        temptime = fields.Datetime.from_string(looptime)
+        looptime = pytz.timezone('UTC').localize(temptime, is_dst=False).astimezone(pytz.timezone(tz_name)).strftime('%Y-%m-%d')
         temp_type, temp_flag = temp_sequence.loop_type, False
         if (temp_type == 'year') and (currenttime[0:4] != looptime[0:4]):
             temp_flag = True

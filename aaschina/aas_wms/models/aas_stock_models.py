@@ -52,5 +52,15 @@ class ProductTemplate(models.Model):
 
     need_warranty = fields.Boolean(string=u'质保期', default=False, help=u"收货时是否需要设置质保期")
     stock_age = fields.Integer(string=u"库龄", default=0, help=u'物料在仓库保存时间，超过时间要给出提醒')
-    push_location = fields.Many2one(comodel_name='stock.location', string=u'最新上架库位')
+    push_location = fields.Many2one(comodel_name='stock.location', string=u'推荐库位', help=u'最近上架库位')
+
+
+class AASProductProduct(models.Model):
+    _inherit = 'product.product'
+
+    @api.multi
+    def name_get(self):
+        if len(self) <= 0:
+            return []
+        return [(record.id, record.default_code) for record in self]
 
