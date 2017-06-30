@@ -28,12 +28,11 @@ class AASStockReceipt(models.Model):
     partner_id = fields.Many2one(comodel_name='res.partner', string=u'业务伙伴', ondelete='restrict')
     remark = fields.Text(string=u'备注', copy=False)
     done_time = fields.Datetime(string=u'完成时间')
-    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
-
     receipt_lines = fields.One2many(comodel_name='aas.stock.receipt.line', inverse_name='receipt_id', string=u'收货明细')
     label_lines = fields.One2many(comodel_name='aas.stock.receipt.label', inverse_name='receipt_id', string=u'收货标签')
     operation_lines = fields.One2many(comodel_name='aas.stock.receipt.operation', inverse_name='receipt_id', string=u'收货作业')
     move_lines = fields.One2many(comodel_name='aas.stock.receipt.move', inverse_name='receipt_id', string=u'执行明细')
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
 
     @api.model
@@ -53,6 +52,31 @@ class AASStockReceipt(models.Model):
         if lines and len(lines) > 0:
             self.write({'receipt_lines': lines})
 
+
+    @api.multi
+    def action_label_list(self):
+        self.ensure_one()
+        wizardvals = {'receipt_id': self.id}
+        rline = self.env['aas.stock.receipt.line'].search([('receipt_id', '=', self.id), ('label_related', '=', False)], limit=1)
+        if rline:
+            wizardvals.update({'line_id': rline.id, 'product_id': rline.product_id.id, 'product_uom': rline.product_uom.id})
+            wizardvals.update({'need_warranty': rline.product_id.need_warranty, 'origin_order': rline.origin_order, 'product_qty': rline.product_qty})
+        wizard = self.env['aas.stock.receipt.product.wizard'].create(wizardvals)
+        view_form = self.env.ref('aas_wms.view_form_aas_stock_receipt_product_lot_wizard')
+        return {
+            'name': u"批次明细",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.stock.receipt.product.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
+
     @api.one
     def action_confirm(self):
         if not self.receipt_lines or len(self.receipt_lines) <= 0:
@@ -66,6 +90,16 @@ class AASStockReceipt(models.Model):
         if self.state == 'draft':
             self.write({'state': 'confirm'})
 
+    @api.one
+    def action_push_all(self):
+        for rline in self.receipt_lines:
+            rline.action_push_all()
+
+    @api.one
+    def action_push_done(self):
+        for rline in self.receipt_lines:
+            rline.action_push_done()
+
 
 class AASStockReceiptLine(models.Model):
     _name = 'aas.stock.receipt.line'
@@ -76,12 +110,12 @@ class AASStockReceiptLine(models.Model):
     receipt_id = fields.Many2one(comodel_name='aas.stock.receipt', string=u'收货单', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品名称', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'产品单位')
-    origin_order = fields.Char(string=u'来源单据', copy=False)
+    origin_order = fields.Char(string=u'来源单据', copy=False, default='')
     label_related = fields.Boolean(string=u'标签关联', default=False)
     receipt_type = fields.Selection(selection=RECEIPT_TYPE, string=u'收货类型')
     state = fields.Selection(selection=RECEIPT_STATE, string=u'状态', default='draft')
+    need_push = fields.Boolean(string=u'可以上架', compute='_compute_receipt_need_push')
     push_location = fields.Many2one(comodel_name='stock.location', string=u'推荐库位', help=u'最近上架库位')
-    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null')
     location_id = fields.Many2one(comodel_name='stock.location', string=u'收货库位', ondelete='restrict')
     warehouse_id = fields.Many2one(comodel_name='stock.warehouse', string=u'收货仓库', ondelete='restrict')
     product_qty = fields.Float(string=u'收货数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
@@ -89,17 +123,27 @@ class AASStockReceiptLine(models.Model):
     doing_qty = fields.Float(string=u'处理中数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     label_list = fields.One2many(comodel_name='aas.stock.receipt.label', inverse_name='line_id', string=u'收货标签')
     operation_list = fields.One2many(comodel_name='aas.stock.receipt.operation', inverse_name='line_id', string=u'收货作业')
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
     _sql_constraints = [
         ('uniq_receipt_line', 'unique (receipt_id, product_id, origin_order)', u'请不要在同一单据上对相同产品重复收货！')
     ]
+
+    @api.depends('receipt_type', 'state', 'product_qty', 'receipt_qty', 'doing_qty')
+    def _compute_receipt_need_push(self):
+        for record in self:
+            states = ['receipt']
+            if record.receipt_type=='purchase':
+                states.append('checked')
+            else:
+                states.append('confirm')
+            record.need_push = record.state in states and float_compare(record.product_qty, record.receipt_qty+record.doing_qty, precision_rounding=0.000001) > 0.0
 
     @api.model
     def action_before_create(self, vals):
         if ('location_id' not in vals) or (not vals.get('location_id')):
             mainbase = self.env['stock.warehouse'].get_default_warehouse()
             vals['warehouse_id'], vals['location_id'] = mainbase.id, mainbase.wh_input_stock_loc_id.id
-        vals['company_id'] = self.env.user.company_id.id
         product_id = self.env['product.product'].browse(vals.get('product_id'))
         vals['product_uom'] = product_id.uom_id.id
         receipt_id = self.env['aas.stock.receipt'].browse(vals.get('receipt_id'))
@@ -125,64 +169,60 @@ class AASStockReceiptLine(models.Model):
         movedict, labels, receipt = {}, self.env['aas.product.label'], self.receipt_id
         for rlabel in self.label_list:
             label = rlabel.label_id
+            labels |= label
             mkey = 'move_'+str(label.product_lot.id)+'_'+str(label.location_id.id)
             if mkey in movedict:
                 movedict[mkey]['product_qty'] += label.product_qty
             else:
                 movedict[mkey] = {
-                    'product_id': self.product_id.id, 'product_uom': self.product_uom, 'product_lot': label.product_lot.id,
-                    'origin_order': self.origin_order, 'receipt_type': self.receipt_type, 'partner_id': self.receipt_id.receipt_id and self.receipt_id.receipt_id.id,
+                    'product_id': self.product_id.id, 'product_uom': self.product_uom.id, 'product_lot': label.product_lot.id,
+                    'origin_order': self.origin_order, 'receipt_type': self.receipt_type, 'partner_id': self.receipt_id.partner_id and self.receipt_id.partner_id.id,
                     'receipt_user': self.env.user.id, 'location_src_id': label.location_id.id, 'location_dest_id': self.location_id.id, 'product_qty': label.product_qty, 'company_id': self.company_id.id
                 }
-        self.label_list.write({'location_id': self.location_id.id, 'stocked': True, 'state': 'normal'})
-        self.write({'state': 'confirm'})
-        move_lines, receiptvals = [], {}
+        labels.write({'location_id': self.location_id.id, 'stocked': True, 'state': 'normal'})
+        move_lines, receiptvals = [], {'receipt_lines': [(1, self.id, {'state': 'confirm'})]}
         for mkey, mval in movedict.items():
             move_lines.append((0, 0, mval))
         receiptvals['move_lines'] = move_lines
-        if receipt.state == 'draft' and all([rline.state not in ['draft', 'cancel'] for rline in receipt.receipt_lines]):
-            receiptvals['state'] = 'confirm'
         receipt.write(receiptvals)
 
-    @api.multi
-    def action_label_list(self):
-        self.ensure_one()
-        if self.label_related:
-            action = self.env.ref('aas_wms.action_aas_stock_receipt_label')
-            form = self.env.ref('aas_wms.view_form_aas_stock_receipt_label')
-            tree = self.env.ref('aas_wms.view_tree_aas_stock_receipt_label')
-            result = {
-                'name': action.name,
-                'type': action.type,
-                'views': [[tree.id, 'tree'], [form.id, 'form']],
-                'target': action.target,
-                'context': action.context,
-                'res_model': action.res_model,
-            }
-            if self.label_list and len(self.label_list) > 0:
-                result['domain'] = "[('id','in',%s)]" % self.label_list.ids
-            else:
-                result = {'type': 'ir.actions.act_window_close'}
-            return result
-        else:
-            wizard = self.env['aas.stock.receipt.product.wizard'].create({
-                'receipt_line_id': self.id, 'receipt_product_id': self.product_id.id, 'receipt_product_uom': self.product_uom.id,
-                'receipt_product_qty': self.product_qty, 'receipt_need_warranty': self.product_id.need_warranty
-            })
-            view_form = self.env.ref('aas_wms.view_form_aas_stock_receipt_product_lot_wizard')
-            return {
-                'name': u"批次明细",
-                'type': 'ir.actions.act_window',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'res_model': 'aas.stock.receipt.product.wizard',
-                'views': [(view_form.id, 'form')],
-                'view_id': view_form.id,
-                'target': 'new',
-                'res_id': wizard.id,
-                'context': self.env.context
-            }
+    @api.one
+    def action_push_all(self):
+        if not self.push_location:
+            raise UserError(u'请先设置好推荐库位，再批量上架！')
+        labellist = self.env['aas.stock.receipt.label'].search([('line_id', '=', self.id), ('checked', '=', False)])
+        if labellist and len(labellist) > 0:
+            operationlist = [(0, 0, {'rlabel_id': rlabel.id}) for rlabel in labellist]
+            self.receipt_id.write({'operation_lines': operationlist})
 
+    @api.one
+    def action_push_done(self):
+        operationlist = self.env['aas.stock.receipt.operation'].search([('line_id', '=', self.id), ('push_onshelf', '=', False)])
+        if operationlist and len(operationlist) > 0:
+            operationlines, push_user, push_time = [], self.env.user.id, fields.Datetime.now()
+            receiptvals, movedict, labels = {}, {}, self.env['aas.product.label']
+            for roperation in operationlist:
+                label = roperation.rlabel_id.label_id
+                operationlines.append((1, roperation.id, {'push_onshelf': True, 'push_user': push_user, 'push_time': push_time}))
+                mkey = 'move_'+str(label.product_lot.id)+'_'+str(label.location_id.id)+'_'+str(roperation.location_id.id)
+                if mkey in movedict:
+                    movedict[mkey]['product_qty'] += label.product_qty
+                else:
+                    movedict[mkey] = {
+                        'product_id': self.product_id.id, 'product_uom': self.product_uom.id, 'product_lot': label.product_lot.id,
+                        'origin_order': self.origin_order, 'receipt_type': self.receipt_type, 'partner_id': self.receipt_id.partner_id and self.receipt_id.partner_id.id,
+                        'receipt_user': self.env.user.id, 'location_src_id': label.location_id.id, 'location_dest_id': roperation.location_id.id, 'product_qty': label.product_qty, 'company_id': self.company_id.id
+                    }
+                label.write({'locked': False, 'locked_order': '', 'location_id': roperation.location_id.id})
+            receiptvals['operation_lines'] = operationlines
+            receiptvals['move_lines'] = [(0, 0, mval) for mkey, mval in movedict.items()]
+            receiptvals['receipt_lines'] = [(1, self.id, {'receipt_qty': self.receipt_qty+self.doing_qty, 'doing_qty': 0.0})]
+            self.receipt_id.write(receiptvals)
+        labelist = self.env['aas.stock.receipt.label'].search([('line_id', '=', self.id), ('checked', '=', False)])
+        if not labelist or len(labelist) <= 0:
+            self.write({'state': 'done'})
+        if all([rline.state=='done' for rline in self.receipt_id.receipt_lines]):
+            self.receipt_id.write({'state': 'done'})
 
 
 
@@ -199,14 +239,15 @@ class AASStockReceiptLabel(models.Model):
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'产品单位')
     origin_order = fields.Char(string=u'来源单据', copy=False)
     checked = fields.Boolean(string=u'是否作业', default=False, copy=False)
-    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     label_location = fields.Many2one(comodel_name='stock.location', string=u'来源库位', ondelete='restrict')
     product_qty = fields.Float(string=u'上架数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
     _sql_constraints = [
         ('uniq_receipt_label', 'unique (receipt_id, label_id)', u'请不要重复添加标签！')
     ]
+
 
 
 class AASStockReceiptOperation(models.Model):
@@ -219,16 +260,71 @@ class AASStockReceiptOperation(models.Model):
     rlabel_id = fields.Many2one(comodel_name='aas.stock.receipt.label', string=u'收货标签', ondelete='set null')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品名称', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'产品单位')
-    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     push_time = fields.Datetime(string=u'上架时间')
     push_onshelf = fields.Boolean(string=u'是否上架', default=False, copy=False)
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'上架库位')
     push_user = fields.Many2one(comodel_name='res.users', string=u'上架员工', ondelete='restrict')
     product_qty = fields.Float(string=u'上架数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
     _sql_constraints = [
-        ('uniq_receipt_rlabel', 'unique (receipt_id, label_id)', u'请不要重复添加标签！')
+        ('uniq_receipt_rlabel', 'unique (receipt_id, rlabel_id)', u'请不要重复添加标签！')
     ]
+
+    @api.onchange('rlabel_id')
+    def action_change_label(self):
+        if self.rlabel_id:
+            self.product_id, self.product_uom = self.rlabel_id.product_id.id, self.rlabel_id.product_uom.id
+            self.product_lot, self.product_qty = self.rlabel_id.product_lot.id, self.rlabel_id.product_qty
+        else:
+            self.product_id, self.product_uom, self.product_lot, self.product_qty = False, False, False, 0.0
+
+    @api.model
+    def action_before_create(self, vals):
+        rlabel = self.env['aas.stock.receipt.label'].browse(vals.get('rlabel_id'))
+        vals.update({
+            'receipt_id': rlabel.receipt_id.id, 'line_id': rlabel.line_id.id,
+            'product_id': rlabel.product_id.id, 'product_lot': rlabel.product_lot.id,
+            'product_qty': rlabel.product_qty, 'product_uom': rlabel.product_uom.id
+        })
+
+    @api.model
+    def create(self, vals):
+        self.action_before_create(vals)
+        record = super(AASStockReceiptOperation, self).create(vals)
+        record.action_after_create()
+        return record
+
+    @api.one
+    def action_after_create(self):
+        rline, rlabel = self.rlabel_id.line_id, self.rlabel_id
+        linevals = {'label_list': [(1, rlabel.id, {'checked': True})]}
+        linevals['doing_qty'] = rline.doing_qty + rlabel.product_qty
+        rline.write(linevals)
+
+
+    @api.multi
+    def unlink(self):
+        linedict = {}
+        for record in self:
+            if record.push_onshelf:
+                raise UserError(u'标签%s已上架，不可以删除！'% record.rlabel_id.label_id.name)
+            lkey = 'line_'+str(record.line_id.id)
+            if lkey in linedict:
+                linedict[lkey][1].appned(record.rlabel_id)
+            else:
+                linedict[lkey] = [record.line_id, [record.rlabel_id]]
+        result = super(AASStockReceiptOperation, self).unlink()
+        for lkey, lval in linedict:
+            rline, linevals, product_qty = lval[0], {'label_list': []}, 0.0
+            for rlabel in lval[1]:
+                linevals['label_list'].append((1, rlabel.id, {'checked': False}))
+                product_qty += rlabel.product_qty
+            linevals['doing_qty'] = rline.doing_qty - product_qty
+            rline.write(linevals)
+        return result
+
 
 
 class AASStockReceiptMove(models.Model):
@@ -239,7 +335,6 @@ class AASStockReceiptMove(models.Model):
     receipt_id = fields.Many2one(comodel_name='aas.stock.receipt', string=u'收货单', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品名称', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'产品单位')
-    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     origin_order = fields.Char(string=u'来源单据', copy=False)
     receipt_type = fields.Selection(selection=RECEIPT_TYPE, string=u'收货类型')
@@ -250,6 +345,7 @@ class AASStockReceiptMove(models.Model):
     location_src_id = fields.Many2one(comodel_name='stock.location', string=u'来源库位', ondelete='restrict')
     location_dest_id = fields.Many2one(comodel_name='stock.location', string=u'目标库位', ondelete='restrict')
     product_qty = fields.Float(string=u'收货数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
     @api.model
     def create(self, vals):

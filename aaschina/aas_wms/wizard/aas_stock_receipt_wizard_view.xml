@@ -9,12 +9,14 @@
                 <form>
                     <group>
                         <group>
-                            <field name="receipt_product_id" readonly="1"/>
-                            <field name="receipt_product_qty" readonly="1"/>
+                            <field name="product_id" required="1"
+                                   options="{'no_create':true}"
+                                   attrs="{'readonly':[('line_id','!=', False)]}"/>
+                            <field name="product_qty" required="1"/>
                         </group>
                         <group>
-                            <field name="receipt_product_uom" readonly="1"/>
-                            <field name="receipt_need_warranty" readonly="1"/>
+                            <field name="product_uom" readonly="1"/>
+                            <field name="need_warranty" readonly="1"/>
                         </group>
                     </group>
                     <group>
@@ -23,17 +25,18 @@
                     </group>
                     <group>
                         <group>
-                            <field name="receipt_line_id" invisible="1"/>
+                            <field name="receipt_id" invisible="1"/>
+                            <field name="line_id" invisible="1"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="批次明细">
-                            <field name="wizard_lot_lines">
+                            <field name="lot_lines">
                                 <tree editable="top">
-                                    <field name="product_lot_name"/>
-                                    <field name="product_lot_qty"/>
-                                    <field name="receipt_label_qty"/>
-                                    <field name="receipt_warranty_date"/>
+                                    <field name="lot_name"/>
+                                    <field name="lot_qty"/>
+                                    <field name="label_qty"/>
+                                    <field name="warranty_date"/>
                                 </tree>
                             </field>
                         </page>
@@ -53,12 +56,12 @@
                 <form>
                     <group>
                         <group>
-                            <field name="receipt_product_id" readonly="1"/>
-                            <field name="receipt_product_qty" readonly="1"/>
+                            <field name="product_id" readonly="1"/>
+                            <field name="product_qty" readonly="1"/>
                         </group>
                         <group>
-                            <field name="receipt_product_uom" readonly="1"/>
-                            <field name="receipt_need_warranty" readonly="1"/>
+                            <field name="product_uom" readonly="1"/>
+                            <field name="need_warranty" readonly="1"/>
                         </group>
                     </group>
                     <group>
@@ -67,16 +70,17 @@
                     </group>
                     <group>
                         <group>
-                            <field name="receipt_line_id" invisible="1"/>
+                            <field name="receipt_id" invisible="1"/>
+                            <field name="line_id" invisible="1"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="标签明细">
-                            <field name="wizard_label_lines">
+                            <field name="label_lines">
                                 <tree editable="top">
-                                    <field name="product_lot_name"/>
-                                    <field name="product_label_qty"/>
-                                    <field name="receipt_warranty_date"/>
+                                    <field name="lot_name"/>
+                                    <field name="label_qty"/>
+                                    <field name="warranty_date"/>
                                 </tree>
                             </field>
                         </page>

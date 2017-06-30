@@ -104,7 +104,7 @@
                             </page>
                             <page string="收货作业">
                                 <field name="operation_lines" attrs="{'readonly': [('state','=','done')]}">
-                                    <tree editable="top" edit="false">
+                                    <tree editable="bottom" edit="false">
                                         <field name="rlabel_id" options="{'no_create':true}" required="1"
                                                 domain="[('receipt_id','=',parent.id)]"/>
                                         <field name="product_id" readonly="1"/>
@@ -248,7 +248,7 @@
                             </page>
                             <page string="收货作业">
                                 <field name="operation_list">
-                                    <tree editable="top" edit="false">
+                                    <tree editable="bottom" edit="false">
                                         <field name="rlabel_id" options="{'no_create':true}" required="1"
                                                 domain="[('receipt_id','=',parent.receipt_id)]"/>
                                         <field name="product_id" readonly="1"/>

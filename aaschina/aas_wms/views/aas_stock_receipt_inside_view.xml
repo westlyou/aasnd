@@ -34,7 +34,7 @@
                             <group>
                                 <field name="id" invisible="1"/>
                                 <field name="name" readonly="1"/>
-                                <field name="partner_id"/>
+                                <field name="partner_id" options="{'no_create':true}"/>
                             </group>
                         </group>
                         <group>
@@ -47,21 +47,29 @@
                                 <field name="done_time" readonly="1"/>
                             </group>
                         </group>
+                        <group>
+                            <group>
+                                <button name="action_label_list" string="收货" type="object" icon="fa-list"
+                                        attrs="{'invisible':[('state','!=','draft')]}" />
+                            </group>
+                        </group>
                         <notebook>
                             <page string="收货明细">
-                                <field name="receipt_lines" attrs="{'readonly': [('state','!=','draft')]}">
-                                    <tree editable="top">
-                                        <field name="product_id" options="{'no_create':true}" required="1"/>
-                                        <field name="product_uom" readonly="1"/>
-                                        <field name="product_qty" required="1"/>
-                                        <field name="receipt_qty" readonly="1"/>
-                                        <field name="doing_qty" readonly="1"/>
-                                        <field name="label_related" readonly="1"/>
-                                        <button name="action_label_list" string="标签清单" type="object" icon="fa-list"/>
+                                <field name="receipt_lines" readonly="1">
+                                    <tree editable="bottom">
+                                        <field name="product_id"/>
+                                        <field name="product_uom"/>
+                                        <field name="product_qty"/>
+                                        <field name="receipt_qty"/>
+                                        <field name="doing_qty"/>
+                                        <field name="label_related"/>
+                                        <field name="state"/>
+                                        <field name="origin_order"/>
                                     </tree>
                                     <form>
-                                        <grou>
+                                        <group>
                                             <group>
+                                                <field name="receipt_id"/>
                                                 <field name="product_id"/>
                                                 <field name="product_uom"/>
                                                 <field name="label_related"/>
@@ -70,8 +78,9 @@
                                                 <field name="product_qty"/>
                                                 <field name="receipt_qty"/>
                                                 <field name="doing_qty"/>
+                                                <field name="origin_order"/>
                                             </group>
-                                        </grou>
+                                        </group>
                                     </form>
                                 </field>
                             </page>
@@ -106,17 +115,17 @@
                                 </field>
                             </page>
                             <page string="收货作业">
-                                <field name="operation_lines" attrs="{'readonly': [('state','=','done')]}">
-                                    <tree editable="top" edit="false">
-                                        <field name="rlabel_id" options="{'no_create':true}" required="1"
-                                                domain="[('receipt_id','=',parent.id)]"/>
-                                        <field name="product_id" readonly="1"/>
-                                        <field name="product_uom" readonly="1"/>
-                                        <field name="product_lot" readonly="1"/>
-                                        <field name="product_qty" readonly="1"/>
-                                        <field name="push_user" readonly="1"/>
-                                        <field name="push_time" readonly="1"/>
-                                        <field name="push_onshelf" readonly="1"/>
+                                <field name="operation_lines" readonly="1">
+                                    <tree>
+                                        <field name="rlabel_id"/>
+                                        <field name="product_id"/>
+                                        <field name="product_uom"/>
+                                        <field name="product_lot"/>
+                                        <field name="product_qty"/>
+                                        <field name="location_id"/>
+                                        <field name="push_user"/>
+                                        <field name="push_time"/>
+                                        <field name="push_onshelf"/>
                                     </tree>
                                     <form>
                                         <group>
@@ -126,10 +135,10 @@
                                             <field name="product_lot"/>
                                         </group>
                                         <group>
+                                            <field name="location_id"/>
                                             <field name="product_qty"/>
                                             <field name="push_user"/>
                                             <field name="push_time"/>
-                                            <field name="push_onshelf"/>
                                         </group>
                                     </form>
                                 </field>
@@ -201,12 +210,13 @@
                     <header>
                         <button name="action_confirm" type="object" string="收货确认" class="oe_highlight" attrs="{'invisible':[('state','!=','draft')]}"/>
                         <button name="action_refresh_push_location" type="object" string="推荐库位" class="oe_highlight"/>
+                        <button name="action_push_all" type="object" string="批量上架" class="oe_highlight"
+                                attrs="{'invisible':[('need_push','=',False)]}"/>
+                        <button name="action_push_done" type="object" string="确认上架" class="oe_highlight"
+                                attrs="{'invisible':[('doing_qty','=',0.0)]}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,tocheck,checked,done,cancle"/>
                     </header>
                     <sheet>
-                        <div class="oe_button_box" name="button_box">
-                            <button name="action_label_list" type="object" class="oe_stat_button" icon="fa-list" string="收货标签"/>
-                        </div>
                         <group>
                             <group>
                                 <field name="product_id" readonly="1"/>
@@ -219,11 +229,12 @@
                         </group>
                         <group>
                             <group>
-
+                                <field name="id" invisible="1"/>
                                 <field name="receipt_qty" readonly="1"/>
                                 <field name="doing_qty" readonly="1"/>
                                 <field name="receipt_id" invisible="1"/>
-                                <field name="push_location" readonly="1"/>
+                                <field name="need_push" invisible="1"/>
+                                <field name="push_location" options="{'no_create':true}"/>
                             </group>
                         </group>
                         <notebook>
@@ -257,15 +268,18 @@
                                     </form>
                                 </field>
                             </page>
+                            <!--attrs="{'readonly':[('need_push','=',False)]}" -->
                             <page string="收货作业">
-                                <field name="operation_list" attrs="{'readonly': [('state','=','done')]}">
-                                    <tree editable="top" edit="false">
+                                <field name="operation_list"
+                                        context="{'default_location_id': push_location}">
+                                    <tree editable="bottom" edit="false">
                                         <field name="rlabel_id" options="{'no_create':true}" required="1"
-                                                domain="[('receipt_id','=',parent.receipt_id)]"/>
+                                                domain="[('line_id','=',parent.id)]"/>
                                         <field name="product_id" readonly="1"/>
                                         <field name="product_uom" readonly="1"/>
                                         <field name="product_lot" readonly="1"/>
                                         <field name="product_qty" readonly="1"/>
+                                        <field name="location_id" required="1" options="{'no_create':true}"/>
                                         <field name="push_user" readonly="1"/>
                                         <field name="push_time" readonly="1"/>
                                         <field name="push_onshelf" readonly="1"/>
@@ -278,10 +292,10 @@
                                             <field name="product_lot"/>
                                         </group>
                                         <group>
+                                            <field name="location_id"/>
                                             <field name="product_qty"/>
                                             <field name="push_user"/>
                                             <field name="push_time"/>
-                                            <field name="push_onshelf"/>
                                         </group>
                                     </form>
                                 </field>
