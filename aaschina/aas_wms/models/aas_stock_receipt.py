@@ -40,6 +40,20 @@ class AASStockReceipt(models.Model):
         vals['name'] = self.env['ir.sequence'].next_by_code('aas.stock.receipt')
         return super(AASStockReceipt, self).create(vals)
 
+    @api.multi
+    def unlink(self):
+        labels = self.env['aas.product.label']
+        for record in self:
+            if record.state != 'draft':
+                raise UserError(u'收货单%s已经在执行，不可以删除！'% record.name)
+            if record.label_lines and len(record.label_lines) > 0:
+                for rlabel in record.label_lines:
+                    labels |= rlabel.label_id
+        result = super(AASStockReceipt, self).unlink()
+        if labels and len(labels) > 0:
+            labels.unlink()
+        return result
+
     @api.one
     def action_refresh_push_location(self):
         lines = []
@@ -75,6 +89,37 @@ class AASStockReceipt(models.Model):
             'res_id': wizard.id,
             'context': self.env.context
         }
+
+
+    @api.one
+    def action_cancel(self):
+        if self.state == 'done':
+            raise UserError(u'收货单%s已完成，请不要取消！'% self.name)
+        if self.state == 'cancel':
+            return True
+        outlabels, internallabels = self.env['aas.product.label'], self.env['aas.product.label']
+        if self.label_lines and len(self.label_lines) > 0:
+            for rlabel in self.label_lines:
+                if rlabel.label_location.usage != 'internal':
+                    outlabels |= rlabel.label_id
+                else:
+                    internallabels |= rlabel.label_id
+            if outlabels and len(outlabels) > 0:
+                outlabels.write({'state': 'over', 'locked': False, 'locked_order': False})
+            if internallabels and len(internallabels) > 0:
+                internallabels.write({'locked': False, 'locked_order': False})
+        receiptvals = {'state': 'cancel'}
+        if self.move_lines and len(self.move_lines) > 0:
+            mlines = [(0, 0, {
+                'product_id': mline.product_id.id, 'product_uom': mline.product_uom.id, 'product_lot': mline.product_lot.id,
+                'origin_order': mline.origin_order, 'receipt_type': mline.receipt_type, 'partner_id': mline.partner_id and mline.partner_id.id,
+                'receipt_user': self.env.user.id, 'product_qty': mline.product_qty, 'receipt_note': u'取消收货',
+                'location_src_id': mline.location_dest_id.id, 'location_dest_id': mline.location_src_id.id
+            }) for mline in self.move_lines]
+            receiptvals['move_lines'] = mlines
+        self.write(receiptvals)
+
+
 
 
     @api.one
@@ -203,6 +248,7 @@ class AASStockReceiptLine(models.Model):
             receiptvals, movedict, labels = {}, {}, self.env['aas.product.label']
             for roperation in operationlist:
                 label = roperation.rlabel_id.label_id
+                labels |= label
                 operationlines.append((1, roperation.id, {'push_onshelf': True, 'push_user': push_user, 'push_time': push_time}))
                 mkey = 'move_'+str(label.product_lot.id)+'_'+str(label.location_id.id)+'_'+str(roperation.location_id.id)
                 if mkey in movedict:
@@ -218,11 +264,12 @@ class AASStockReceiptLine(models.Model):
             receiptvals['move_lines'] = [(0, 0, mval) for mkey, mval in movedict.items()]
             receiptvals['receipt_lines'] = [(1, self.id, {'receipt_qty': self.receipt_qty+self.doing_qty, 'doing_qty': 0.0})]
             self.receipt_id.write(receiptvals)
+            labels.write({'locked': False, 'locked_order': False})
         labelist = self.env['aas.stock.receipt.label'].search([('line_id', '=', self.id), ('checked', '=', False)])
         if not labelist or len(labelist) <= 0:
             self.write({'state': 'done'})
         if all([rline.state=='done' for rline in self.receipt_id.receipt_lines]):
-            self.receipt_id.write({'state': 'done'})
+            self.receipt_id.write({'state': 'done', 'done_time': fields.Datetime.now()})
 
 
 
@@ -337,6 +384,7 @@ class AASStockReceiptMove(models.Model):
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'产品单位')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     origin_order = fields.Char(string=u'来源单据', copy=False)
+    receipt_note = fields.Text(string=u'备注')
     receipt_type = fields.Selection(selection=RECEIPT_TYPE, string=u'收货类型')
     receipt_date = fields.Date(string=u'收货日期', default=fields.Date.today)
     receipt_time = fields.Datetime(string=u'收货时间', default=fields.Datetime.now)

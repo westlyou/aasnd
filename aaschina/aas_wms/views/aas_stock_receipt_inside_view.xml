@@ -27,7 +27,9 @@
                     <header>
                         <button name="action_confirm" type="object" string="收货确认" class="oe_highlight" attrs="{'invisible':[('state','!=','draft')]}"/>
                         <button name="action_refresh_push_location" type="object" string="推荐库位" class="oe_highlight"/>
-                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,receipt,done,cancle"/>
+                        <button name="action_cancel" type="object" string="取消收货" class="oe_highlight"
+                                attrs="{'invisible':[('state','in',['draft','done','cancel'])]}"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,receipt,done,cancel"/>
                     </header>
                     <sheet>
                         <group>
@@ -268,9 +270,8 @@
                                     </form>
                                 </field>
                             </page>
-                            <!--attrs="{'readonly':[('need_push','=',False)]}" -->
                             <page string="收货作业">
-                                <field name="operation_list"
+                                <field name="operation_list" attrs="{'readonly':[('need_push','=',False)]}"
                                         context="{'default_location_id': push_location}">
                                     <tree editable="bottom" edit="false">
                                         <field name="rlabel_id" options="{'no_create':true}" required="1"

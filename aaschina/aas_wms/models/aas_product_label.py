@@ -15,6 +15,7 @@ LABEL_STATE = [('draft', u'草稿'), ('normal', u'正常'), ('frozen', u'冻结'
 class AASProductLabel(models.Model):
     _name = 'aas.product.label'
     _description = u'产品标签'
+    _order = 'id desc'
 
     name = fields.Char(string=u'名称', copy=False)
     barcode = fields.Char(string='Barcode', copy=False)
