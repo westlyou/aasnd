@@ -51,7 +51,7 @@
                         </group>
                         <group>
                             <group>
-                                <button name="action_label_list" string="收货" type="object" icon="fa-list"
+                                <button name="action_label_list" string="收货" type="object" icon="fa-list" class="oe_highlight"
                                         attrs="{'invisible':[('state','!=','draft')]}" />
                             </group>
                         </group>
@@ -210,13 +210,12 @@
             <field name="arch" type="xml">
                 <form create="false" delete="false">
                     <header>
-                        <button name="action_confirm" type="object" string="收货确认" class="oe_highlight" attrs="{'invisible':[('state','!=','draft')]}"/>
                         <button name="action_refresh_push_location" type="object" string="推荐库位" class="oe_highlight"/>
                         <button name="action_push_all" type="object" string="批量上架" class="oe_highlight"
                                 attrs="{'invisible':[('need_push','=',False)]}"/>
                         <button name="action_push_done" type="object" string="确认上架" class="oe_highlight"
                                 attrs="{'invisible':[('doing_qty','=',0.0)]}"/>
-                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,tocheck,checked,done,cancle"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,tocheck,checked,done,cancel"/>
                     </header>
                     <sheet>
                         <group>
@@ -271,8 +270,7 @@
                                 </field>
                             </page>
                             <page string="收货作业">
-                                <field name="operation_list" attrs="{'readonly':[('need_push','=',False)]}"
-                                        context="{'default_location_id': push_location}">
+                                <field name="operation_list" context="{'default_location_id': push_location}">
                                     <tree editable="bottom" edit="false">
                                         <field name="rlabel_id" options="{'no_create':true}" required="1"
                                                 domain="[('line_id','=',parent.id)]"/>

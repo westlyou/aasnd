@@ -64,3 +64,9 @@ class AASProductProduct(models.Model):
             return []
         return [(record.id, record.default_code) for record in self]
 
+
+class Location(models.Model):
+    _inherit = 'stock.location'
+
+    usage = fields.Selection(selection_add=[('sundry', u'杂项')])
+

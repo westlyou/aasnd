@@ -11,6 +11,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
+# 收货同时生成标签和明细，多为仓库内部创建收货单用，生产退料也可用到
 class AASStockReceiptProductWizard(models.TransientModel):
     _name = "aas.stock.receipt.product.wizard"
     _description = u"收货明细产品向导"
@@ -43,9 +44,6 @@ class AASStockReceiptProductWizard(models.TransientModel):
             product_id = self.env['product.product'].browse(vals.get('product_id'))
             vals.update({'product_uom': product_id.uom_id.id, 'need_warranty': product_id.need_warranty})
         return super(AASStockReceiptProductWizard, self).write(vals)
-
-
-
 
 
     @api.one
@@ -126,6 +124,8 @@ class AASStockReceiptProductWizard(models.TransientModel):
             location_id = self.env.ref('stock.stock_location_suppliers').id
         elif receipt.receipt_type=='sundry':
             location_id = self.env.ref('aas_wms.stock_location_sundry').id
+        elif receipt.receipt_type=='manreturn':
+            location_id = self.env.ref('stock.location_production').id
         else:
             location_id = self.env['stock.warehouse'].get_default_warehouse().lot_stock_id.id
         receipt_labels = []
@@ -141,13 +141,18 @@ class AASStockReceiptProductWizard(models.TransientModel):
                 'origin_order': label.origin_order, 'product_lot': lot_id, 'label_location': location_id, 'product_qty': label.product_qty
             }))
         if not self.line_id:
-            self.env['aas.stock.receipt.line'].create({
-                'receipt_id': receipt.id, 'product_id': self.product_id.id, 'product_qty': self.product_qty,
-                'origin_order': self.origin_order, 'label_related': True, 'label_list': receipt_labels,
-                'push_location': False if not self.product_id.push_location else self.product_id.push_location.id
-            })
+            linedomain = [('receipt_id', '=', self.receipt_id.id), ('product_id', '=', self.product_id.id), ('origin_order', '=', '')]
+            templine = self.env['aas.stock.receipt.line'].search(linedomain, limit=1)
+            if not templine:
+                self.env['aas.stock.receipt.line'].create({
+                    'receipt_id': receipt.id, 'product_id': self.product_id.id, 'product_qty': self.product_qty,
+                    'origin_order': self.origin_order, 'label_related': True, 'label_list': receipt_labels,
+                    'push_location': False if not self.product_id.push_location else self.product_id.push_location.id
+                })
+            else:
+                templine.write({'label_related': True, 'product_qty': templine.product_qty+self.product_qty, 'label_list': receipt_labels})
         else:
-            self.line_id.write({{'label_related': True, 'label_list': receipt_labels}})
+            self.line_id.write({'label_related': True, 'label_list': receipt_labels})
 
 
     @api.multi
@@ -214,10 +219,7 @@ class AASStockReceiptProductLotWizard(models.TransientModel):
 
 
 
-
-
-
-
+# 标签收货想到，多为仓库之外的部门创建收货单用
 class AASStockReceiptProductLabelWizard(models.TransientModel):
     _name = "aas.stock.receipt.product.label.wizard"
     _description = u"收货明细产品标签向导"
@@ -226,3 +228,155 @@ class AASStockReceiptProductLabelWizard(models.TransientModel):
     lot_name = fields.Char(string=u"批次名称", required=True)
     label_qty = fields.Float(string=u'标签数量', digits=dp.get_precision('Product Unit of Measure'), required=True)
     warranty_date = fields.Date(string=u'质保日期')
+
+
+
+class AASStockReceiptLabelWizard(models.TransientModel):
+    _name = "aas.stock.receipt.label.wizard"
+    _description = u"标签收货向导"
+
+    receipt_id = fields.Many2one(comodel_name='aas.stock.receipt', string=u'收货单', ondelete='cascade')
+    order_user = fields.Many2one(comodel_name='res.users', string=u'下单人员', default=lambda self: self.env.user)
+    order_time = fields.Datetime(string=u'下单时间', default=fields.Datetime.now)
+    add_lines = fields.One2many(comodel_name='aas.stock.receipt.label.add.wizard', inverse_name='wizard_id', string=u'添加明细')
+    del_lines = fields.One2many(comodel_name='aas.stock.receipt.label.del.wizard', inverse_name='wizard_id', string=u'清理明细')
+
+    @api.one
+    def action_check_labels(self):
+        if (not self.add_lines or len(self.add_lines) <= 0) and (not self.del_lines or len(self.del_lines) <= 0):
+            raise UserError(u'请至少添加一个新收获标签或一个待清理收货标签！')
+
+    @api.one
+    def action_add_labels(self):
+        if not self.add_lines or len(self.add_lines) <= 0:
+            return
+        receipt, rlinedict = self.receipt_id, {}
+        for aline in self.add_lines:
+            rlabelval = {'receipt_id': receipt.id, 'label_id': aline.label_id.id, 'product_id': aline.product_id.id}
+            rlabelval.update({'product_uom': aline.product_uom.id, 'product_qty': aline.product_qty})
+            rlabelval.update({'product_lot': aline.product_lot.id, 'label_location': aline.location_id.id})
+            lkey = 'P'+str(aline.product_id.id)
+            if lkey not in rlinedict:
+                linedomain = [('receipt_id', '=', receipt.id), ('product_id', '=', aline.product_id.id), ('origin_order', '=', '')]
+                rline = self.env['aas.stock.receipt.line'].search(linedomain, limit=1)
+                if not rline:
+                    rline = self.env['aas.stock.receipt.line'].create({
+                        'receipt_id': receipt.id, 'product_id': aline.product_id.id, 'origin_order': ''
+                    })
+                rlinedict[lkey] = {
+                    'line': {'record': rline, 'qty': aline.product_qty},
+                    'labels': [(0, 0, rlabelval)]
+                }
+            else:
+                rlinedict[lkey]['line']['qty'] += aline.product_qty
+                rlinedict[lkey]['labels'].append((0, 0, rlabelval))
+        for rkey, rval in rlinedict.items():
+            rline, product_qty = rval['line']['record'], rval['line']['qty']
+            linevals = {'product_qty': rline.product_qty+product_qty, 'label_related': True, 'label_list': rval['labels']}
+            rline.write(linevals)
+
+
+    @api.one
+    def action_del_labels(self):
+        if not self.del_lines or len(self.del_lines) <= 0:
+            return
+        dellabels, linedict = [], {}
+        for dline in self.del_lines:
+            rlabel, rline = dline.rlabel_id, dline.rlabel_id.line_id
+            dellabels.append((2, rlabel.id, False))
+            lkey = 'L'+str(rline.id)
+            if lkey in linedict:
+                linedict[lkey]['qty'] -= rlabel.product_qty
+            else:
+                linedict[lkey] = {'lineid': rline.id, 'qty': rline.product_qty-rlabel.product_qty}
+        tlines = []
+        for lkey, lval in linedict.items():
+            if float_compare(lval['qty'], 0.0, precision_rounding=0.000001) <= 0.0:
+                tlines.append((2, lval['lineid'], False))
+            else:
+                tlines.append((1, lval['lineid'], {'product_qty': lval['product_qty']}))
+        self.receipt_id.write({
+            'receipt_lines': tlines, 'label_lines': dellabels
+        })
+
+
+
+
+
+
+    @api.one
+    def action_done(self):
+        self.action_check_labels()
+        self.action_add_labels()
+        self.action_del_labels()
+
+
+
+
+
+class AASStockReceiptLabelAddWizard(models.TransientModel):
+    _name = "aas.stock.receipt.label.add.wizard"
+    _description = u"收货标签添加向导"
+
+    wizard_id = fields.Many2one(comodel_name='aas.stock.receipt.label.wizard', string=u'标签收货', ondelete='cascade')
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品')
+    product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'))
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位')
+
+    _sql_constraints = [
+        ('uniq_label', 'unique (wizard_id, label_id)', u'请不要重复添加标签！')
+    ]
+
+    @api.onchange('label_id')
+    def action_change_label(self):
+        self.product_id, self.product_uom = False, False
+        self.product_lot, self.product_qty, self.location_id = False, 0.0, False
+        if self.label_id:
+            self.product_id, self.product_uom = self.label_id.product_id.id, self.label_id.product_uom.id
+            self.product_lot, self.location_id, self.product_qty = self.label_id.product_lot.id, self.label_id.location_id.id, self.label_id.product_qty
+
+    @api.model
+    def action_before_create(self, vals):
+        label = self.env['aas.product.label'].browse(vals.get('label_id'))
+        vals.update({
+            'product_id': label.product_id.id, 'product_uom': label.product_uom.id, 'product_lot': label.product_lot.id,
+            'product_qty': label.product_qty, 'location_id': label.location_id.id
+        })
+
+    @api.model
+    def create(self, vals):
+        self.action_before_create(vals)
+        super(AASStockReceiptLabelAddWizard, self).create(vals)
+
+
+class AASStockReceiptLabelDelWizard(models.TransientModel):
+    _name = "aas.stock.receipt.label.del.wizard"
+    _description = u"收货标签删除向导"
+
+    wizard_id = fields.Many2one(comodel_name='aas.stock.receipt.label.wizard', string=u'标签收货', ondelete='cascade')
+    rlabel_id = fields.Many2one(comodel_name='aas.stock.receipt.label', string=u'标签')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品')
+    product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'))
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位')
+
+    _sql_constraints = [
+        ('uniq_rlabel', 'unique (wizard_id, rlabel_id)', u'请不要重复添加标签！')
+    ]
+
+    @api.model
+    def action_before_create(self, vals):
+        rlabel = self.env['aas.stock.receipt.label'].browse(vals.get('rlabel_id'))
+        vals.update({
+            'product_id': rlabel.product_id.id, 'product_uom': rlabel.product_uom.id, 'product_lot': rlabel.product_lot.id,
+            'product_qty': rlabel.product_qty, 'location_id': rlabel.label_location.id
+        })
+
+    @api.model
+    def create(self, vals):
+        self.action_before_create(vals)
+        super(AASStockReceiptLabelDelWizard, self).create(vals)

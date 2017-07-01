@@ -93,5 +93,57 @@
             </field>
         </record>
 
+        <record id="view_form_aas_stock_receipt_label_wizard" model="ir.ui.view">
+            <field name="name">aas.stock.receipt.label.wizard</field>
+            <field name="model">aas.stock.receipt.label.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="receipt_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group> <field name="order_user" readonly="1"/> </group>
+                        <group> <field name="order_time" readonly="1"/> </group>
+                    </group>
+                    <notebook>
+                        <page string="添加标签">
+                            <field name="add_lines">
+                                <tree editable="bottom">
+                                    <field name="label_id" options="{'no_create':true}"
+                                            domain="[('state','=','normal'),('stocked','=',True),('locked','=',False)]"/>
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="product_uom" readonly="1"/>
+                                    <field name="product_lot" readonly="1"/>
+                                    <field name="product_qty" readonly="1"/>
+                                    <field name="location_id" readonly="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="清理标签">
+                            <field name="del_lines">
+                                <tree editable="bottom">
+                                    <field name="rlabel_id" options="{'no_create':true}"
+                                            domain="[('receipt_id','=',parent.receipt_id)]"/>
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="product_uom" readonly="1"/>
+                                    <field name="product_lot" readonly="1"/>
+                                    <field name="product_qty" readonly="1"/>
+                                    <field name="location_id" readonly="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+
+
     </data>
 </odoo>

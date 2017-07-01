@@ -69,6 +69,11 @@ class AASStockReceipt(models.Model):
 
     @api.multi
     def action_label_list(self):
+        """
+        收入产品并拆分标签，生成收货明细和标签记录
+        主要在采购收货、杂项入库、以及生成退料时使用
+        :return:
+        """
         self.ensure_one()
         wizardvals = {'receipt_id': self.id}
         rline = self.env['aas.stock.receipt.line'].search([('receipt_id', '=', self.id), ('label_related', '=', False)], limit=1)
@@ -83,6 +88,29 @@ class AASStockReceipt(models.Model):
             'view_type': 'form',
             'view_mode': 'form',
             'res_model': 'aas.stock.receipt.product.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
+    @api.multi
+    def action_receipt_labels(self):
+        """
+        直接通过标签生成收货单记录
+        主要在成品入库、生产退料使用
+        :return:
+        """
+        self.ensure_one()
+        wizard = self.env['aas.stock.receipt.label.wizard'].create({'receipt_id': self.id})
+        view_form = self.env.ref('aas_wms.view_form_aas_stock_receipt_label_wizard')
+        return {
+            'name': u"标签入库",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.stock.receipt.label.wizard',
             'views': [(view_form.id, 'form')],
             'view_id': view_form.id,
             'target': 'new',
@@ -109,6 +137,8 @@ class AASStockReceipt(models.Model):
             if internallabels and len(internallabels) > 0:
                 internallabels.write({'locked': False, 'locked_order': False})
         receiptvals = {'state': 'cancel'}
+        if self.receipt_lines and len(self.receipt_lines) > 0:
+            receiptvals['receipt_lines'] = [(1, rline.id, {'state': 'cancel'}) for rline in self.receipt_lines]
         if self.move_lines and len(self.move_lines) > 0:
             mlines = [(0, 0, {
                 'product_id': mline.product_id.id, 'product_uom': mline.product_uom.id, 'product_lot': mline.product_lot.id,
@@ -237,18 +267,22 @@ class AASStockReceiptLine(models.Model):
             raise UserError(u'请先设置好推荐库位，再批量上架！')
         labellist = self.env['aas.stock.receipt.label'].search([('line_id', '=', self.id), ('checked', '=', False)])
         if labellist and len(labellist) > 0:
-            operationlist = [(0, 0, {'rlabel_id': rlabel.id}) for rlabel in labellist]
+            operationlist = [(0, 0, {'rlabel_id': rlabel.id, 'location_id': self.push_location.id}) for rlabel in labellist]
             self.receipt_id.write({'operation_lines': operationlist})
 
     @api.one
     def action_push_done(self):
         operationlist = self.env['aas.stock.receipt.operation'].search([('line_id', '=', self.id), ('push_onshelf', '=', False)])
         if operationlist and len(operationlist) > 0:
-            operationlines, push_user, push_time = [], self.env.user.id, fields.Datetime.now()
-            receiptvals, movedict, labels = {}, {}, self.env['aas.product.label']
+            productdict, receiptvals, movedict, operationlines = {}, {}, {}, []
+            push_user, push_time, push_date = self.env.user.id, fields.Datetime.now(), fields.Date.today()
             for roperation in operationlist:
+                pkey = 'P'+str(roperation.product_id.id)
+                if pkey in productdict:
+                    productdict[pkey]['location_id'] = roperation.location_id.id
+                else:
+                    productdict[pkey] = {'product': roperation.product_id, 'location_id': roperation.location_id.id}
                 label = roperation.rlabel_id.label_id
-                labels |= label
                 operationlines.append((1, roperation.id, {'push_onshelf': True, 'push_user': push_user, 'push_time': push_time}))
                 mkey = 'move_'+str(label.product_lot.id)+'_'+str(label.location_id.id)+'_'+str(roperation.location_id.id)
                 if mkey in movedict:
@@ -259,12 +293,18 @@ class AASStockReceiptLine(models.Model):
                         'origin_order': self.origin_order, 'receipt_type': self.receipt_type, 'partner_id': self.receipt_id.partner_id and self.receipt_id.partner_id.id,
                         'receipt_user': self.env.user.id, 'location_src_id': label.location_id.id, 'location_dest_id': roperation.location_id.id, 'product_qty': label.product_qty, 'company_id': self.company_id.id
                     }
-                label.write({'locked': False, 'locked_order': '', 'location_id': roperation.location_id.id})
+                labelvals = {'locked': False, 'locked_order': False}
+                labelvals.update({'onshelf_time': push_time, 'onshelf_date': push_date, 'location_id': roperation.location_id.id})
+                label.write(labelvals)
+            # 记录原料最近一次存放位置，为下次上架提供推荐库位
+            for pkey, pval in productdict.items():
+                product_id, location_id = pval['product'], pval['location_id']
+                product_id.write({'push_location': location_id})
+            # 更新收货单信息
             receiptvals['operation_lines'] = operationlines
             receiptvals['move_lines'] = [(0, 0, mval) for mkey, mval in movedict.items()]
             receiptvals['receipt_lines'] = [(1, self.id, {'receipt_qty': self.receipt_qty+self.doing_qty, 'doing_qty': 0.0})]
             self.receipt_id.write(receiptvals)
-            labels.write({'locked': False, 'locked_order': False})
         labelist = self.env['aas.stock.receipt.label'].search([('line_id', '=', self.id), ('checked', '=', False)])
         if not labelist or len(labelist) <= 0:
             self.write({'state': 'done'})
@@ -284,7 +324,7 @@ class AASStockReceiptLabel(models.Model):
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'收货标签', ondelete='set null')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品名称', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'产品单位')
-    origin_order = fields.Char(string=u'来源单据', copy=False)
+    origin_order = fields.Char(string=u'来源单据', copy=False, default='')
     checked = fields.Boolean(string=u'是否作业', default=False, copy=False)
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     label_location = fields.Many2one(comodel_name='stock.location', string=u'来源库位', ondelete='restrict')
@@ -345,31 +385,44 @@ class AASStockReceiptOperation(models.Model):
 
     @api.one
     def action_after_create(self):
-        rline, rlabel = self.rlabel_id.line_id, self.rlabel_id
-        linevals = {'label_list': [(1, rlabel.id, {'checked': True})]}
-        linevals['doing_qty'] = rline.doing_qty + rlabel.product_qty
-        rline.write(linevals)
+        rlabel, rline, receipt = self.rlabel_id, self.line_id, self.receipt_id
+        receiptvals = {'label_lines': [(1, rlabel.id, {'checked': True})]}
+        if receipt.state!='receipt':
+            receiptvals['state'] = 'receipt'
+        lineval = {'doing_qty': rline.doing_qty + rlabel.product_qty}
+        if rline.state!='receipt':
+            lineval['state'] = 'receipt'
+        receiptvals['receipt_lines'] = [(1, rline.id, lineval)]
+        receipt.write(receiptvals)
 
 
     @api.multi
     def unlink(self):
-        linedict = {}
+        rlabels = self.env['aas.stock.receipt.label']
         for record in self:
             if record.push_onshelf:
                 raise UserError(u'标签%s已上架，不可以删除！'% record.rlabel_id.label_id.name)
-            lkey = 'line_'+str(record.line_id.id)
-            if lkey in linedict:
-                linedict[lkey][1].appned(record.rlabel_id)
-            else:
-                linedict[lkey] = [record.line_id, [record.rlabel_id]]
+            rlabels |= record.rlabel_id
         result = super(AASStockReceiptOperation, self).unlink()
-        for lkey, lval in linedict:
-            rline, linevals, product_qty = lval[0], {'label_list': []}, 0.0
-            for rlabel in lval[1]:
-                linevals['label_list'].append((1, rlabel.id, {'checked': False}))
-                product_qty += rlabel.product_qty
-            linevals['doing_qty'] = rline.doing_qty - product_qty
-            rline.write(linevals)
+        rlabels.write({'checked': False})
+        linesdict = {}
+        for rlabel in rlabels:
+            receipt, rline = rlabel.receipt_id, rlabel.line_id
+            if not receipt.operation_lines or len(receipt.operation_lines) <= 0:
+                rstate = 'confirm' if receipt.receipt_type!='purchase' else 'checked'
+                receipt.write({'state': rstate})
+            lkey = 'line_'+str(rline.id)
+            if lkey in linesdict:
+                linesdict[lkey]['doing_qty'] -= rlabel.product_qty
+            else:
+                linesdict[lkey] = {'line': rline, 'doing_qty': rline.doing_qty - rlabel.product_qty}
+        for tkey, tval in linesdict.items():
+            rline, doing_qty = tval['line'], tval['doing_qty']
+            linvals = {'doing_qty': doing_qty}
+            if float_compare(doing_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+                linvals['doing_qty'] = 0.0
+                linvals['state'] = 'confirm' if rline.receipt_type!='purchase' else 'checked'
+            rline.write(linvals)
         return result
 
 
