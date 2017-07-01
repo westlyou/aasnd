@@ -10,7 +10,7 @@ from odoo.tools.sql import drop_view_if_exists
 import logging
 _logger = logging.getLogger(__name__)
 
-RECEIPT_TYPE = [('purchase', u'采购收货'), ('manufacture', u'生产入库'), ('manreturn', u'生产退料'), ('sundry', u'杂项入库')]
+RECEIPT_TYPE = [('purchase', u'采购收货'), ('manufacture', u'成品入库'), ('manreturn', u'生产退料'), ('sundry', u'杂项入库')]
 RECEIPT_STATE = [('draft', u'草稿'), ('confirm', u'确认'), ('tocheck', u'待检'), ('checked', u'已检'), ('receipt', u'收货'), ('done', u'完成'), ('cancel', u'取消')]
 
 
