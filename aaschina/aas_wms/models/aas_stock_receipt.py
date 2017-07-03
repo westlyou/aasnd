@@ -435,7 +435,7 @@ class AASStockReceiptMove(models.Model):
     receipt_id = fields.Many2one(comodel_name='aas.stock.receipt', string=u'收货单', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品名称', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'产品单位')
-    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'产品批次', ondelete='restrict')
     origin_order = fields.Char(string=u'来源单据', copy=False)
     receipt_note = fields.Text(string=u'备注')
     receipt_type = fields.Selection(selection=RECEIPT_TYPE, string=u'收货类型')

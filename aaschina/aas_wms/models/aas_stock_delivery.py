@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+"""
+@version: 1.0
+@author: luforn
+@license: LGPL V3
+@time: 2017-7-2 15:44
+"""
+
 from odoo import api, fields, models, _
 from odoo.addons import decimal_precision as dp
 from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
@@ -19,5 +26,219 @@ class AASStockDelivery(models.Model):
     _name = 'aas.stock.delivery'
     _description = u'发货单'
     _order = 'id desc'
+
+
+    name = fields.Char(string=u'名称')
+    order_user = fields.Many2one(comodel_name='res.users', string=u'下单人', ondelete='restrict', default=lambda self: self.env.user)
+    order_time = fields.Datetime(string=u'下单时间', default=fields.Datetime.now)
+    state = fields.Selection(selection=DELIVERY_STATE, string=u'状态', default='draft')
+    delivery_type = fields.Selection(selection=DELIVERY_TYPE, string=u'发货类型')
+    done_time = fields.Datetime(string=u'完成时间')
+    origin_order = fields.Char(string=u'来源单据', copy=False)
+    remark = fields.Text(string=u'备注')
+    partner_id = fields.Many2one(comodel_name='res.partner', string=u'业务伙伴', ondelete='restrict')
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='restrict')
+    warehouse_id = fields.Many2one(comodel_name='stock.warehouse', string=u'仓库', ondelete='restrict')
+    picking_confirm = fields.Boolean(string=u'拣货确认', default=False, copy=False, help=u'发货员确认货物已分拣')
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
+
+    delivery_lines = fields.One2many(comodel_name='aas.stock.delivery.line', inverse_name='delivery_id', string=u'发货明细')
+    picking_list = fields.One2many(comodel_name='aas.stock.picking.list', inverse_name='delivery_id', string=u'拣货清单')
+    operation_lines = fields.One2many(comodel_name='aas.stock.delivery.operation', inverse_name='delivery_id', string=u'拣货作业')
+    move_lines = fields.One2many(comodel_name='aas.stock.delivery.move', inverse_name='delivery_id', string=u'执行明细')
+
+
+
+    @api.one
+    def action_confirm(self):
+        if not self.delivery_lines or len(self.delivery_lines) <= 0:
+            raise UserError(u'您还没有添加明细，请新添加明细！')
+        dlines = [(1, dline.id, {'state': 'confirm'}) for dline in self.delivery_lines]
+        self.write({'state': 'confirm', 'delivery_lines': dlines})
+
+
+
+
+
+class AASStockDeliveryLine(models.Model):
+    _name = 'aas.stock.delivery.line'
+    _description = u'发货明细'
+    _order = 'id desc'
+
+    delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'收货单', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
+    product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
+    product_qty = fields.Float(string=u'应发数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    state = fields.Selection(selection=DELIVERY_STATE, string=u'状态', default='draft')
+    delivery_type = fields.Selection(selection=DELIVERY_TYPE, string=u'发货类型')
+    delivery_qty = fields.Float(string=u'已发数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    picking_qty = fields.Float(string=u'拣货数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
+
+
+    _sql_constraints = [
+        ('uniq_prodcut', 'unique (delivery_id, product_id)', u'请不要重复添加同一个产品！')
+    ]
+
+    @api.one
+    def action_clear_list(self):
+        """
+        清理当前产品的拣货清单
+        :return:
+        """
+        pick_list = self.env['aas.stock.picking.list'].search([('delivery_id', '=', self.delivery_id.id), ('product_id', '=', self.product_id.id)])
+        if pick_list and len(pick_list) > 0:
+            pick_list.unlink()
+
+
+    @api.multi
+    def action_building_picking_list(self, picking_qty, labels):
+        """
+        根据指定的分拣数量和标签生成分拣清单记录
+        :param picking_qty:
+        :param labels:
+        :return:
+        """
+        self.ensure_one()
+        tempkey, pickingdict, label_qty, label_ids = False, {}, 0.0, []
+        if not labels or len(labels) <= 0:
+            return []
+        for label in labels:
+            lkey = 'P_'+str(label.location_id.id)+'_'+str(label.product_lot.id)
+            if not tempkey:
+                tempkey = lkey
+            elif tempkey != lkey:
+                if float_compare(label_qty, picking_qty, precision_rounding=0.000001) >= 0.0:
+                    break
+                else:
+                    tempkey = lkey
+            if lkey in pickingdict:
+                pickingdict[lkey]['product_qty'] += label.product_qty
+            else:
+                pickingdict[lkey] = {
+                    'product_id': label.product_id.id, 'product_uom': label.product_uom.id,
+                    'product_lot': label.product_lot.id, 'product_qty': label.product_qty, 'location_id': label.location_id.id
+                }
+            label_qty += label.product_qty
+            label_ids.append(label.id)
+        self.delivery_id.write({'picking_list': [(0, 0, pval) for pkey, pval in pickingdict]})
+        picking_qty -= label_qty
+        return label_ids
+
+
+
+
+    @api.one
+    def action_picking_list(self, prioritized_lots=None):
+        """
+        生成分拣清单
+        :param prioritized_lots:
+        :return:
+        """
+        self.action_clear_list()
+        picking_qty, excludelabelids = self.product_qty - self.delivery_qty, []
+        if float_compare(picking_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+            return
+        stock_location = self.delivery_id.warehouse_id.view_location_id.id
+        labeldomain = [('product_id', '=', self.product_id.id), ('state', '=', 'normal'), ('qualified', '=', True), ('stocked', '=', True)]
+        labeldomain.extend([('parent_id', '=', False), ('locked', '=', False), ('company_id', '=', self.company_id.id), ('location_id', 'child_of', stock_location)])
+        labelorder, label_qty, pickingdict, tempkey = 'onshelf_date,product_lot', 0.0, {}, False
+        # 优先处理的标签，可能是生产退料的物料需要优先处理掉
+        prioritizedomain = labeldomain + [('prioritized', '=', True)]
+        prioritizedlabels = self.env['aas.product.label'].search(prioritizedomain, order=labelorder)
+        excludelabelids = self.action_building_picking_list(picking_qty, prioritizedlabels)
+        # 优先批次，添加优先处理的批次
+        if float_compare(picking_qty, 0.0, precision_rounding=0.000001) > 0 and prioritized_lots:
+            prioritizedlotsdomain, prioritizedlotslabels = [], []
+            prioritizedlots = self.env['stock.production.lot'].search([('product_id', '=', self.product_id.id), ('name', 'in', prioritized_lots.split(','))])
+            if prioritizedlots and len(prioritizedlots) > 0:
+                prioritizedlotsdomain = labeldomain + [('product_lot', 'in', prioritizedlots.ids)]
+                if excludelabelids and len(excludelabelids) > 0:
+                    prioritizedlotsdomain += [('id', 'not in', excludelabelids)]
+                prioritizedlotslabels = self.env['aas.product.label'].search(prioritizedlotsdomain, order=labelorder)
+            excludelabelids += self.action_building_picking_list(picking_qty, prioritizedlotslabels)
+        # 正常条件下，先进先出原则
+        if float_compare(picking_qty, 0.0, precision_rounding=0.000001) > 0:
+            commondomain = labeldomain
+            if excludelabelids and len(excludelabelids) > 0:
+                commondomain = labeldomain + [('id', 'not in', excludelabelids)]
+            commonlabels = self.env['aas.product.label'].search(commondomain, order=labelorder)
+            self.action_building_picking_list(picking_qty, commonlabels)
+
+
+
+
+
+
+
+class AASStockPickingList(models.Model):
+    _name = 'aas.stock.picking.list'
+    _description = u'拣货清单'
+
+    delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'收货单', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
+    product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位',  ondelete='restrict')
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
+
+
+
+
+class AASStockDeliveryOperation(models.Model):
+    _name = 'aas.stock.delivery.operation'
+    _description = u'拣货作业'
+    _order = 'id desc'
+
+    delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'收货单', ondelete='cascade')
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
+    product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    product_qty = fields.Float(string=u'应发数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    location_src_id = fields.Many2one(comodel_name='stock.location', string=u'来源库位',  ondelete='restrict')
+    location_dest_id = fields.Many2one(comodel_name='stock.location', string=u'目标库位',  ondelete='restrict')
+    pick_user = fields.Many2one(comodel_name='res.users', string=u'拣货人', ondelete='restrict', default=lambda self: self.env.user)
+    pick_time = fields.Datetime(string=u'拣货时间', default=fields.Datetime.now)
+    check_user = fields.Many2one(comodel_name='res.users', string=u'确认人', ondelete='restrict')
+    check_time = fields.Datetime(string=u'确认时间')
+    deliver_done = fields.Boolean(string=u'是否发货', default=False, copy=False)
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
+
+
+    _sql_constraints = [
+        ('uniq_label', 'unique (delivery_id, label_id)', u'请不要重复添加同一个标签！')
+    ]
+
+
+
+class AASStockDeliveryMove(models.Model):
+    _name = 'aas.stock.delivery.move'
+    _description = u'执行明细'
+    _order = "id desc"
+
+    delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'收货单', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品名称', ondelete='restrict')
+    product_uom = fields.Many2one(comodel_name='product.uom', string=u'产品单位')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'产品批次', ondelete='restrict')
+    origin_order = fields.Char(string=u'来源单据', copy=False)
+    delivery_note = fields.Text(string=u'备注')
+    delivery_type = fields.Selection(selection=DELIVERY_TYPE, string=u'发货类型')
+    delivery_date = fields.Date(string=u'收货日期', default=fields.Date.today)
+    delivery_time = fields.Datetime(string=u'收货时间', default=fields.Datetime.now)
+    partner_id = fields.Many2one(comodel_name='res.partner', string=u'业务伙伴', ondelete='restrict')
+    delivery_user = fields.Many2one(comodel_name='res.users', string=u'收货员工', ondelete='restrict')
+    location_src_id = fields.Many2one(comodel_name='stock.location', string=u'来源库位', ondelete='restrict')
+    location_dest_id = fields.Many2one(comodel_name='stock.location', string=u'目标库位', ondelete='restrict')
+    product_qty = fields.Float(string=u'收货数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
+
+
+
+
+
+
+
 
 
