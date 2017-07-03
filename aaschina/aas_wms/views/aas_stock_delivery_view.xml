@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <menuitem id="menu_aas_stock_delivery" name="发货单" parent="stock.menu_stock_root"
+                sequence="3" groups="stock.group_stock_user,stock.group_stock_manager"/>
+
+        <record id="view_search_aas_stock_delivery" model="ir.ui.view">
+            <field name="name">aas.stock.delivery.search</field>
+            <field name="model">aas.stock.delivery</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="state" string="状态" filter_domain="[('state','ilike',self)]"/>
+                    <field name="order_user" string="下单人员" filter_domain="[('order_user','ilike',self)]"/>
+                    <field name="partner_id" string="业务伙伴" filter_domain="[('partner_id','ilike',self)]"/>
+                    <field name="origin_order" string="来源单据" filter_domain="[('origin_order','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="状态" context="{'group_by':'state'}"/>
+                        <filter string="下单人员" context="{'group_by':'order_user'}"/>
+                        <filter string="业务伙伴" context="{'group_by':'partner_id'}"/>
+                        <filter string="来源单据" context="{'group_by':'origin_order'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_search_aas_stock_delivery_line" model="ir.ui.view">
+            <field name="name">aas.stock.delivery.line.search</field>
+            <field name="model">aas.stock.delivery.line</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="state" string="状态" filter_domain="[('state','ilike',self)]"/>
+                    <field name="delivery_id" string="发货单" filter_domain="[('delivery_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="状态" context="{'group_by':'state'}"/>
+                        <filter string="发货单" context="{'group_by':'delivery_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+
+
+        <record id="view_tree_aas_stock_delivery_move_report" model="ir.ui.view">
+            <field name="name">aas.stock.delivery.move.report.tree</field>
+            <field name="model">aas.stock.delivery.move.report</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="product_id" />
+                    <field name="product_uom" />
+                    <field name="product_lot" />
+                    <field name="product_qty" />
+                    <field name="delivery_type" />
+                    <field name="delivery_user" />
+                    <field name="delivery_date" />
+                    <field name="location_src_id" />
+                    <field name="location_dest_id" />
+                    <field name="origin_order" />
+                    <field name="partner_id" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_search_aas_stock_delivery_move_report" model="ir.ui.view">
+            <field name="name">aas.stock.delivery.move.report.search</field>
+            <field name="model">aas.stock.delivery.move.report</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="product_lot" string="批次" filter_domain="[('product_lot','ilike',self)]"/>
+                    <field name="delivery_type" string="发货类型" filter_domain="[('delivery_type','ilike',self)]"/>
+                    <field name="delivery_user" string="发货员工" filter_domain="[('delivery_user','ilike',self)]"/>
+                    <field name="delivery_date" string="发货日期" filter_domain="[('delivery_date','ilike',self)]"/>
+                    <field name="location_src_id" string="来源库位" filter_domain="[('location_src_id','ilike',self)]"/>
+                    <field name="location_dest_id" string="目标库位" filter_domain="[('location_dest_id','ilike',self)]"/>
+                    <field name="origin_order" string="来源单据" filter_domain="[('origin_order','ilike',self)]"/>
+                    <field name="partner_id" string="业务伙伴" filter_domain="[('partner_id','ilike',self)]"/>
+                    <separator/>
+                    <filter string="今天" domain="[('delivery_date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                    <filter string="本月" domain="[('delivery_date', '&amp;lt:=', context_today().strftime('%Y-%m-01')), ('delivery_date', '&amp;lt:', (context_today() + relativedelta(months=1)).strftime('%Y-%m-01'))]"/>
+                    <group expand="0" string="分组">
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="批次" context="{'group_by':'product_lot'}"/>
+                        <filter string="发货类型" context="{'group_by':'delivery_type'}"/>
+                        <filter string="发货员工" context="{'group_by':'delivery_user'}"/>
+                        <filter string="来源库位" context="{'group_by':'location_src_id'}"/>
+                        <filter string="目标库位" context="{'group_by':'location_dest_id'}"/>
+                        <filter string="来源单据" context="{'group_by':'origin_order'}"/>
+                        <filter string="业务伙伴" context="{'group_by':'partner_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+
+        <record id="action_aas_stock_delivery_move_report" model="ir.actions.act_window">
+            <field name="name">发货报表</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.stock.delivery.move.report</field>
+            <field name="limit">50</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_stock_delivery_move_report"/>
+            <field name="search_view_id" ref="view_search_aas_stock_delivery_move_report"/>
+        </record>
+
+        <menuitem id="menu_aas_stock_delivery_move_report"  name="发货报表" action="action_aas_stock_delivery_move_report"
+                          parent="stock.menu_aas_stock_inventory" sequence="3" groups="stock.group_stock_user,stock.group_stock_manager"/>
+
+
+    </data>
+</odoo>

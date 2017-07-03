@@ -10,8 +10,9 @@
 from odoo import api, fields, models, _
 from odoo.addons import decimal_precision as dp
 from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
-from odoo.tools.float_utils import float_compare
+from odoo.tools.float_utils import float_compare, float_is_zero
 from odoo.exceptions import UserError
+from odoo.tools.sql import drop_view_if_exists
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -51,10 +52,69 @@ class AASStockDelivery(models.Model):
 
     @api.one
     def action_confirm(self):
+        """
+        确认发货单，当发货单确认后仓库人员才可以开始拣货
+        :return:
+        """
         if not self.delivery_lines or len(self.delivery_lines) <= 0:
             raise UserError(u'您还没有添加明细，请新添加明细！')
         dlines = [(1, dline.id, {'state': 'confirm'}) for dline in self.delivery_lines]
         self.write({'state': 'confirm', 'delivery_lines': dlines})
+
+
+    @api.one
+    def action_picking_confirm(self):
+        """
+        拣货确认，仓库人员拣货结束后需要确认拣货，然后诸如生产领料员就可以检查并确认收货
+        :return:
+        """
+        operation_lines = self.env['aas.stock.delivery.operation'].search([('delivery_id', '=', self.id), ('deliver_done', '=', False)])
+        if not operation_lines or len(operation_lines) <= 0:
+            raise UserError(u'您还没有添加拣货作业，不可以确认拣货')
+        self.write({'picking_confirm': True})
+
+
+    @api.one
+    def action_deliver_done(self):
+        """
+        仓库已拣货，收货人员检查并确认收货；此时产品库存会扣减
+        :return:
+        """
+        operation_lines = self.env['aas.stock.delivery.operation'].search([('delivery_id', '=', self.id), ('deliver_done', '=', False)])
+        if not operation_lines or len(operation_lines) <= 0:
+            raise UserError(u'还没有添加拣货明细，不可以确认！')
+        if not self.picking_confirm:
+            raise UserError(u'仓库人员还没有确认拣货结束，不可以操作！')
+        movedict, oplines= {}, []
+        for doperation in operation_lines:
+            oplines.append((1, doperation.id, {'deliver_done': True}))
+            dkey = 'D_'+str(doperation.product_id.id)+'_'+str(doperation.product_lot.id)+'_'+str(doperation.location_id.id)
+            if dkey not in movedict:
+                movedict[dkey]['product_qty'] += doperation.product_qty
+            else:
+                movedict[dkey] = {
+                    'product_id': doperation.product_id.id, 'product_uom': doperation.product_uom.id,
+                    'product_lot': doperation.product_lot.id, 'origin_order': self.origin_order,
+                    'delivery_type': self.delivery_type, 'product_qty': doperation.product_qty,
+                    'location_src_id': doperation.location_id.id, 'location_dest_id': self.location_id.id,
+                    'partner_id': self.partner_id and self.partner_id.id
+                }
+        deliveryvals = {'picking_confirm': False, 'operation_lines': oplines, 'move_lines': [(0, 0, mval) for mkey, mval in movedict]}
+        dlines = self.env['aas.stock.delivery.line'].search([('delivery_id', '=', self.id), ('picking_qty', '>', 0.0)])
+        if dlines and len(dlines) > 0:
+            deliverylines = []
+            for dline in dlines:
+                delivery_qty = dline.delivery_qty + dline.picking_qty
+                lineval = {'delivery_qty':delivery_qty, 'picking_qty': 0.0}
+                if float_compare(dline.product_qty, delivery_qty, precision_rounding=0.000001) <= 0.0:
+                    lineval['state'] = 'done'
+                deliverylines.append((1, dline.id, lineval))
+            deliveryvals['delivery_lines'] = deliverylines
+        self.write(deliveryvals)
+        if all([line.state=='done' for line in self.delivery_lines]):
+            self.write({'state': 'done'})
+
+
 
 
 
@@ -63,6 +123,7 @@ class AASStockDelivery(models.Model):
 class AASStockDeliveryLine(models.Model):
     _name = 'aas.stock.delivery.line'
     _description = u'发货明细'
+    _rec_name = 'product_id'
     _order = 'id desc'
 
     delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'收货单', ondelete='cascade')
@@ -197,8 +258,7 @@ class AASStockDeliveryOperation(models.Model):
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     product_qty = fields.Float(string=u'应发数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    location_src_id = fields.Many2one(comodel_name='stock.location', string=u'来源库位',  ondelete='restrict')
-    location_dest_id = fields.Many2one(comodel_name='stock.location', string=u'目标库位',  ondelete='restrict')
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'标签库位',  ondelete='restrict')
     pick_user = fields.Many2one(comodel_name='res.users', string=u'拣货人', ondelete='restrict', default=lambda self: self.env.user)
     pick_time = fields.Datetime(string=u'拣货时间', default=fields.Datetime.now)
     check_user = fields.Many2one(comodel_name='res.users', string=u'确认人', ondelete='restrict')
@@ -210,6 +270,70 @@ class AASStockDeliveryOperation(models.Model):
     _sql_constraints = [
         ('uniq_label', 'unique (delivery_id, label_id)', u'请不要重复添加同一个标签！')
     ]
+
+    @api.onchange('label_id')
+    def action_change_label(self):
+        if self.label_id:
+            self.product_id, self.product_uom = self.label_id.product_id.id, self.label_id.product_uom.id
+            self.product_lot, self.product_qty = self.label_id.product_lot.id, self.label_id.product_qty
+            self.location_id = self.label_id.location_id.id
+        else:
+            self.product_id, self.product_uom, self.product_lot, self.product_qty, self.location_id= False, False, False, 0.0, False
+
+
+    @api.model
+    def action_before_create(self, vals):
+        label = self.env['aas.product.label'].browse(vals.get('label_id'))
+        vals.update({
+            'product_id': label.product_id.id, 'product_uom': label.product_uom.id,
+            'product_lot': label.product_lot.id, 'location_id': label.location_id.id,
+            'product_qty': label.product_qty
+        })
+
+
+    @api.model
+    def create(self, vals):
+        self.action_before_create(vals)
+        return super(AASStockDeliveryOperation, self).create(vals)
+
+
+    @api.model
+    def action_before_write(self, vals):
+        if vals.get('label_id'):
+            label = self.env['aas.product.label'].browse(vals.get('label_id'))
+            vals.update({
+                'product_id': label.product_id.id, 'product_uom': label.product_uom.id,
+                'product_lot': label.product_lot.id, 'location_id': label.location_id.id,
+                'product_qty': label.product_qty
+            })
+
+
+    @api.multi
+    def write(self, vals):
+        self.action_before_write(vals)
+        return super(AASStockDeliveryOperation, self).write(vals)
+
+    @api.multi
+    def unlink(self):
+        productdict = {}
+        for record in self:
+            if record.delivery_id.picking_confirm:
+                raise UserError(u'%s已确认拣货，不可以删除！'% record.delivery_id.name)
+            pkey = 'D_'+str(record.delivery_id.id)+'_'+str(record.product_id.id)
+            if pkey in productdict:
+                productdict[pkey]['product_qty'] += record.product_qty
+            else:
+                productdict[pkey] = {'delivery_id': record.delivery_id.id, 'product_id': record.product_id.id, 'product_qty': record.product_qty}
+        result = super(AASStockDeliveryOperation, self).unlink()
+        for pkey, pval in productdict:
+            delivery_id, product_id = pval['delivery_id'], pval['product_id']
+            dline = self.env['aas.stock.delivery.line'].search([('delivery_id', '=', delivery_id), ('product_id', '=', product_id)], limit=1)
+            if dline:
+                tempqty = dline.picking_qty - pval['product_qty']
+                if float_compare(tempqty, 0.0, precision_rounding=0.000001) < 0.0:
+                    tempqty = 0.0
+                dline.write({'picking_qty': 0.0})
+        return result
 
 
 
@@ -235,10 +359,94 @@ class AASStockDeliveryMove(models.Model):
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
 
+    @api.model
+    def create(self, vals):
+        record = super(AASStockDeliveryMove, self).create(vals)
+        record.action_receive_deliver()
+        record.action_stock_move()
+        return record
+
+
+    @api.one
+    def action_receive_deliver(self):
+        """
+        更新收发汇总表
+        :return:
+        """
+        if self.location_src_id.usage == 'internal':
+            self.env['aas.receive.deliver'].action_deliver(self.product_id.id, self.location_src_id.id, self.product_lot.id, self.product_qty)
+        if self.location_dest_id.usage == 'internal':
+            self.env['aas.receive.deliver'].action_receive(self.product_id.id, self.location_dest_id.id, self.product_lot.id, self.product_qty)
+
+
+    @api.one
+    def action_stock_move(self):
+        """
+        生成移库单，更新库存
+        :return:
+        """
+        self.env['stock.move'].create({
+            'name': self.delivery_id.name, 'product_id': self.product_id.id, 'product_uom': self.product_uom.id,
+            'create_date': fields.Datetime.now(), 'restrict_lot_id': self.product_lot.id, 'product_uom_qty': self.product_qty,
+            'location_id': self.location_src_id.id, 'location_dest_id': self.location_dest_id.id, 'company_id': self.company_id.id
+        }).action_done()
 
 
 
+class AASStockDeliveryMoveReport(models.Model):
+    _auto = False
+    _name = "aas.stock.delivery.move.report"
+    _order = "delivery_date desc, product_id"
 
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品名称', readonly=True)
+    product_uom = fields.Many2one(comodel_name='product.uom', string=u'产品单位', readonly=True)
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', readonly=True)
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'产品批次', readonly=True)
+    delivery_date = fields.Date(string=u'发货日期', readonly=True)
+    origin_order = fields.Char(string=u'来源单据', readonly=True)
+    delivery_user = fields.Many2one(comodel_name='res.users', string=u'发货员工', readonly=True)
+    location_src_id = fields.Many2one(comodel_name='stock.location', string=u'来源库位', readonly=True)
+    location_dest_id = fields.Many2one(comodel_name='stock.location', string=u'目标库位', readonly=True)
+    product_qty = fields.Float(string=u'发货数量', digits=dp.get_precision('Product Unit of Measure'), readonly=True)
+    delivery_type = fields.Selection(selection=DELIVERY_TYPE, string=u'发货类型', readonly=True)
+    partner_id = fields.Many2one(comodel_name='res.partner', string=u'业务伙伴', readonly=True)
+
+
+    def _select(self):
+        select_str = """
+        SELECT min(asdm.id) as id,
+        asdm.product_id as product_id,
+        asdm.product_uom as product_uom,
+        asdm.product_lot as product_lot,
+        sum(asdm.product_qty) as product_qty,
+        asdm.delivery_date as delivery_date,
+        asdm.delivery_user as delivery_user,
+        asdm.company_id as company_id,
+        asdm.location_src_id as location_src_id,
+        asdm.location_dest_id as location_dest_id,
+        asdm.origin_order as origin_order,
+        asdm.delivery_type as delivery_type,
+        asdm.partner_id as partner_id
+        """
+        return select_str
+
+    def _from(self):
+        from_str = """
+        aas_stock_delivery_move asdm
+        """
+        return from_str
+
+    def _group_by(self):
+        group_by_str = """
+        GROUP BY asdm.product_id,asdm.product_lot,asdm.product_uom,asdm.delivery_date,asdm.delivery_user,asdm.location_src_id,asdm.location_dest_id,
+        asdm.company_id,asdm.delivery_type,asdm.partner_id,asdm.origin_order
+        """
+        return group_by_str
+
+    @api.model_cr
+    def init(self):
+        drop_view_if_exists(self._cr, self._table)
+        self._cr.execute("""CREATE or REPLACE VIEW %s as ( %s FROM %s %s )""" % (self._table, self._select(), self._from(), self._group_by()))
 
 
 

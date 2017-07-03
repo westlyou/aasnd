@@ -22,7 +22,10 @@
         'views/aas_stock_receipt_view.xml',
         'views/aas_stock_receipt_inside_view.xml',
         'views/aas_stock_receipt_outside_view.xml',
-        'wizard/aas_stock_receipt_wizard_view.xml'
+        'wizard/aas_stock_receipt_wizard_view.xml',
+        'views/aas_stock_delivery_view.xml',
+        'views/aas_stock_delivery_outside_view.xml',
+        'views/aas_stock_delivery_inside_view.xml'
     ],
     'qweb':[],
     'installable': True,
