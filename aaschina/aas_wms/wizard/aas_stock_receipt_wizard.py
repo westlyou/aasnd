@@ -141,7 +141,7 @@ class AASStockReceiptProductWizard(models.TransientModel):
                 'origin_order': label.origin_order, 'product_lot': lot_id, 'label_location': location_id, 'product_qty': label.product_qty
             }))
         if not self.line_id:
-            linedomain = [('receipt_id', '=', self.receipt_id.id), ('product_id', '=', self.product_id.id), ('origin_order', '=', '')]
+            linedomain = [('receipt_id', '=', self.receipt_id.id), ('product_id', '=', self.product_id.id), ('origin_order', '=', False)]
             templine = self.env['aas.stock.receipt.line'].search(linedomain, limit=1)
             if not templine:
                 self.env['aas.stock.receipt.line'].create({

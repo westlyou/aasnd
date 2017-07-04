@@ -26,7 +26,8 @@
                 <form>
                     <header>
                         <button name="action_confirm" type="object" string="收货确认" class="oe_highlight" attrs="{'invisible':[('state','!=','draft')]}"/>
-                        <button name="action_refresh_push_location" type="object" string="推荐库位" class="oe_highlight"/>
+                        <button name="action_refresh_push_location" type="object" string="推荐库位" class="oe_highlight"
+                                attrs="{'invisible':[('state','in',['draft','done','cancel'])]}"/>
                         <button name="action_cancel" type="object" string="取消收货" class="oe_highlight"
                                 attrs="{'invisible':[('state','in',['draft','done','cancel'])]}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,receipt,done,cancel"/>

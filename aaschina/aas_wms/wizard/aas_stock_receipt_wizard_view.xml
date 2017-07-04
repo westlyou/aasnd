@@ -32,7 +32,7 @@
                     <notebook>
                         <page string="批次明细">
                             <field name="lot_lines">
-                                <tree editable="top">
+                                <tree editable="bottom">
                                     <field name="lot_name"/>
                                     <field name="lot_qty"/>
                                     <field name="label_qty"/>
@@ -77,7 +77,7 @@
                     <notebook>
                         <page string="标签明细">
                             <field name="label_lines">
-                                <tree editable="top">
+                                <tree editable="bottom">
                                     <field name="lot_name"/>
                                     <field name="label_qty"/>
                                     <field name="warranty_date"/>

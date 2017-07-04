@@ -185,7 +185,7 @@ class AASStockReceiptLine(models.Model):
     receipt_id = fields.Many2one(comodel_name='aas.stock.receipt', string=u'收货单', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品名称', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'产品单位')
-    origin_order = fields.Char(string=u'来源单据', copy=False, default='')
+    origin_order = fields.Char(string=u'来源单据', copy=False)
     label_related = fields.Boolean(string=u'标签关联', default=False)
     receipt_type = fields.Selection(selection=RECEIPT_TYPE, string=u'收货类型')
     state = fields.Selection(selection=RECEIPT_STATE, string=u'状态', default='draft')
