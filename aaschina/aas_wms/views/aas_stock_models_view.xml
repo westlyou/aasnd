@@ -96,5 +96,18 @@
         <menuitem id="menu_aas_stock_quant_report"  name="库存报表" action="action_aas_stock_quant_report"
                           parent="stock.menu_aas_stock_inventory" sequence="5"/>
 
+
+
+        <record id="view_form_stock_location_mrb" model="ir.ui.view">
+            <field name="name">stock.location.mrb.form</field>
+            <field name="model">stock.location</field>
+            <field name="inherit_id" ref="stock.view_location_form"/>
+            <field name="arch" type="xml">
+                <field name="return_location" position="after">
+                    <field name="mrblocation"/>
+                </field>
+            </field>
+        </record>
+
     </data>
 </odoo>

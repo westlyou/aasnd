@@ -48,7 +48,16 @@ class AASStockDelivery(models.Model):
     operation_lines = fields.One2many(comodel_name='aas.stock.delivery.operation', inverse_name='delivery_id', string=u'拣货作业')
     move_lines = fields.One2many(comodel_name='aas.stock.delivery.move', inverse_name='delivery_id', string=u'执行明细')
 
+    @api.model
+    def action_before_create(self, vals):
+        if not vals.get('warehouse_id'):
+            warehouse = self.env['stock.warehouse'].get_default_warehouse()
+            vals.update({'warehouse_id': warehouse.id})
 
+    @api.model
+    def create(self, vals):
+        vals['name'] = self.env['ir.sequence'].next_by_code('aas.stock.delivery')
+        return super(AASStockDelivery, self).create(vals)
 
     @api.one
     def action_confirm(self):
@@ -58,9 +67,18 @@ class AASStockDelivery(models.Model):
         """
         if not self.delivery_lines or len(self.delivery_lines) <= 0:
             raise UserError(u'您还没有添加明细，请新添加明细！')
-        dlines = [(1, dline.id, {'state': 'confirm'}) for dline in self.delivery_lines]
-        self.write({'state': 'confirm', 'delivery_lines': dlines})
+        self.write({'state': 'confirm', 'delivery_lines': [(1, dline.id, {'state': 'confirm'}) for dline in self.delivery_lines]})
 
+    @api.one
+    def action_picking_list(self):
+        """
+        拣货清单，先进先出生成拣货清单，制定具体库位的批次和数量
+        :return:
+        """
+        if not self.delivery_lines or len(self.delivery_lines) <= 0:
+            return
+        for dline in self.delivery_lines:
+            dline.action_picking_list()
 
     @api.one
     def action_picking_confirm(self):
@@ -166,15 +184,26 @@ class AASStockDeliveryLine(models.Model):
         ('uniq_prodcut', 'unique (delivery_id, product_id)', u'请不要重复添加同一个产品！')
     ]
 
+    @api.model
+    def action_before_create(self, vals):
+        if not vals.get('delivery_type') and vals.get('delivery_id'):
+            delivery = self.env['aas.stock.delivery'].browse(vals.get('delivery_id'))
+            vals.update({'delivery_type': delivery.delivery_type})
+
+    @api.model
+    def create(self, vals):
+        self.action_before_create(vals)
+        return super(AASStockDeliveryLine, self).create(vals)
+
+
     @api.one
     def action_clear_list(self):
         """
         清理当前产品的拣货清单
         :return:
         """
-        pick_list = self.env['aas.stock.picking.list'].search([('delivery_id', '=', self.delivery_id.id), ('product_id', '=', self.product_id.id)])
-        if pick_list and len(pick_list) > 0:
-            pick_list.unlink()
+        if self.picking_list and len(self.picking_list) > 0:
+            self.picking_list.unlink()
 
 
     @api.multi
@@ -202,54 +231,57 @@ class AASStockDeliveryLine(models.Model):
                 pickingdict[lkey]['product_qty'] += label.product_qty
             else:
                 pickingdict[lkey] = {
-                    'delivery_line': self.id, 'product_id': label.product_id.id, 'product_uom': label.product_uom.id,
+                    'delivery_id': self.delivery_id.id, 'product_id': label.product_id.id, 'product_uom': label.product_uom.id,
                     'product_lot': label.product_lot.id, 'product_qty': label.product_qty, 'location_id': label.location_id.id
                 }
             label_qty += label.product_qty
             label_ids.append(label.id)
-        self.delivery_id.write({'picking_list': [(0, 0, pval) for pkey, pval in pickingdict]})
+        self.write({'picking_list': [(0, 0, pval) for pkey, pval in pickingdict.items()]})
         picking_qty -= label_qty
         return label_ids
 
-
-
-
-    @api.one
-    def action_picking_list(self, prioritized_lots=None):
-        """
-        生成分拣清单
-        :param prioritized_lots:
-        :return:
-        """
-        self.action_clear_list()
-        picking_qty, excludelabelids = self.product_qty - self.delivery_qty, []
+    @api.model
+    def action_pickinglist(self, deliveryline, prioritized_lots=None):
+        deliveryline.action_clear_list()
+        picking_qty, excludelabelids = deliveryline.product_qty - deliveryline.delivery_qty, []
         if float_compare(picking_qty, 0.0, precision_rounding=0.000001) <= 0.0:
             return
-        stock_location = self.delivery_id.warehouse_id.view_location_id.id
-        labeldomain = [('product_id', '=', self.product_id.id), ('state', '=', 'normal'), ('qualified', '=', True), ('stocked', '=', True)]
-        labeldomain.extend([('parent_id', '=', False), ('locked', '=', False), ('company_id', '=', self.company_id.id), ('location_id', 'child_of', stock_location)])
+        stock_location = deliveryline.delivery_id.warehouse_id.view_location_id.id
+        labeldomain = [('product_id', '=', deliveryline.product_id.id), ('state', '=', 'normal'), ('qualified', '=', True), ('stocked', '=', True)]
+        labeldomain.extend([('parent_id', '=', False), ('locked', '=', False), ('company_id', '=', deliveryline.company_id.id), ('location_id', 'child_of', stock_location)])
         labelorder, label_qty, pickingdict, tempkey = 'onshelf_date,product_lot', 0.0, {}, False
         # 优先处理的标签，可能是生产退料的物料需要优先处理掉
         prioritizedomain = labeldomain + [('prioritized', '=', True)]
         prioritizedlabels = self.env['aas.product.label'].search(prioritizedomain, order=labelorder)
-        excludelabelids = self.action_building_picking_list(picking_qty, prioritizedlabels)
+        excludelabelids = deliveryline.action_building_picking_list(picking_qty, prioritizedlabels)
         # 优先批次，添加优先处理的批次
         if float_compare(picking_qty, 0.0, precision_rounding=0.000001) > 0 and prioritized_lots:
+            print 'lots: '+ str(prioritized_lots)
             prioritizedlotsdomain, prioritizedlotslabels = [], []
-            prioritizedlots = self.env['stock.production.lot'].search([('product_id', '=', self.product_id.id), ('name', 'in', prioritized_lots.split(','))])
+            prioritizedlots = self.env['stock.production.lot'].search([('product_id', '=', deliveryline.product_id.id), ('name', 'in', prioritized_lots.split(','))])
             if prioritizedlots and len(prioritizedlots) > 0:
                 prioritizedlotsdomain = labeldomain + [('product_lot', 'in', prioritizedlots.ids)]
                 if excludelabelids and len(excludelabelids) > 0:
                     prioritizedlotsdomain += [('id', 'not in', excludelabelids)]
                 prioritizedlotslabels = self.env['aas.product.label'].search(prioritizedlotsdomain, order=labelorder)
-            excludelabelids += self.action_building_picking_list(picking_qty, prioritizedlotslabels)
+            excludelabelids += deliveryline.action_building_picking_list(picking_qty, prioritizedlotslabels)
         # 正常条件下，先进先出原则
         if float_compare(picking_qty, 0.0, precision_rounding=0.000001) > 0:
             commondomain = labeldomain
             if excludelabelids and len(excludelabelids) > 0:
                 commondomain = labeldomain + [('id', 'not in', excludelabelids)]
             commonlabels = self.env['aas.product.label'].search(commondomain, order=labelorder)
-            self.action_building_picking_list(picking_qty, commonlabels)
+            deliveryline.action_building_picking_list(picking_qty, commonlabels)
+
+
+    @api.one
+    def action_picking_list(self):
+        """
+        生成分拣清单
+        :param prioritized_lots:
+        :return:
+        """
+        self.action_pickinglist(self)
 
 
 

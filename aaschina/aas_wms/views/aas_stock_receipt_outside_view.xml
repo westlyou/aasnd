@@ -116,7 +116,7 @@
                                 </field>
                             </page>
                             <page string="收货作业">
-                                <field name="operation_lines" attrs="{'readonly': [('state','=','done')]}">
+                                <field name="operation_lines" attrs="{'readonly': [('state','not in',['confirm','receipt'])]}">
                                     <tree editable="bottom" edit="false">
                                         <field name="rlabel_id" options="{'no_create':true}" required="1"
                                                 domain="[('receipt_id','=',parent.id)]"/>
@@ -267,7 +267,8 @@
                                 </field>
                             </page>
                             <page string="收货作业">
-                                <field name="operation_list">
+                                <field name="operation_list" context="{'default_location_id': push_location}"
+                                       attrs="{'readonly':[('state','not in',['confirm','receipt'])]}">
                                     <tree editable="bottom" edit="false">
                                         <field name="rlabel_id" options="{'no_create':true}" required="1"
                                                 domain="[('line_id','=',parent.id)]"/>
@@ -275,6 +276,7 @@
                                         <field name="product_uom" readonly="1"/>
                                         <field name="product_lot" readonly="1"/>
                                         <field name="product_qty" readonly="1"/>
+                                        <field name="location_id" options="{'no_create':true}" required="1"/>
                                         <field name="push_user" readonly="1"/>
                                         <field name="push_time" readonly="1"/>
                                         <field name="push_onshelf" readonly="1"/>
@@ -373,7 +375,7 @@
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="view_tree_aas_stock_receipt_outside"/>
             <field name="search_view_id" ref="view_search_aas_stock_receipt"/>
-            <field name="domain">[('receipt_type','=','manreturn'), ('state','not in',['draft','cancle'])]</field>
+            <field name="domain">[('receipt_type','=','manreturn'), ('state','not in',['draft'])]</field>
             <field name="context">{'default_receipt_type': 'manreturn'}</field>
         </record>
 
@@ -404,7 +406,7 @@
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="view_tree_aas_stock_receipt_line_outside"/>
             <field name="search_view_id" ref="view_search_aas_stock_receipt_line"/>
-            <field name="domain">[('receipt_type', '=', 'manreturn'), ('state','not in',['draft','cancle'])]</field>
+            <field name="domain">[('receipt_type', '=', 'manreturn'), ('state','not in',['draft'])]</field>
             <field name="context">{'default_receipt_type': 'manreturn'}</field>
         </record>
 

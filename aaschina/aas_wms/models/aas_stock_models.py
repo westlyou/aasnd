@@ -14,7 +14,7 @@ _logger = logging.getLogger(__name__)
 class Warehouse(models.Model):
     _inherit = 'stock.warehouse'
 
-    wh_mrb_stock_loc_id = fields.Many2one(comodel_name='stock.location', string='MRB Location')
+    wh_wip_stock_loc_id = fields.Many2one(comodel_name='stock.location', string='WIP Location')
 
 
     @api.model
@@ -29,14 +29,13 @@ class Warehouse(models.Model):
         locations |= self.wh_input_stock_loc_id
         locations |= self.wh_output_stock_loc_id
         locations.write({'active': True})
-        mrbvals = {'name': 'MRB', 'active': True, 'usage': 'internal'}
-        mrbvals.update({'location_id': self.view_location_id.id, 'company_id': self.company_id.id})
-        mrb_location = self.env['stock.location'].create(mrbvals)
-        self.write({'wh_mrb_stock_loc_id': mrb_location.id})
+        wipvals = {'name': 'WIP', 'active': True, 'usage': 'wip', 'location_id': self.view_location_id.id, 'company_id': self.company_id.id}
+        wipacation = self.env['stock.location'].create(wipvals)
+        self.write({'wh_wip_stock_loc_id': wipacation.id})
 
     @api.model
     def action_upgrade_aas_stock_warehouse(self):
-        warehouses = self.env['stock.warehouse'].search([('wh_mrb_stock_loc_id', '=', False)])
+        warehouses = self.env['stock.warehouse'].search([('wh_wip_stock_loc_id', '=', False)])
         if not warehouses or len(warehouses) <= 0:
             return
         for warehouse in warehouses:
@@ -68,7 +67,8 @@ class AASProductProduct(models.Model):
 class Location(models.Model):
     _inherit = 'stock.location'
 
-    usage = fields.Selection(selection_add=[('sundry', u'杂项')])
+    usage = fields.Selection(selection_add=[('sundry', u'杂项'), ('wip', u'线边库')])
+    mrblocation = fields.Boolean(string=u'MRB库位', default=False, copy=False)
 
 
 

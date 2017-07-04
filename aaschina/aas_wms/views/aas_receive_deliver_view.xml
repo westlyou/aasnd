@@ -8,7 +8,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree create="false" edit="false" delete="false">
-                    <field name="action_year" />
+                    <field name="action_year" widget="char"/>
                     <field name="action_month" />
                     <field name="product_id" />
                     <field name="location_id" />
