@@ -74,6 +74,30 @@ class AASStockDelivery(models.Model):
         self.write({'picking_confirm': True})
 
 
+    @api.multi
+    def action_label_deliver(self):
+        """
+        标签发货，直接添加标签而生成发货明细，主要是采购退货使用
+        :return:
+        """
+        self.ensure_one()
+        wizardvals = {'delivery_id': self.id}
+        wizard = self.env['aas.stock.delivery.label.wizard'].create(wizardvals)
+        view_form = self.env.ref('aas_wms.view_form_aas_stock_delivery_label_wizard')
+        return {
+            'name': u"标签明细",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.stock.delivery.label.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
+
     @api.one
     def action_deliver_done(self):
         """
@@ -126,7 +150,7 @@ class AASStockDeliveryLine(models.Model):
     _rec_name = 'product_id'
     _order = 'id desc'
 
-    delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'收货单', ondelete='cascade')
+    delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'发货单', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     product_qty = fields.Float(string=u'应发数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
@@ -136,6 +160,8 @@ class AASStockDeliveryLine(models.Model):
     picking_qty = fields.Float(string=u'拣货数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
+    picking_list = fields.One2many(comodel_name='aas.stock.picking.list', inverse_name='delivery_line', string=u'拣货清单')
+    operation_lines = fields.One2many(comodel_name='aas.stock.delivery.operation', inverse_name='delivery_line', string=u'拣货作业')
 
     _sql_constraints = [
         ('uniq_prodcut', 'unique (delivery_id, product_id)', u'请不要重复添加同一个产品！')
@@ -177,7 +203,7 @@ class AASStockDeliveryLine(models.Model):
                 pickingdict[lkey]['product_qty'] += label.product_qty
             else:
                 pickingdict[lkey] = {
-                    'product_id': label.product_id.id, 'product_uom': label.product_uom.id,
+                    'delivery_line': self.id, 'product_id': label.product_id.id, 'product_uom': label.product_uom.id,
                     'product_lot': label.product_lot.id, 'product_qty': label.product_qty, 'location_id': label.location_id.id
                 }
             label_qty += label.product_qty
@@ -236,7 +262,8 @@ class AASStockPickingList(models.Model):
     _name = 'aas.stock.picking.list'
     _description = u'拣货清单'
 
-    delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'收货单', ondelete='cascade')
+    delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'发货单', ondelete='cascade')
+    delivery_line = fields.Many2one(comodel_name='aas.stock.delivery.line', string=u'发货明细', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
@@ -252,7 +279,8 @@ class AASStockDeliveryOperation(models.Model):
     _description = u'拣货作业'
     _order = 'id desc'
 
-    delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'收货单', ondelete='cascade')
+    delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'发货单', ondelete='cascade')
+    delivery_line = fields.Many2one(comodel_name='aas.stock.delivery.line', string=u'发货明细', ondelete='cascade')
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
@@ -283,56 +311,60 @@ class AASStockDeliveryOperation(models.Model):
 
     @api.model
     def action_before_create(self, vals):
-        label = self.env['aas.product.label'].browse(vals.get('label_id'))
+        label, dline = self.env['aas.product.label'].browse(vals.get('label_id')), False
+        if vals.get('delivery_line') and not vals.get('delivery_id'):
+            dline = self.env['aas.stock.delivery.line'].browse(vals.get('delivery_line'))
+            vals.update({'delivery_id': dline.delivery_id.id})
+        elif vals.get('delivery_id') and not vals.get('delivery_line'):
+            dline = self.env['aas.stock.delivery.line'].search([('delivery_id', '=', vals.get('delivery_id')), ('product_id', '=', label.product_id.id)], limit=1)
+            vals.update({'delivery_line': dline.id})
+        if self.env['aas.stock.delivery.line'].search_count([('delivery_id', '=', vals.get('delivery_id')), ('product_id', '=', label.product_id.id)]) <= 0:
+            raise UserError(u'非法标签，当前标签货物不在发货明细中,请重新拣货！')
         vals.update({
             'product_id': label.product_id.id, 'product_uom': label.product_uom.id,
             'product_lot': label.product_lot.id, 'location_id': label.location_id.id,
             'product_qty': label.product_qty
         })
 
+    @api.one
+    def action_after_create(self):
+        dline = self.delivery_line
+        lineval = {'picking_qty': dline.picking_qty + self.product_qty}
+        if dline.state!='picking':
+            lineval['state'] = 'picking'
+        dline.write(lineval)
+
 
     @api.model
     def create(self, vals):
         self.action_before_create(vals)
-        return super(AASStockDeliveryOperation, self).create(vals)
+        record = super(AASStockDeliveryOperation, self).create(vals)
+        record.action_after_create()
+        return record
 
 
-    @api.model
-    def action_before_write(self, vals):
-        if vals.get('label_id'):
-            label = self.env['aas.product.label'].browse(vals.get('label_id'))
-            vals.update({
-                'product_id': label.product_id.id, 'product_uom': label.product_uom.id,
-                'product_lot': label.product_lot.id, 'location_id': label.location_id.id,
-                'product_qty': label.product_qty
-            })
 
-
-    @api.multi
-    def write(self, vals):
-        self.action_before_write(vals)
-        return super(AASStockDeliveryOperation, self).write(vals)
 
     @api.multi
     def unlink(self):
-        productdict = {}
+        linedict = {}
         for record in self:
             if record.delivery_id.picking_confirm:
                 raise UserError(u'%s已确认拣货，不可以删除！'% record.delivery_id.name)
-            pkey = 'D_'+str(record.delivery_id.id)+'_'+str(record.product_id.id)
-            if pkey in productdict:
-                productdict[pkey]['product_qty'] += record.product_qty
+            if record.deliver_done:
+                raise UserError(u'%s已经发货，不可以删除！'% record.label_id.name)
+            lkey = 'L'+str(record.delivery_line.id)
+            if lkey not in linedict:
+                linedict[lkey] = {'line': record.delivery_line, 'product_qty': record.product_qty}
             else:
-                productdict[pkey] = {'delivery_id': record.delivery_id.id, 'product_id': record.product_id.id, 'product_qty': record.product_qty}
+                linedict[lkey]['product_qty'] += record.product_qty
         result = super(AASStockDeliveryOperation, self).unlink()
-        for pkey, pval in productdict:
-            delivery_id, product_id = pval['delivery_id'], pval['product_id']
-            dline = self.env['aas.stock.delivery.line'].search([('delivery_id', '=', delivery_id), ('product_id', '=', product_id)], limit=1)
-            if dline:
-                tempqty = dline.picking_qty - pval['product_qty']
-                if float_compare(tempqty, 0.0, precision_rounding=0.000001) < 0.0:
-                    tempqty = 0.0
-                dline.write({'picking_qty': 0.0})
+        for lkey, lval in linedict.items():
+            dline, product_qty = lval['line'], lval['product_qty']
+            product_qty = dline.picking_qty - product_qty
+            if float_compare(product_qty, 0.0, precision_rounding=0.000001) < 0.0:
+                product_qty = 0.0
+            dline.write({'picking_qty': product_qty})
         return result
 
 
@@ -342,7 +374,7 @@ class AASStockDeliveryMove(models.Model):
     _description = u'执行明细'
     _order = "id desc"
 
-    delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'收货单', ondelete='cascade')
+    delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'发货单', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品名称', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'产品单位')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'产品批次', ondelete='restrict')

@@ -209,6 +209,69 @@
                                 <field name="picking_qty" readonly="1"/>
                             </group>
                         </group>
+                        <notebook>
+                            <page string="拣货清单">
+                                <field name="picking_list" readonly="1">
+                                    <tree>
+                                        <field name="product_id"/>
+                                        <field name="product_uom"/>
+                                        <field name="product_lot"/>
+                                        <field name="product_qty"/>
+                                        <field name="location_id"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_qty"/>
+                                            </group>
+                                            <group>
+                                                <field name="product_lot"/>
+                                                <field name="location_id"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="发货作业">
+                                <field name="operation_lines">
+                                    <tree editable="bottom">
+                                        <field name="label_id" options="{'no_crete':true}" required="1"/>
+                                        <field name="product_id" readonly="1"/>
+                                        <field name="product_uom" readonly="1"/>
+                                        <field name="product_lot" readonly="1"/>
+                                        <field name="product_qty" readonly="1"/>
+                                        <field name="location_id" readonly="1"/>
+                                        <field name="pick_user" readonly="1"/>
+                                        <field name="pick_time" readonly="1"/>
+                                        <field name="check_user" readonly="1"/>
+                                        <field name="check_time" readonly="1"/>
+                                        <field name="deliver_done" readonly="1"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group><field name="label_id" options="{'no_crete':true}" required="1"/></group>
+                                        </group>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_uom"/>
+                                                <field name="product_lot"/>
+                                                <field name="product_qty"/>
+                                                <field name="location_id"/>
+                                            </group>
+                                            <group>
+                                                <field name="pick_user"/>
+                                                <field name="pick_time"/>
+                                                <field name="check_user"/>
+                                                <field name="check_time"/>
+                                                <field name="deliver_done"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>
