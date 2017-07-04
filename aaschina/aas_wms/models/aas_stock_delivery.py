@@ -81,8 +81,7 @@ class AASStockDelivery(models.Model):
         :return:
         """
         self.ensure_one()
-        wizardvals = {'delivery_id': self.id}
-        wizard = self.env['aas.stock.delivery.label.wizard'].create(wizardvals)
+        wizard = self.env['aas.stock.delivery.label.wizard'].create({'delivery_id': self.id})
         view_form = self.env.ref('aas_wms.view_form_aas_stock_delivery_label_wizard')
         return {
             'name': u"标签明细",

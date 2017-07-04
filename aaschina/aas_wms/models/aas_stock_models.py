@@ -70,3 +70,49 @@ class Location(models.Model):
 
     usage = fields.Selection(selection_add=[('sundry', u'杂项')])
 
+
+
+class AASStockQuantReport(models.Model):
+    _auto = False
+    _name = 'aas.stock.quant.report'
+    _description = u'库存报表'
+
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', readonly=True)
+    product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', related='product_id.uom_id', readonly=True)
+    product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), readonly=True)
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位',  readonly=True)
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', readonly=True)
+
+    def _select(self):
+        select_str = """
+        SELECT min(asq.id) as id,
+        asq.product_id as product_id,
+        sum(asq.qty) as product_qty,
+        asq.company_id as company_id,
+        asq.location_id as location_id
+        """
+        return select_str
+
+
+    def _from(self):
+        from_str = """
+        stock_quant asq
+        """
+        return from_str
+
+
+    def _group_by(self):
+        group_by_str = """
+        GROUP BY asq.product_id,asq.company_id,asq.location_id
+        """
+        return group_by_str
+
+
+    @api.model_cr
+    def init(self):
+        drop_view_if_exists(self._cr, self._table)
+        self._cr.execute("""CREATE or REPLACE VIEW %s as ( %s FROM %s %s )""" % (self._table, self._select(), self._from(), self._group_by()))
+
+
+
+

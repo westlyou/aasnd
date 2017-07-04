@@ -56,7 +56,8 @@
                         </group>
                         <notebook>
                             <page string="发货明细">
-                                <field name="delivery_lines">
+                                <field name="delivery_lines"
+                                       attrs="{'readonly':['|',('state','!=','draft'),('delivery_type','=','purchase')]}">
                                     <tree editable="bottom">
                                         <field name="product_id" options="{'no_create':true}"/>
                                         <field name="product_uom" readonly="1"/>

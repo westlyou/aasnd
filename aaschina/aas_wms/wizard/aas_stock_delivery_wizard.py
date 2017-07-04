@@ -27,7 +27,7 @@ class AASStockDeliveryLabelWizard(models.TransientModel):
     delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'发货单', ondelete='cascade')
     origin_order = fields.Char(string=u'来源单据')
 
-    label_lines = fields.One2many(comodel_name='maas.stock.delivery.label.line.wizard', inverse_name='wizard_id', string=u'标签明细')
+    label_lines = fields.One2many(comodel_name='aas.stock.delivery.label.line.wizard', inverse_name='wizard_id', string=u'标签明细')
 
     @api.one
     def action_done(self):
