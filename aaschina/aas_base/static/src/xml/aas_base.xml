@@ -62,4 +62,21 @@
         <button type="button" class="btn btn-sm btn-default o_delete_exported_list">删除</button>
     </t>
 
+    <t t-extend="ListView.buttons">
+        <t t-jquery="button.o_list_button_add" t-operation="after">
+            <button t-if="widget.is_action_enabled('orderimport')" type="button" class="btn btn-sm btn-default o_list_button_orderimport">
+                订单导入
+            </button>
+        </t>
+    </t>
+
+    <div t-name="AASOrderImportDialog" class="o_form_view">
+        <table class="o_group o_inner_group o_label_nowrap">
+            <tr>
+                <td class="o_td_label"><label for="order_number" class="o_form_label">订单号：</label></td>
+                <td width="100%"><input id="order_number" type="text" class="o_form_field o_form_input" name="order_number" minlength="1" autofocus="autofocus"/></td>
+            </tr>
+        </table>
+    </div>
+
 </templates>

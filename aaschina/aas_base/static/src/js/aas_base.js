@@ -12,6 +12,7 @@ odoo.define('aas.base', function (require) {
     var framework = require('web.framework');
     var WebClient = require('web.WebClient');
     var ListView = require('web.ListView');
+    var Model = require('web.DataModel');
     var session = require('web.session');
     var Dialog = require('web.Dialog');
     var crash_manager = require('web.crash_manager');
@@ -48,6 +49,24 @@ odoo.define('aas.base', function (require) {
         init: function (parent, dataset, view_id, options) {
             this._super.apply(this, arguments);
         },
+        is_action_enabled: function(action) {
+            var attrs = this.fields_view.arch.attrs;
+            if(action=='orderimport' || action=='import'){
+                return (action in attrs) ? JSON.parse(attrs[action]) : false;
+            }
+            return (action in attrs) ? JSON.parse(attrs[action]) : true;
+        },
+        render_buttons: function() {
+            var self = this;
+            var add_button = false;
+            if (!this.$buttons) { // Ensures that this is only done once
+                add_button = true;
+            }
+            this._super.apply(this, arguments); // Sets this.$buttons
+            if(add_button && this.$buttons) {
+                this.$buttons.on('click', '.o_list_button_orderimport', this.do_aas_order_import);
+            }
+        },
         render_sidebar: function($node) {
             var tempsuper = _.bind(this._super, this);
             tempsuper.call(self, $node);
@@ -64,6 +83,9 @@ odoo.define('aas.base', function (require) {
         },
         do_aas_web_export: function(){
             new AASWebExporter(this, this.dataset).open();
+        },
+        do_aas_order_import: function(){
+            new AASOrderImport(this, this.dataset).open();
         }
     });
 
@@ -194,10 +216,10 @@ odoo.define('aas.base', function (require) {
         },
         init: function(parent, dataset) {
             var options = {
-                title: _t("Data Export"),
+                title: '数据导出',
                 buttons: [
-                    {text: _t("Export"), click: this.export_data, classes: "btn-primary"},
-                    {text: _t("Close"), close: true},
+                    {text: '导出', click: this.export_data, classes: "btn-primary"},
+                    {text: '关闭', close: true},
                 ],
             };
             this._super(parent, options);
@@ -372,8 +394,56 @@ odoo.define('aas.base', function (require) {
         }
     });
 
+
+    var AASOrderImport = Dialog.extend({
+        template: 'AASOrderImportDialog',
+        init: function(parent, dataset) {
+            var options = {
+                title: '订单导入',
+                buttons: [
+                    {text: '导入', click: this.import_order, classes: "btn-primary"},
+                    {text: '关闭', close: true},
+                ],
+            };
+            this._super(parent, options);
+            this.dataset = dataset;
+            this.res_model = dataset.model;
+
+            // The default for the ".modal_content" element is "max-height: 100%;"
+            // but we want it to always expand to "height: 100%;" for this modal.
+            // This can be achieved thanks to LESS modification without touching
+            // the ".modal-content" rules... but not with Internet explorer (11).
+            this.$modal.find(".modal-content").css("height", "200");
+        },
+        start: function() {
+            this._super.apply(this, arguments);
+        },
+        import_order: function() {
+            var self = this;
+            var ordernumber = this.$('#order_number').val();
+            if (ordernumber==null || ordernumber==''){
+                Dialog.alert(this, "请先填入订单号..............");
+                return;
+            }
+            var OrderModel = new Model(self.res_model);
+            OrderModel.call('action_import_order',[ordernumber]).then(function(data){
+                if(data.success==undefined || data.success){
+                    self.close();
+                }else{
+                    self.do_warn('警告', data.message, false);
+                }
+            }, function(error,event) {
+                if (event) {
+                    event.preventDefault();
+                }
+                self.do_warn(error.message, error.data.message, false);
+            });
+        }
+    });
+
     return {
-        'AASWebExporter': AASWebExporter
+        'AASWebExporter': AASWebExporter,
+        'AASOrderImport': AASOrderImport
     };
 
 });
