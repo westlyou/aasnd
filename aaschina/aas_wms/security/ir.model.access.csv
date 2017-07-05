@@ -38,3 +38,11 @@ access_aas_stock_purchase_order_stock_user,aas.stock.purchase.order stock_user,m
 access_aas_stock_purchase_order_stock_manager,aas.stock.purchase.order stock_manager,model_aas_stock_purchase_order,stock.group_stock_manager,1,1,1,1
 access_aas_stock_purchase_order_line_stock_user,aas.stock.purchase.order.line stock_user,model_aas_stock_purchase_order_line,stock.group_stock_user,1,1,1,1
 access_aas_stock_purchase_order_line_stock_manager,aas.stock.purchase.order.line stock_manager,model_aas_stock_purchase_order_line,stock.group_stock_manager,1,1,1,1
+access_aas_ebs_delivery_stock_user,aas.ebs.delivery stock_user,model_aas_ebs_delivery,stock.group_stock_user,1,0,0,0
+access_aas_ebs_delivery_stock_manager,aas.ebs.delivery stock_manager,model_aas_ebs_delivery,stock.group_stock_manager,1,0,0,0
+access_aas_ebs_delivery_line_stock_user,aas.ebs.delivery.line stock_user,model_aas_ebs_delivery_line,stock.group_stock_user,1,0,0,0
+access_aas_ebs_delivery_line_stock_manager,aas.ebs.delivery.line stock_manager,model_aas_ebs_delivery_line,stock.group_stock_manager,1,0,0,0
+access_aas_stock_sale_delivery_stock_user,aas.stock.sale.delivery stock_user,model_aas_stock_sale_delivery,stock.group_stock_user,1,1,1,1
+access_aas_stock_sale_delivery_stock_manager,aas.stock.sale.delivery stock_manager,model_aas_stock_sale_delivery,stock.group_stock_manager,1,1,1,1
+access_aas_stock_sale_delivery_line_stock_user,aas.stock.sale.delivery.line stock_user,model_aas_stock_sale_delivery_line,stock.group_stock_user,1,1,1,1
+access_aas_stock_sale_delivery_line_stock_manager,aas.stock.sale.delivery.line stock_manager,model_aas_stock_sale_delivery_line,stock.group_stock_manager,1,1,1,1

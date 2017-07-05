@@ -325,16 +325,25 @@ class AASStockPurchaseReceiptWizard(models.TransientModel):
         self.ensure_one()
         if not self.purchase_lines or len(self.purchase_lines) <= 0:
             raise UserError(u'请重新生成收货明细！')
-        receiptvals, rlines = {'partner_id': self.partner_id.id, 'receipt_type': 'purchase'}, []
+        receiptvals, rlines, orderdict = {'partner_id': self.partner_id.id, 'receipt_type': 'purchase'}, [], {}
         for pline in self.purchase_lines:
-            tline, product_id = pline.line_id, pline.line_id.product_id
+            tline, torder, tproduct = pline.line_id, pline.line_id.order_id, pline.line_id.product_id
             rlines.append((0, 0, {
-                'product_id': product_id.id, 'product_uom': tline.product_uom.id, 'origin_order': tline.order_id.name,
-                'receipt_type': 'purchase', 'push_location': product_id.push_location and product_id.push_location.id,
+                'product_id': tproduct.id, 'product_uom': tproduct.uom_id.id, 'origin_order': tline.order_id.name,
+                'receipt_type': 'purchase', 'push_location': tproduct.push_location and tproduct.push_location.id,
                 'product_qty': pline.product_qty
             }))
+            tkey, doing_qty = 'T'+str(torder.id), tline.doing_qty+pline.product_qty
+            if tkey in orderdict:
+                orderdict[tkey]['lines'].append((1, tline.id, {'doing_qty': doing_qty}))
+            else:
+                orderdict[tkey] = {'order': torder, 'lines': [(1, tline.id, {'doing_qty': doing_qty})]}
         receiptvals['receipt_lines'] = rlines
         receipt = self.env['aas.stock.receipt'].create(receiptvals)
+        # 更新采购明细的doing_qty
+        for okey, oval in orderdict:
+            porder, plines = oval['order'], oval['lines']
+            porder.write({'order_lines': plines})
         view_form = self.env.ref('aas_wms.view_form_aas_stock_receipt_inside')
         return {
             'name': u"采购收货",
@@ -379,3 +388,86 @@ class AASStockPurchaseReceiptLineWizard(models.TransientModel):
         if float_compare(self.product_qty, 0.0, precision_rounding=0.000001) <= 0.0:
             raise ValidationError(u'收货数量必须是一个正数！')
 
+
+
+
+class AASStockReceipt(models.Model):
+    _inherit = 'aas.stock.receipt'
+
+    @api.one
+    def action_cancel(self):
+        super(AASStockReceipt, self).action_cancel()
+        if self.receipt_type == 'purchase':
+            # 采购收货单取消之后要更新采购订单明细的已收货数量或处理中的数量
+            purchasedict = {}
+            for rline in self.receipt_lines:
+                if not rline.origin_order:
+                    continue
+                linedomain = [('product_id', '=', rline.product_id.id), ('order_name', '=', rline.origin_order)]
+                purchaseline = self.env['aas.stock.purchase.order.line'].search(linedomain, limit=1)
+                if not purchaseline:
+                    continue
+                purchaseorder, pkey = purchaseline.order_id, 'P'+str(purchaseline.order_id.id)
+                if pkey in purchasedict:
+                    if rline.state == 'draft':
+                       purchasedict[pkey]['lines'].append((1, purchaseline.id, {'doing_qty': purchaseline.doing_qty - rline.product_qty}))
+                    else:
+                        purchasedict[pkey]['lines'].append((1, purchaseline.id, {'receipt_qty': purchaseline.receipt_qty - rline.product_qty}))
+                else:
+                    if rline.state == 'draft':
+                        purchasedict[pkey] = {'order': purchaseorder, 'lines': [(1, purchaseline.id, {'doing_qty': purchaseline.doing_qty - rline.product_qty})]}
+                    else:
+                        purchasedict[pkey] = {'order': purchaseorder, 'lines': [(1, purchaseline.id, {'receipt_qty': purchaseline.receipt_qty - rline.product_qty})]}
+            if purchasedict and len(purchasedict) > 0:
+                for pkey, pval in purchasedict.items():
+                    porder, plines = pval['order'], pval['lines']
+                    porder.write({'order_lines': plines})
+
+
+
+
+class AASStockReceiptLine(models.Model):
+    _inherit = 'aas.stock.receipt.line'
+
+    @api.one
+    def action_confirm(self):
+        super(AASStockReceiptLine, self).action_confirm()
+        if self.receipt_type=='purchase' and self.origin_order:
+            # 采购收货确认之后需要将采购明细上的处理数量更新为已收货数量
+            linedomain = [('product_id', '=', self.product_id.id), ('order_name', '=', self.origin_order)]
+            purchaseline = self.env['aas.stock.purchase.order.line'].search(linedomain, limit=1)
+            if purchaseline:
+                receipt_qty, doing_qty = purchaseline.receipt_qty + self.product_qty, purchaseline.doing_qty - self.product_qty
+                if float_compare(doing_qty, 0.0, precision_rounding=0.000001) < 0.0:
+                    doing_qty = 0.0
+                purchaseline.write({'receipt_qty': receipt_qty, 'doing_qty': doing_qty})
+
+
+    @api.multi
+    def unlink(self):
+        purchasedict = {}
+        for record in self:
+            if record.receipt_type != 'purchase' or not record.origin_order:
+                continue
+            linedomain = [('product_id', '=', record.product_id.id), ('order_name', '=', record.origin_order)]
+            purchaseline = self.env['aas.stock.purchase.order.line'].search(linedomain, limit=1)
+            if not purchaseline:
+                continue
+            purchaseorder, pkey = record.order_id, 'P'+str(record.order_id.id)
+            if pkey in purchasedict:
+                if record.state == 'draft':
+                    purchasedict[pkey]['lines'].append((1, purchaseline.id, {'doing_qty': purchaseline.doing_qty-record.product_qty}))
+                else:
+                    purchasedict[pkey]['lines'].append((1, purchaseline.id, {'receipt_qty': purchaseline.receipt_qty-record.product_qty}))
+            else:
+                if record.state == 'draft':
+                    purchasedict[pkey] = {'order': purchaseorder, 'lines':[(1, purchaseline.id, {'doing_qty': purchaseline.doing_qty-record.product_qty})]}
+                else:
+                    purchasedict[pkey] = {'order': purchaseorder, 'lines': [(1, purchaseline.id, {'receipt_qty': purchaseline.receipt_qty-record.product_qty})]}
+        result = super(AASStockReceiptLine, self).unlink()
+        if purchasedict and len(purchasedict) > 0:
+            # 采购收货单删除时需要清理采购订单明细上的已收数量或处理中数量
+            for pkey, pval in purchasedict.items():
+                purchaseorder, purchaselines = pval['order'], pval['lines']
+                purchaseorder.write({'order_lines': purchaselines})
+        return result

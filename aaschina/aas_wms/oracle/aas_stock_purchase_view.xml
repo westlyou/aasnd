@@ -152,6 +152,20 @@
             </field>
         </record>
 
+        <record id="action_aas_stock_purchase_receipt_order" model="ir.actions.act_window">
+            <field name="name">多单收货</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.stock.purchase.receipt.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_form_aas_stock_purchase_receipt_order"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem id="menu_aas_stock_purchase_receipt_order"  name="多单收货" action="action_aas_stock_purchase_receipt_order"
+                          parent="menu_aas_stock_purchase" sequence="2" groups="stock.group_stock_user,stock.group_stock_manager"/>
+
+
         <record id="view_form_aas_stock_purchase_receipt_line" model="ir.ui.view">
             <field name="name">aas.stock.purchase.receipt.line.wizard</field>
             <field name="model">aas.stock.purchase.receipt.wizard</field>
