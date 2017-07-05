@@ -65,6 +65,13 @@ class AASStockPurchaseOrder(models.Model):
     order_lines = fields.One2many(comodel_name='aas.stock.purchase.order.line', inverse_name='order_id', string=u'采购明细')
     ebs_order_id = fields.Integer(string=u'EBS采购订单ID')
     ebsorder = fields.Boolean(string=u'Oracle订单', default=False, copy=False)
+    receiptable = fields.Boolean(string=u'可否收货', compute='_compute_receiptable', store=True)
+
+    @api.depends('order_lines.receiptable')
+    def _compute_receiptable(self):
+        for record in self:
+            record.receiptable = any([rline.receiptable for rline in record.order_lines])
+
 
     @api.model
     def action_import_order(self, order_number):
@@ -178,6 +185,7 @@ class AASStockPurchaseOrder(models.Model):
             self.write({'order_lines': aas_line_list})
         return {"type": "ir.actions.client", "tag": "reload"}
 
+
     @api.multi
     def action_purchase_receipt(self):
         """
@@ -185,26 +193,80 @@ class AASStockPurchaseOrder(models.Model):
         :return:
         """
         self.ensure_one()
+        plines = []
+        for pline in self.order_lines:
+            receipt_qty = pline.product_qty + pline.rejected_qty - pline.receipt_qty - pline.doing_qty
+            if float_compare(receipt_qty, 0.0, precision_rounding=0.000001) > 0.0:
+                plines.append((0, 0, {'line_id': pline.id, 'receipt_qty': receipt_qty, 'product_qty': receipt_qty}))
+        if not plines or len(plines) <= 0:
+            raise UserError(u'请仔细检查，可能当前采购订单已完成收货！')
+
+        wizard = self.env['aas.stock.purchase.receipt.wizard'].create({
+            'partner_id': self.partner_id.id, 'purchase_lines': plines
+        })
+        view_form = self.env.ref('aas_wms.view_form_aas_stock_purchase_receipt_line')
+        return {
+            'name': u"收货明细",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.stock.purchase.receipt.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
 
 
 
 class AASStockPurchaseOrderLine(models.Model):
     _name = 'aas.stock.purchase.order.line'
     _description = 'AAS Stock Purchase Order Line'
-    _rec_name = 'product_id'
+    _rec_name = 'line_name'
 
-    order_id = fields.Many2one(comodel_name='aas.purchase.order', string=u'采购订单', ondelete='cascade')
+    order_id = fields.Many2one(comodel_name='aas.stock.purchase.order', string=u'采购订单', ondelete='cascade')
     order_name = fields.Char(string=u'订单号')
+    line_name = fields.Char(string=u'采购明细')
     partner_id = fields.Many2one(comodel_name='res.partner', string=u'供应商')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位')
     product_qty = fields.Float(string=u'订单数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     receipt_qty = fields.Float(string=u'收货数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     rejected_qty = fields.Float(string=u'退货数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    doing_qty = fields.Float(string=u'确认数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     creation_date = fields.Datetime(string=u'创建日期')
     last_update_date = fields.Datetime(string=u'修改日期')
     created_by = fields.Integer(string='created_by')
     last_updated_by = fields.Integer(string='last_updated_by')
+    receiptable = fields.Boolean(string=u'可否收货', compute='_compute_receiptable', store=True)
+
+    @api.depends('product_qty', 'receipt_qty', 'rejected_qty', 'doing_qty')
+    def _compute_receiptable(self):
+        for record in self:
+            receipt_qty = record.product_qty+record.rejected_qty-record.receipt_qty-record.doing_qty
+            record.receiptable = float_compare(receipt_qty, 0.0, precision_rounding=0.000001) > 0.0
+
+
+
+    @api.model
+    def action_before_create(self, vals):
+        if vals.get('order_id') and (not vals.get('order_name') or not vals.get('partner_id')):
+            order = self.env['aas.stock.purchase.order'].browse(vals.get('order_id'))
+            vals.update({'order_name': order.name, 'partner_id': order.partner_id.id})
+        if not vals.get('product_uom'):
+            product_id = self.env['product.product'].browse(vals.get('product_id'))
+            vals['product_uom'] = product_id.uom_id.id
+
+
+    @api.model
+    def create(self, vals):
+        self.action_before_create(vals)
+        record = super(AASStockPurchaseOrderLine, self).create(vals)
+        line_name = '['+record.order_id.name+']'+record.product_id.default_code
+        record.write({'line_name': line_name})
+        return record
 
 
 
@@ -217,6 +279,75 @@ class AASStockPurchaseReceiptWizard(models.TransientModel):
 
     purchase_orders = fields.One2many(comodel_name='aas.stock.purchase.receipt.order.wizard', inverse_name='wizard_id', string=u'订单明细')
     purchase_lines = fields.One2many(comodel_name='aas.stock.purchase.receipt.line.wizard', inverse_name='wizard_id', string=u'采购明细')
+
+
+    @api.multi
+    def action_order_lines(self):
+        """
+        通过添加多个采购订单生成待收货的订单明细
+        :return:
+        """
+        self.ensure_one()
+        if not self.purchase_orders or len(self.purchase_orders) <= 0:
+            raise UserError(u'请先添加采购订单！')
+        lines = []
+        for wporder in self.purchase_orders:
+            porder = wporder.purchase_id
+            for pline in porder.order_lines:
+                receipt_qty = pline.product_qty + pline.rejected_qty - pline.receipt_qty - pline.doing_qty
+                if float_compare(receipt_qty, 0.0, precision_rounding=0.000001) > 0.0:
+                    lines.append((0, 0, {'line_id': pline.id, 'receipt_qty': receipt_qty, 'product_qty': receipt_qty}))
+        if not lines or len(lines) <= 0:
+            raise UserError(u'请仔细检查，可能当前采购订单都已完成收货！')
+        self.write({'purchase_lines': lines})
+        view_form = self.env.ref('aas_wms.view_form_aas_stock_purchase_receipt_line')
+        return {
+            'name': u"收货明细",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.stock.purchase.receipt.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': self.id,
+            'context': self.env.context
+        }
+
+
+
+    @api.multi
+    def action_receipt(self):
+        """
+        生成收货单
+        :return:
+        """
+        self.ensure_one()
+        if not self.purchase_lines or len(self.purchase_lines) <= 0:
+            raise UserError(u'请重新生成收货明细！')
+        receiptvals, rlines = {'partner_id': self.partner_id.id, 'receipt_type': 'purchase'}, []
+        for pline in self.purchase_lines:
+            tline, product_id = pline.line_id, pline.line_id.product_id
+            rlines.append((0, 0, {
+                'product_id': product_id.id, 'product_uom': tline.product_uom.id, 'origin_order': tline.order_id.name,
+                'receipt_type': 'purchase', 'push_location': product_id.push_location and product_id.push_location.id,
+                'product_qty': pline.product_qty
+            }))
+        receiptvals['receipt_lines'] = rlines
+        receipt = self.env['aas.stock.receipt'].create(receiptvals)
+        view_form = self.env.ref('aas_wms.view_form_aas_stock_receipt_inside')
+        return {
+            'name': u"采购收货",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.stock.receipt',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'self',
+            'res_id': receipt.id,
+            'context': self.env.context
+        }
 
 
 
@@ -236,6 +367,15 @@ class AASStockPurchaseReceiptLineWizard(models.TransientModel):
 
     wizard_id = fields.Many2one(comodel_name='aas.stock.purchase.receipt.wizard', string=u'采购收货', ondelete='cascade')
     line_id = fields.Many2one(comodel_name='aas.stock.purchase.order.line', string=u'收货明细', ondelete='cascade')
-    order_name = fields.Char(string=u'订单号')
     receipt_qty = fields.Float(string=u'可收货数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     product_qty = fields.Float(string=u'收货数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+
+
+    @api.one
+    @api.constrains('product_qty')
+    def action_check_product_qty(self):
+        if float_compare(self.product_qty, self.receipt_qty, precision_rounding=0.000001) > 0.0:
+            raise ValidationError(u'收货数量不可以大于最大可收货数量')
+        if float_compare(self.product_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+            raise ValidationError(u'收货数量必须是一个正数！')
+

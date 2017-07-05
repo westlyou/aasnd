@@ -26,7 +26,7 @@ access_aas_stock_delivery_stock_move_user,aas.stock.delivery.move stock_user,mod
 access_aas_stock_delivery_stock_move_manager,aas.stock.delivery.move stock_manager,model_aas_stock_delivery_move,stock.group_stock_manager,1,1,1,1
 access_aas_stock_delivery_move_report_stock_user,aas.stock.delivery.move.report stock_user,model_aas_stock_delivery_move_report,stock.group_stock_user,1,1,1,1
 access_aas_stock_delivery_move_report_stock_manager,aas.stock.delivery.move.report stock_manager,model_aas_stock_delivery_move_report,stock.group_stock_manager,1,1,1,1
-
+access_aas_stock_quant_report_user,aas.stock.quant.report user,model_aas_stock_quant_report,base.group_user,1,0,0,0
 
 
 

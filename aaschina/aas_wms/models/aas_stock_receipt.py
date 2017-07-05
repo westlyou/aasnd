@@ -219,10 +219,12 @@ class AASStockReceiptLine(models.Model):
         if ('location_id' not in vals) or (not vals.get('location_id')):
             mainbase = self.env['stock.warehouse'].get_default_warehouse()
             vals['warehouse_id'], vals['location_id'] = mainbase.id, mainbase.wh_input_stock_loc_id.id
-        product_id = self.env['product.product'].browse(vals.get('product_id'))
-        vals['product_uom'] = product_id.uom_id.id
-        receipt_id = self.env['aas.stock.receipt'].browse(vals.get('receipt_id'))
-        vals['receipt_type'] = receipt_id.receipt_type
+        if not vals.get('product_uom'):
+            product_id = self.env['product.product'].browse(vals.get('product_id'))
+            vals['product_uom'] = product_id.uom_id.id
+        if not vals.get('receipt_type'):
+            receipt_id = self.env['aas.stock.receipt'].browse(vals.get('receipt_id'))
+            vals['receipt_type'] = receipt_id.receipt_type
 
     @api.model
     def create(self, vals):

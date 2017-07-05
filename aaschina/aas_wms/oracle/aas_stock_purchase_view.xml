@@ -27,6 +27,8 @@
                     <header>
                         <button name="action_synchronize" type="object" string="同步订单" class="oe_highlight"
                                 attrs="{'invisible':[('ebsorder','=',False)]}"/>
+                        <button name="action_purchase_receipt" type="object" string="订单收货" class="oe_highlight"
+                                attrs="{'invisible':[('receiptable','=',False)]}"/>
                     </header>
                     <sheet>
                         <group>
@@ -41,6 +43,7 @@
                         <group>
                             <group>
                                 <field name="ebsorder" invisible="1"/>
+                                <field name="receiptable" invisible="1"/>
                             </group>
                         </group>
                         <notebook>
@@ -51,11 +54,13 @@
                                         <field name="product_qty" required="1"/>
                                         <field name="receipt_qty" readonly="1"/>
                                         <field name="rejected_qty" readonly="1"/>
+                                        <field name="doing_qty" readonly="1"/>
                                     </tree>
                                     <form>
                                         <group>
                                             <group>
                                                 <field name="product_id" required="1" options="{'no_create':true}"/>
+                                                <field name="product_uom" readonly="1"/>
                                                 <field name="order_name" readonly="1"/>
                                                 <field name="partner_id" readonly="1"/>
                                             </group>
@@ -119,6 +124,62 @@
         <menuitem id="menu_aas_stock_purchase_order"  name="采购订单" action="action_aas_stock_purchase_order"
                           parent="menu_aas_stock_purchase" sequence="1" groups="stock.group_stock_user,stock.group_stock_manager"/>
 
+
+        <record id="view_form_aas_stock_purchase_receipt_order" model="ir.ui.view">
+            <field name="name">aas.stock.purchase.receipt.order.wizard</field>
+            <field name="model">aas.stock.purchase.receipt.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="partner_id" required="1" options="{'no_create':true}"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="采购订单">
+                            <field name="purchase_orders">
+                                <tree editable="bottom">
+                                    <field name="purchase_id" required="1" options="{'no_create':true}" domain="[('partner_id','=',parent.partner_id)]"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <footer>
+                        <button name="action_order_lines" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_form_aas_stock_purchase_receipt_line" model="ir.ui.view">
+            <field name="name">aas.stock.purchase.receipt.line.wizard</field>
+            <field name="model">aas.stock.purchase.receipt.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="partner_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="收货明细">
+                            <field name="purchase_lines">
+                                <tree editable="bottom" create="false">
+                                    <field name="line_id" readonly="1"/>
+                                    <field name="receipt_qty" readonly="1"/>
+                                    <field name="product_qty" required="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <footer>
+                        <button name="action_receipt" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
 
 
     </data>
