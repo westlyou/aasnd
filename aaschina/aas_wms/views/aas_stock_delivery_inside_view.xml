@@ -26,6 +26,12 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
+                        <button name="action_confirm" string="确认订单" type="object" class="oe_highlight" states="draft"/>
+                        <button name="action_picking_list" string="拣货清单" type="object" class="oe_highlight" states="confirm,picking"/>
+                        <button name="action_picking_confirm" string="确认拣货" type="object" class="oe_highlight"
+                                attrs="{'invisible':['|',('state','not in',['confirm','picking']),('picking_confirm','=',True)]}"/>
+                        <button name="action_deliver_done" string="确认发货" type="object" class="oe_highlight"
+                                attrs="{'invisible':[('picking_confirm','=',False)]}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,picking,done,cancel"/>
                     </header>
                     <sheet>
@@ -36,16 +42,17 @@
                                 <field name="order_time" readonly="1"/>
                             </group>
                             <group>
-                                <field name="location_id" options="{'no_create': true}"/>
+                                <field name="origin_order" readonly="1"/>
                                 <field name="delivery_type" readonly="1"/>
                                 <field name="done_time" readonly="1"/>
                             </group>
                         </group>
                         <group>
                             <group>
+                                <field name="location_id"/>
                                 <field name="partner_id"/>
-                                <field name="origin_order" readonly="1"/>
                                 <field name="done_time" readonly="1"/>
+                                <field name="picking_confirm" invisible="1"/>
                             </group>
                         </group>
                         <group>
@@ -59,9 +66,9 @@
                                 <field name="delivery_lines"
                                        attrs="{'readonly':['|',('state','!=','draft'),('delivery_type','=','purchase')]}">
                                     <tree editable="bottom">
-                                        <field name="product_id" options="{'no_create':true}"/>
+                                        <field name="product_id" options="{'no_create':true}" required="1"/>
                                         <field name="product_uom" readonly="1"/>
-                                        <field name="product_qty" readonly="1"/>
+                                        <field name="product_qty" required="1"/>
                                         <field name="delivery_qty" readonly="1"/>
                                         <field name="picking_qty" readonly="1"/>
                                         <field name="state" readonly="1"/>
@@ -82,7 +89,7 @@
                                     </form>
                                 </field>
                             </page>
-                            <page string="发货清单">
+                            <page string="拣货清单">
                                 <field name="picking_list" readonly="1">
                                     <tree>
                                         <field name="product_id"/>
@@ -105,9 +112,9 @@
                                 </field>
                             </page>
                             <page string="发货作业">
-                                <field name="operation_lines">
+                                <field name="operation_lines" attrs="{'readonly':['|',('state','in',['draft','done','cancel']),('picking_confirm','=',True)]}">
                                     <tree editable="bottom" edit="false">
-                                        <field name="label_id"/>
+                                        <field name="label_id" options="{'no_create':true}" required="1"/>
                                         <field name="product_id" readonly="1"/>
                                         <field name="product_uom" readonly="1"/>
                                         <field name="product_lot" readonly="1"/>
@@ -197,11 +204,17 @@
             <field name="arch" type="xml">
                 <form create="false" delete="false">
                     <header>
+                        <button name="action_picking_list" string="拣货清单" type="object" class="oe_highlight" states="confirm,picking"/>
+                        <button name="action_picking_confirm" string="确认拣货" type="object" class="oe_highlight"
+                                attrs="{'invisible':['|',('state','not in',['confirm','picking']),('picking_confirm','=',True)]}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,picking,done,cancel"/>
                     </header>
                     <sheet>
                         <group>
-                            <group> <field name="delivery_id" readonly="1"/> </group>
+                            <group>
+                                <field name="delivery_id" readonly="1"/>
+                                <field name="picking_confirm" invisible="1"/>
+                            </group>
                         </group>
                         <group>
                             <group>
@@ -240,9 +253,10 @@
                                 </field>
                             </page>
                             <page string="发货作业">
-                                <field name="operation_lines">
+                                <field name="operation_lines" attrs="{'readonly':['|',('state','in',['draft','done','cancel']),('picking_confirm','=',True)]}">
                                     <tree editable="bottom">
-                                        <field name="label_id" options="{'no_crete':true}" required="1"/>
+                                        <field name="label_id" options="{'no_create':true}" required="1"
+                                                domain="[('product_id','=',parent.product_id)]"/>
                                         <field name="product_id" readonly="1"/>
                                         <field name="product_uom" readonly="1"/>
                                         <field name="product_lot" readonly="1"/>

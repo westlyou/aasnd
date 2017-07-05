@@ -11,7 +11,7 @@ from odoo import api, fields, models, _
 from odoo.addons import decimal_precision as dp
 from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.tools.float_utils import float_compare, float_is_zero
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.tools.sql import drop_view_if_exists
 
 import logging
@@ -37,6 +37,7 @@ class AASStockDelivery(models.Model):
     done_time = fields.Datetime(string=u'完成时间')
     origin_order = fields.Char(string=u'来源单据', copy=False)
     remark = fields.Text(string=u'备注')
+    pick_user = fields.Many2one(comodel_name='res.users', string=u'拣货人', ondelete='restrict')
     partner_id = fields.Many2one(comodel_name='res.partner', string=u'业务伙伴', ondelete='restrict')
     location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='restrict')
     warehouse_id = fields.Many2one(comodel_name='stock.warehouse', string=u'仓库', ondelete='restrict')
@@ -53,10 +54,11 @@ class AASStockDelivery(models.Model):
         if not vals.get('warehouse_id'):
             warehouse = self.env['stock.warehouse'].get_default_warehouse()
             vals.update({'warehouse_id': warehouse.id})
+        vals['name'] = self.env['ir.sequence'].next_by_code('aas.stock.delivery')
 
     @api.model
     def create(self, vals):
-        vals['name'] = self.env['ir.sequence'].next_by_code('aas.stock.delivery')
+        self.action_before_create(vals)
         return super(AASStockDelivery, self).create(vals)
 
     @api.one
@@ -89,7 +91,7 @@ class AASStockDelivery(models.Model):
         operation_lines = self.env['aas.stock.delivery.operation'].search([('delivery_id', '=', self.id), ('deliver_done', '=', False)])
         if not operation_lines or len(operation_lines) <= 0:
             raise UserError(u'您还没有添加拣货作业，不可以确认拣货')
-        self.write({'picking_confirm': True})
+        self.write({'picking_confirm': True, 'delivery_lines': [(1, dline.id, {'picking_confirm': True}) for dline in self.delivery_lines]})
 
 
     @api.multi
@@ -121,39 +123,27 @@ class AASStockDelivery(models.Model):
         仓库已拣货，收货人员检查并确认收货；此时产品库存会扣减
         :return:
         """
-        operation_lines = self.env['aas.stock.delivery.operation'].search([('delivery_id', '=', self.id), ('deliver_done', '=', False)])
-        if not operation_lines or len(operation_lines) <= 0:
-            raise UserError(u'还没有添加拣货明细，不可以确认！')
-        if not self.picking_confirm:
-            raise UserError(u'仓库人员还没有确认拣货结束，不可以操作！')
-        movedict, oplines= {}, []
-        for doperation in operation_lines:
-            oplines.append((1, doperation.id, {'deliver_done': True}))
-            dkey = 'D_'+str(doperation.product_id.id)+'_'+str(doperation.product_lot.id)+'_'+str(doperation.location_id.id)
-            if dkey not in movedict:
-                movedict[dkey]['product_qty'] += doperation.product_qty
-            else:
-                movedict[dkey] = {
-                    'product_id': doperation.product_id.id, 'product_uom': doperation.product_uom.id,
-                    'product_lot': doperation.product_lot.id, 'origin_order': self.origin_order,
-                    'delivery_type': self.delivery_type, 'product_qty': doperation.product_qty,
-                    'location_src_id': doperation.location_id.id, 'location_dest_id': self.location_id.id,
-                    'partner_id': self.partner_id and self.partner_id.id
-                }
-        deliveryvals = {'picking_confirm': False, 'operation_lines': oplines, 'move_lines': [(0, 0, mval) for mkey, mval in movedict]}
-        dlines = self.env['aas.stock.delivery.line'].search([('delivery_id', '=', self.id), ('picking_qty', '>', 0.0)])
-        if dlines and len(dlines) > 0:
-            deliverylines = []
-            for dline in dlines:
-                delivery_qty = dline.delivery_qty + dline.picking_qty
-                lineval = {'delivery_qty':delivery_qty, 'picking_qty': 0.0}
-                if float_compare(dline.product_qty, delivery_qty, precision_rounding=0.000001) <= 0.0:
-                    lineval['state'] = 'done'
-                deliverylines.append((1, dline.id, lineval))
-            deliveryvals['delivery_lines'] = deliverylines
+        if not self.delivery_lines or len(self.delivery_lines) <= 0:
+            return
+        for dline in self.delivery_lines:
+            if dline.state in ['draft', 'done', 'cancel']:
+                continue
+            dline.action_deliver()
+        deliveryvals = {'picking_confirm': False}
+        if all([dline.state == 'done' for dline in self.delivery_lines]):
+            deliveryvals.update({'state': 'done', 'done_time': fields.Datetime.now()})
         self.write(deliveryvals)
-        if all([line.state=='done' for line in self.delivery_lines]):
-            self.write({'state': 'done'})
+
+
+
+
+
+    @api.multi
+    def unlink(self):
+        for record in self:
+            if record.state!='draft':
+                raise UserError(u'发货单%s已经开始处理，不可以删除！'% record.name)
+        return super(AASStockDelivery, self).unlink()
 
 
 
@@ -177,6 +167,7 @@ class AASStockDeliveryLine(models.Model):
     picking_qty = fields.Float(string=u'拣货数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
+    picking_confirm = fields.Boolean(string=u'拣货确认', default=False, copy=False, help=u'发货员确认货物已分拣')
     picking_list = fields.One2many(comodel_name='aas.stock.picking.list', inverse_name='delivery_line', string=u'拣货清单')
     operation_lines = fields.One2many(comodel_name='aas.stock.delivery.operation', inverse_name='delivery_line', string=u'拣货作业')
 
@@ -284,6 +275,57 @@ class AASStockDeliveryLine(models.Model):
         self.action_pickinglist(self)
 
 
+    @api.one
+    def action_picking_confirm(self):
+        """
+        拣货确认，仓库人员拣货结束后需要确认拣货，然后诸如生产领料员就可以检查并确认收货
+        :return:
+        """
+        operation_lines = self.env['aas.stock.delivery.operation'].search([('delivery_line', '=', self.id), ('deliver_done', '=', False)])
+        if not operation_lines or len(operation_lines) <= 0:
+            raise UserError(u'您还没有添加%s拣货作业，不可以确认拣货'% self.product_id.default_code)
+        self.delivery_id.action_picking_confirm()
+
+
+    @api.one
+    def action_deliver(self):
+        """
+        执行发货
+        :return:
+        """
+        operation_lines = self.env['aas.stock.delivery.operation'].search([('delivery_line', '=', self.id), ('deliver_done', '=', False)])
+        if not operation_lines or len(operation_lines) <= 0:
+            if self.picking_confirm:
+                self.write({'picking_confirm': False})
+            return
+        if not self.picking_confirm:
+            raise UserError(u'仓库人员还没有确认拣货结束，不可以操作！')
+        delivery, movedict, oplines, labels = self.delivery_id, {}, [], self.env['aas.product.label']
+        for doperation in operation_lines:
+            labels |= doperation.label_id
+            oplines.append((1, doperation.id, {'deliver_done': True}))
+            dkey = 'D_'+str(doperation.product_id.id)+'_'+str(doperation.product_lot.id)+'_'+str(doperation.location_id.id)
+            if dkey in movedict:
+                movedict[dkey]['product_qty'] += doperation.product_qty
+            else:
+                movedict[dkey] = {
+                    'product_id': doperation.product_id.id, 'product_uom': doperation.product_uom.id,
+                    'product_lot': doperation.product_lot.id, 'origin_order': delivery.origin_order,
+                    'delivery_type': delivery.delivery_type, 'product_qty': doperation.product_qty,
+                    'location_src_id': doperation.location_id.id, 'location_dest_id': delivery.location_id.id,
+                    'partner_id': delivery.partner_id and delivery.partner_id.id, 'delivery_user': self.env.user.id
+                }
+        delivery_qty = self.delivery_qty + self.picking_qty
+        linevals = {'picking_confirm': False, 'delivery_qty': delivery_qty, 'picking_qty': 0.0}
+        if float_compare(self.product_qty, delivery_qty, precision_rounding=0.000001) <= 0.0:
+            linevals['state'] = 'done'
+        deliveryvals = {'delivery_lines': [(1, self.id, linevals)], 'operation_lines': oplines}
+        deliveryvals['move_lines'] = [(0, 0, mval) for mkey, mval in movedict.items()]
+        delivery.write(deliveryvals)
+        if delivery.delivery_type == 'manufacture':
+            labels.write({'location_id': delivery.location_id.id})
+        else:
+            labels.write({'location_id': delivery.location_id.id, 'state': 'over'})
 
 
 
@@ -330,6 +372,17 @@ class AASStockDeliveryOperation(models.Model):
         ('uniq_label', 'unique (delivery_id, label_id)', u'请不要重复添加同一个标签！')
     ]
 
+    @api.one
+    @api.constrains('label_id')
+    def action_check_label(self):
+        if self.delivery_id.delivery_type != 'purchase':
+            product_id, location_id, product_lot = self.label_id.product_id, self.label_id.location_id, self.label_id.product_lot
+            listdomain = [('product_id', '=', product_id.id), ('product_lot', '=', product_lot.id)]
+            listdomain.extend([('location_id', '=', location_id.id), ('delivery_id', '=', self.delivery_id.id)])
+            if self.env['aas.stock.picking.list'].search_count(listdomain) <= 0:
+                raise ValidationError(u'请仔细检查是否已生成拣货清单；若拣货清单已生成，则说明当前标签%s不可以拣货到当前发货单！'% self.label_id.name)
+
+
     @api.onchange('label_id')
     def action_change_label(self):
         if self.label_id:
@@ -349,8 +402,6 @@ class AASStockDeliveryOperation(models.Model):
         elif vals.get('delivery_id') and not vals.get('delivery_line'):
             dline = self.env['aas.stock.delivery.line'].search([('delivery_id', '=', vals.get('delivery_id')), ('product_id', '=', label.product_id.id)], limit=1)
             vals.update({'delivery_line': dline.id})
-        if self.env['aas.stock.delivery.line'].search_count([('delivery_id', '=', vals.get('delivery_id')), ('product_id', '=', label.product_id.id)]) <= 0:
-            raise UserError(u'非法标签，当前标签货物不在发货明细中,请重新拣货！')
         vals.update({
             'product_id': label.product_id.id, 'product_uom': label.product_uom.id,
             'product_lot': label.product_lot.id, 'location_id': label.location_id.id,
