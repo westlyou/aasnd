@@ -26,7 +26,9 @@
         'views/aas_stock_delivery_view.xml',
         'views/aas_stock_delivery_outside_view.xml',
         'views/aas_stock_delivery_inside_view.xml',
-        'wizard/aas_stock_delivery_wizard_view.xml'
+        'wizard/aas_stock_delivery_wizard_view.xml',
+
+        'oracle/aas_stock_purchase_view.xml'
     ],
     'qweb':[],
     'installable': True,

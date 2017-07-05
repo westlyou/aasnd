@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <menuitem id="menu_aas_stock_purchase"  name="采购管理" parent="stock.menu_stock_root"
+                  sequence="4" groups="stock.group_stock_user,stock.group_stock_manager"/>
+
+        <record id="view_tree_aas_stock_purchase_order" model="ir.ui.view">
+            <field name="name">aas.stock.purchase.order.tree</field>
+            <field name="model">aas.stock.purchase.order</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree orderimport="true">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="creation_date"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_stock_purchase_order" model="ir.ui.view">
+            <field name="name">aas.stock.purchase.order.form</field>
+            <field name="model">aas.stock.purchase.order</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_synchronize" type="object" string="同步订单" class="oe_highlight"
+                                attrs="{'invisible':[('ebsorder','=',False)]}"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" attrs="{'readonly':[('ebsorder','=',True)]}" required="1"/>
+                            </group>
+                            <group>
+                                <field name="partner_id" options="{'no_create':true}"
+                                       required="1" attrs="{'readonly':[('ebsorder','=',True)]}"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="ebsorder" invisible="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="订单明细">
+                                <field name="order_lines" attrs="{'readonly':[('ebsorder','=',True)]}">
+                                    <tree editable="bottom" edit="false">
+                                        <field name="product_id" required="1" options="{'no_create':true}"/>
+                                        <field name="product_qty" required="1"/>
+                                        <field name="receipt_qty" readonly="1"/>
+                                        <field name="rejected_qty" readonly="1"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="product_id" required="1" options="{'no_create':true}"/>
+                                                <field name="order_name" readonly="1"/>
+                                                <field name="partner_id" readonly="1"/>
+                                            </group>
+                                            <group>
+                                                <field name="product_qty" required="1"/>
+                                                <field name="receipt_qty" readonly="1"/>
+                                                <field name="rejected_qty" readonly="1"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_stock_purchase_order" model="ir.ui.view">
+            <field name="name">aas.stock.purchase.order.search</field>
+            <field name="model">aas.stock.purchase.order</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="订单号" filter_domain="[('name','ilike',self)]"/>
+                    <field name="partner_id" string="供应商" filter_domain="[('partner_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="供应商" context="{'group_by':'partner_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_stock_purchase_order" model="ir.actions.act_window">
+            <field name="name">采购订单</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.stock.purchase.order</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_stock_purchase_order"/>
+            <field name="search_view_id" ref="view_search_aas_stock_purchase_order"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加采购订单</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_stock_purchase_order" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_stock_purchase_order"/>
+            <field name="act_window_id" ref="action_aas_stock_purchase_order"/>
+        </record>
+
+        <record id="act_view_form_aas_stock_purchase_order" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_stock_purchase_order"/>
+            <field name="act_window_id" ref="action_aas_stock_purchase_order"/>
+        </record>
+
+        <menuitem id="menu_aas_stock_purchase_order"  name="采购订单" action="action_aas_stock_purchase_order"
+                          parent="menu_aas_stock_purchase" sequence="1" groups="stock.group_stock_user,stock.group_stock_manager"/>
+
+
+
+    </data>
+</odoo>
