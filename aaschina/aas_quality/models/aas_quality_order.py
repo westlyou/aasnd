@@ -119,6 +119,15 @@ class AASQualityOrder(models.Model):
         if qlabels and len(qlabels) > 0:
             self.write({'operation_lines': [(0, 0, {'qlabel_id': qlabel.id}) for qlabel in qlabels]})
 
+    @api.multi
+    def action_done(self):
+        self.ensure_one()
+        qlabels = self.env['aas.quality.label'].search([('order_id', '=', self.id), ('label_checked', '=', False)])
+        if qlabels and len(qlabels) > 0:
+            raise UserError(u'您还有部分标签还未检测')
+
+
+
 
     @api.none
     def action_all_unqualified(self):
@@ -154,7 +163,10 @@ class AASQualityLabel(models.Model):
     origin_order = fields.Char(string=u'来源单据', copy=False)
     label_checked = fields.Boolean(string=u'是否检测', default=False, copy=False)
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
-
+    # 报检单据信息
+    commit_id = fields.Integer(string=u'报检单据ID')
+    commit_model = fields.Char(string=u'报检单据Model')
+    commit_order = fields.Char(string=u'报检单据名称')
 
     _sql_constraints = [
         ('uniq_label', 'unique (order_id, label_id)', u'请不要重复添加同一个标签！')
@@ -198,6 +210,11 @@ class AASQualityOperation(models.Model):
     unqualified_qty = fields.Float(string=u'不合格数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
+    # 报检单据信息
+    commit_id = fields.Integer(string=u'报检单据ID')
+    commit_model = fields.Char(string=u'报检单据Model')
+    commit_order = fields.Char(string=u'报检单据名称')
+
     _sql_constraints = [
         ('uniq_qlabel', 'unique (order_id, qlabel_id)', u'请不要重复添加同一个标签！')
     ]
@@ -231,7 +248,8 @@ class AASQualityOperation(models.Model):
         qlabel = self.env['aas.quality.label'].browse(vals.get('qlabel_id'))
         vals.update({
             'product_id': qlabel.product_id.id, 'product_uom': qlabel.product_uom.id,
-            'product_lot': qlabel.product_lot.id, 'product_qty': qlabel.product_qty
+            'product_lot': qlabel.product_lot.id, 'product_qty': qlabel.product_qty,
+            'commit_id': qlabel.commit_id, 'commit_model': qlabel.commit_model, 'commit_order': qlabel.commit_order
         })
 
     @api.one
@@ -298,6 +316,11 @@ class AASQualityRejection(models.Model):
     origin_order = fields.Char(string=u'来源单据', copy=False)
     current_label = fields.Boolean(string=u'新建标签', default=False, copy=False, help=u'由其他标签部分不合格品中拆分而来；如果为False说明那个标签全部不合格')
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
+
+    # 报检单据信息
+    commit_id = fields.Integer(string=u'报检单据ID')
+    commit_model = fields.Char(string=u'报检单据Model')
+    commit_order = fields.Char(string=u'报检单据名称')
 
     _sql_constraints = [
         ('uniq_label', 'unique (order_id, label_id)', u'请不要重复添加同一个标签！')

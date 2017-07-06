@@ -35,6 +35,11 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
+                        <button name="action_confirm" string="确认" type="object" states="draft" class="oe_highlight"/>
+                        <button name="'action_all_qualified" string="全部合格" type="object" states="tocheck,checking"
+                                class="oe_highlight" groups="group_aas_quality_user,group_aas_quality_manager"/>
+                        <button name="'action_all_unqualified" string="全不合格" type="object" states="tocheck,checking"
+                                class="oe_highlight" groups="group_aas_quality_user,group_aas_quality_manager"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,tocheck,checking,done,cancel"/>
                     </header>
                     <sheet>
