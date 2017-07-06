@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_aas_quality_order_quality_user,aas.quality.order quality_user,model_aas_quality_order,group_aas_quality_user,1,1,0,0
+access_aas_quality_order_quality_manager,aas.quality.order quality_manager,model_aas_quality_order,group_aas_quality_manager,1,1,1,1
+access_aas_quality_label_quality_user,aas.quality.label quality_user,model_aas_quality_label,group_aas_quality_user,1,1,1,1
+access_aas_quality_label_quality_manager,aas.quality.label quality_manager,model_aas_quality_label,group_aas_quality_manager,1,1,1,1
+access_aas_quality_operation_quality_user,aas.quality.operation quality_user,model_aas_quality_operation,group_aas_quality_user,1,1,1,1
+access_aas_quality_operation_quality_manager,aas.quality.operation quality_manager,model_aas_quality_operation,group_aas_quality_manager,1,1,1,1
+access_aas_quality_rejection_quality_user,aas.quality.rejection quality_user,model_aas_quality_rejection,group_aas_quality_user,1,1,1,1
+access_aas_quality_rejection_quality_manager,aas.quality.rejection quality_manager,model_aas_quality_rejection,group_aas_quality_manager,1,1,1,1

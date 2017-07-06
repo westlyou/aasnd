@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <menuitem id="menu_aas_quality_order"  name="质检" parent="menu_aas_quality" sequence="1"
+                  groups="group_aas_quality_user,group_aas_quality_manager"/>
+
+        <record id="view_tree_aas_quality_order" model="ir.ui.view">
+            <field name="name">aas.quality.order.tree</field>
+            <field name="model">aas.quality.order</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="product_id"/>
+                    <field name="product_uom"/>
+                    <field name="product_qty"/>
+                    <field name="qualified_qty"/>
+                    <field name="concession_qty"/>
+                    <field name="unqualified_qty"/>
+                    <field name="commit_user"/>
+                    <field name="commit_time"/>
+                    <field name="check_user"/>
+                    <field name="check_time"/>
+                    <field name="partner_id"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_quality_order" model="ir.ui.view">
+            <field name="name">aas.quality.order.form</field>
+            <field name="model">aas.quality.order</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,tocheck,checking,done,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="partner_id" attrs="{'readonly':[('state','!=','draft')]}"/>
+                                <field name="id" invisible="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="product_id" attrs="{'readonly':[('state','!=','draft')]}"/>
+                                <field name="product_uom" readonly="1"/>
+                                <field name="product_qty" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="qualified_qty" readonly="1"/>
+                                <field name="concession_qty" readonly="1"/>
+                                <field name="unqualified_qty" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="commit_user" attrs="{'readonly':[('state','!=','draft')]}"/>
+                                <field name="commit_time" attrs="{'readonly':[('state','!=','draft')]}"/>
+                            </group>
+                            <group>
+                                <field name="check_user" readonly="1"/>
+                                <field name="check_time" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="质检清单">
+                                <field name="label_lines" attrs="{'readonly':[('state','!=','draft')]}">
+                                    <tree editable="bottom">
+                                        <field name="label_id" options="{'no_create':true}" required="1"
+                                               domain="[('product_id','=',parent.product_id)]"/>
+                                        <field name="product_id" readonly="1"/>
+                                        <field name="product_uom" readonly="1"/>
+                                        <field name="product_lot" readonly="1"/>
+                                        <field name="product_qty" readonly="1"/>
+                                        <field name="origin_order" readonly="1"/>
+                                        <field name="label_checked" readonly="1"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="label_id"/>
+                                            </group>
+                                        </group>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_uom"/>
+                                                <field name="product_lot"/>
+                                            </group>
+                                            <group>
+                                                <field name="product_qty"/>
+                                                <field name="origin_order"/>
+                                                <field name="label_checked"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="质检作业">
+                                <field name="operation_lines">
+                                    <tree editable="bottom">
+                                        <field name="qlabel_id" required="1" options="{'no_create':true}"
+                                               domain="[('order_id','=',parent.id)]"/>
+                                        <field name="product_id" readonly="1"/>
+                                        <field name="product_uom" readonly="1"/>
+                                        <field name="product_lot" readonly="1"/>
+                                        <field name="product_qty" readonly="1"/>
+                                        <field name="qualified_qty" readonly="1"/>
+                                        <field name="concession_qty"/>
+                                        <field name="unqualified_qty"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_lot"/>
+                                                <field name="product_qty"/>
+                                            </group>
+                                            <group>
+                                                <field name="qualified_qty"/>
+                                                <field name="concession_qty"/>
+                                                <field name="unqualified_qty"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="不合格品">
+                                <field name="rejection_lines" readonly="1">
+                                    <tree>
+                                        <field name="label_id"/>
+                                        <field name="product_id"/>
+                                        <field name="product_uom"/>
+                                        <field name="product_lot"/>
+                                        <field name="product_qty"/>
+                                        <field name="origin_order"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="label_id"/>
+                                                <field name="product_uom"/>
+                                                <field name="origin_order"/>
+                                            </group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_lot"/>
+                                                <field name="product_qty"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_quality_order" model="ir.ui.view">
+            <field name="name">aas.quality.order.search</field>
+            <field name="model">aas.quality.order</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="commit_user" string="报检员" filter_domain="[('commit_user','ilike',self)]"/>
+                    <field name="check_user" string="质检员" filter_domain="[('check_user','ilike',self)]"/>
+                    <separator/>
+                    <filter string="待检" domain="[('state','=','tocheck')]"/>
+                    <filter string="已检" domain="[('state','=','done')]"/>
+                    <filter string="取消" domain="[('state','=','cancel')]"/>
+                    <filter string="质检中" domain="[('state','=','checking')]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="报检员" context="{'group_by':'commit_user'}"/>
+                        <filter string="质检员" context="{'group_by':'check_user'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_quality_order" model="ir.actions.act_window">
+            <field name="name">质检</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.quality.order</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_quality_order"/>
+            <field name="search_view_id" ref="view_search_aas_quality_order"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加质检单</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_quality_order" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_quality_order"/>
+            <field name="act_window_id" ref="action_aas_quality_order"/>
+        </record>
+
+        <record id="act_view_form_aas_quality_order" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_quality_order"/>
+            <field name="act_window_id" ref="action_aas_quality_order"/>
+        </record>
+
+        <menuitem id="menu_aas_quality_order_list"  name="质检单" action="action_aas_quality_order" sequence="1"
+                          parent="menu_aas_quality_order" groups="group_aas_quality_user,group_aas_quality_manager"/>
+
+    </data>
+</odoo>

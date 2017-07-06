@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <menuitem id="menu_aas_quality" name="质量"  sequence="10" groups="group_aas_quality_user,group_aas_quality_manager"/>
+
+    </data>
+</odoo>
