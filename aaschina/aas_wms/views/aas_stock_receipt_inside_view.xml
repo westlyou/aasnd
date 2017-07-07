@@ -541,6 +541,24 @@
             </field>
         </record>
 
+        <record id="view_tree_aas_stock_receipt_line_purchase" model="ir.ui.view">
+            <field name="name">aas.stock.receipt.line.purchase.tree</field>
+            <field name="model">aas.stock.receipt.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="product_id"/>
+                    <field name="receipt_id"/>
+                    <field name="product_uom"/>
+                    <field name="product_qty"/>
+                    <field name="receipt_qty"/>
+                    <field name="doing_qty"/>
+                    <field name="origin_order"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
         <record id="view_form_aas_stock_receipt_line_purchase" model="ir.ui.view">
             <field name="name">aas.stock.receipt.line.purchase.form</field>
             <field name="model">aas.stock.receipt.line</field>
@@ -685,7 +703,7 @@
             <field name="res_model">aas.stock.receipt.line</field>
             <field name="limit">50</field>
             <field name="view_mode">form,tree</field>
-            <field name="view_id" ref="view_tree_aas_stock_receipt_line_inside"/>
+            <field name="view_id" ref="view_tree_aas_stock_receipt_line_purchase"/>
             <field name="search_view_id" ref="view_search_aas_stock_receipt_line"/>
             <field name="domain">[('receipt_type', '=', 'purchase')]</field>
             <field name="context">{'default_receipt_type': 'purchase'}</field>
@@ -694,7 +712,7 @@
         <record id="act_view_tree_aas_stock_receipt_line_purchase" model="ir.actions.act_window.view">
             <field name="sequence" eval="1"/>
             <field name="view_mode">tree</field>
-            <field name="view_id" ref="view_tree_aas_stock_receipt_line_inside"/>
+            <field name="view_id" ref="view_tree_aas_stock_receipt_line_purchase"/>
             <field name="act_window_id" ref="action_aas_stock_receipt_line_purchase"/>
         </record>
 

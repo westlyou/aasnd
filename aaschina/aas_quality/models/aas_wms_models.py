@@ -20,11 +20,98 @@ _logger = logging.getLogger(__name__)
 CHECK_STATE = [('draft', u'草稿'), ('tocheck', u'待检'), ('checking', u'检测中'), ('done', u'完成'), ('cancel', u'取消')]
 
 
+class AASStockReceipt(models.Model):
+    _inherit = 'aas.stock.receipt'
+
+    @api.multi
+    def action_commit_checking(self):
+        """
+        多张收货单提交报检
+        :return:
+        """
+        productdict, commit_user, commit_time = {}, self.env.user, fields.Datetime.now()
+        for record in self:
+            if record.state != 'confirm' or record.receipt_type != 'purchase':
+                continue
+            if not record.receipt_lines or len(record.receipt_lines) <= 0:
+                continue
+            for rline in record.receipt_lines:
+                if rline.state != 'confirm':
+                    continue
+                pkey = 'P'+str(rline.product_id.id)
+                if pkey in productdict:
+                    productdict[pkey]['product_qty'] += rline.product_qty
+                    productdict[pkey]['rlines'].append(rline.id)
+                    productdict[pkey]['qlabels'].extends([(0, 0, {
+                        'label_id': rlabel.id, 'commit_id': rline.id, 'commit_model': 'aas.stock.receipt.line',
+                        'commit_order': '['+record.name+']'+rline.product_id.default_code
+                    })])
+                else:
+                    productdict[pkey] = {
+                        'product_id': rline.product_id.id, 'product_uom': rline.product_uom.id, 'product_qty': rline.product_qty,
+                        'commit_user': commit_user.id, 'commit_time': commit_time, 'state': 'tocheck', 'partner_id': record.partner_id and record.partner_id.id,
+                        'rlines': [rline.id], 'qlabels': [(0, 0, {
+                            'label_id': rlabel.id, 'commit_id': rline.id, 'commit_model': 'aas.stock.receipt.line',
+                            'commit_order': '['+record.name+']'+rline.product_id.default_code
+                        }) for rlabel in rline.label_list]
+                    }
+        if productdict and len(productdict) > 0:
+            for pkey, pval in productdict.items():
+                qualityvals = {
+                   'product_id': pval['product_id'], 'product_uom': pval['product_uom'], 'product_qty': pval['product_qty'],
+                    'commit_user': pval['commit_user'], 'commit_time': pval['commit_time'], 'state': pval['state'], 'partner_id': pval['partner_id'],
+                    'label_lines': pval['qlabels']
+                }
+                quality = self.env['aas.quality.order'].create(qualityvals)
+                receiptlines = self.env['aas.stock.receipt.line'].browse(pval['rlines'])
+                receiptlines.write({'quality_id': quality.id})
+
+
+
 class AASStockReceiptLine(models.Model):
     _inherit = 'aas.stock.receipt.line'
 
     quality_id = fields.Many2one(comodel_name='aas.quality.order', string=u'质检单', ondelete='set null')
     quality_state = fields.Selection(selection=CHECK_STATE, string=u'质检状态', related='quality_id.state', store=True)
+
+    @api.multi
+    def action_commit_checking(self):
+        """
+        批量收货明细提交报检
+        :return:
+        """
+        productdict, commit_user, commit_time = {}, self.env.user, fields.Datetime.now()
+        for record in self:
+            if record.state!='confirm' or record.receipt_type!='purchase':
+                continue
+            pkey, receipt = 'P'+str(record.product_id.id), record.receipt_id
+            if pkey in productdict:
+                productdict[pkey]['product_qty'] += record.product_qty
+                productdict[pkey]['rlines'].append(record.id)
+                productdict[pkey]['qlabels'].extends([(0, 0, {
+                    'label_id': rlabel.id, 'commit_id': record.id, 'commit_model': 'aas.stock.receipt.line',
+                    'commit_order': '['+receipt.name+']'+record.product_id.default_code
+                }) for rlabel in record.label_list])
+            else:
+                productdict[pkey] = {
+                    'product_id': rlabel.product_id.id, 'product_uom': rlabel.product_uom.id, 'product_qty': rlabel.product_qty,
+                    'commit_user': commit_user.id, 'commit_time': commit_time, 'state': 'tocheck', 'partner_id': receipt.partner_id and receipt.partner_id.id,
+                    'rlines': [record.id], 'qlabels': [(0, 0, {
+                        'label_id': rlabel.id, 'commit_id': record.id, 'commit_model': 'aas.stock.receipt.line',
+                        'commit_order': '['+record.name+']'+record.product_id.default_code
+                    }) for rlabel in record.label_list]
+                }
+        if productdict and len(productdict) > 0:
+            for pkey, pval in productdict.items():
+                qualityvals = {
+                   'product_id': pval['product_id'], 'product_uom': pval['product_uom'], 'product_qty': pval['product_qty'],
+                    'commit_user': pval['commit_user'], 'commit_time': pval['commit_time'], 'state': pval['state'], 'partner_id': pval['partner_id'],
+                    'label_lines': pval['qlabels']
+                }
+                quality = self.env['aas.quality.order'].create(qualityvals)
+                receiptlines = self.env['aas.stock.receipt.line'].browse(pval['rlines'])
+                receiptlines.write({'quality_id': quality.id})
+
 
 
 class AASStockReceiptLabel(models.Model):

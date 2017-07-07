@@ -7,6 +7,44 @@
             <field name="model">aas.stock.receipt</field>
             <field name="inherit_id" ref="aas_wms.view_form_aas_stock_receipt_purchase"/>
             <field name="arch" type="xml">
+                <button name="action_refresh_push_location" position="before">
+                    <button name="action_commit_checking" type="object" string="收货报检" class="oe_highlight"
+                                attrs="{'invisible':[('state','!=','confirm')]}"/>
+                </button>
+                <field name="receipt_lines" position="replace">
+                    <field name="receipt_lines" readonly="1">
+                                    <tree editable="bottom">
+                                        <field name="product_id"/>
+                                        <field name="product_uom"/>
+                                        <field name="product_qty"/>
+                                        <field name="receipt_qty"/>
+                                        <field name="doing_qty"/>
+                                        <field name="label_related"/>
+                                        <field name="state"/>
+                                        <field name="origin_order"/>
+                                        <field name="quality_id"/>
+                                        <field name="quality_state"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="receipt_id"/>
+                                                <field name="product_id"/>
+                                                <field name="product_uom"/>
+                                                <field name="label_related"/>
+                                                <field name="quality_id"/>
+                                            </group>
+                                            <group>
+                                                <field name="product_qty"/>
+                                                <field name="receipt_qty"/>
+                                                <field name="doing_qty"/>
+                                                <field name="origin_order"/>
+                                                <field name="quality_state"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                </field>
                 <field name="label_lines" position="replace">
                     <field name="label_lines" readonly="1">
                         <tree>
@@ -46,11 +84,33 @@
             </field>
         </record>
 
+        <record id="view_tree_aas_stock_receipt_line_purchase_quality" model="ir.ui.view">
+            <field name="name">aas.stock.receipt.line.purchase.quality.tree</field>
+            <field name="model">aas.stock.receipt.line</field>
+            <field name="inherit_id" ref="aas_wms.view_tree_aas_stock_receipt_line_purchase"/>
+            <field name="arch" type="xml">
+                <field name="state" position="after">
+                    <field name="quality_id"/>
+                    <field name="quality_state"/>
+                </field>
+            </field>
+        </record>
+
         <record id="view_form_aas_stock_receipt_line_purchase_quality" model="ir.ui.view">
             <field name="name">aas.stock.receipt.line.purchase.quality.form</field>
             <field name="model">aas.stock.receipt.line</field>
             <field name="inherit_id" ref="aas_wms.view_form_aas_stock_receipt_line_purchase"/>
             <field name="arch" type="xml">
+                <button name="action_refresh_push_location" position="before">
+                    <button name="action_commit_checking" type="object" string="收货报检" class="oe_highlight"
+                                attrs="{'invisible':[('state','!=','confirm')]}"/>
+                </button>
+                <notebook position="before">
+                    <group>
+                        <group> <field name="quality_id" readonly="1"/> </group>
+                        <group> <field name="quality_state" readonly="1"/> </group>
+                    </group>
+                </notebook>
                 <field name="label_list" position="replace">
                     <field name="label_list" readonly="1">
                         <tree>
