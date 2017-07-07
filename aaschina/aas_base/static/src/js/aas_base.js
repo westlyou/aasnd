@@ -12,6 +12,7 @@ odoo.define('aas.base', function (require) {
     var framework = require('web.framework');
     var WebClient = require('web.WebClient');
     var ListView = require('web.ListView');
+    var FormView = require('web.FormView');
     var Model = require('web.DataModel');
     var session = require('web.session');
     var Dialog = require('web.Dialog');
@@ -27,6 +28,7 @@ odoo.define('aas.base', function (require) {
             this.set('title_part', {"zopenerp": document.title});
         }
     });
+
 
     Sidebar.include({
         add_items: function(section_code, items) {
@@ -44,6 +46,35 @@ odoo.define('aas.base', function (require) {
         }
     });
 
+    FormView.include({
+        is_action_enabled: function(action) {
+            var attrs = this.fields_view.arch.attrs;
+            if(action=='labelprint'){
+                return (action in attrs) ? JSON.parse(attrs[action]) : false;
+            }
+            return (action in attrs) ? JSON.parse(attrs[action]) : true;
+        },
+        render_sidebar: function($node) {
+            var tempsuper = _.bind(this._super, this);
+            tempsuper.call(self, $node);
+            var self = this;
+            if (!self.sidebar) {
+                self.sidebar = new Sidebar(self, {editable: self.is_action_enabled('edit')});
+                $node = $node || self.$('.oe_form_sidebar');
+                self.sidebar.appendTo($node);
+                self.toggle_sidebar();
+            }
+            if(self.is_action_enabled('labelprint')){
+                self.sidebar.add_items('print', _.compact([
+                    { label: '标签打印', callback: self.on_sidebar_printlabel }
+                ]));
+            }
+        },
+        on_sidebar_printlabel: function(){
+            new AASLabelPrint(this, this.dataset).open();
+        }
+    });
+
 
     ListView.include({
         init: function (parent, dataset, view_id, options) {
@@ -51,7 +82,7 @@ odoo.define('aas.base', function (require) {
         },
         is_action_enabled: function(action) {
             var attrs = this.fields_view.arch.attrs;
-            if(action=='orderimport' || action=='import'){
+            if(action=='orderimport' || action=='import' || action=='labelprint'){
                 return (action in attrs) ? JSON.parse(attrs[action]) : false;
             }
             return (action in attrs) ? JSON.parse(attrs[action]) : true;
@@ -80,12 +111,20 @@ odoo.define('aas.base', function (require) {
             this.sidebar.add_items('other', _.compact([
                 { label: '数据导出', callback: this.do_aas_web_export}
             ]));
+            if (self.is_action_enabled('labelprint')){
+               self.sidebar.add_items('print', _.compact([
+                   { label: '标签打印', callback: this.do_aas_label_print}
+               ]));
+            }
         },
         do_aas_web_export: function(){
             new AASWebExporter(this, this.dataset).open();
         },
         do_aas_order_import: function(){
             new AASOrderImport(this, this.dataset).open();
+        },
+        do_aas_label_print: function(){
+            new AASLabelPrint(this, this.dataset).open();
         }
     });
 
@@ -441,9 +480,93 @@ odoo.define('aas.base', function (require) {
         }
     });
 
+    var AASLabelPrint = Dialog.extend({
+        template: 'AASLabelPrintDialog',
+        init: function(parent, dataset) {
+            var options = {
+                title: '标签打印',
+                buttons: [
+                    {text: '打印', click: this.print_label, classes: "btn-primary"},
+                    {text: '关闭', close: true},
+                ],
+            };
+            this._super(parent, options);
+            this.dataset = dataset;
+            this.res_model = dataset.model;
+
+            // The default for the ".modal_content" element is "max-height: 100%;"
+            // but we want it to always expand to "height: 100%;" for this modal.
+            // This can be achieved thanks to LESS modification without touching
+            // the ".modal-content" rules... but not with Internet explorer (11).
+            this.$modal.find(".modal-content").css("height", "200");
+        },
+        start: function() {
+            var self = this;
+            this._super.apply(this, arguments);
+            self.$el.find('#label_printer').empty();
+            var load_printers = self.rpc("/aas/base/labelprinters", {
+                model: self.dataset.model
+            }).done(function (records) {
+                if (records.length<=0){
+                    return ;
+                }
+                var printer_list = self.$el.find('#label_printer');
+                _.each(records, function(record){
+                    printer_list.append(new Option(record.pname, record.pid));
+                });
+            });
+            var waitFor = [load_printers];
+            var view_type = self.getParent().ViewManager.active_view.type;
+            if (view_type=='list'){
+                waitFor.push(self.getParent().get_active_domain().then(function (domain) {
+                    if (domain === undefined) {
+                        self.ids = self.getParent().get_selected_ids();
+                        self.domain = self.dataset.domain;
+                    } else {
+                        self.ids = [];
+                        self.domain = domain;
+                    }
+                }));
+            }else if (view_type=='form'){
+                self.ids = [self.getParent().datarecord.id];
+                self.domain = [];
+            }
+            return $.when.apply($, waitFor);
+        },
+        print_label: function() {
+            var self = this;
+            var labelprinter = this.$('#label_printer').val();
+            var labelcount = this.$('#label_count').val();
+            if (labelprinter==null || labelprinter==''){
+                Dialog.alert(this, "请先选择标签打印机..............");
+                return;
+            }
+            var numberreg = /^[1-9]\d*$/;
+            if(!numberreg.test(labelcount)){
+                Dialog.alert(this, "标签份数必须是一个大于等于1的整数！");
+                return;
+            }
+            var LabelModel = new Model(self.res_model);
+            LabelModel.call('action_print_label',[parseInt(labelprinter), self.ids, self.domain]).then(function(data){
+                if(data.success==undefined || data.success){
+                    console.log(data.records);
+                    self.close();
+                }else{
+                    self.do_warn('警告', data.message, false);
+                }
+            }, function(error,event) {
+                if (event) {
+                    event.preventDefault();
+                }
+                self.do_warn(error.message, error.data.message, false);
+            });
+        }
+    });
+
     return {
         'AASWebExporter': AASWebExporter,
-        'AASOrderImport': AASOrderImport
+        'AASOrderImport': AASOrderImport,
+        'AASLabelPrint': AASLabelPrint
     };
 
 });

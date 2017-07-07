@@ -300,7 +300,30 @@ class AASProductLabel(models.Model):
         return super(AASProductLabel, self).unlink()
 
 
-
+    @api.model
+    def action_print_label(self, printer_id, ids=[], domain=[]):
+        values = {'success': True, 'message': ''}
+        printer = self.env['aas.label.printer'].browse(printer_id)
+        if not printer.field_lines or len(printer.field_lines) <= 0:
+            values.update({'success': False, 'message': u'请联系管理员标签打印未指定具体打印内容！'})
+            return values
+        values['printer'] = printer.name
+        printnamedict, field_list = {}, []
+        for fline in printer.field_lines:
+            field_list.append(fline.field_name)
+            if fline.field_name != fline.print_name:
+                printnamedict[fline.field_name] = fline.print_name
+        if ids and len(ids) > 0:
+            labeldomain = [('id', 'in', ids)]
+        else:
+            labeldomain = domain
+        records = self.search_read(domain=labeldomain, fields=field_list)
+        if not records or len(records) <= 0:
+            values.update({'success': False, 'message': u'未搜索到需要打印的标签！'})
+            return values
+        records = printer.action_correct_records(records)
+        values['records'] = records
+        return values
 
 
 

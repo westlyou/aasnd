@@ -79,4 +79,19 @@
         </table>
     </div>
 
+    <div t-name="AASLabelPrintDialog" class="o_form_view">
+        <table class="o_group o_inner_group o_label_nowrap">
+            <tr>
+                <td class="o_td_label"><label for="label_printer" class="o_form_label">打印机</label></td>
+                <td width="50%" class="oe_form_required">
+                    <select id="label_printer"></select>
+                </td>
+                <td class="o_td_label"><label for="label_count" class="o_form_label">标签份数</label></td>
+                <td width="50%" class="oe_form_required">
+                    <input id="label_count" type="text" class="o_form_field o_form_input" name="label_count" value="1"/>
+                </td>
+            </tr>
+        </table>
+    </div>
+
 </templates>

@@ -15,7 +15,7 @@ class AASLabelPrinter(models.Model):
 
     name = fields.Char(string=u'名称', copy=False)
     host = fields.Char(string=u'主机', help=u'打印机IP地址')
-    port = fields.Integer(string=u"端口", help=u'打印机服务端口')
+    port = fields.Integer(string=u"端口", default=80, help=u'打印机服务端口')
     completeurl = fields.Char(string=u'打印服务', help=u'打印机服务请求完整的URL')
     model_id = fields.Many2one(comodel_name='ir.model', string=u'标签对象', ondelete='set null')
     field_lines = fields.One2many(comodel_name='aas.label.printer.lines', inverse_name='printer_id', string=u'打印明细')
@@ -23,6 +23,25 @@ class AASLabelPrinter(models.Model):
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'标签打印机的名称不能重复！')
     ]
+
+    @api.multi
+    def action_correct_records(self, records):
+        """
+        修正记录，删除id字段，many2one字段只取名称
+        :param records:
+        :return:
+        """
+        self.ensure_one()
+        if not records or len(records) <= 0:
+            return []
+        def updaterecord(record):
+            del record['id']
+            for rkey, rval in record.items():
+                if isinstance(rval, tuple):
+                    record[rkey] = rval[1]
+            return record
+        trecords = map(updaterecord, records)
+        return trecords
 
 
 class AASLabelPrinterLines(models.Model):

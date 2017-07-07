@@ -10,7 +10,7 @@
             <field name="model">aas.product.label</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree create="false" edit="false" delete="false">
+                <tree create="false" edit="false" delete="false" labelprint="true">
                     <field name="name"/>
                     <field name="product_id"/>
                     <field name="product_lot"/>
@@ -33,7 +33,7 @@
             <field name="model">aas.product.label</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form create="false" edit="false" delete="false">
+                <form create="false" edit="false" delete="false" labelprint="true">
                     <header>
                         <field name="state" widget="statusbar" statusbar_visible="draft,normal,frozen,over"/>
                     </header>
