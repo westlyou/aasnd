@@ -72,15 +72,19 @@ class AASQualityOrder(models.Model):
         :return:
         """
         for record in self:
-            qualified_qty, concession_qty, unqualified_qty = 0.0, 0.0, 0.0
-            if record.operation_lines and len(record.operation_lines):
+            qualified_qty, concession_qty, unqualified_qty, qstate = 0.0, 0.0, 0.0, record.state
+            if record.operation_lines and len(record.operation_lines) > 0:
                 for opline in record.operation_lines:
-                    if float_is_zero(opline.product_qty, precision_rounding=0.000001):
-                        continue
                     qualified_qty += opline.qualified_qty
                     concession_qty += opline.concession_qty
                     unqualified_qty += opline.unqualified_qty
-            record.write({'qualified_qty': qualified_qty, 'concession_qty': concession_qty, 'unqualified_qty': unqualified_qty})
+                qstate = 'checking'
+            else:
+                qstate = 'tocheck'
+            record.write({
+                'qualified_qty': qualified_qty, 'concession_qty': concession_qty,
+                'unqualified_qty': unqualified_qty, 'state': qstate
+            })
 
     @api.one
     def action_confirm(self):
@@ -119,17 +123,87 @@ class AASQualityOrder(models.Model):
         if qlabels and len(qlabels) > 0:
             self.write({'operation_lines': [(0, 0, {'qlabel_id': qlabel.id}) for qlabel in qlabels]})
 
+    @api.one
+    def action_quality_done(self):
+        """
+        质检完成，刷新质检单状态
+        :return:
+        """
+        rejection_lines = []
+        for qoperation in self.operation_lines:
+            if float_is_zero(qoperation.unqualified_qty, precision_rounding=0.000001):
+                continue
+            templabel = qoperation.qlabel_id.label_id
+            if float_compare(qoperation.product_qty, qoperation.unqualified_qty, precision_rounding=0.000001) == 0.0:
+                templabel.write({'qualified': False})
+                rejection_lines.append((0, 0, {
+                    'label_id': templabel.id, 'product_id': qoperation.product_id.id, 'product_uom': qoperation.product_uom.id,
+                    'product_lot': qoperation.product_lot.id, 'product_qty': qoperation.product_qty, 'origin_order': qoperation.origin_order,
+                    'current_label': False, 'commit_id': qoperation.commit_id, 'commit_model': qoperation.commit_model, 'commit_order': qoperation.commit_order
+                }))
+            else:
+                templabel.write({'product_qty': qoperation.product_qty - qoperation.unqualified_qty})
+        qualityvals = {'state': 'done', 'check_user': self.env.user.id, 'check_time': fields.Datetime.now()}
+        if rejection_lines and len(rejection_lines) > 0:
+            qualityvals['rejection_lines'] = rejection_lines
+        self.write(qualityvals)
+
+
+
     @api.multi
     def action_done(self):
         self.ensure_one()
         qlabels = self.env['aas.quality.label'].search([('order_id', '=', self.id), ('label_checked', '=', False)])
         if qlabels and len(qlabels) > 0:
             raise UserError(u'您还有部分标签还未检测')
+        unqualifieddict, unqualified_qty = {}, 0.0
+        for qoperation in self.operation_lines:
+            if float_is_zero(qoperation.unqualified_qty, precision_rounding=0.000001):
+                continue
+            if float_is_zero(qoperation.product_qty-qoperation.unqualified_qty, precision_rounding=0.000001):
+                continue
+            unqualified_qty += qoperation.unqualified_qty
+            templabel = qoperation.qlabel_id.label_id
+            tkey = 'UN.'+str(templabel.product_lot.id)
+            if templabel.origin_order:
+                tkey += '.'+templabel.origin_order
+            if qoperation.commit_id and qoperation.commit_model:
+                tkey += '.'+qoperation.commit_model+'.'+str(qoperation.commit_id)
+            if tkey in unqualifieddict:
+                unqualifieddict[tkey]['product_qty'] += qoperation.unqualified_qty
+            else:
+                unqualifieddict[tkey] = {
+                    'product_lot': templabel.product_lot.id, 'product_qty': qoperation.unqualified_qty,
+                    'origin_order': templabel.origin_order, 'commit_id': qoperation.commit_id,
+                    'commit_model': qoperation.commit_model, 'commit_order': qoperation.commit_order
+                }
+        if not unqualifieddict or len(unqualifieddict) <= 0:
+            self.action_quality_done()
+        else:
+            wizardvals = {
+                'quality_id': self.id, 'product_id': self.product_id.id, 'product_uom': self.product_uom.id,
+                'partner_id': self.partner_id and self.partner_id.id, 'product_qty': unqualified_qty,
+                'plot_lines': [(0, 0, uval) for ukey, uval in unqualifieddict.items()]
+            }
+            wizard = self.env['aas.quality.rejection.wizard'].create(wizardvals)
+            view_form = self.env.ref('aas_quality.view_form_aas_quality_rejection_lots_wizard')
+            return {
+                'name': u"不合格品标签",
+                'type': 'ir.actions.act_window',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_model': 'aas.quality.rejection.wizard',
+                'views': [(view_form.id, 'form')],
+                'view_id': view_form.id,
+                'target': 'new',
+                'res_id': wizard.id,
+                'context': self.env.context
+            }
 
 
 
 
-    @api.none
+    @api.one
     def action_all_unqualified(self):
         """
         一次性未质检的标签全部不合格

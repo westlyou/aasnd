@@ -17,7 +17,9 @@
         'security/ir.model.access.csv',
         'data/aas_quality_sequence.xml',
         'views/aas_quality_view.xml',
-        'views/aas_quality_order_view.xml'
+        'views/aas_quality_order_view.xml',
+        'wizard/aas_quality_order_wizard_view.xml',
+        'views/aas_wms_models_view.xml'
     ],
     'qweb':[],
     'installable': True,

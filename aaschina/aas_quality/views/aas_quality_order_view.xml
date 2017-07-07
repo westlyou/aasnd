@@ -37,9 +37,11 @@
                     <header>
                         <button name="action_confirm" string="确认" type="object" states="draft" class="oe_highlight"/>
                         <button name="'action_all_qualified" string="全部合格" type="object" states="tocheck,checking"
-                                class="oe_highlight" groups="group_aas_quality_user,group_aas_quality_manager"/>
+                                class="oe_highlight" groups="aas_quality.group_aas_quality_user,aas_quality.group_aas_quality_manager"/>
                         <button name="'action_all_unqualified" string="全不合格" type="object" states="tocheck,checking"
-                                class="oe_highlight" groups="group_aas_quality_user,group_aas_quality_manager"/>
+                                class="oe_highlight" groups="aas_quality.group_aas_quality_user,aas_quality.group_aas_quality_manager"/>
+                        <button name="'action_done" string="质检完成" type="object" states="checking"
+                                class="oe_highlight" groups="aas_quality.group_aas_quality_user,aas_quality.group_aas_quality_manager"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,tocheck,checking,done,cancel"/>
                     </header>
                     <sheet>
@@ -107,7 +109,7 @@
                                 </field>
                             </page>
                             <page string="质检作业">
-                                <field name="operation_lines">
+                                <field name="operation_lines" attrs="{'readonly':[('state','not in',['tocheck','checking'])]}">
                                     <tree editable="bottom">
                                         <field name="qlabel_id" required="1" options="{'no_create':true}"
                                                domain="[('order_id','=',parent.id)]"/>

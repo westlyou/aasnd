@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_form_aas_quality_rejection_lots_wizard" model="ir.ui.view">
+            <field name="name">aas.quality.rejection.lots.wizard.form</field>
+            <field name="model">aas.quality.rejection.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group> <field name="quality_id" readonly="1"/> </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="product_id" readonly="1"/>
+                                <field name="product_uom" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="product_qty" readonly="1"/>
+                                <field name="partner_id" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="批次明细">
+                                <field name="plot_lines">
+                                    <tree editable="bottom" create="false" delete="false">
+                                        <field name="product_lot" readonly="1"/>
+                                        <field name="product_qty" readonly="1"/>
+                                        <field name="label_qty" required="1"/>
+                                        <field name="origin_order" readonly="1"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="product_lot" readonly="1"/>
+                                                <field name="origin_order" readonly="1"/>
+                                            </group>
+                                            <group>
+                                                <field name="product_qty" readonly="1"/>
+                                                <field name="label_qty" required="1"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <footer>
+                        <button name="action_split_lots" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_form_aas_quality_rejection_labels_wizard" model="ir.ui.view">
+            <field name="name">aas.quality.rejection.labels.wizard.form</field>
+            <field name="model">aas.quality.rejection.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group> <field name="quality_id" readonly="1"/> </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="product_id" readonly="1"/>
+                                <field name="product_uom" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="product_qty" readonly="1"/>
+                                <field name="partner_id" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="标签明细">
+                                <field name="label_lines" readonly="1">
+                                    <tree>
+                                        <field name="product_lot"/>
+                                        <field name="label_qty"/>
+                                        <field name="origin_order"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="origin_order"/>
+                                            </group>
+                                        </group>
+                                        <group>
+                                            <group> <field name="product_lot"/> </group>
+                                            <group> <field name="label_qty"/> </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</odoo>

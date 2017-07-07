@@ -330,7 +330,7 @@ class AASStockReceiptLabel(models.Model):
     checked = fields.Boolean(string=u'是否作业', default=False, copy=False)
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     label_location = fields.Many2one(comodel_name='stock.location', string=u'来源库位', ondelete='restrict')
-    product_qty = fields.Float(string=u'上架数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    product_qty = fields.Float(string=u'产品数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
     _sql_constraints = [
