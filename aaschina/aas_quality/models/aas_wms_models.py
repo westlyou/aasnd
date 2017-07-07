@@ -29,12 +29,13 @@ class AASStockReceipt(models.Model):
         多张收货单提交报检
         :return:
         """
-        productdict, commit_user, commit_time = {}, self.env.user, fields.Datetime.now()
+        productdict, commit_user, commit_time, receipts = {}, self.env.user, fields.Datetime.now(), []
         for record in self:
             if record.state != 'confirm' or record.receipt_type != 'purchase':
                 continue
             if not record.receipt_lines or len(record.receipt_lines) <= 0:
                 continue
+            receipts.append(record)
             for rline in record.receipt_lines:
                 if rline.state != 'confirm':
                     continue
@@ -64,7 +65,16 @@ class AASStockReceipt(models.Model):
                 }
                 quality = self.env['aas.quality.order'].create(qualityvals)
                 receiptlines = self.env['aas.stock.receipt.line'].browse(pval['rlines'])
-                receiptlines.write({'quality_id': quality.id})
+                receiptlines.write({'quality_id': quality.id, 'state': 'tocheck'})
+        if receipts and len(receipts) > 0:
+            receiptlist = self.env['aas.stock.receipt']
+            for receipt in receipts:
+                if any([not rline.quality_id for rline in receipt.receipt_lines]):
+                    continue
+                receiptlist |= receipt
+            if receiptlist and len(receiptlist) > 0:
+                receiptlist.write({'state': 'tocheck'})
+
 
 
 
@@ -80,11 +90,14 @@ class AASStockReceiptLine(models.Model):
         批量收货明细提交报检
         :return:
         """
-        productdict, commit_user, commit_time = {}, self.env.user, fields.Datetime.now()
+        productdict, commit_user, commit_time, receiptids, receiptlist = {}, self.env.user, fields.Datetime.now(), [], []
         for record in self:
             if record.state!='confirm' or record.receipt_type!='purchase':
                 continue
             pkey, receipt = 'P'+str(record.product_id.id), record.receipt_id
+            if receipt.id not in receiptids:
+                receiptids.append(receipt.id)
+                receiptlist.append(receipt)
             if pkey in productdict:
                 productdict[pkey]['product_qty'] += record.product_qty
                 productdict[pkey]['rlines'].append(record.id)
@@ -110,7 +123,15 @@ class AASStockReceiptLine(models.Model):
                 }
                 quality = self.env['aas.quality.order'].create(qualityvals)
                 receiptlines = self.env['aas.stock.receipt.line'].browse(pval['rlines'])
-                receiptlines.write({'quality_id': quality.id})
+                receiptlines.write({'quality_id': quality.id, 'state': 'tocheck'})
+        if receiptlist and len(receiptlist) > 0:
+            receipts = self.env['aas.stock.receipt']
+            for treceipt in receiptlist:
+                if any([not rline.quality_id for rline in treceipt.receipt_lines]):
+                    continue
+                receipts |= treceipt
+            if receipts and len(receipts) > 0:
+                receipts.write({'state': 'tocheck'})
 
 
 
@@ -169,10 +190,14 @@ class AASQualityOrder(models.Model):
         receiptlines = self.env['aas.stock.receipt.line'].search([('quality_id', '=', self.id)])
         if not receiptlines or len(receiptlines) <= 0:
             return
+        receiptids, receiptlist = [], []
         for rline in receiptlines:
             rkey = 'R'+str(rline.id)
             if rkey not in receiptdict:
                 continue
+            if rline.receipt_id.id not in receiptids:
+                receiptids.append(rline.receipt_id.id)
+                receiptlist.append(rline.receipt_id)
             rlinedict, templabels = receiptdict[rkey], []
             for llabel in rline.label_list:
                 lkey = 'L'+str(llabel.label_id.id)
@@ -184,7 +209,16 @@ class AASQualityOrder(models.Model):
                 for tkey, tval in rlinedict:
                     tval.update({'receipt_id': rline.receipt_id.id})
                     templabels.append((0, 0, tval))
-            rline.write({'label_list': templabels})
+            rline.write({'label_list': templabels, 'state': 'checked'})
+        # 刷新收货单质检状态
+        if receiptlist and len(receiptlist) > 0:
+            receipts = self.env['aas.stock.receipt']
+            for treceipt in receiptlist:
+                if any([not rline.quality_id for rline in treceipt.receipt_lines]):
+                    continue
+                receipts |= treceipt
+            if receipts and len(receipts) > 0:
+                receipts.write({'state': 'checked'})
 
 
 

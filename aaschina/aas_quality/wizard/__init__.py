@@ -8,3 +8,4 @@
 """
 
 import aas_quality_order_wizard
+import aas_wms_models_wizard

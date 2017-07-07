@@ -11,6 +11,9 @@
                     <button name="action_commit_checking" type="object" string="收货报检" class="oe_highlight"
                                 attrs="{'invisible':[('state','!=','confirm')]}"/>
                 </button>
+                <field name="state" position="replace">
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirm,tocheck,checked,receipt,done,cancel"/>
+                </field>
                 <field name="receipt_lines" position="replace">
                     <field name="receipt_lines" readonly="1">
                                     <tree editable="bottom">

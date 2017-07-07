@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_form_aas_multi_receipt_quality_wizard" model="ir.ui.view">
+            <field name="name">aas.multi.receipt.quality.wizard.form</field>
+            <field name="model">aas.multi.receipt.quality.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="partner_id" string="供应商" options="{'no_create': true}" required="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="收货明细">
+                            <field name="receipt_lines">
+                                <tree editable="bottom">
+                                    <field name="receipt_id" required="1" options="{'no_create':true}"
+                                           domain="[('receipt_type','=','purchase'),('state','=','confirm'),('partner_id','=', parent.partner_id)]"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_aas_multi_receipt_quality_wizard" model="ir.actions.act_window">
+            <field name="name">多单报检</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.multi.receipt.quality.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_form_aas_multi_receipt_quality_wizard"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem id="menu_aas_multi_receipt_quality_wizard"  name="多单报检" action="action_aas_multi_receipt_quality_wizard"
+                          parent="aas_wms.menu_aas_stock_purchase" sequence="3" groups="stock.group_stock_user,stock.group_stock_manager"/>
+
+    </data>
+</odoo>
