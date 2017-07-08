@@ -25,19 +25,19 @@
                     <sheet>
                         <group>
                             <group>
-                                <field name="name"/>
-                                <field name="host"/>
+                                <field name="name" required="1"/>
+                                <field name="host" required="1"/>
                             </group>
                             <group>
-                                <field name="model_id" options="{'no_create':true}"/>
+                                <field name="model_id" options="{'no_create':true}" required="1"/>
                                 <field name="port"/>
-                                <field name="completeurl" invisible="1"/>
+                                <field name="serverurl" invisible="1"/>
                             </group>
                         </group>
                         <notebook>
                             <page string="打印字段">
                                 <field name="field_lines">
-                                    <tree editable="top">
+                                    <tree editable="bottom">
                                         <field name="field_id" options="{'no_create':true}"
                                                domain="[('model_id','=',parent.model_id),('ttype','not in',['one2many','many2many'])]"/>
                                         <field name="field_name" readonly="1"/>

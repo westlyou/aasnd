@@ -14,15 +14,27 @@ class AASLabelPrinter(models.Model):
     _description = u'标签打印机'
 
     name = fields.Char(string=u'名称', copy=False)
-    host = fields.Char(string=u'主机', help=u'打印机IP地址')
+    host = fields.Char(string=u'主机', default='127.0.0.1', help=u'打印机IP地址')
     port = fields.Integer(string=u"端口", default=80, help=u'打印机服务端口')
-    completeurl = fields.Char(string=u'打印服务', help=u'打印机服务请求完整的URL')
+    serverurl = fields.Char(string=u'打印服务', help=u'打印机服务请求完整的URL', compute='_compute_serverurl', store=True)
     model_id = fields.Many2one(comodel_name='ir.model', string=u'标签对象', ondelete='set null')
     field_lines = fields.One2many(comodel_name='aas.label.printer.lines', inverse_name='printer_id', string=u'打印明细')
 
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'标签打印机的名称不能重复！')
     ]
+
+    @api.depends('host', 'port')
+    def _compute_serverurl(self):
+        for record in self:
+            port = '80' if not record.port else str(record.port)
+            record.serverurl = record.host+':'+port
+
+    @api.model
+    def create(self, vals):
+        if not vals.get('field_lines'):
+            raise UserError(u'请先添加需要打印的字段！')
+        return super(AASLabelPrinter, self).create(vals)
 
     @api.multi
     def action_correct_records(self, records):
@@ -32,15 +44,32 @@ class AASLabelPrinter(models.Model):
         :return:
         """
         self.ensure_one()
+        fieldsdict, changenamedict = {}, {}
+        for fline in self.field_lines:
+            fieldsdict[fline.field_name] = {'field_name': fline.field_name, 'field_type': fline.field_type, 'print_name': fline.print_name}
+            if fline.field_name != fline.print_name:
+                changenamedict[fline.field_name] = fline.print_name
         if not records or len(records) <= 0:
             return []
         def updaterecord(record):
             del record['id']
             for rkey, rval in record.items():
-                if isinstance(rval, tuple):
+                if rval and fieldsdict[rkey]['field_type'] == 'many2one':
                     record[rkey] = rval[1]
+                elif not rval and fieldsdict[rkey]['field_type'] != 'boolean':
+                    record[rkey] = ''
+                elif rkey == 'qualified':
+                    record[rkey] = u'合格' if rval else u'不合格'
             return record
         trecords = map(updaterecord, records)
+        def updatedictname(record):
+            for dkey, dval in changenamedict.items():
+                if dkey in record:
+                    record[dval] = record[dkey]
+                    del record[dkey]
+            return record
+        if changenamedict and len(changenamedict) > 0:
+            trecords = map(updatedictname, trecords)
         return trecords
 
 

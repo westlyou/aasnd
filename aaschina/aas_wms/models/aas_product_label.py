@@ -307,7 +307,7 @@ class AASProductLabel(models.Model):
         if not printer.field_lines or len(printer.field_lines) <= 0:
             values.update({'success': False, 'message': u'请联系管理员标签打印未指定具体打印内容！'})
             return values
-        values['printer'] = printer.name
+        values.update({'printer': printer.name, 'serverurl': printer.serverurl})
         printnamedict, field_list = {}, []
         for fline in printer.field_lines:
             field_list.append(fline.field_name)

@@ -549,8 +549,12 @@ odoo.define('aas.base', function (require) {
             var LabelModel = new Model(self.res_model);
             LabelModel.call('action_print_label',[parseInt(labelprinter), self.ids, self.domain]).then(function(data){
                 if(data.success==undefined || data.success){
-                    console.log(data.records);
                     self.close();
+                    var params = {'label_name': data.printer, 'label_count': parseInt(labelcount), 'label_content':data.records};
+                    $.ajax({type:'post', dataType:'script', url:'http://'+data.serverurl, data: params,
+                        success: function (result) { },
+                        error:function(XMLHttpRequest,textStatus,errorThrown){}
+                    });
                 }else{
                     self.do_warn('警告', data.message, false);
                 }
