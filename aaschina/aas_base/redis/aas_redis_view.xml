@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_base_redis" model="ir.ui.view">
+            <field name="name">aas.base.redis.tree</field>
+            <field name="model">aas.base.redis</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="type"/>
+                    <field name="host"/>
+                    <field name="port"/>
+                    <field name="db"/>
+                    <field name="name"/>
+                    <field name="comment"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_base_redis" model="ir.ui.view">
+            <field name="name">aas.base.redis.form</field>
+            <field name="model">aas.base.redis</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="connect_test" type="object" string="测试连接" class="oe_highlight"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="type"/>
+                                <field name="name"/>
+                                <field name="password" widget="password"/>
+                            </group>
+                            <group>
+                                <field name="host"/>
+                                <field name="port" widget="char"/>
+                                <field name="db"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="备注">
+                                <field name="comment"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_base_redis" model="ir.ui.view">
+            <field name="name">aas.base.redis.search</field>
+            <field name="model">aas.base.redis</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="type" string="类型" filter_domain="[('type','ilike',self)]"/>
+                    <field name="name" string="前缀" filter_domain="[('name','ilike',self)]"/>
+                    <field name="host" string="主机" filter_domain="[('host','ilike',self)]"/>
+                    <field name="port" string="端口" filter_domain="[('port','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="前缀" context="{'group_by':'name'}"/>
+                        <filter string="主机" context="{'group_by':'host'}"/>
+                        <filter string="端口" context="{'group_by':'port'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_base_redis" model="ir.actions.act_window">
+            <field name="name">Redis缓存</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.base.redis</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_base_redis"/>
+            <field name="search_view_id" ref="view_search_aas_base_redis"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加Redis缓存对象</p>
+            </field>
+        </record>
+
+        <menuitem id="menu_aas_base_redis"  name="Redis" action="action_aas_base_redis"
+                          parent="menu_aas_base_itsettings_list" sequence="3"/>
+
+
+    </data>
+</odoo>
