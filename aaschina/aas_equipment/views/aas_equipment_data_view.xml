@@ -107,8 +107,8 @@
             <field name="act_window_id" ref="action_aas_equipment_data"/>
         </record>
 
-        <menuitem id="menu_aas_equipment_data"  name="设备数据" action="action_aas_equipment_data"
-                          parent="menu_aas_equipment_information" sequence="1"/>
+        <menuitem id="menu_aas_equipment_data"  name="设备数据" action="action_aas_equipment_data" sequence="1"
+                parent="menu_aas_equipment_information" groups="group_aas_equipment_user,group_aas_equipment_mechanic,group_aas_equipment_manager"/>
 
 
     </data>

@@ -13,6 +13,8 @@
     'website': 'http://www.zhiq.info',
     'depends': ['aas_redis'],
     'data': [
+        'security/aas_equipment_security.xml',
+        'security/ir.model.access.csv',
         'data/aas_equipment_data.xml',
         'views/aas_equipment_view.xml',
         'views/aas_equipment_data_view.xml'

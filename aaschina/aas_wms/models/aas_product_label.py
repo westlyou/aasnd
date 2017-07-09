@@ -52,6 +52,8 @@ class AASProductLabel(models.Model):
     stock_date = fields.Date(string=u'库龄日期', help=u'库龄时间段，货物允许放在仓库的最后日期')
     warranty_date = fields.Date(string=u'质保日期', help=u'质保时间段，货物最后有效的日期，过期将自动冻结')
 
+    product_name = fields.Char(string=u'产品名称')
+    product_code = fields.Char(string=u'产品编码')
     journal_lines = fields.One2many(comodel_name='aas.product.label.journal', inverse_name='label_id', string=u'查存卡', copy=False)
 
 
@@ -60,7 +62,9 @@ class AASProductLabel(models.Model):
         sequence = self.env['ir.sequence'].next_by_code('aas.product.label')
         vals.update({'name': sequence, 'barcode': sequence})
         product_id = self.env['product.product'].browse(vals.get('product_id'))
-        vals['product_uom'] = product_id.uom_id.id
+        vals.update({
+            'product_uom': product_id.uom_id.id, 'product_name': product_id.name, 'product_code': product_id.default_code
+        })
 
     @api.model
     def create(self, vals):
