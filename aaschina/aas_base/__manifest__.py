@@ -15,12 +15,14 @@
     'data': [
         'data/aas_base_schedule.xml',
         'data/aas_base_sequence.xml',
+        'data/aas_base_wechat.xml',
         'security/aas_base_security.xml',
         'security/ir.model.access.csv',
         'views/aas_base_templates.xml',
         'views/aas_base_view.xml',
         'views/aas_label_view.xml',
-        'views/aas_wechat_templates.xml'
+        'views/aas_wechat_templates.xml',
+        'views/aas_wechat_view.xml'
     ],
     'qweb':[
         'static/src/xml/aas_base.xml'

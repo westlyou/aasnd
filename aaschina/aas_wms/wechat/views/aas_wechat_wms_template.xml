@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <template id="wechat_wms_index" name="Wechat WMS Index">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/iconfont/iconfont.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <a id="aas_wms_logout" class="mui-pull-right mui-icon iconfont icon-zhuxiao" style="color: #0870d9;" href="javascript:;"></a>
+                        <h1 class="mui-title"> 仓库管理 </h1>
+                    </header>
+                    <div class="mui-content">
+                        <div class="mui-row aas-header">
+                            <span class="aas-header-avatar"> <img src="/aas_base/static/wechat/aas/images/wechat_icon.png"/> </span>
+                            <span class="aas-header-content"> <t t-esc="user"/>，欢迎您！</span>
+                        </div>
+                        <ul class="mui-table-view mui-grid-view mui-grid-9">
+                            <!-- 发货清单 -->
+                            <!--<li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
+                                <a href="/aaswechat/wms/picklist/sales">
+                                    <span class="mui-icon iconfont icon-fahuo"></span>
+                                    <div class="mui-media-body" style="font-size:12px;">销售发货</div>
+                                </a>
+                            </li>
+                            <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
+                                <a href="/aaswechat/wms/picklist/manufacture">
+                                    <span class="mui-icon iconfont icon-lingliao"></span>
+                                    <div class="mui-media-body" style="font-size:12px;">生产领料</div>
+                                </a>
+                            </li>
+                            <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
+                                <a href="/aaswechat/wms/picklist/purchase">
+                                    <span class="mui-icon iconfont icon-tuihuo"></span>
+                                    <div class="mui-media-body" style="font-size:12px;">采购退货</div>
+                                </a>
+                            </li>
+                            <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
+                                <a href="/aaswechat/wms/picklist/sundry">
+                                    <span class="mui-icon iconfont icon-zaqizaba"></span>
+                                    <div class="mui-media-body" style="font-size:12px;">杂项出库</div>
+                                </a>
+                            </li>-->
+                            <!-- 收货清单 -->
+                            <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
+                                <a href="/aaswechat/wms/receiptlinelist">
+                                    <span class="mui-icon iconfont icon-push"></span>
+                                    <div class="mui-media-body" style="font-size:12px;">收货上架</div>
+                                </a>
+                            </li>
+                            <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
+                                <a href="/aaswechat/wms/purchasereceipts">
+                                    <span class="mui-icon iconfont icon-shouhuo"></span>
+                                    <div class="mui-media-body" style="font-size:12px;">采购收货</div>
+                                </a>
+                            </li>
+                            <!--<li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
+                                <a href="/aaswechat/wms/receiptlist/manreturn">
+                                    <span class="mui-icon iconfont icon-tuihuo"></span>
+                                    <div class="mui-media-body" style="font-size:12px;">生产退料</div>
+                                </a>
+                            </li>
+                            <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
+                                <a href="/aaswechat/wms/receiptlist/sundry">
+                                    <span class="mui-icon iconfont icon-zaqizaba"></span>
+                                    <div class="mui-media-body" style="font-size:12px;">杂项入库</div>
+                                </a>
+                            </li>-->
+                        </ul>
+                    </div>
+                </body>
+                <script src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+                <script src="/aas_wms/static/wechat/wechat_wms_index.js"></script>
+            </html>
+        </template>
+
+
+    </data>
+</openerp>

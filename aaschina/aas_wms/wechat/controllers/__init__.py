@@ -7,4 +7,5 @@
 @time: 2017-7-9 18:14
 """
 
+import aas_stock
 import aas_receipt

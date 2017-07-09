@@ -29,10 +29,13 @@
         'wizard/aas_stock_delivery_wizard_view.xml',
 
         'oracle/aas_stock_purchase_view.xml',
-        'oracle/aas_stock_sales_view.xml'
+        'oracle/aas_stock_sales_view.xml',
+
+        'wechat/views/aas_wechat_wms_template.xml'
     ],
     'qweb':[],
     'installable': True,
     'application': True,
-    'auto_install': False
+    'auto_install': False,
+    'external_dependencies': {'python': ['wechatpy']}
 }

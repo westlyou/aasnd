@@ -81,7 +81,7 @@
             </field>
         </record>
 
-        <menuitem id="menu_aas_base_redis"  name="Redis" action="action_aas_base_redis"
+        <menuitem id="menu_aas_base_redis"  name="Redis缓存" action="action_aas_base_redis"
                           parent="aas_base.menu_aas_base_itsettings_list" sequence="3"/>
 
 

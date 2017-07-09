@@ -550,10 +550,18 @@ odoo.define('aas.base', function (require) {
             LabelModel.call('action_print_label',[parseInt(labelprinter), self.ids, self.domain]).then(function(data){
                 if(data.success==undefined || data.success){
                     self.close();
-                    var params = {'label_name': data.printer, 'label_count': parseInt(labelcount), 'label_content':data.records};
+                    labelcount = parseInt(labelcount);
+                    /*var params = {'label_name': data.printer, 'label_count': labelcount, 'label_content':data.records};
                     $.ajax({type:'post', dataType:'script', url:'http://'+data.serverurl, data: params,
                         success: function (result) { },
                         error:function(XMLHttpRequest,textStatus,errorThrown){}
+                    });*/
+                    _(data.records).each(function(record){
+                        var params = {'label_name': data.printer, 'label_count': labelcount, 'label_content':record};
+                        $.ajax({type:'post', dataType:'script', url:'http://'+data.serverurl, data: params,
+                            success: function (result) { },
+                            error:function(XMLHttpRequest,textStatus,errorThrown){}
+                        });
                     });
                 }else{
                     self.do_warn('警告', data.message, false);

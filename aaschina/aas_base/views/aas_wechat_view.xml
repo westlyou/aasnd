@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_form_aas_wechat_enapplication" model="ir.ui.view">
+            <field name="name">aas.wechat.enapplication.form</field>
+            <field name="model">aas.wechat.enapplication</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group> <field name="name"/> </group>
+                            <group> <field name="app_code"/> </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="corp_id"/>
+                                <field name="role_secret"/>
+                                <field name="home_url"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="agent_id"/>
+                                <field name="callback_url"/>
+                                <field name="app_token"/>
+                                <field name="encoding_aes_key"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="company_id" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="应用介绍"> <field name="description"/> </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_tree_aas_wechat_enapplication" model="ir.ui.view">
+            <field name="name">aas.wechat.enapplication.tree</field>
+            <field name="model">aas.wechat.enapplication</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name" />
+                    <field name="app_code" />
+                    <field name="user_id" />
+                    <field name="agent_id" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_search_aas_wechat_enapplication" model="ir.ui.view">
+            <field name="name">aas.wechat.enapplication.search</field>
+            <field name="model">aas.wechat.enapplication</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <separator/>
+                    <filter string="自己创建" domain="[('user_id','=',uid)]" />
+                    <group expand="0" string="分组">
+                        <filter string="用户" context="{'group_by':'user_id'}"/>
+                        <filter string="企业号" context="{'group_by':'corp_id'}"/>
+                        <filter string="权限分组" context="{'group_by':'role_secret'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_wechat_enapplication" model="ir.actions.act_window">
+            <field name="name">微信企业号应用</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.wechat.enapplication</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_wechat_enapplication"/>
+            <field name="search_view_id" ref="view_search_aas_wechat_enapplication"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加企业号应用</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_wechat_enapplication" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_wechat_enapplication"/>
+            <field name="act_window_id" ref="action_aas_wechat_enapplication"/>
+        </record>
+
+        <record id="act_view_form_aas_wechat_enapplication" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_wechat_enapplication"/>
+            <field name="act_window_id" ref="action_aas_wechat_enapplication"/>
+        </record>
+
+        <menuitem id="menu_wechat_enapplication" name="企业应用" parent="menu_aas_base_itsettings_list"
+                  sequence="2" action="action_aas_wechat_enapplication" groups="group_aas_it"/>
+
+    </data>
+</odoo>

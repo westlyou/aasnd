@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <record id="wms_enapplication" model="aas.wechat.enapplication">
+            <field name="name">安费诺仓库管理</field>
+            <field name="agent_id">10</field>
+            <field name="app_code">aas_wms</field>
+            <field name="corp_id">wxfa9d2d799a6f1408</field>
+            <field name="role_secret">m-NjVDDJouGAaXrLCG7Q4zl8Px1T60rd1JK-qstB8ZNMieIRHIwZhasbmtgz3HGw</field>
+            <field name="home_url">http://amphenol.uand.cn/aaswechat/wms</field>
+            <field name="callback_url">http://amphenol.uand.cn/aaswechat/wms/message</field>
+            <field name="app_token">amphenol</field>
+            <field name="encoding_aes_key">E1XZIN9SGpogdef53LVVLnc9fJkrpi9L5tsVXy97tJD</field>
+            <field name="description">安费诺仓库管理</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
+        <record id="quality_enapplication" model="aas.wechat.enapplication">
+            <field name="name">安费诺质量管理</field>
+            <field name="agent_id">12</field>
+            <field name="app_code">aas_quality</field>
+            <field name="corp_id">wxfa9d2d799a6f1408</field>
+            <field name="role_secret">wwV91RVJ23bkT2c0dEl-zZMyyJrhNnHyxIv4euB6ox0l8nZmgu8fyOna0LSLwGMZ</field>
+            <field name="home_url">http://amphenol.uand.cn/aaswechat/quality</field>
+            <field name="callback_url">http://amphenol.uand.cn/aaswechat/quality/message</field>
+            <field name="app_token">amphenol</field>
+            <field name="encoding_aes_key">mpynh56saSIDKlEs5UfKTTE7GARqHVb9LkiUiyDtuHA</field>
+            <field name="description"> 安费诺质检管理 </field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
+        <record id="mes_enapplication" model="aas.wechat.enapplication">
+            <field name="name">安费诺生产管理</field>
+            <field name="agent_id">13</field>
+            <field name="app_code">aas_mes</field>
+            <field name="corp_id">wxfa9d2d799a6f1408</field>
+            <field name="role_secret">RohUb2pfyCLd_NFLJNTNUiAE1T2QaieMpHMnaDa3ok7LUg7CV-44kcj8HGM5cW2-</field>
+            <field name="home_url">http://amphenol.uand.cn/aaswechat/mes</field>
+            <field name="callback_url">http://amphenol.uand.cn/aaswechat/mes/message</field>
+            <field name="app_token">amphenol</field>
+            <field name="encoding_aes_key">HyJz8eAgqnkNIEDn9nWugzDiYUXYTRbe9RwuPjBEX6D</field>
+            <field name="description"> 安费诺质检管理 </field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
+    </data>
+</openerp>
