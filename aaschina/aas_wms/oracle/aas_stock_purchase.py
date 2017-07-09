@@ -341,7 +341,7 @@ class AASStockPurchaseReceiptWizard(models.TransientModel):
         receiptvals['receipt_lines'] = rlines
         receipt = self.env['aas.stock.receipt'].create(receiptvals)
         # 更新采购明细的doing_qty
-        for okey, oval in orderdict:
+        for okey, oval in orderdict.items():
             porder, plines = oval['order'], oval['lines']
             porder.write({'order_lines': plines})
         view_form = self.env.ref('aas_wms.view_form_aas_stock_receipt_inside')

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="aas_wechat_login" name="Wechat Login Layout">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <style type="text/css">
+                        .mui-input-group:after{height:0;}
+                    </style>
+                </head>
+                <body style="background-color:#FFFFFF;">
+                    <header class="mui-bar mui-bar-nav">
+                        <h1 class="mui-title">登录</h1>
+                    </header>
+                    <div class="mui-content" style="background-color:#FFFFFF;">
+
+                        <p style="text-align:center; margin-top:50px; margin-bottom:50px;">
+                            <img src="/aas_base/static/wechat/aas/images/amphenol_logo.png" alt="AAS"/>
+                        </p>
+
+                        <form class="mui-input-group" action="/aaswechat/login" method="post" onsubmit="this.action">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <div class="mui-input-row" t-if="databases and len(databases) &gt; 1">
+                                <input type="text" name="db" t-att-value="request.db" id="db" class="mui-input" required="required" readonly="readonly"/>
+                                <span>
+                                    <a href="/web/database/selector" class="mui-btn mui-btn-default">选择 <i class="fa fa-database"></i></a>
+                                </span>
+                            </div>
+
+                            <div class="mui-input-row">
+                                <label>账号</label>
+                                <input id="login" name="login" type="text" class="mui-input-clear mui-input" required="required" autofocus="autofocus" autocapitalize="off" placeholder="请输入账号"/>
+                            </div>
+                            <div class="mui-input-row">
+                                <label>密码</label>
+                                <input id='password' name="password"  type="password" class="mui-input-clear mui-input" required="required" placeholder="请输入密码"/>
+                            </div>
+                            <div class="mui-input-row" t-if="error">
+                                <label><t t-esc="error"/></label>
+                            </div>
+                            <div class="mui-input-row" t-if="message">
+                                <label><t t-esc="message"/></label>
+                            </div>
+
+                            <input type="hidden" name="redirect" t-att-value="redirect"/>
+
+                            <div style="display:block;text-align:center;margin:30px;margin-top:50px;">
+                                <button type="submit" class="mui-btn mui-btn-block mui-btn-primary">登录</button>
+                            </div>
+
+                        </form>
+                    </div>
+                </body>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+            </html>
+        </template>
+
+</odoo>

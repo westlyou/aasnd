@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <menuitem id="menu_aas_equipment" name="设备"  sequence="4"/>
+
+        <menuitem id="menu_aas_equipment_information"  name="设备信息" parent="menu_aas_equipment" sequence="10"/>
+
+    </data>
+</odoo>

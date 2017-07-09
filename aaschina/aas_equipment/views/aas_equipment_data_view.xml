@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_equipment_data" model="ir.ui.view">
+            <field name="name">aas.equipment.data.tree</field>
+            <field name="model">aas.equipment.data</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree edit="false" delete="false">
+                    <field name="app_code"/>
+                    <field name="app_secret"/>
+                    <field name="staff_code"/>
+                    <field name="job_code"/>
+                    <field name="product_code"/>
+                    <field name="station_code"/>
+                    <field name="operate_time"/>
+                    <field name="timstamp"/>
+                    <field name="data_type"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_equipment_data" model="ir.ui.view">
+            <field name="name">aas.equipment.data.form</field>
+            <field name="model">aas.equipment.data</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" edit="false" delete="false">
+                    <header>
+                        <button name="action_push_data" type="object" string="推入缓存" class="oe_highlight"/>
+                        <button name="action_persist_data" type="object" string="存入PG" class="oe_highlight"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="app_code"/>
+                                <field name="app_secret"/>
+                                <field name="staff_code"/>
+                                <field name="station_code"/>
+
+                            </group>
+                            <group>
+                                <field name="job_code"/>
+                                <field name="product_code"/>
+                                <field name="operate_time"/>
+                                <field name="timstamp"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group><field name="data_type"/></group>
+                        </group>
+                        <notebook>
+                            <page string="数据集">
+                                <field name="data"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_equipment_data" model="ir.ui.view">
+            <field name="name">aas.equipment.data.search</field>
+            <field name="model">aas.equipment.data</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="app_code" string="设备编码" filter_domain="[('app_code','ilike',self)]"/>
+                    <field name="staff_code" string="员工编码" filter_domain="[('staff_code','ilike',self)]"/>
+                    <field name="station_code" string="工位编码" filter_domain="[('station_code','ilike',self)]"/>
+                    <field name="job_code" string="工单编码" filter_domain="[('job_code','ilike',self)]"/>
+                    <field name="product_code" string="产品编码" filter_domain="[('product_code','ilike',self)]"/>
+                    <separator/>
+                    <filter string="调试数据" domain="[('data_type','=','D')]"/>
+                    <filter string="生产数据" domain="[('data_type','=','P')]"/>
+                    <filter string="测试数据" domain="[('data_type','=','T')]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="设备编码" context="{'group_by':'app_code'}"/>
+                        <filter string="员工编码" context="{'group_by':'staff_code'}"/>
+                        <filter string="工位编码" context="{'group_by':'station_code'}"/>
+                        <filter string="工单编码" context="{'group_by':'job_code'}"/>
+                        <filter string="产品编码" context="{'group_by':'product_code'}"/>
+                        <filter string="数据类型" context="{'group_by':'data_type'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_equipment_data" model="ir.actions.act_window">
+            <field name="name">设备数据</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.equipment.data</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_equipment_data"/>
+            <field name="search_view_id" ref="view_search_aas_equipment_data"/>
+        </record>
+
+        <record id="act_view_tree_aas_equipment_data" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_equipment_data"/>
+            <field name="act_window_id" ref="action_aas_equipment_data"/>
+        </record>
+
+        <record id="act_view_tree_aas_equipment_data" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_equipment_data"/>
+            <field name="act_window_id" ref="action_aas_equipment_data"/>
+        </record>
+
+        <menuitem id="menu_aas_equipment_data"  name="设备数据" action="action_aas_equipment_data"
+                          parent="menu_aas_equipment_information" sequence="1"/>
+
+
+    </data>
+</odoo>

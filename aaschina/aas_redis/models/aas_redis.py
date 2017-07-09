@@ -40,39 +40,38 @@ class DatetimeJSONEncoder(json.JSONEncoder):
 
 class RedisBase(object):
 
-    _redis_type = ""
+    _redis_name = ""
     _redis_record = None
 
     def get_redis(self):
         if not self._redis_record :
-            self._redis_record = self.env['aas.base.redis'].get_redis(self._redis_type)
+            self._redis_record = self.env['aas.base.redis'].get_redis(self._redis_name)
         return self._redis_record
 
 
 class RedisModel(RedisBase):
 
-    _redis_name = ""
-
-    def redis_message_send(self, type, value):
+    def redis_set(self, value):
         name = self._redis_name
         redis = self.get_redis()
-        message = {'type': type, 'value': value}
-        return redis.put_value(message, name)
+        return redis.set_value(name, value)
 
-    def redis_set(self, value, key=None):
+
+    def redis_get(self):
         name = self._redis_name
-        if key:
-            name = "%s%s" % (name, key)
-        redis = self.get_redis()
-        return redis.set_value(value, name)
-
-
-    def redis_get(self, key=None):
-        name = self._redis_name
-        if key:
-            name = "%s%s" % (name, key)
         redis = self.get_redis()
         return redis.get_value(name)
+
+    def redis_push(self, value):
+        name = self._redis_name
+        redis = self.get_redis()
+        return redis.push_value(name, value)
+
+    def redis_pop(self):
+        name = self._redis_name
+        redis = self.get_redis()
+        return redis.pop_value(name)
+
 
 
 
@@ -80,22 +79,30 @@ class RedisModel(RedisBase):
 class AASBaseRedis(models.Model):
     _name = 'aas.base.redis'
     _description = "AAS Base Redis"
-    _rec_name = "type"
+
     _redis_pool = None
 
-    type = fields.Char(u'类型', required=True, copy=False, help="label equipment")
 
-    host = fields.Char(u'主机', required=True, default="localhost")
+
+    name = fields.Char(string=u'名称', compute='_compute_name', store=True)
+    code = fields.Char(string=u'编码', required=True, copy=False)
+    prefix = fields.Char(string=u'前缀', required=True, copy=False)
+    host = fields.Char(u'主机', required=True, default="127.0.0.1")
     port = fields.Integer(u'端口', required=True, default=6379)
     password = fields.Char(u'密码')
     db = fields.Integer(u'库号', required=True, default=0)
-    name = fields.Char(u'名称前缀', required=True)
-
     comment = fields.Text(u'备注')
 
+
     _sql_constraints = [
-        ('type_uniq', 'unique(type)', u'缓存类型必须唯一'),
+        ('uniq_code', 'unique(code)', u'缓存编码必须唯一！'),
     ]
+
+
+    @api.depends('prefix', 'code')
+    def _compute_name(self):
+        for record in self:
+            record.name = record.prefix+record.code
 
 
     def _get_connection_pool(self):
@@ -114,28 +121,10 @@ class AASBaseRedis(models.Model):
         #unix://[:password]@/path/to/socket.sock?db=0
         return redis.StrictRedis(host=self.host, port=self.port, password=self.password, db=self.db)
 
-    def _get_key(self, name):
-        key = self.name
-        if name:
-            key = "%s%s" % (key, name)
-        return key
-
-
-    @api.multi
-    @api.depends('type', 'name')
-    def name_get(self):
-        return [(record.id, u"%s（%s）" % (record.type, record.name)) for record in self]
-
-
-    @api.one
-    def copy(self, default=None):
-        default = dict(default or {}, type=_("%s (Copy)") % self.type)
-        return super(AASBaseRedis, self).copy(default=default)
-
 
     @api.model
-    def get_redis(self, type):
-        record = self.search([('type', '=', type)], limit=1)
+    def get_redis(self, key):
+        record = self.search([('name', '=', key)], limit=1)
         if record:
             return record;
         else:
@@ -162,35 +151,56 @@ class AASBaseRedis(models.Model):
             value = json.dumps(value, cls=DatetimeJSONEncoder)
         return value
 
+
     def get_value(self, name):
-        r = self._get_pool_redis()
-        key = self._get_key(name)
-        value = r.get(key)
-        _logger.info("Redis Get Key(%s) : Value(%s)" % (key, value))
+        rconnection = self._get_pool_redis()
+        value = rconnection.get(name)
+        _logger.info("Redis Get Key(%s) : Value(%s)" % (name, value))
         return value
 
-    def set_value(self, value, name):
-        r = self._get_pool_redis()
-        key = self._get_key(name)
-        val = self.json_dumps(value)
-        _logger.info("Redis Set Key(%s) Value(%s)" % (key, val))
+
+    def set_value(self, name, value):
+        rconnection = self._get_pool_redis()
+        tvalue = self.json_dumps(value)
+        _logger.info("Redis Set Key(%s) Value(%s)" % (name, tvalue))
         try:
-            ret = r.set(key, val)
+            result = rconnection.set(name, tvalue)
         except Exception,e:
             _logger.error("Redis Error: %s" % e)
             raise UserError(u"Redis Set错误，请检查配置")
-        _logger.info("Redis Set Key(%s) Ret(%s) : Value(%s)" % (key, ret, val))
-        return ret
+        _logger.info("Redis Set Key(%s) Ret(%s) : Value(%s)" % (name, result, tvalue))
+        return result
 
-    def put_value(self, value, name):
-        r = self._get_pool_redis()
-        key = self._get_key(name)
-        val = self.json_dumps(value)
-        _logger.info("Redis Put Key(%s) Value(%s)" % (key, val))
+
+    def push_value(self, name, value, left=True):
+        rconnection = self._get_pool_redis()
+        tvalue = self.json_dumps(value)
+        _logger.info("Redis Put Key(%s) Value(%s)" % (name, tvalue))
         try:
-            ret = r.lpush(key, val)
+            if left:
+                result = rconnection.lpush(name, tvalue)
+            else:
+                result = rconnection.rpush(name, tvalue)
         except Exception,e:
             _logger.error("Redis Error: %s" % e)
             raise UserError(u"Redis Put错误，请检查配置")
-        _logger.info("Redis Put Key(%s) Ret(%s) : Value(%s)" % (key, ret, val))
-        return ret
+        _logger.info("Redis Put Key(%s) Ret(%s) : Value(%s)" % (name, result, tvalue))
+        return result
+
+
+    def pop_value(self, name, right=True):
+        rconnection = self._get_pool_redis()
+        _logger.info("Redis Pop Key(%s)" % name)
+        try:
+            if right:
+                result = json.loads(rconnection.rpop(name))
+            else:
+                result = json.loads(rconnection.lpop(name))
+        except Exception,e:
+            _logger.error("Redis Error: %s" % e)
+            raise UserError(u"Redis Pop错误，请检查配置")
+        _logger.info("Redis Pop Key(%s) Ret(%s)" % (name, result))
+        return result
+
+
+

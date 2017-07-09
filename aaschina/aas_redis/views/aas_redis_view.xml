@@ -8,11 +8,10 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree>
-                    <field name="type"/>
+                    <field name="name"/>
                     <field name="host"/>
                     <field name="port"/>
                     <field name="db"/>
-                    <field name="name"/>
                     <field name="comment"/>
                 </tree>
             </field>
@@ -30,8 +29,8 @@
                     <sheet>
                         <group>
                             <group>
-                                <field name="type"/>
-                                <field name="name"/>
+                                <field name="code"/>
+                                <field name="prefix"/>
                                 <field name="password" widget="password"/>
                             </group>
                             <group>
@@ -55,13 +54,13 @@
             <field name="model">aas.base.redis</field>
             <field name="arch" type="xml">
                 <search>
-                    <field name="type" string="类型" filter_domain="[('type','ilike',self)]"/>
-                    <field name="name" string="前缀" filter_domain="[('name','ilike',self)]"/>
+                    <field name="code" string="编码" filter_domain="[('code','ilike',self)]"/>
+                    <field name="prefix" string="前缀" filter_domain="[('prefix','ilike',self)]"/>
                     <field name="host" string="主机" filter_domain="[('host','ilike',self)]"/>
                     <field name="port" string="端口" filter_domain="[('port','ilike',self)]"/>
                     <separator/>
                     <group expand="0" string="分组">
-                        <filter string="前缀" context="{'group_by':'name'}"/>
+                        <filter string="前缀" context="{'group_by':'prefix'}"/>
                         <filter string="主机" context="{'group_by':'host'}"/>
                         <filter string="端口" context="{'group_by':'port'}"/>
                     </group>
@@ -83,7 +82,7 @@
         </record>
 
         <menuitem id="menu_aas_base_redis"  name="Redis" action="action_aas_base_redis"
-                          parent="menu_aas_base_itsettings_list" sequence="3"/>
+                          parent="aas_base.menu_aas_base_itsettings_list" sequence="3"/>
 
 
     </data>

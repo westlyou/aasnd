@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="redis_aasequipment" model="aas.base.redis">
+            <field name="code">equipment</field>
+            <field name="prefix">aas</field>
+            <field name="host">127.0.0.1</field>
+            <field name="port">6379</field>
+            <field name="db">0</field>
+        </record>
+
+    </data>
+</odoo>

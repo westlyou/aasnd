@@ -13,6 +13,7 @@ from odoo.http import request
 
 logger = logging.getLogger(__name__)
 
+
 class AASBaseController(http.Controller):
 
     @http.route('/aas/base/labelprinters', type='json', auth="user")

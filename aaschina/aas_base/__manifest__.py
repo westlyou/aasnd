@@ -20,7 +20,7 @@
         'views/aas_base_templates.xml',
         'views/aas_base_view.xml',
         'views/aas_label_view.xml',
-        'redis/aas_redis_view.xml'
+        'views/aas_wechat_templates.xml'
     ],
     'qweb':[
         'static/src/xml/aas_base.xml'
