@@ -3,3 +3,4 @@
 import models
 import wizard
 import oracle
+import wechat

@@ -117,6 +117,10 @@ class AASBaseCron(models.Model):
 
     @api.model
     def excute_month_cron(self):
+        """
+        每月执行一次
+        :return:
+        """
         tempcron = self.env['aas.base.cron'].create({'cron_method': 'action_month_cron'})
         self.action_month_cron()
         tempcron.write({'thend_time': fields.Datetime.now()})
@@ -127,6 +131,10 @@ class AASBaseCron(models.Model):
 
     @api.model
     def excute_day_cron(self):
+        """
+        每天执行一次
+        :return:
+        """
         tempcron = self.env['aas.base.cron'].create({'cron_method': 'action_day_cron'})
         self.action_day_cron()
         self.action_clear_cron_records()
@@ -138,6 +146,10 @@ class AASBaseCron(models.Model):
 
     @api.model
     def excute_hour_cron(self):
+        """
+        每小时执行一次
+        :return:
+        """
         tempcron = self.env['aas.base.cron'].create({'cron_method': 'action_hour_cron'})
         self.action_hour_cron()
         tempcron.write({'thend_time': fields.Datetime.now()})
@@ -149,4 +161,17 @@ class AASBaseCron(models.Model):
     @api.model
     def action_clear_cron_records(self, days=180):
         # 清理days天之前的记录,默认半年
+        pass
+
+    @api.model
+    def excute_minute_cron(self):
+        """
+        每分钟执行一次
+        :return:
+        """
+        self.action_minute_cron()
+
+
+    @api.model
+    def action_minute_cron(self):
         pass

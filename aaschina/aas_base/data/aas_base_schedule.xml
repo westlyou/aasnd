@@ -41,6 +41,19 @@
             <field name="args" eval="'()'"/>
         </record>
 
+        <record forcecreate="True" id="ir_cron_aas_base_cron_minute" model="ir.cron">
+            <field name="name">分钟任务</field>
+            <field eval="True" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">minutes</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+            <field name="model">aas.base.cron</field>
+            <field name="function" eval="'excute_minute_cron'"/>
+            <field name="args" eval="'()'"/>
+        </record>
+
 
     </data>
 </odoo>

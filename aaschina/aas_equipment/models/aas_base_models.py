@@ -20,10 +20,9 @@ _logger = logging.getLogger(__name__)
 class AASBaseCron(models.Model):
     _inherit = 'aas.base.cron'
 
-
     @api.model
-    def action_hour_cron(self):
-        super(AASBaseCron, self).action_hour_cron()
+    def action_minute_cron(self):
+        super(AASBaseCron, self).action_minute_cron()
         # 将缓存中的设备数据存到PG中
         self.env['aas.equipment.data'].action_persist_data()
 
