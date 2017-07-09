@@ -42,24 +42,37 @@ class AASEquipmentData(models.Model, RedisModel):
         将redis中缓存的生产设备信息持久化到pg中
         :return:
         """
-        record = self.redis_pop()
-        if record:
-            self.create({
-                'app_code': record.app_code+'01', 'app_secret': record.app_secret, 'staff_code': record.staff_code,
-                'job_code': record.job_code, 'product_code': record.product_code, 'station_code': record.station_code,
+        loop = True
+        while loop:
+            try:
+                record = self.redis_pop()
+            except UserError, ue:
+                loop = False
+            if not loop:
+                break
+            if not record:
+                continue
+            recorddata = ''
+            if record['data']:
+                recorddata = record['data']
+                if isinstance(record['data'], dict):
+                    recorddata = self.json2str(record['data'])
+            self.env['aas.equipment.data'].create({
+                'app_code': record['app_code']+'01', 'app_secret': record['app_secret'], 'staff_code': record['staff_code'],
+                'job_code': record['job_code'], 'product_code': record['product_code'], 'station_code': record['station_code'],
                 'operate_time': '2017-07-09 14:29:11',
                 'timstamp': '2017-07-09 14:29:50',
                 # 'timstamp': fields.Datetime.to_string(fields.Datetime.context_timestamp(self, record.timstamp)),
-                'data_type': record.data_type, 'data': record.data
+                'data_type': record['data_type'], 'data': recorddata
             })
 
 
-    @api.model
-    def action_push_data(self, value):
+    @api.one
+    def action_push_data(self):
         record = {
-            'aap_code': 'EQ0001', 'app_secret': 121232423, 'staff_code': 'EM0002', 'job_code': '1535530',
+            'app_code': 'EQ0001', 'app_secret': 121232423, 'staff_code': 'EM0002', 'job_code': '1535530',
             'product_code': 'A-1743', 'station_code': 'ST00006', 'operate_time': '2017-07-09 14:29:50',
-            'timstamp': '2017-07-09 14:29:50', 'data_type': 'P', 'data': "{ 'Tempresure': 337.5, 'Presdf': 224}"
+            'timstamp': '2017-07-09 14:29:50', 'data_type': 'P', 'data': {'Tempresure': 337.5, 'Presdf': 224}
         }
         self.redis_push(record)
 

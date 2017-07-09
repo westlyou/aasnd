@@ -7,4 +7,5 @@
 @time: 2017-7-9 13:05
 """
 
+import aas_base_models
 import aas_equipment_data

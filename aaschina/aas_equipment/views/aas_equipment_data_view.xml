@@ -7,7 +7,7 @@
             <field name="model">aas.equipment.data</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree edit="false" delete="false">
+                <tree create="false" edit="false" delete="false">
                     <field name="app_code"/>
                     <field name="app_secret"/>
                     <field name="staff_code"/>
@@ -27,10 +27,6 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form create="false" edit="false" delete="false">
-                    <header>
-                        <button name="action_push_data" type="object" string="推入缓存" class="oe_highlight"/>
-                        <button name="action_persist_data" type="object" string="存入PG" class="oe_highlight"/>
-                    </header>
                     <sheet>
                         <group>
                             <group>

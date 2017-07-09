@@ -48,6 +48,21 @@ class RedisBase(object):
             self._redis_record = self.env['aas.base.redis'].get_redis(self._redis_name)
         return self._redis_record
 
+    def json2str(self, value):
+        if isinstance(value, str):
+            pass
+        else:
+            value = json.dumps(value, cls=DatetimeJSONEncoder)
+        return value
+
+
+    def str2json(self, value):
+        if isinstance(value, dict):
+            pass
+        else:
+            value = json.loads(value)
+        return value
+
 
 class RedisModel(RedisBase):
 
@@ -192,10 +207,8 @@ class AASBaseRedis(models.Model):
         rconnection = self._get_pool_redis()
         _logger.info("Redis Pop Key(%s)" % name)
         try:
-            if right:
-                result = json.loads(rconnection.rpop(name))
-            else:
-                result = json.loads(rconnection.lpop(name))
+            tvalue = rconnection.rpop(name) if right else rconnection.lpop(name)
+            result = json.loads(tvalue)
         except Exception,e:
             _logger.error("Redis Error: %s" % e)
             raise UserError(u"Redis Pop错误，请检查配置")
