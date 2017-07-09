@@ -137,6 +137,7 @@ class AASStockReceiptProductWizard(models.TransientModel):
                 lotdict[lline.lot_name] = lot_id
             label = self.action_build_label(lot_id, lline.label_qty, location_id, lline.warranty_date)
             receipt_labels.append((0, 0, {
+                'label_current': True,
                 'receipt_id': receipt.id, 'label_id': label.id, 'product_id': label.product_id.id, 'product_uom': label.product_uom.id,
                 'origin_order': label.origin_order, 'product_lot': lot_id, 'label_location': location_id, 'product_qty': label.product_qty
             }))

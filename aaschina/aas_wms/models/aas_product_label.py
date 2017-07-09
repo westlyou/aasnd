@@ -312,11 +312,7 @@ class AASProductLabel(models.Model):
             values.update({'success': False, 'message': u'请联系管理员标签打印未指定具体打印内容！'})
             return values
         values.update({'printer': printer.name, 'serverurl': printer.serverurl})
-        printnamedict, field_list = {}, []
-        for fline in printer.field_lines:
-            field_list.append(fline.field_name)
-            if fline.field_name != fline.print_name:
-                printnamedict[fline.field_name] = fline.print_name
+        field_list = [fline.field_name for fline in printer.field_lines]
         if ids and len(ids) > 0:
             labeldomain = [('id', 'in', ids)]
         else:

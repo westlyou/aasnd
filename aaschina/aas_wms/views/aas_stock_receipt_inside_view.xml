@@ -379,7 +379,7 @@
             <field name="model">aas.stock.receipt</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form>
+                <form labelprint="true">
                     <header>
                         <button name="action_confirm" type="object" string="收货确认" class="oe_highlight" attrs="{'invisible':[('state','!=','draft')]}"/>
                         <button name="action_refresh_push_location" type="object" string="推荐库位" class="oe_highlight"

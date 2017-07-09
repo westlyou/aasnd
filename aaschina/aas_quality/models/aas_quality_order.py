@@ -222,6 +222,47 @@ class AASQualityOrder(models.Model):
         return super(AASQualityOrder, self).unlink()
 
 
+    @api.model
+    def action_print_label(self, printer_id, ids=[], domain=[]):
+        values = {'success': True, 'message': ''}
+        printer = self.env['aas.label.printer'].browse(printer_id)
+        if not printer.field_lines or len(printer.field_lines) <= 0:
+            values.update({'success': False, 'message': u'请联系管理员标签打印未指定具体打印内容！'})
+            return values
+        if printer.model_id.model != 'aas.product.label':
+            values.update({'success': False, 'message': u'请仔细检查是否选择正确打印机；如果打印机正确，请联系管理员检查配置是否正确！'})
+            return values
+        values.update({'printer': printer.name, 'serverurl': printer.serverurl})
+        if ids and len(ids) > 0:
+            qualitydomain = [('id', 'in', ids)]
+        else:
+            qualitydomain = domain
+        qualitylist = self.env['aas.quality.order'].search(qualitydomain)
+        if not qualitylist or len(qualitylist) <= 0:
+            values.update({'success': False, 'message': u'未搜索到需要打印标签的质检单！'})
+            return values
+        labelids = []
+        for quality in qualitylist:
+            operationdoamin = [('order_id', '=', quality.id), ('qualified_qty', '!=', 0.0), ('unqualified_qty', '!=', 0.0)]
+            qoperations = self.env['aas.quality.operation'].search(operationdoamin)
+            if qoperations and len(qoperations) > 0:
+                labelids.extend([qoperation.qlabel_id.label_id.id for qoperation in qoperations])
+            qrejections = self.env['aas.quality.rejection'].search([('current_label', '=', True), ('order_id', '=', quality.id)])
+            if qrejections and len(qrejections) > 0:
+                labelids.extend([qrejection.label_id.id for qrejection in qrejections])
+        if not labelids or len(labelids) <= 0:
+            values.update({'success': False, 'message': u'暂时不需要打印任何标签！'})
+            return values
+        field_list = [fline.field_name for fline in printer.field_lines]
+        records = self.search_read(domain=[('id', 'in', labelids)], fields=field_list)
+        if not records or len(records) <= 0:
+            values.update({'success': False, 'message': u'未搜索到需要打印的标签！'})
+            return values
+        records = printer.action_correct_records(records)
+        values['records'] = records
+        return values
+
+
 class AASQualityLabel(models.Model):
     _name = 'aas.quality.label'
     _description = 'AAS Quality Label'
