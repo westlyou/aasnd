@@ -31,7 +31,8 @@
         'oracle/aas_stock_purchase_view.xml',
         'oracle/aas_stock_sales_view.xml',
 
-        'wechat/views/aas_wechat_wms_template.xml'
+        'wechat/views/aas_wechat_wms_template.xml',
+        'wechat/views/aas_wechat_wms_receipt_template.xml'
     ],
     'qweb':[],
     'installable': True,

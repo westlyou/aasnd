@@ -7,3 +7,13 @@ access_aas_quality_operation_quality_user,aas.quality.operation quality_user,mod
 access_aas_quality_operation_quality_manager,aas.quality.operation quality_manager,model_aas_quality_operation,group_aas_quality_manager,1,1,1,1
 access_aas_quality_rejection_quality_user,aas.quality.rejection quality_user,model_aas_quality_rejection,group_aas_quality_user,1,1,1,1
 access_aas_quality_rejection_quality_manager,aas.quality.rejection quality_manager,model_aas_quality_rejection,group_aas_quality_manager,1,1,1,1
+
+
+access_aas_quality_order_stock_user,aas.quality.order stock_user,model_aas_quality_order,stock.group_stock_user,1,0,0,0
+access_aas_quality_order_stock_manager,aas.quality.order stock_manager,model_aas_quality_order,stock.group_stock_manager,1,0,0,0
+access_aas_quality_label_stock_user,aas.quality.label stock_user,model_aas_quality_label,stock.group_stock_user,1,0,0,0
+access_aas_quality_label_stock_manager,aas.quality.label stock_manager,model_aas_quality_label,stock.group_stock_manager,1,0,0,0
+access_aas_quality_operation_stock_user,aas.quality.operation stock_user,model_aas_quality_operation,stock.group_stock_user,1,0,0,0
+access_aas_quality_operation_stock_manager,aas.quality.operation stock_manager,model_aas_quality_operation,stock.group_stock_manager,1,0,0,0
+access_aas_quality_rejection_stock_user,aas.quality.rejection stock_user,model_aas_quality_rejection,stock.group_stock_user,1,0,0,0
+access_aas_quality_rejection_stock_manager,aas.quality.rejection stock_manager,model_aas_quality_rejection,stock.group_stock_manager,1,0,0,0

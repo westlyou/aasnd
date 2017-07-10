@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <template id="wechat_wms_receipt_line_list" name="Wechat WMS Receipt Line List">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/iconfont/iconfont.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <h1 class="mui-title"> 收货上架 </h1>
+                    </header>
+                    <div id="receipt_line_list_pullrefresh" class="mui-content mui-scroll-wrapper" t-att-lineindex="lineindex">
+                        <div class="mui-scroll">
+                            <div class="mui-input-row mui-search" style="height:34px;margin:10px;">
+                                <input id="product_code_search" type="search" class="mui-input-clear" placeholder="请输入产品编码"/>
+                            </div>
+                            <ul id="receipt_line_list" class="mui-table-view mui-table-view-chevron">
+                                <li class="mui-table-view-cell">
+                                    <div class='mui-table'>
+                                        <div class='mui-table-cell mui-col-xs-8 mui-text-left'>产品编码</div>
+                                        <div class='mui-table-cell mui-col-xs-4 mui-text-right'>收货类型</div>
+                                    </div>
+                                    <div class='mui-table'>
+                                        <div class='mui-table-cell mui-col-xs-8 mui-text-left'>推荐库位</div>
+                                        <div class='mui-table-cell mui-col-xs-4 mui-text-right'>待处理数量</div>
+                                    </div>
+                                </li>
+                                <t t-if="receiptlines">
+                                   <t t-foreach="receiptlines" t-as="rline">
+                                       <li class="aas-receipt-line mui-table-view-cell" t-att-receiptlineid="rline['line_id']">
+                                           <a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>
+                                               <div class='mui-table'>
+                                                   <div class='mui-table-cell mui-col-xs-8 mui-text-left'> <t t-esc="rline['product_code']"/> </div>
+                                                   <div class='mui-table-cell mui-col-xs-4 mui-text-right'> <t t-esc="rline['receipt_type']"/> </div>
+                                               </div>
+                                               <div class='mui-table'>
+                                                   <div class='mui-table-cell mui-col-xs-8 mui-text-left'> <t t-esc="rline['location_name']"/> </div>
+                                                   <div class='mui-table-cell mui-col-xs-4 mui-text-right'> <t t-esc="rline['receipt_qty']"/> </div>
+                                               </div>
+                                           </a>
+                                       </li>
+                                   </t>
+                                </t>
+                            </ul>
+                        </div>
+                    </div>
+                </body>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_receipt_line_list.js"></script>
+            </html>
+        </template>
+
+    </data>
+</odoo>

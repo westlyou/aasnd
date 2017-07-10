@@ -43,7 +43,7 @@ class AASStockReceipt(models.Model):
                 if pkey in productdict:
                     productdict[pkey]['product_qty'] += rline.product_qty
                     productdict[pkey]['rlines'].append(rline.id)
-                    productdict[pkey]['qlabels'].extends([(0, 0, {
+                    productdict[pkey]['qlabels'].extend([(0, 0, {
                         'label_id': rlabel.id, 'commit_id': rline.id, 'commit_model': 'aas.stock.receipt.line',
                         'commit_order': '['+record.name+']'+rline.product_id.default_code
                     })])
@@ -63,7 +63,7 @@ class AASStockReceipt(models.Model):
                     'commit_user': pval['commit_user'], 'commit_time': pval['commit_time'], 'state': pval['state'], 'partner_id': pval['partner_id'],
                     'label_lines': pval['qlabels']
                 }
-                quality = self.env['aas.quality.order'].create(qualityvals)
+                quality = self.env['aas.quality.order'].sudo().create(qualityvals)
                 receiptlines = self.env['aas.stock.receipt.line'].browse(pval['rlines'])
                 receiptlines.write({'quality_id': quality.id, 'state': 'tocheck'})
         if receipts and len(receipts) > 0:
@@ -101,7 +101,7 @@ class AASStockReceiptLine(models.Model):
             if pkey in productdict:
                 productdict[pkey]['product_qty'] += record.product_qty
                 productdict[pkey]['rlines'].append(record.id)
-                productdict[pkey]['qlabels'].extends([(0, 0, {
+                productdict[pkey]['qlabels'].extend([(0, 0, {
                     'label_id': rlabel.id, 'commit_id': record.id, 'commit_model': 'aas.stock.receipt.line',
                     'commit_order': '['+receipt.name+']'+record.product_id.default_code
                 }) for rlabel in record.label_list])
@@ -121,7 +121,7 @@ class AASStockReceiptLine(models.Model):
                     'commit_user': pval['commit_user'], 'commit_time': pval['commit_time'], 'state': pval['state'], 'partner_id': pval['partner_id'],
                     'label_lines': pval['qlabels']
                 }
-                quality = self.env['aas.quality.order'].create(qualityvals)
+                quality = self.env['aas.quality.order'].sudo().create(qualityvals)
                 receiptlines = self.env['aas.stock.receipt.line'].browse(pval['rlines'])
                 receiptlines.write({'quality_id': quality.id, 'state': 'tocheck'})
         if receiptlist and len(receiptlist) > 0:
