@@ -57,8 +57,8 @@ function pulluprefresh(){
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>"+rline.receipt_type+"</div>"+
                         "</div>"+
                         "<div class='mui-table'>" +
-                            "<div class='mui-table-cell mui-col-xs-8 mui-text-left'>"+rline.location_name+"</div>"+
-                            "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>"+rline.receipt_qty+"</div>"+
+                            "<div class='mui-table-cell mui-col-xs-8 mui-text-left'>"+rline.receipt_name+"</div>"+
+                            "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>"+rline.location_name+"</div>"+
                         "</div>"+
                         "</a>";
                     li.setAttribute('receiptlineid', rline.line_id);
@@ -102,8 +102,8 @@ mui.ready(function(){
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>收货类型</div>"+
                         "</div>"+
                         "<div class='mui-table'>" +
-                            "<div class='mui-table-cell mui-col-xs-8 mui-text-left'>推荐库位</div>"+
-                            "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>待处理数量</div>"+
+                            "<div class='mui-table-cell mui-col-xs-8 mui-text-left'>收货单号</div>"+
+                            "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>推荐库位</div>"+
                         "</div>";
                 receipt_line_list.appendChild(titleli);
                 var dresult = data.result;
@@ -121,8 +121,8 @@ mui.ready(function(){
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>"+rline.receipt_type+"</div>"+
                         "</div>"+
                         "<div class='mui-table'>" +
-                            "<div class='mui-table-cell mui-col-xs-8 mui-text-left'>"+rline.location_name+"</div>"+
-                            "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>"+rline.receipt_qty+"</div>"+
+                            "<div class='mui-table-cell mui-col-xs-8 mui-text-left'>"+rline.receipt_name+"</div>"+
+                            "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>"+rline.location_name+"</div>"+
                         "</div>"+
                         "</a>";
                     li.setAttribute('receiptlineid', rline.line_id);

@@ -313,41 +313,44 @@ class AASStockReceiptLine(models.Model):
     @api.one
     def action_push_done(self):
         operationlist = self.env['aas.stock.receipt.operation'].search([('line_id', '=', self.id), ('push_onshelf', '=', False)])
-        if operationlist and len(operationlist) > 0:
-            productdict, receiptvals, movedict, operationlines = {}, {}, {}, []
-            push_user, push_time, push_date = self.env.user.id, fields.Datetime.now(), fields.Date.today()
-            for roperation in operationlist:
-                pkey = 'P'+str(roperation.product_id.id)
-                if pkey in productdict:
-                    productdict[pkey]['location_id'] = roperation.location_id.id
-                else:
-                    productdict[pkey] = {'product': roperation.product_id, 'location_id': roperation.location_id.id}
-                label = roperation.rlabel_id.label_id
-                operationlines.append((1, roperation.id, {'push_onshelf': True, 'push_user': push_user, 'push_time': push_time}))
-                mkey = 'move_'+str(label.product_lot.id)+'_'+str(label.location_id.id)+'_'+str(roperation.location_id.id)
-                if mkey in movedict:
-                    movedict[mkey]['product_qty'] += label.product_qty
-                else:
-                    movedict[mkey] = {
-                        'product_id': self.product_id.id, 'product_uom': self.product_uom.id, 'product_lot': label.product_lot.id,
-                        'origin_order': self.origin_order, 'receipt_type': self.receipt_type, 'partner_id': self.receipt_id.partner_id and self.receipt_id.partner_id.id,
-                        'receipt_user': self.env.user.id, 'location_src_id': label.location_id.id, 'location_dest_id': roperation.location_id.id, 'product_qty': label.product_qty, 'company_id': self.company_id.id
-                    }
-                labelvals = {'locked': False, 'locked_order': False}
-                labelvals.update({'onshelf_time': push_time, 'onshelf_date': push_date, 'location_id': roperation.location_id.id})
-                label.write(labelvals)
-            # 记录原料最近一次存放位置，为下次上架提供推荐库位
-            for pkey, pval in productdict.items():
-                product_id, location_id = pval['product'], pval['location_id']
-                product_id.write({'push_location': location_id})
-            # 更新收货单信息
-            receiptvals['operation_lines'] = operationlines
-            receiptvals['move_lines'] = [(0, 0, mval) for mkey, mval in movedict.items()]
-            receiptvals['receipt_lines'] = [(1, self.id, {'receipt_qty': self.receipt_qty+self.doing_qty, 'doing_qty': 0.0})]
-            self.receipt_id.write(receiptvals)
+        if not operationlist or len(operationlist) <= 0:
+            raise UserError(u"请仔细检查，还可能还没有添加上架作业标签！")
+        productdict, receiptvals, movedict, operationlines = {}, {}, {}, []
+        push_user, push_time, push_date = self.env.user.id, fields.Datetime.now(), fields.Date.today()
+        for roperation in operationlist:
+            pkey = 'P'+str(roperation.product_id.id)
+            if pkey in productdict:
+                productdict[pkey]['location_id'] = roperation.location_id.id
+            else:
+                productdict[pkey] = {'product': roperation.product_id, 'location_id': roperation.location_id.id}
+            label = roperation.rlabel_id.label_id
+            operationlines.append((1, roperation.id, {'push_onshelf': True, 'push_user': push_user, 'push_time': push_time}))
+            mkey = 'move_'+str(label.product_lot.id)+'_'+str(label.location_id.id)+'_'+str(roperation.location_id.id)
+            if mkey in movedict:
+                movedict[mkey]['product_qty'] += label.product_qty
+            else:
+                movedict[mkey] = {
+                    'product_id': self.product_id.id, 'product_uom': self.product_uom.id, 'product_lot': label.product_lot.id,
+                    'origin_order': self.origin_order, 'receipt_type': self.receipt_type, 'partner_id': self.receipt_id.partner_id and self.receipt_id.partner_id.id,
+                    'receipt_user': self.env.user.id, 'location_src_id': label.location_id.id, 'location_dest_id': roperation.location_id.id, 'product_qty': label.product_qty, 'company_id': self.company_id.id
+                }
+            labelvals = {'locked': False, 'locked_order': False}
+            labelvals.update({'onshelf_time': push_time, 'onshelf_date': push_date, 'location_id': roperation.location_id.id})
+            label.write(labelvals)
+        # 记录原料最近一次存放位置，为下次上架提供推荐库位
+        for pkey, pval in productdict.items():
+            product_id, location_id = pval['product'], pval['location_id']
+            product_id.write({'push_location': location_id})
+        # 更新收货单信息
+        receiptvals['operation_lines'] = operationlines
+        receiptvals['move_lines'] = [(0, 0, mval) for mkey, mval in movedict.items()]
+        receiptvals['receipt_lines'] = [(1, self.id, {'receipt_qty': self.receipt_qty+self.doing_qty, 'doing_qty': 0.0})]
+        self.receipt_id.write(receiptvals)
+        # 判断当前收货明细是否结束收货
         labelist = self.env['aas.stock.receipt.label'].search([('line_id', '=', self.id), ('checked', '=', False)])
         if not labelist or len(labelist) <= 0:
             self.write({'state': 'done'})
+        # 判断当前收货单是否结束收货
         if all([rline.state=='done' for rline in self.receipt_id.receipt_lines]):
             self.receipt_id.write({'state': 'done', 'done_time': fields.Datetime.now()})
 
