@@ -39,12 +39,15 @@ class AASReceiptWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/receiptlinemore', type='json', auth="user")
-    def aas_wechat_wms_receiptlinemore(self, lineindex=0, limit=20):
+    def aas_wechat_wms_receiptlinemore(self, lineindex=0, product_code=None, limit=20):
         values = {'receiptlines': [], 'lineindex': lineindex, 'linecount': 0}
         linesdomain = ['&', '|']
         linesdomain.extend(['&', ('receipt_type', '=', 'purchase'), ('state', 'in', ['checked', 'receipt'])])
         linesdomain.extend(['&', ('receipt_type', '!=', 'purchase'), ('state', 'in', ['confirm', 'receipt'])])
-        linesdomain.extend([('company_id', '=', request.env.user.company_id.id)])
+        if not product_code:
+            linesdomain.extend([('company_id', '=', request.env.user.company_id.id)])
+        else:
+            linesdomain.extend(['&', ('company_id', '=', request.env.user.company_id.id), ('product_id', 'ilike', product_code)])
         receiptlines = request.env['aas.stock.receipt.line'].search(linesdomain, offset=lineindex, limit=limit)
         if receiptlines and len(receiptlines) > 0:
             values['receiptlines'] = [{

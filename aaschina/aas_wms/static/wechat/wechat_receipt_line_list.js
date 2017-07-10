@@ -23,16 +23,17 @@ mui.init({
 });
 
 function pulluprefresh(){
-    var keyword = document.getElementById('product_code_search').value;
-    if(keyword!=null && keyword!=''){
-        mui.later(function(){ window.location.reload(true); }, 500);
-    }
     mui.later(function(){
         var pullrefresh = document.body.querySelector('#receipt_line_list_pullrefresh');
         var lineindex = pullrefresh.getAttribute('lineindex');
         var accessid = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        var params = {'lineindex': parseInt(lineindex)};
+        var keyword = document.getElementById('product_code_search').value;
+        if(keyword!=null && keyword!=''){
+            params['product_code'] = keyword;
+        }
         mui.ajax('/aaswechat/wms/receiptlinemore',{
-            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {'lineindex': parseInt(lineindex)}, id: accessid}),
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: params, id: accessid}),
             dataType:'json', type:'post', timeout:10000,
             headers:{'Content-Type':'application/json'},
             success:function(data){

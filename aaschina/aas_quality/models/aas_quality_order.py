@@ -114,16 +114,6 @@ class AASQualityOrder(models.Model):
         self.write(qvals)
 
     @api.one
-    def action_all_qualified(self):
-        """
-        一次性未检测的标签全部合格
-        :return:
-        """
-        qlabels = self.env['aas.quality.label'].search([('order_id', '=', self.id), ('label_checked', '=', False)])
-        if qlabels and len(qlabels) > 0:
-            self.write({'operation_lines': [(0, 0, {'qlabel_id': qlabel.id}) for qlabel in qlabels]})
-
-    @api.one
     def action_quality_done(self):
         """
         质检完成，刷新质检单状态
@@ -200,7 +190,15 @@ class AASQualityOrder(models.Model):
                 'context': self.env.context
             }
 
-
+    @api.one
+    def action_all_qualified(self):
+        """
+        一次性未检测的标签全部合格
+        :return:
+        """
+        qlabels = self.env['aas.quality.label'].search([('order_id', '=', self.id), ('label_checked', '=', False)])
+        if qlabels and len(qlabels) > 0:
+            self.write({'operation_lines': [(0, 0, {'qlabel_id': qlabel.id, 'qualified_qty': qlabel.product_qty}) for qlabel in qlabels]})
 
 
     @api.one
