@@ -45,7 +45,7 @@
                     </div>
                     <div id="purchase_list_buttons" class="mui-popover mui-popover-action mui-popover-bottom">
                         <ul class="mui-table-view">
-                            <li class="mui-table-view-cell"> <a id="'action_purchase_import" href="javascript:;">导入订单</a></li>
+                            <li class="mui-table-view-cell"> <a id="gitaction_purchase_import" href="javascript:;">导入订单</a></li>
                         </ul>
                         <ul class="mui-table-view">
                             <li class="mui-table-view-cell"> <a href="#purchase_list_buttons"><b>取消</b></a> </li>
