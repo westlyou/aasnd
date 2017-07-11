@@ -16,6 +16,7 @@
                 </head>
                 <body>
                     <header class="mui-bar mui-bar-nav">
+                        <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
                         <a class="mui-icon mui-icon-bars mui-pull-right" style="color: #0870d9;" href="#purchase_list_buttons"></a>
                         <h1 class="mui-title"> 采购订单 </h1>
                     </header>
