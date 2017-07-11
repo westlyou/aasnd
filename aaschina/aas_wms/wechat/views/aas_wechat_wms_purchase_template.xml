@@ -230,7 +230,7 @@
                     </div>
                 </body>
                 <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
-                <script type="text/javascript" src="/aas_wms_wechat/static/wechat/wechat_purchase_receipt.js"></script>
+                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_purchase_receipt.js"></script>
             </html>
         </template>
 
