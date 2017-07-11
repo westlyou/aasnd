@@ -111,7 +111,8 @@ class AASStockPurchaseOrder(models.Model):
                     }
             ordervals['order_lines'] = [(0, 0, pval) for pkey, pval in productdict.items()]
         ordervals['ebsorder'] = True
-        self.env['aas.stock.purchase.order'].create(ordervals)
+        purchaseorder = self.env['aas.stock.purchase.order'].create(ordervals)
+        values['purchaseid'] = purchaseorder.id
         return values
 
 

@@ -9,3 +9,4 @@
 
 import aas_stock
 import aas_receipt
+import aas_purchase

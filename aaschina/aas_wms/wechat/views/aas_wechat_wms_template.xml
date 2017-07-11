@@ -64,13 +64,13 @@
                                     <div class="mui-media-body" style="font-size:12px;">采购收货</div>
                                 </a>
                             </li>
-                            <!--<li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
-                                <a href="/aaswechat/wms/receiptlist/manreturn">
-                                    <span class="mui-icon iconfont icon-tuihuo"></span>
-                                    <div class="mui-media-body" style="font-size:12px;">生产退料</div>
+                            <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
+                                <a href="/aaswechat/wms/purchaselist">
+                                    <span class="mui-icon iconfont icon-purchase"></span>
+                                    <div class="mui-media-body" style="font-size:12px;">采购订单</div>
                                 </a>
                             </li>
-                            <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
+                            <!--<li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
                                 <a href="/aaswechat/wms/receiptlist/sundry">
                                     <span class="mui-icon iconfont icon-zaqizaba"></span>
                                     <div class="mui-media-body" style="font-size:12px;">杂项入库</div>
