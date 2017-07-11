@@ -22,6 +22,8 @@ RECEIPTSTATEDICT = {'draft': u'草稿', 'confirm': u'确认', 'tocheck': u'待�
 
 class AASReceiptWechatController(http.Controller):
 
+    ######################################## 收货明细单上架操作 #########################################
+
     @http.route('/aaswechat/wms/receiptlinelist', type='http', auth='user')
     def aas_wechat_wms_receiptlinelist(self, limit=20):
         values = {'success': True, 'message': '', 'receiptlines': [], 'lineindex': '0'}
@@ -184,6 +186,222 @@ class AASReceiptWechatController(http.Controller):
         receiptline = request.env['aas.stock.receipt.line'].browse(lineid)
         try:
             receiptline.action_push_done()
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
+        return values
+
+
+    ######################################## 收货单操作 #########################################
+
+    @http.route('/aaswechat/wms/receiptlist/<string:receipttype>', type='http', auth="user")
+    def aas_wechat_wms_receiptlist(self, receipttype='all', limit=20):
+        values = {'receipts': [], 'receipttype': receipttype, 'list_name': u'收货列表', 'receiptindex': '0'}
+        search_domain = [('state', 'in', ['confirm', 'receipt'])]
+        if receipttype == 'purchase':
+            search_domain = [('state', 'in', ['draft', 'confirm', 'tocheck', 'checked', 'receipt'])]
+        if receipttype != 'all':
+            search_domain.append(('receipt_type', '=', receipttype))
+            values['list_name'] = RECEIPTTYPEDICT[receipttype]
+        search_domain.append(('company_id', '=', request.env.user.company_id.id))
+        receipt_list = request.env['aas.stock.receipt'].search(search_domain, limit=limit)
+        if receipt_list:
+            values['receipts'] = [{
+                'receipt_id': receipt.id, 'receipt_name': receipt.name, 'receipt_state': RECEIPTSTATEDICT[receipt.state]
+            } for receipt in receipt_list]
+            values['receiptindex'] = len(receipt_list)
+        return request.render('aas_wms.wechat_wms_receipt_list', values)
+
+    @http.route('/aaswechat/wms/receiptlistsearch', type='json', auth="user")
+    def aas_wechat_wms_receipt_product_search(self, product_code=None, receipt_type='all', limit=20):
+        values = {'success': True, 'message': '', 'receiptindex': '0'}
+        search_domain = [('state', 'in', ['confirm', 'receipt'])]
+        if receipt_type=='purchase':
+            search_domain = [('state', 'in', ['draft', 'confirm', 'tocheck', 'checked', 'receipt'])]
+        if receipt_type!='all':
+            search_domain.append(('receipt_type', '=', receipt_type))
+        search_domain.append(('product_id', 'ilike', product_code))
+        search_domain.append(('company_id', '=', request.env.user.company_id.id))
+        receipt_line_list = request.env['aas.stock.receipt.line'].search(search_domain)
+        if not receipt_line_list or len(receipt_line_list) <= 0:
+            values['success'], values['message'] = False, u'未搜索到你需要的收货单！'
+            return values
+        receiptids = list(set([rline.receipt_id.id for rline in receipt_line_list]))
+        receipts = request.env['aas.stock.receipt'].search([('id', 'in', receiptids)], limit=limit)
+        values['receipts'] = [{
+            'receipt_id': receipt.id, 'receipt_name': receipt.name, 'receipt_state': RECEIPTSTATEDICT[receipt.state]
+        } for receipt in receipts]
+        values['receiptindex'] = len(receipts)
+        return values
+
+
+    @http.route('/aaswechat/wms/receiptmore', type='json', auth="user")
+    def aas_wechat_wms_receiptmore(self, receipttype='all', product_code=None, receiptindex=0, limit=20):
+        values = {'receipts': [], 'receiptindex': receiptindex, 'receipttype': receipttype, 'receiptcount': 0}
+        search_domain = [('state', 'in', ['confirm', 'receipt'])]
+        if receipttype=='purchase':
+            search_domain = [('state', 'in', ['draft', 'confirm', 'tocheck', 'checked', 'receipt'])]
+        if receipttype!='all':
+            search_domain.append(('receipt_type', '=', receipttype))
+        search_domain.append(('company_id', '=', request.env.user.company_id.id))
+        if product_code:
+            search_domain.append(('product_id', 'ilike', product_code))
+            receiptlines = request.env['aas.stock.receipt.line'].search(search_domain)
+            if not receiptlines or len(receiptlines) <= 0:
+                receipts = []
+            receiptids = list(set([rline.receipt_id.id for rline in receiptlines]))
+            receipts = request.env['aas.stock.receipt'].search([('id', 'in', receiptids)], offset=receiptindex, limit=limit)
+        else:
+            receipts = request.env['aas.stock.receipt'].search(search_domain, offset=receiptindex, limit=limit)
+        if receipts and len(receipts) > 0:
+            values['receipts'] = [{
+                'receipt_id': receipt.id, 'receipt_name': receipt.name, 'receipt_state': RECEIPTSTATEDICT[receipt.state]
+            } for receipt in receipts]
+            values['receiptcount'] = len(receipts)
+            values['receiptindex'] = values['receiptcount'] + receiptindex
+        return values
+
+
+    @http.route('/aaswechat/wms/receiptdetail/<int:receiptid>', type='http', auth="user")
+    def aas_wechat_wms_receiptdetail(self, receiptid):
+        receipt = request.env['aas.stock.receipt'].browse(receiptid)
+        values = {'receipt_id': receipt.id, 'receipt_name': receipt.name}
+        values.update({'order_user': receipt.order_user.name, 'origin_order': receipt.origin_order})
+        values.update({'receipt_type': receipt.receipt_type, 'receipt_type_name': RECEIPTTYPEDICT[receipt.receipt_type]})
+        values.update({'receipt_state': receipt.state, 'receipt_state_name': RECEIPTSTATEDICT[receipt.state]})
+        values.update({'receiptconfirm': 'none', 'commitcheck': 'none', 'printlabel': 'none'})
+        if receipt.receipt_type == 'purchase':
+            if receipt.state == 'draft':
+                values['receiptconfirm'] = 'block'
+            elif receipt.state == 'confirm':
+                values.update({'commitcheck': 'block', 'printlabel': 'block'})
+        if receipt.receipt_lines:
+            values['receipt_lines'] = [{
+                'line_id': rline.id,
+                'product_id': rline.product_id.id,
+                'product_code': rline.product_id.default_code,
+                'product_qty': rline.product_qty,
+                'receipt_qty': str(rline.receipt_qty),
+                'doing_qty': str(rline.doing_qty),
+                'label_related': rline.label_related
+            } for rline in receipt.receipt_lines]
+        if receipt.label_lines:
+            values['label_lines'] = [{
+                'list_id': rlabel.id,
+                'label_name': rlabel.label_id.name,
+                'product_code': rlabel.label_id.product_code,
+                'product_lot': rlabel.product_lot.name,
+                'location_name': rlabel.label_id.location_id.name,
+                'product_qty': rlabel.label_product_qty,
+                'qualified_qty': rlabel.qualified_qty,
+                'concession_qty': rlabel.concession_qty,
+                'unqualified_qty': rlabel.unqualified_qty,
+                'label_qualified': rlabel.label_id.qualified} for rlabel in receipt.label_lines]
+        if receipt.operation_lines:
+            values['operation_lines'] = [{
+                'operation_id': roperation.id,
+                'label_name': roperation.rlabel_id.label_id.name,
+                'product_code': roperation.product_id.default_code,
+                'product_qty': roperation.product_qty,
+                'location_id': roperation.location_id.id,
+                'location_name': roperation.location_id.name,
+                'push_onshelf': roperation.push_onshelf} for roperation in receipt.operation_lines]
+        return request.render('aas_wms.wechat_wms_receipt_detail', values)
+
+
+    @http.route('/aaswechat/wms/receiptconfirm', type='json', auth="user")
+    def aas_wechat_wms_receiptconfirm(self, receiptid=None):
+        values = {'success': True, 'message': ''}
+        receipt = request.env['aas.stock.receipt'].browse(receiptid)
+        try:
+            receipt.action_confirm()
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
+        return values
+
+
+    @http.route('/aaswechat/wms/receiptcommitcheck', type='json', auth="user")
+    def aas_wechat_wms_receipt_commit_check(self, receiptid=None):
+        values = {'success': True, 'message': ''}
+        receipt = request.env['aas.stock.receipt'].browse(receiptid)
+        try:
+            receipt.action_commit_checking()
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
+        return values
+
+
+    @http.route('/aaswechat/wms/receiptprintlabels', type='json', auth="user")
+    def aas_wechat_wms_receipt_print_labels(self, receiptid, printerid):
+        values = {'success': True, 'message': ''}
+        try:
+            tempvals = request.env['aas.stock.receipt'].action_print_label(printerid, ids=[receiptid])
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
+        values.update(tempvals)
+        printer = request.env['aas.label.printer'].browse(printerid)
+        values['printer'] = printer.name
+        return values
+
+
+    @http.route('/aaswechat/wms/receipt/lotlist/<int:lineid>', type='http', auth='user')
+    def aas_wechat_wms_receipt_lotlist(self, lineid):
+        receiptline = request.env['aas.stock.receipt.line'].browse(lineid)
+        values = {'linedid': lineid, 'product_id': receiptline.product_id.id}
+        values.update({'product_qty': receiptline.product_qty, 'origin_order': receiptline.origin_order})
+        values.update({'product_code': receiptline.product_id.default_code, 'need_warranty': receiptline.product_id.need_warranty})
+        return request.render('aas_wms.wechat_wms_receipt_lotlist', values)
+
+
+    @http.route('/aaswechat/wms/receipt/lotlistdone', type='json', auth="user")
+    def aas_wechat_wms_receipt_lotlistdone(self, lineid, lot_line_list=[]):
+        values = {'success': True, 'message': '', 'lineid': lineid}
+        line = request.env['aas.stock.receipt.line'].browse(lineid)
+        if line.label_related:
+            values['success'], values['message'] = True, u"标签已生成，请不要重复操作！"
+            return values
+        try:
+            receiptwizard = request.env['aas.stock.receipt.product.wizard'].create({
+                'receipt_id': line.receipt_id.id, 'line_id': lineid, 'product_id': line.product_id.id,
+                'product_uom': line.product_uom.id, 'product_qty': line.product_qty, 'need_warranty': line.product_id.need_warranty,
+                'receipt_locked': True, 'origin_order': line.origin_order,
+                'lot_lines': [(0, 0, lotval) for lotval in lot_line_list]
+            })
+            receiptwizard.action_check_lots()
+            for lline in receiptwizard.lot_lines:
+                lline.action_split_lot()
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
+        values.update({'receiptwizardid': receiptwizard.id})
+        return values
+
+
+    @http.route('/aaswechat/wms/receipt/labellist/<int:wizardid>', type='http', auth="user")
+    def aas_wechat_wms_receipt_labellist(self, wizardid=None):
+        receiptwizard = request.env['aas.stock.receipt.product.wizard'].browse(wizardid)
+        values = {'wizardid': wizardid, 'product_code': receiptwizard.product_id.default_code}
+        values.update({'product_qty': receiptwizard.product_qty, 'need_warranty': receiptwizard.need_warranty})
+        values.update({'origin_order': receiptwizard.origin_order, 'label_count': len(receiptwizard.label_lines)})
+        values['labellines'] = [{
+            'lot_name': lline.lot_name, 'label_qty': lline.label_qty, 'warranty_date': lline.warranty_date
+        } for lline in receiptwizard.label_lines]
+        return request.render('aas_wms.wechat_wms_receipt_labellist', values)
+
+
+    @http.route('/aaswechat/wms/receipt/labellistdone', type='json', auth="user")
+    def aas_wechat_wms_receipt_labellistdone(self, wizardid=None, label_line_list=[]):
+        values = {'success': True, 'message': ''}
+        receiptwizard = request.env['aas.stock.receipt.product.wizard'].browse(wizardid)
+        values['receiptid'] = receiptwizard.receipt_id.id
+        if receiptwizard.label_lines and len(receiptwizard.label_lines) > 0:
+            receiptwizard.label_lines.unlink()
+        try:
+            receiptwizard.write({'label_lines': [(0, 0, labelval) for labelval in label_line_list]})
+            receiptwizard.action_done_labels()
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
             return values

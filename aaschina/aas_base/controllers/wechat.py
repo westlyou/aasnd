@@ -49,7 +49,7 @@ def ensure_db(redirect='/web/database/selector'):
     request.session.db = db
 
 
-class AASLoginController(Home):
+class AASBaseWechatController(Home):
 
 
     @http.route('/web/login', type='http', auth="public", methods=['GET', 'POST'])
@@ -57,7 +57,7 @@ class AASLoginController(Home):
         if redirect and (redirect.find('aaswechat')>-1):
             redirect = '/aaswechat/login?' + request.httprequest.query_string
             return http.redirect_with_hash(redirect)
-        return super(AASLoginController, self).web_login(redirect=redirect, *args, **kw)
+        return super(AASBaseWechatController, self).web_login(redirect=redirect, *args, **kw)
 
     @http.route('/aaswechat/login', type='http', auth="public", methods=['GET', 'POST'])
     def aaswechat_login(self, redirect=None, *args, **kw):
@@ -84,3 +84,12 @@ class AASLoginController(Home):
             request.uid = old_uid
             values['error'] = u"账号或密码错误！"
         return request.render('aas_base.aas_wechat_login', values)
+
+
+    @http.route('/aaswechat/labelprinters', type='json', auth="user")
+    def aas_wechat_labelprinters(self):
+        values = {'success': True, 'message': '', 'printers': []}
+        printers = request.env['aas.label.printer'].search([])
+        if printers and len(printers) > 0:
+            values['printers'] = [{'value': str(printer.id), 'text': printer.name} for printer in printers]
+        return values

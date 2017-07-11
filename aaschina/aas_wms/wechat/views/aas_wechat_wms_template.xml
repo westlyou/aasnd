@@ -59,7 +59,7 @@
                                 </a>
                             </li>
                             <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
-                                <a href="/aaswechat/wms/purchasereceipts">
+                                <a href="/aaswechat/wms/receiptlist/purchase">
                                     <span class="mui-icon iconfont icon-shouhuo"></span>
                                     <div class="mui-media-body" style="font-size:12px;">采购收货</div>
                                 </a>
