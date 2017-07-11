@@ -34,8 +34,8 @@
                                        <li class="aas-purchase mui-table-view-cell" t-att-purchaseid="purchase['order_id']">
                                            <a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>
                                                <div class='mui-table'>
-                                                   <div class='mui-table-cell mui-col-xs-4 mui-text-left'> <t t-esc="rline['order_name']"/> </div>
-                                                   <div class='mui-table-cell mui-col-xs-8 mui-text-right'> <t t-esc="rline['partner_name']"/> </div>
+                                                   <div class='mui-table-cell mui-col-xs-4 mui-text-left'> <t t-esc="purchase['order_name']"/> </div>
+                                                   <div class='mui-table-cell mui-col-xs-8 mui-text-right'> <t t-esc="purchase['partner_name']"/> </div>
                                                </div>
                                            </a>
                                        </li>
