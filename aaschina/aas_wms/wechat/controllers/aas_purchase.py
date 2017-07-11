@@ -58,7 +58,7 @@ class AASPurchaseWechatController(http.Controller):
         return request.env['aas.stock.purchase.order'].action_import_order(order_name)
 
 
-    @http.route('/aaswechat/wms/purchasedetail/<int:purchaseid>', type='json', auth='user')
+    @http.route('/aaswechat/wms/purchasedetail/<int:purchaseid>', type='http', auth='user')
     def aas_wechat_wms_purchasedetail(self, purchaseid):
         porder = request.env['aas.stock.purchase.order'].browse(purchaseid)
         values = {'purchase_id': porder.id, 'purchase_name': porder.name, 'partner_name': porder.partner_id.name}
