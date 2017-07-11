@@ -71,3 +71,28 @@ class AASPurchaseWechatController(http.Controller):
             'rejected_qty': str(oline.rejected_qty)} for oline in porder.order_lines]
         return request.render('aas_wms.wechat_wms_purchase_detail', values)
 
+
+    @http.route('/aaswechat/wms/purchasereceipt/<int:purchaseid>', type='http', auth="user")
+    def aas_wechat_wms_purchasereceipt(self, purchaseid):
+        purchaseorder = request.env['aas.stock.purchase.order'].browse(purchaseid)
+        values = {'purchase_id': purchaseorder.id, 'purchase_name': purchaseorder.name, 'partner_name': purchaseorder.partner_id.name, 'order_lines':[]}
+        for oline in purchaseorder.order_lines:
+            temp_qty = oline.product_qty - oline.receipt_qty + oline.rejected_qty - oline.doing_qty
+            if float_compare(temp_qty, 0.0, precision_rounding=0.000001) > 0.0:
+                values['order_lines'].append({'product_id': oline.product_id.id, 'product_name': oline.product_id.name, 'product_code': oline.product_id.default_code, 'product_qty': temp_qty})
+        return request.render('aas_wms.wechat_wms_purchase_receipt', values)
+
+
+    @http.route('/aaswechat/wms/purchasereceiptdone', type='json', auth="user")
+    def aas_wechat_wms_purchasereceiptdone(self, purchaseid, receiptlines):
+        values = {'success': True, 'message': ''}
+        purchase_order = request.env['aas.stock.purchase.order'].browse(purchaseid)
+        purchase_receipt = request.env['aas.stock.receipt'].create({
+            'partner_id': purchase_order.partner_id.id,
+            'receipt_type': 'purchase',
+            'receipt_user': request.env.user.id,
+            'receipt_lines': [(0, 0, rline) for rline in receiptlines]
+        })
+        values['receiptid'] = purchase_receipt.id
+        return values
+

@@ -161,5 +161,77 @@
             </html>
         </template>
 
+        <template id="wechat_wms_purchase_receipt" name="Wechat WMS Purchase Receipt">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+                        <a class="mui-icon mui-icon-bars mui-pull-right" style="color: #0870d9;" href="#purchase_receipt_buttons"></a>
+                        <h1 class="mui-title"> 采购收货 </h1>
+                    </header>
+                    <div id="purchase_receipt_pullrefresh" class="mui-content mui-scroll-wrapper" t-att-purchaseid="purchase_id">
+                        <div class="mui-scroll">
+                            <ul class="mui-table-view">
+                                <li class="mui-table-view-cell" >
+                                    <span class="mui-pull-left">采购订单号</span>
+                                    <span id="purchase_name" class="mui-pull-right" t-att-pname="purchase_name">
+                                        <t t-esc="purchase_name"/>
+                                    </span>
+                                </li>
+                                <li class="mui-table-view-cell" >
+                                    <span class="mui-pull-left">采购供应商</span>
+                                    <span id="partner_name" class="mui-pull-right"><t t-esc="partner_name"/></span>
+                                </li>
+                            </ul>
+                            <div class="aas-mui-table-view-title"> 收货明细 </div>
+                            <ul id="purchase_receipt_lines" class="mui-table-view">
+                                <t t-foreach="order_lines" t-as="oline">
+                                    <li class="mui-table-view-cell">
+                                        <div class='mui-slider-right mui-disabled'>
+                                            <a class='mui-btn mui-btn-red'>删除</a>
+                                        </div>
+                                        <div class="mui-slider-handle">
+                                            <div class="mui-table">
+                                                <div class="mui-table-cell mui-col-xs-3 mui-text-left">产品编码</div>
+                                                <div class="mui-table-cell mui-col-xs-8 mui-text-right"> <t t-esc="oline['product_code']"/> </div>
+                                            </div>
+                                            <div class="mui-table">
+                                                <div class="mui-table-cell mui-col-xs-3 mui-text-left">收货数量</div>
+                                                <div class="mui-table-cell mui-col-xs-8 mui-text-right">
+                                                    <input type="text" class="aas-purchase-ipt" t-att-value="oline['product_qty']"
+                                                            t-att-productid="oline['product_id']" t-att-productqty="oline['product_qty']"
+                                                           style='margin-bottom:0;height:30px;text-align:right;'/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </t>
+                            </ul>
+                        </div>
+                    </div>
+                    <div id="purchase_receipt_buttons" class="mui-popover mui-popover-action mui-popover-bottom">
+                        <ul class="mui-table-view">
+                            <li class="mui-table-view-cell"> <a id="action_purchase_receipt" href="javascript:;">确认收货</a> </li>
+                        </ul>
+                        <ul class="mui-table-view">
+                            <li class="mui-table-view-cell"> <a href="#purchase_receipt_buttons"><b>取消</b></a> </li>
+                        </ul>
+                    </div>
+                </body>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.js"></script>
+                <script type="text/javascript" src="/aas_wms_wechat/static/wechat/wechat_purchase_receipt.js"></script>
+            </html>
+        </template>
+
     </data>
 </odoo>
