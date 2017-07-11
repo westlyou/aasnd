@@ -315,8 +315,8 @@
                                     <span id="order_user" class="mui-pull-right"><t t-esc="order_user"/></span>
                                 </li>
                                 <li class="mui-table-view-cell" >
-                                    <span class="mui-pull-left">单据来源</span>
-                                    <span id="origin_order" class="mui-pull-right"><t t-esc="origin_order"/></span>
+                                    <span class="mui-pull-left">下单时间</span>
+                                    <span class="mui-pull-right"><t t-esc="order_time"/></span>
                                 </li>
                             </ul>
                             <div class="mui-card" style="margin-left:0;margin-right:0;">

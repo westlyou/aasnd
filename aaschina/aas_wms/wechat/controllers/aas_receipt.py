@@ -10,7 +10,7 @@
 import logging
 import werkzeug
 
-from odoo import http
+from odoo import http, fields
 from odoo.http import request
 from odoo.tools.float_utils import float_compare
 from odoo.exceptions import AccessDenied,UserError,ValidationError
@@ -19,6 +19,13 @@ logger = logging.getLogger(__name__)
 
 RECEIPTTYPEDICT = {'purchase': u'采购收货', 'manufacture': u'成品入库', 'manreturn': u'生产退料', 'sundry': u'杂项入库'}
 RECEIPTSTATEDICT = {'draft': u'草稿', 'confirm': u'确认', 'tocheck': u'待检', 'checked': u'已检', 'receipt': u'收货', 'done': u'完成', 'cancel': u'取消'}
+
+def get_current_time(record, timestr):
+    if not timestr:
+        return ''
+    temptime = fields.Datetime.from_string(timestr)
+    return fields.Datetime.to_string(fields.Datetime.context_timestamp(record, temptime))
+
 
 class AASReceiptWechatController(http.Controller):
 
@@ -266,7 +273,7 @@ class AASReceiptWechatController(http.Controller):
     def aas_wechat_wms_receiptdetail(self, receiptid):
         receipt = request.env['aas.stock.receipt'].browse(receiptid)
         values = {'receipt_id': receipt.id, 'receipt_name': receipt.name}
-        values.update({'order_user': receipt.order_user.name, 'origin_order': receipt.origin_order})
+        values.update({'order_user': receipt.order_user.name, 'order_time': get_current_time(receipt, receipt.order_time)})
         values.update({'receipt_type': receipt.receipt_type, 'receipt_type_name': RECEIPTTYPEDICT[receipt.receipt_type]})
         values.update({'receipt_state': receipt.state, 'receipt_state_name': RECEIPTSTATEDICT[receipt.state]})
         values.update({'receiptconfirm': 'none', 'commitcheck': 'none', 'printlabel': 'none'})
