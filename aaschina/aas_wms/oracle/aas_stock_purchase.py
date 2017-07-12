@@ -345,7 +345,7 @@ class AASStockPurchaseReceiptWizard(models.TransientModel):
         for okey, oval in orderdict.items():
             porder, plines = oval['order'], oval['lines']
             porder.write({'order_lines': plines})
-        view_form = self.env.ref('aas_wms.view_form_aas_stock_receipt_inside')
+        view_form = self.env.ref('aas_wms.view_form_aas_stock_receipt_purchase')
         return {
             'name': u"采购收货",
             'type': 'ir.actions.act_window',

@@ -10,7 +10,7 @@
             <field name="model">aas.product.label</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree create="false" edit="false" delete="false" labelprint="true">
+                <tree create="false" edit="false" delete="false" labelprint="true" decoration-danger="not qualified">
                     <field name="name"/>
                     <field name="product_id"/>
                     <field name="product_lot"/>
@@ -24,6 +24,7 @@
                     <field name="origin_order"/>
                     <field name="locked_order"/>
                     <field name="state"/>
+                    <field name="qualified" invisible="1"/>
                 </tree>
             </field>
         </record>

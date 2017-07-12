@@ -54,6 +54,7 @@ class ProductTemplate(models.Model):
     push_location = fields.Many2one(comodel_name='stock.location', string=u'推荐库位', help=u'最近上架库位')
 
 
+
 class AASProductProduct(models.Model):
     _inherit = 'product.product'
 
