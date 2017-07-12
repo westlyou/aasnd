@@ -190,8 +190,6 @@ class AASProductLabel(models.Model):
     @api.multi
     def action_journal_qty(self, product_qty):
         for record in self:
-            if float_compare(temp_qty, 0.0, precision_rounding=0.000001) == 0.0:
-                continue
             journalvals = {'label_id': record.id}
             temp_qty = record.product_qty - product_qty
             if float_compare(temp_qty, 0.0, precision_rounding=0.000001) > 0:
