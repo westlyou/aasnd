@@ -37,9 +37,9 @@ class AASQualityRejectionWizard(models.TransientModel):
             raise UserError(u'您还没有添加批次拆分明细！')
         for plot in self.plot_lines:
             if float_compare(plot.label_qty, 0.0, precision_rounding=0.000001) <= 0.0:
-                raise UserError(u'批次%s拆分标签没标签的数量不能小于零'% plot.product_lot.name)
+                raise UserError(u'批次%s拆分标签每标签的数量不能小于零'% plot.product_lot.name)
             if float_compare(plot.label_qty, plot.product_qty, precision_rounding=0.000001) > 0.0:
-                raise UserError(u'批次%s拆分标签没标签的数量不能大于批次总数'% plot.product_lot.name)
+                raise UserError(u'批次%s拆分标签每标签的数量不能大于批次总数'% plot.product_lot.name)
 
     @api.multi
     def action_split_lots(self):
@@ -85,7 +85,7 @@ class AASQualityRejectionWizard(models.TransientModel):
             tempvals = {'product_id': self.product_id.id, 'product_uom': self.product_uom.id, 'partner_id': self.partner_id and self.partner_id.id}
             tempvals.update({
                 'location_id': templocation.id, 'product_lot': tline.product_lot.id, 'product_qty': tline.label_qty,
-                'origin_order': self.origin_order, 'locked': True, 'locked_order': tline.commit_order, 'stocked': True,
+                'origin_order': tline.origin_order, 'locked': True, 'locked_order': tline.commit_order, 'stocked': True,
                 'state': 'normal', 'qualified': False
             })
             templabel = self.env['aas.product.label'].create(tempvals)
