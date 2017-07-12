@@ -44,7 +44,7 @@ class AASStockReceipt(models.Model):
                     productdict[pkey]['product_qty'] += rline.product_qty
                     productdict[pkey]['rlines'].append(rline.id)
                     productdict[pkey]['qlabels'].extend([(0, 0, {
-                        'label_id': rlabel.id, 'commit_id': rline.id, 'commit_model': 'aas.stock.receipt.line',
+                        'label_id': rlabel.label_id.id, 'commit_id': rline.id, 'commit_model': 'aas.stock.receipt.line',
                         'commit_order': '['+record.name+']'+rline.product_id.default_code
                     }) for rlabel in rline.label_list])
                 else:
@@ -52,7 +52,7 @@ class AASStockReceipt(models.Model):
                         'product_id': rline.product_id.id, 'product_uom': rline.product_uom.id, 'product_qty': rline.product_qty,
                         'commit_user': commit_user.id, 'commit_time': commit_time, 'state': 'tocheck', 'partner_id': record.partner_id and record.partner_id.id,
                         'rlines': [rline.id], 'qlabels': [(0, 0, {
-                            'label_id': rlabel.id, 'commit_id': rline.id, 'commit_model': 'aas.stock.receipt.line',
+                            'label_id': rlabel.label_id.id, 'commit_id': rline.id, 'commit_model': 'aas.stock.receipt.line',
                             'commit_order': '['+record.name+']'+rline.product_id.default_code
                         }) for rlabel in rline.label_list]
                     }
@@ -102,7 +102,7 @@ class AASStockReceiptLine(models.Model):
                 productdict[pkey]['product_qty'] += record.product_qty
                 productdict[pkey]['rlines'].append(record.id)
                 productdict[pkey]['qlabels'].extend([(0, 0, {
-                    'label_id': rlabel.id, 'commit_id': record.id, 'commit_model': 'aas.stock.receipt.line',
+                    'label_id': rlabel.label_id.id, 'commit_id': record.id, 'commit_model': 'aas.stock.receipt.line',
                     'commit_order': '['+receipt.name+']'+record.product_id.default_code
                 }) for rlabel in record.label_list])
             else:
@@ -110,7 +110,7 @@ class AASStockReceiptLine(models.Model):
                     'product_id': record.product_id.id, 'product_uom': record.product_uom.id, 'product_qty': record.product_qty,
                     'commit_user': commit_user.id, 'commit_time': commit_time, 'state': 'tocheck', 'partner_id': receipt.partner_id and receipt.partner_id.id,
                     'rlines': [record.id], 'qlabels': [(0, 0, {
-                        'label_id': rlabel.id, 'commit_id': record.id, 'commit_model': 'aas.stock.receipt.line',
+                        'label_id': rlabel.label_id.id, 'commit_id': record.id, 'commit_model': 'aas.stock.receipt.line',
                         'commit_order': '['+receipt.name+']'+record.product_id.default_code
                     }) for rlabel in record.label_list]
                 }
