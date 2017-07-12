@@ -30,7 +30,7 @@
                         </group>
                         <group>
                             <group>
-                                <field name="company_id" readonly="1"/>
+                                <field name="company_id"/>
                             </group>
                         </group>
                         <notebook>
