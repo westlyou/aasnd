@@ -128,7 +128,7 @@ class AASQualityOrder(models.Model):
                 templabel.write({'qualified': False})
                 rejection_lines.append((0, 0, {
                     'label_id': templabel.id, 'product_id': qoperation.product_id.id, 'product_uom': qoperation.product_uom.id,
-                    'product_lot': qoperation.product_lot.id, 'product_qty': qoperation.product_qty, 'origin_order': qoperation.origin_order,
+                    'product_lot': qoperation.product_lot.id, 'product_qty': qoperation.product_qty, 'origin_order': qoperation.qlabel_id.origin_order,
                     'current_label': False, 'commit_id': qoperation.commit_id, 'commit_model': qoperation.commit_model, 'commit_order': qoperation.commit_order
                 }))
             else:
