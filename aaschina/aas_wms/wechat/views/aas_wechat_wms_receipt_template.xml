@@ -495,6 +495,7 @@
                     <meta name="apple-mobile-web-app-capable" content="yes"/>
                     <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
                     <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.picker.min.css"/>
                     <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
                 </head>
                 <body>
@@ -536,6 +537,7 @@
                     </div>
                 </body>
                 <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.picker.min.js"></script>
                 <script type="text/javascript" src="/aas_wms/static/wechat/wechat_receipt_lotlist.js"></script>
             </html>
         </template>
