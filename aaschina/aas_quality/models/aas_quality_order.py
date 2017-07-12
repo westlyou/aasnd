@@ -318,9 +318,9 @@ class AASQualityOperation(models.Model):
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     product_qty = fields.Float(string=u'报检数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    qualified_qty = fields.Float(string=u'合格数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     concession_qty = fields.Float(string=u'让步数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     unqualified_qty = fields.Float(string=u'不合格数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    qualified_qty = fields.Float(string=u'合格数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_qualified_qty', store=True)
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
     # 报检单据信息
@@ -332,9 +332,10 @@ class AASQualityOperation(models.Model):
         ('uniq_qlabel', 'unique (order_id, qlabel_id)', u'请不要重复添加同一个标签！')
     ]
 
-    @api.onchange('concession_qty', 'unqualified_qty')
-    def action_change_unqualified_concession(self):
-        self.qualified_qty = self.product_qty - self.concession_qty - self.unqualified_qty
+    @api.depends('product_qty', 'concession_qty', 'unqualified_qty')
+    def _compute_qualified_qty(self):
+        for record in self:
+            record.qualified_qty = record.product_qty - record.concession_qty - record.unqualified_qty
 
     @api.one
     @api.constrains('concession_qty', 'unqualified_qty')
