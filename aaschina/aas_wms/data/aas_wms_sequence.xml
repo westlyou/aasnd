@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
+    <data noupdate="1">
         <record id="seq_aas_product_label" model="ir.sequence">
             <field name="name">产品标签</field>
             <field name="code">aas.product.label</field>

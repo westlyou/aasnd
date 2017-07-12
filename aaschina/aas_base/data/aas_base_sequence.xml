@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
+    <data noupdate="1">
         <record id="seq_aas_base_cron" model="ir.sequence">
             <field name="name">自动任务</field>
             <field name="code">aas.base.cron</field>
