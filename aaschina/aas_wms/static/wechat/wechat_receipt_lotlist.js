@@ -268,13 +268,17 @@ mui.ready(function(){
             var lot_qty = parseFloat(aaslot.children[1].children[0].children[1].children[0].value);
             var label_qty = parseFloat(aaslot.children[2].children[0].children[1].children[0].value);
             var warranty_date = aaslot.children[3].children[0].children[1].getAttribute('warranty');
-            lot_line_list.push({'lot_name': lot_number, 'lot_qty': lot_qty, 'label_qty': label_qty, 'warranty_date': warranty_date});
+            var lotvals = {'lot_name': lot_number, 'lot_qty': lot_qty, 'label_qty': label_qty};
+            if (warranty_date!='' && warranty_date!=null){
+                lotvals['warranty_date'] = warranty_date;
+            }
+            lot_line_list.push(lotvals);
         });
         var line_id = parseInt(document.getElementById('receipt_lotlist').getAttribute('lineid'));
         var lot_params = {'lineid': line_id, 'lot_line_list': lot_line_list};
         var lot_access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         var donemask = aas_receipt_lotlist_loading();
-        mui.ajax('/aaswechat/wms/receiptlotdone', {
+        mui.ajax('/aaswechat/wms/receipt/lotlistdone', {
             data: JSON.stringify({jsonrpc: "2.0",method: 'call',params: lot_params, id: lot_access_id}),
             dataType: 'json', type: 'post', timeout: 10000,
             headers: {'Content-Type': 'application/json'},
@@ -286,7 +290,7 @@ mui.ready(function(){
                     mui.toast(dresult.message);
                     return ;
                 }
-                window.location.replace('/aaswechat/wms/receiptlotlabel/'+dresult.wizard_id);
+                window.location.replace('/aaswechat/wms/receipt/labellist/'+dresult.receiptwizardid);
             },
             error:function(xhr,type,errorThrown){
                 confirm_lot_flag = false;

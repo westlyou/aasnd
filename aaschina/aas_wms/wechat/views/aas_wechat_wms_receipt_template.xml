@@ -26,7 +26,7 @@
                             <div class="mui-input-row mui-search" style="height:34px;margin:10px;">
                                 <input id="product_code_search" type="search" class="mui-input-clear" placeholder="请输入产品编码"/>
                             </div>
-                            <ul id="receipt_line_list" class="mui-table-view mui-table-view-chevron">
+                            <ul id="receipt_line_list" class="mui-table-view">
                                 <li class="mui-table-view-cell">
                                     <div class='mui-table'>
                                         <div class='mui-table-cell mui-col-xs-8 mui-text-left'>产品编码</div>
@@ -127,7 +127,7 @@
                                 </li>
                             </ul>
                             <div class="aas-mui-table-view-title"> 收货标签 </div>
-                            <ul id="receipt_labels" class="mui-table-view mui-table-view-chevron">
+                            <ul id="receipt_labels" class="mui-table-view">
                                 <li class="mui-table-view-cell">
                                     <div class='mui-table'>
                                         <div class='mui-table-cell mui-col-xs-8 mui-text-left'>标签名称</div>
@@ -164,7 +164,7 @@
                                 </t>
                             </ul>
                             <div class="aas-mui-table-view-title"> 上架作业 </div>
-                            <ul id="receipt_operations" class="mui-table-view mui-table-view-chevron">
+                            <ul id="receipt_operations" class="mui-table-view">
                                 <li class="mui-table-view-cell">
                                     <div class='mui-table'>
                                         <div class='mui-table-cell mui-col-xs-8 mui-text-left'>标签名称</div>
@@ -253,7 +253,7 @@
                             <div class="mui-input-row mui-search" style="height:34px;margin:10px;">
                                 <input id="product_code_search" type="search" class="mui-input-clear" placeholder="请输入产品编码"/>
                             </div>
-                            <ul id="receipt_list" class="mui-table-view mui-table-view-chevron">
+                            <ul id="receipt_list" class="mui-table-view">
                                 <t t-if="receipts">
                                     <t t-foreach="receipts" t-as="receipt">
                                         <li class="aas-receipt mui-table-view-cell" t-att-receiptid="receipt['receipt_id']">
@@ -337,11 +337,11 @@
                                 <li class="mui-table-view-cell">
                                     <div class="mui-table">
                                         <div class="mui-table-cell mui-col-xs-6 mui-text-left"> 产品编码 </div>
-                                        <div class="mui-table-cell mui-col-xs-6 mui-text-center"> 已收数量 </div>
+                                        <div class="mui-table-cell mui-col-xs-6 mui-text-right"> 已收数量 </div>
                                     </div>
                                     <div class="mui-table">
                                         <div class="mui-table-cell mui-col-xs-6 mui-text-left"> 应收数量 </div>
-                                        <div class="mui-table-cell mui-col-xs-6 mui-text-center"> 处理中数量 </div>
+                                        <div class="mui-table-cell mui-col-xs-6 mui-text-right"> 处理中数量 </div>
                                     </div>
                                 </li>
                                 <t t-if="receipt_lines">
@@ -349,22 +349,24 @@
                                         <li t-if="rline['label_related']" class="mui-table-view-cell aas-product-line" t-att-lineid="rline['line_id']">
                                             <div class="mui-table">
                                                 <div class="mui-table-cell mui-col-xs-6 mui-text-left"> <t t-esc="rline['product_code']"/> </div>
-                                                <div class="mui-table-cell mui-col-xs-6 mui-text-center"> <t t-esc="rline['receipt_qty']"/> </div>
+                                                <div class="mui-table-cell mui-col-xs-6 mui-text-right"> <t t-esc="rline['receipt_qty']"/> </div>
                                             </div>
                                             <div class="mui-table">
                                                 <div class="mui-table-cell mui-col-xs-6 mui-text-left"> <t t-esc="rline['product_qty']"/> </div>
-                                                <div class="mui-table-cell mui-col-xs-6 mui-text-center"> <t t-esc="rline['doing_qty']"/> </div>
+                                                <div class="mui-table-cell mui-col-xs-6 mui-text-right"> <t t-esc="rline['doing_qty']"/> </div>
                                             </div>
                                         </li>
                                         <li t-if="not rline['label_related']" class="mui-table-view-cell aas-product-line aas-label-unrelated" t-att-lineid="rline['line_id']">
-                                            <div class="mui-table">
-                                                <div class="mui-table-cell mui-col-xs-6 mui-text-left"> <t t-esc="rline['product_code']"/> </div>
-                                                <div class="mui-table-cell mui-col-xs-6 mui-text-center"> <t t-esc="rline['receipt_qty']"/> </div>
-                                            </div>
-                                            <div class="mui-table">
-                                                <div class="mui-table-cell mui-col-xs-6 mui-text-left"> <t t-esc="rline['product_qty']"/> </div>
-                                                <div class="mui-table-cell mui-col-xs-6 mui-text-center"> <t t-esc="rline['doing_qty']"/> </div>
-                                            </div>
+                                            <a class='mui-navigate-right' style='padding-right:30px;' href='javascript:;'>
+                                                <div class="mui-table">
+                                                    <div class="mui-table-cell mui-col-xs-6 mui-text-left"> <t t-esc="rline['product_code']"/> </div>
+                                                    <div class="mui-table-cell mui-col-xs-6 mui-text-right"> <t t-esc="rline['receipt_qty']"/> </div>
+                                                </div>
+                                                <div class="mui-table">
+                                                    <div class="mui-table-cell mui-col-xs-6 mui-text-left"> <t t-esc="rline['product_qty']"/> </div>
+                                                    <div class="mui-table-cell mui-col-xs-6 mui-text-right"> <t t-esc="rline['doing_qty']"/> </div>
+                                                </div>
+                                            </a>
                                         </li>
                                     </t>
                                 </t>
@@ -501,7 +503,7 @@
                         <a class="mui-icon mui-icon-bars mui-pull-right" style="color: #0870d9;" href="#receipt_lotlist_buttons"></a>
                         <h1 class="mui-title"> 收货批次 </h1>
                     </header>
-                    <div id="receipt_lotlist" class="mui-content" t-att-lineid="line_id">
+                    <div id="receipt_lotlist" class="mui-content" t-att-lineid="linedid">
                         <ul class="mui-table-view">
                             <li class="mui-table-view-cell" >
                                 <span class="mui-pull-left">来源单据</span>
@@ -557,7 +559,7 @@
                         <a class="mui-icon mui-icon-bars mui-pull-right" style="color: #0870d9;" href="#receipt_labellist_buttons"></a>
                         <h1 class="mui-title"> 收货标签 </h1>
                     </header>
-                    <div id="receipt_labellist" class="mui-content" t-att-wizardid="wizard_id">
+                    <div id="receipt_labellist" class="mui-content" t-att-wizardid="wizardid">
                         <ul class="mui-table-view">
                             <li class="mui-table-view-cell" >
                                 <span class="mui-pull-left">产品编码</span>

@@ -299,7 +299,7 @@ class AASReceiptWechatController(http.Controller):
                 'product_code': rlabel.label_id.product_code,
                 'product_lot': rlabel.product_lot.name,
                 'location_name': rlabel.label_id.location_id.name,
-                'product_qty': rlabel.label_product_qty,
+                'product_qty': rlabel.product_qty,
                 'qualified_qty': rlabel.qualified_qty,
                 'concession_qty': rlabel.concession_qty,
                 'unqualified_qty': rlabel.unqualified_qty,
@@ -400,7 +400,7 @@ class AASReceiptWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/receipt/labellistdone', type='json', auth="user")
-    def aas_wechat_wms_receipt_labellistdone(self, wizardid=None, label_line_list=[]):
+    def aas_wechat_wms_receipt_labellistdone(self, wizardid, label_line_list=[]):
         values = {'success': True, 'message': ''}
         receiptwizard = request.env['aas.stock.receipt.product.wizard'].browse(wizardid)
         values['receiptid'] = receiptwizard.receipt_id.id

@@ -10,7 +10,7 @@ mui.init({
         up: {
             auto: false,
             contentrefresh: '正在加载...',
-            callback: pulldownrefresh
+            callback: pulluprefresh
         },
         down : {
           height:50,
@@ -24,7 +24,7 @@ mui.init({
 });
 
 
-function pulldownrefresh(){
+function pulluprefresh(){
     mui.later(function(){
         var pullrefresh = document.body.querySelector('#purchase_list_pullrefresh');
         var purchaseindex = pullrefresh.getAttribute('purchaseindex');
