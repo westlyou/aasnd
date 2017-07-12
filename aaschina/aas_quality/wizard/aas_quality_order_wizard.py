@@ -95,6 +95,7 @@ class AASQualityRejectionWizard(models.TransientModel):
                 'current_label': True, 'commit_id': tline.commit_id, 'commit_model': tline.commit_model, 'commit_order': tline.commit_order
             }))
         self.quality_id.write({'rejection_lines': rejection_lines})
+        self.quality_id.action_quality_done()
 
 
 
