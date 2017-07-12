@@ -21,11 +21,11 @@ class IRSequence(models.Model):
     @api.one
     def alert_sequence(self, number_increment=None, number_next=None):
         if not number_increment:
-            number_increment = self.number_increment
+            number_increment = 1
         else:
             self.sudo().write({'number_increment': number_increment})
         if not number_next:
-            number_next = self.number_next
+            number_next = 1
         else:
             self.sudo().write({'number_next': number_next})
         _alter_sequence(self.env.cr, "ir_sequence_%03d" % self.id, number_increment=number_increment, number_next=number_next)
