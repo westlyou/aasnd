@@ -281,7 +281,8 @@ class AASReceiptWechatController(http.Controller):
             if receipt.state == 'draft':
                 values['receiptconfirm'] = 'block'
             elif receipt.state == 'confirm':
-                values.update({'commitcheck': 'block', 'printlabel': 'block'})
+                values['commitcheck'] = 'block'
+            values['printlabel'] = 'block'
         if receipt.receipt_lines:
             values['receipt_lines'] = [{
                 'line_id': rline.id,
