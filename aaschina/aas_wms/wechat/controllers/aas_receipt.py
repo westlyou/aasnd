@@ -188,7 +188,7 @@ class AASReceiptWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/receiptlinepushdone', type='json', auth="user")
-    def aas_wechat_wms_receiptlinepushall(self, lineid):
+    def aas_wechat_wms_receiptlinepushdone(self, lineid):
         values = {'success': True, 'message': ''}
         receiptline = request.env['aas.stock.receipt.line'].browse(lineid)
         try:
