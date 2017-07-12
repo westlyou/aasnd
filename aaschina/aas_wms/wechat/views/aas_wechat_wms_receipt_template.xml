@@ -73,7 +73,6 @@
                     <meta name="apple-mobile-web-app-capable" content="yes"/>
                     <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
                     <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
-                    <link rel="stylesheet" href="/aas_base/static/wechat/iconfont/iconfont.css"/>
                     <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
                 </head>
                 <body>
@@ -224,7 +223,7 @@
                     </div>
                 </body>
                 <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
-                <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.1.0.js"></script>
+                <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
                 <script type="text/javascript" src="/aas_wms/static/wechat/wechat_receipt_line_detail.js"></script>
             </html>
         </template>

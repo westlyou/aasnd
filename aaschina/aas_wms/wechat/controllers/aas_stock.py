@@ -9,18 +9,13 @@
 
 
 import logging
-import werkzeug
 import time, random, string
 
 from odoo import http
 from odoo.http import request
-from odoo.exceptions import AccessDenied,UserError,ValidationError
 
 from wechatpy.enterprise.crypto import WeChatCrypto
 from wechatpy.enterprise.client import WeChatClient
-from wechatpy.exceptions import InvalidSignatureException, InvalidAppIdException
-from wechatpy.enterprise.exceptions import InvalidCorpIdException
-from wechatpy.enterprise import parse_message, create_reply
 
 logger = logging.getLogger(__name__)
 
@@ -51,11 +46,12 @@ class AASStockWechatController(http.Controller):
 
     @http.route('/aaswechat/wms/scaninit', type='json', auth="user")
     def aas_wechat_wms_scaninit(self, access_url=None):
-        cticket = wms_client.jsapi.get_jsapi_ticket()
+        aasjsapi = wms_client.jsapi
+        cticket = aasjsapi.get_jsapi_ticket()
         curl = access_url
         cnoncestr = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(15))
         ctimestamp = int(time.time())
-        csignature = wms_client.jsapi.get_jsapi_signature(noncestr=cnoncestr, ticket=cticket, timestamp=ctimestamp, url=curl)
-        wxvalues = {'debug': False, 'appId': self.CorpId, 'timestamp': ctimestamp, 'nonceStr': cnoncestr}
+        csignature = aasjsapi.get_jsapi_signature(noncestr=cnoncestr, ticket=cticket, timestamp=ctimestamp, url=access_url)
+        wxvalues = {'debug': True, 'appId': self.CorpId, 'timestamp': ctimestamp, 'nonceStr': cnoncestr}
         wxvalues.update({'signature': csignature, 'jsApiList': ['scanQRCode']})
         return wxvalues
