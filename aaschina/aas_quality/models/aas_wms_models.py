@@ -206,7 +206,7 @@ class AASQualityOrder(models.Model):
                 templabels.append((1, llabel.id, rlinedict[lkey]))
                 del rlinedict[lkey]
             if rlinedict and len(rlinedict) > 0:
-                for tkey, tval in rlinedict:
+                for tkey, tval in rlinedict.items():
                     tval.update({'receipt_id': rline.receipt_id.id})
                     templabels.append((0, 0, tval))
             rline.write({'label_list': templabels, 'state': 'checked'})
