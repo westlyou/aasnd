@@ -169,9 +169,10 @@ mui.ready(function(){
                     return ;
                 }
                 var printer = dresult.printer;
+                var printurl = 'http://'+dresult.printurl;
                 mui.each(records, function(index, record){
                     var params = {'label_name':printer, 'label_count':1, 'label_content':record};
-                    $.ajax({type:'post', dataType:'script', url:'http://10.18.1.16:4153', data: params,
+                    $.ajax({type:'post', dataType:'script', url: printurl, data: params,
                         success: function (result) { },
                         error:function(XMLHttpRequest,textStatus,errorThrown){}
                     });

@@ -353,7 +353,7 @@ class AASReceiptWechatController(http.Controller):
             return values
         values.update(tempvals)
         printer = request.env['aas.label.printer'].browse(printerid)
-        values['printer'] = printer.name
+        values.update({'printer': printer.name, 'printurl': printer.serverurl})
         return values
 
 
