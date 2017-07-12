@@ -141,7 +141,7 @@
                                 </li>
                                 <t t-if="labellist">
                                     <t t-foreach="labellist" t-as="rlabel">
-                                        <li t-if="rlabel['checked']" class="mui-table-view-cell" t-attf-id="label_{{rlabel['label_id']}}">
+                                        <li t-if="rlabel['qualified']" class="mui-table-view-cell">
                                             <div class='mui-table'>
                                                 <div class='mui-table-cell mui-col-xs-8 mui-text-left'> <t t-esc="rlabel['label_name']"/> </div>
                                                 <div class='mui-table-cell mui-col-xs-4 mui-text-right'> <t t-esc="rlabel['product_lot']"/> </div>
@@ -151,7 +151,7 @@
                                                 <div class='mui-table-cell mui-col-xs-4 mui-text-right'> <t t-esc="rlabel['product_qty']"/> </div>
                                             </div>
                                         </li>
-                                        <li t-if="not rlabel['checked']" class="mui-table-view-cell aas-receipt-label" t-attf-id="label_{{rlabel['label_id']}}">
+                                        <li t-if="not rlabel['qualified']" class="mui-table-view-cell" style="color:red;">
                                             <div class='mui-table'>
                                                 <div class='mui-table-cell mui-col-xs-8 mui-text-left'> <t t-esc="rlabel['label_name']"/> </div>
                                                 <div class='mui-table-cell mui-col-xs-4 mui-text-right'> <t t-esc="rlabel['product_lot']"/> </div>

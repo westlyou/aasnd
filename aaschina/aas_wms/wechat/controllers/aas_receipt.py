@@ -105,8 +105,9 @@ class AASReceiptWechatController(http.Controller):
             values.update({'pushdone': 'block'})
         if receiptline.label_list and len(receiptline.label_list) > 0:
             values['labellist'] = [{
-                'label_id': llist.label_id.id, 'label_name': llist.label_id.name, 'checked': llist.checked,
-                'product_code': llist.product_id.default_code,'product_lot': llist.product_lot.name, 'product_qty': llist.product_qty
+                'label_name': llist.label_id.name,
+                'product_lot': llist.product_lot.name, 'product_qty': llist.label_id.product_qty,
+                'qualified': llist.label_id.qualified, 'product_code': llist.product_id.default_code
             } for llist in receiptline.label_list]
         if receiptline.operation_list and len(receiptline.operation_list) > 0:
             values['operationlist'] = [{

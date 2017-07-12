@@ -408,7 +408,7 @@ class AASStockReceiptOperation(models.Model):
     def action_change_label(self):
         if self.rlabel_id:
             self.product_id, self.product_uom = self.rlabel_id.product_id.id, self.rlabel_id.product_uom.id
-            self.product_lot, self.product_qty = self.rlabel_id.product_lot.id, self.rlabel_id.product_qty
+            self.product_lot, self.product_qty = self.rlabel_id.product_lot.id, self.rlabel_id.label_id.product_qty
         else:
             self.product_id, self.product_uom, self.product_lot, self.product_qty = False, False, False, 0.0
 
@@ -418,7 +418,7 @@ class AASStockReceiptOperation(models.Model):
         vals.update({
             'receipt_id': rlabel.receipt_id.id, 'line_id': rlabel.line_id.id,
             'product_id': rlabel.product_id.id, 'product_lot': rlabel.product_lot.id,
-            'product_qty': rlabel.product_qty, 'product_uom': rlabel.product_uom.id
+            'product_qty': rlabel.label_id.product_qty, 'product_uom': rlabel.product_uom.id
         })
 
     @api.model
