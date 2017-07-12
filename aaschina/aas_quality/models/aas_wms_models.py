@@ -107,7 +107,7 @@ class AASStockReceiptLine(models.Model):
                 }) for rlabel in record.label_list])
             else:
                 productdict[pkey] = {
-                    'product_id': rlabel.product_id.id, 'product_uom': rlabel.product_uom.id, 'product_qty': rlabel.product_qty,
+                    'product_id': record.product_id.id, 'product_uom': record.product_uom.id, 'product_qty': record.product_qty,
                     'commit_user': commit_user.id, 'commit_time': commit_time, 'state': 'tocheck', 'partner_id': receipt.partner_id and receipt.partner_id.id,
                     'rlines': [record.id], 'qlabels': [(0, 0, {
                         'label_id': rlabel.id, 'commit_id': record.id, 'commit_model': 'aas.stock.receipt.line',
