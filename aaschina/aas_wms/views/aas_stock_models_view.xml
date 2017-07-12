@@ -109,5 +109,8 @@
             </field>
         </record>
 
+        <menuitem name="单位" id="menu_stock_uom_form_action" action="product.product_uom_form_action"
+        parent="stock.menu_aas_stock_warehouse" sequence="35"/>
+
     </data>
 </odoo>
