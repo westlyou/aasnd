@@ -31,7 +31,15 @@ class AASQualityRejectionWizard(models.TransientModel):
     plot_lines = fields.One2many(comodel_name='aas.quality.rejection.lot.wizard', inverse_name='wizard_id', string=u'批次明细')
     label_lines = fields.One2many(comodel_name='aas.quality.rejection.label.wizard', inverse_name='wizard_id', string=u'标签明细')
 
-
+    @api.one
+    def action_check_lots(self):
+        if not self.plot_lines or len(self.plot_lines) <= 0:
+            raise UserError(u'您还没有添加批次拆分明细！')
+        for plot in self.plot_lines:
+            if float_compare(plot.label_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+                raise UserError(u'批次%s拆分标签没标签的数量不能小于零'% plot.product_lot.name)
+            if float_compare(plot.label_qty, plot.product_qty, precision_rounding=0.000001) > 0.0:
+                raise UserError(u'批次%s拆分标签没标签的数量不能大于批次总数'% plot.product_lot.name)
 
     @api.multi
     def action_split_lots(self):
@@ -40,6 +48,7 @@ class AASQualityRejectionWizard(models.TransientModel):
         :return:
         """
         self.ensure_one()
+        self.action_check_lots()
         label_lines = []
         for plot in self.plot_lines:
             tproduct_qty, tlabel_qty = plot.product_qty, plot.label_qty
@@ -102,14 +111,6 @@ class AASQualityRejectionLotWizard(models.TransientModel):
     commit_id = fields.Integer(string=u'报检单据ID')
     commit_model = fields.Char(string=u'报检单据Model')
     commit_order = fields.Char(string=u'报检单据名称')
-
-    @api.one
-    @api.constrains('label_qty')
-    def action_check_label_qty(self):
-        if float_compare(self.label_qty, 0.0, precision_rounding=0.000001) <= 0.0:
-            raise ValidationError(u'批次%s拆分标签没标签的数量不能小于零'% self.product_lot.name)
-        if float_compare(self.label_qty, self.product_qty, precision_rounding=0.000001) > 0.0:
-            raise ValidationError(u'批次%s拆分标签没标签的数量不能大于批次总数'% self.product_lot.name)
 
 
 
