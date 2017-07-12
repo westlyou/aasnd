@@ -130,6 +130,7 @@ mui.ready(function(){
                             '</div>';
                         receipt_operations.appendChild(operationli);
                         document.getElementById('action_push_done').style.display = 'block';
+                        document.getElementById('receipt_doing_qty').innerHTML = dresult.doing_qty;
                     },
                     error:function(xhr,type,errorThrown){
                         console.log(type);
@@ -169,7 +170,7 @@ mui.ready(function(){
                         mui.toast(dresult.message);
                         return ;
                     }
-                    document.getElementById('receipt_operation').removeChild(li);
+                    document.getElementById('receipt_operations').removeChild(li);
                     document.getElementById('receipt_doing_qty').innerHTML = dresult.doing_qty;
                 },
                 error:function(xhr,type,errorThrown){

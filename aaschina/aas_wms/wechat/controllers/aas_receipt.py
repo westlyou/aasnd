@@ -157,7 +157,8 @@ class AASReceiptWechatController(http.Controller):
         })
         values.update({
             'label_id': label.id, 'label_name': label.name, 'product_code': label.product_code,
-            'product_lot': label.product_lot.name, 'product_qty': label.product_qty, 'operation_id': tempoperation.id
+            'product_lot': label.product_lot.name, 'product_qty': label.product_qty,
+            'operation_id': tempoperation.id, 'doing_qty': receiptline.doing_qty
         })
         return values
 
