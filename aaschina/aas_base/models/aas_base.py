@@ -10,7 +10,7 @@ from datetime import datetime
 _logger = logging.getLogger(__name__)
 
 
-from odoo.addons.base.ir import ir_sequence
+from odoo.addons.base.ir.ir_sequence import _alter_sequence
 
 class IRSequence(models.Model):
     _inherit = "ir.sequence"
@@ -28,7 +28,11 @@ class IRSequence(models.Model):
             number_next = self.number_next
         else:
             self.sudo().write({'number_next': number_next})
-        ir_sequence._alter_sequence(self.env.cr, "ir_sequence_%03d" % self.id, number_increment=number_increment, number_next=number_next)
+        _alter_sequence(self.env.cr, "ir_sequence_%03d" % self.id, number_increment=number_increment, number_next=number_next)
+
+    def convert2timezonetime(self, origintime, tzname='Asia/Shanghai'):
+        temptime = pytz.timezone('UTC').localize(origintime, is_dst=False)
+        return temptime.astimezone(pytz.timezone(tzname))
 
 
     @api.model
@@ -36,10 +40,10 @@ class IRSequence(models.Model):
         temp_sequence = self.env['ir.sequence'].search([('code', '=', sequence_code)], limit=1)
         if not temp_sequence or not temp_sequence.loop_type:
             return super(IRSequence, self).next_by_code(sequence_code)
-        currenttime, looptime = datetime.now().strftime('%Y-%m-%d'), temp_sequence.loop_time
         tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
-        temptime = fields.Datetime.from_string(looptime)
-        looptime = pytz.timezone('UTC').localize(temptime, is_dst=False).astimezone(pytz.timezone(tz_name)).strftime('%Y-%m-%d')
+        temptime = fields.Datetime.from_string(temp_sequence.loop_time)
+        looptime = self.convert2timezonetime(temptime, tzname=tz_name).strftime('%Y-%m-%d')
+        currenttime= datetime.now().strftime('%Y-%m-%d')
         temp_type, temp_flag = temp_sequence.loop_type, False
         if (temp_type == 'year') and (currenttime[0:4] != looptime[0:4]):
             temp_flag = True
