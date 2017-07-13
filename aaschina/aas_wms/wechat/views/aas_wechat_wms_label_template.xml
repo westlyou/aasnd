@@ -63,5 +63,280 @@
             </html>
         </template>
 
+        <template id="wechat_wms_label_detail" name="Wechat Label Detail">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.picker.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+                        <a class="mui-icon mui-icon-bars mui-pull-right" style="color: #0870d9;" href="#label_detail_buttons"></a>
+                        <h1 class="mui-title"> 标签详情 </h1>
+                    </header>
+                    <div id="label_detail_pullrefresh" class="mui-content mui-scroll-wrapper" t-att-labelid="label_id">
+                        <div class="mui-scroll">
+                            <ul class="mui-table-view">
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">标签单号</span>
+                                    <span class="mui-pull-right"><t t-esc="label_name"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">产品编码</span>
+                                    <span class="mui-pull-right"><t t-esc="product_code"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">产品批次</span>
+                                    <span class="mui-pull-right"><t t-esc="product_lot"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">产品数量</span>
+                                    <span class="mui-pull-right"><t t-esc="product_qty"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">DateCode</span>
+                                    <span class="mui-pull-right"><t t-esc="datecode"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">标签状态</span>
+                                    <span class="mui-pull-right"><t t-esc="state_name"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">标签库位</span>
+                                    <span class="mui-pull-right"><t t-esc="label_location"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">是否合格</span>
+                                    <span class="mui-pull-right"><t t-esc="qualified"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">上架时间</span>
+                                    <span class="mui-pull-right"><t t-esc="onshelf_time"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">下架时间</span>
+                                    <span class="mui-pull-right"><t t-esc="offshelf_time"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">库龄日期</span>
+                                    <span class="mui-pull-right"><t t-esc="stock_date"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">质保日期</span>
+                                    <span class="mui-pull-right"><t t-esc="warranty_date"/></span>
+                                </li>
+                                <li t-if='locked_order' class="mui-table-view-cell">
+                                    <span class="mui-pull-left">锁定单据</span>
+                                    <span class="mui-pull-right"><t t-esc="locked_order"/></span>
+                                </li>
+                                <li t-if='origin_order' class="mui-table-view-cell">
+                                    <span class="mui-pull-left">来源单据</span>
+                                    <span class="mui-pull-right"><t t-esc="origin_order"/></span>
+                                </li>
+                                <li t-if="partner_name" class="mui-table-view-cell">
+                                    <span class="mui-pull-left">业务伙伴</span>
+                                    <span class="mui-pull-right"><t t-esc="partner_name"/></span>
+                                </li>
+                                <li id="stock_qty" class="mui-table-view-cell">
+                                    <a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>
+                                        <span class="mui-pull-left">库存数量</span>
+                                        <span class="mui-pull-right"><t t-esc="stock_qty"/></span>
+                                    </a>
+                                </li>
+                            </ul>
+
+                            <div class="mui-card" style="margin-left:0;margin-right:0;">
+                                <div class="mui-card-header">
+                                    <span class="mui-pull-left">标签打印机</span>
+                                    <button id="change_printer" type="button" class="mui-btn mui-btn-primary mui-btn-outlined mui-pull-right">
+                                        更换打印机
+                                    </button>
+                                </div>
+                                <div class="mui-card-content">
+                                    <div class="mui-card-content-inner" style="color:#000000;font-weight:bold;font-size:17px;height:50px;">
+                                        <div>
+                                            <span class="mui-pull-left">当前打印机：</span>
+                                            <span id="label_printer" printerid="0" class="mui-pull-right"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mui-card-footer">
+                                    <span class="mui-pull-left" style="color:#000000;font-weight:bold;font-size:17px;">标签份数：</span>
+                                    <span class="mui-numbox mui-pull-right">
+                                        <button class="mui-btn mui-btn-numbox-minus" type="button">-</button>
+                                        <input id="labelcount" class="mui-input-numbox" type="number" value="1"/>
+                                        <button class="mui-btn mui-btn-numbox-plus" type="button">+</button>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="aas-mui-table-view-title"> 查存卡 </div>
+                            <ul class="mui-table-view">
+                                <li class="mui-table-view-cell" >
+                                    <div class="mui-table">
+                                        <div class="mui-table-cell mui-col-xs-6 mui-text-left"> 发出库位 </div>
+                                        <div class="mui-table-cell mui-col-xs-6 mui-text-right"> 收发数量 </div>
+                                    </div>
+                                    <div class="mui-table">
+                                        <div class="mui-table-cell mui-col-xs-6 mui-text-left"> 收入库位 </div>
+                                        <div class="mui-table-cell mui-col-xs-6 mui-text-right"> 结存数量 </div>
+                                    </div>
+                                </li>
+                                <t t-if="journal_lines">
+                                    <t t-foreach="journal_lines" t-as="jline">
+                                        <li class="mui-table-view-cell" >
+                                            <div class="mui-table">
+                                                <div class="mui-table-cell mui-col-xs-6 mui-text-left"> <t t-esc="jline['locationsrc']"/> </div>
+                                                <div class="mui-table-cell mui-col-xs-6 mui-text-right"> <t t-esc="jline['journal_qty']"/> </div>
+                                            </div>
+                                            <div class="mui-table">
+                                                <div class="mui-table-cell mui-col-xs-6 mui-text-left"> <t t-esc="jline['locationdest']"/> </div>
+                                                <div class="mui-table-cell mui-col-xs-6 mui-text-right"> <t t-esc="jline['balance_qty']"/> </div>
+                                            </div>
+                                        </li>
+                                    </t>
+                                </t>
+                            </ul>
+                            <t t-if="split_lines">
+                                <div class="aas-mui-table-view-title" style="margin-top:10px;"> 拆分明细 </div>
+                                <ul class="mui-table-view">
+                                    <li class="mui-table-view-cell" >
+                                        <div class="mui-table">
+                                            <div class="mui-table-cell mui-col-xs-6 mui-text-left"> 产品编码 </div>
+                                            <div class="mui-table-cell mui-col-xs-6 mui-text-right"> 产品数量 </div>
+                                        </div>
+                                        <div class="mui-table">
+                                            <div class="mui-table-cell mui-col-xs-6 mui-text-left"> 产品批次 </div>
+                                            <div class="mui-table-cell mui-col-xs-6 mui-text-right"> 标签名称 </div>
+                                        </div>
+                                    </li>
+                                    <t t-foreach="split_lines" t-as="sline">
+                                        <li class="mui-table-view-cell" >
+                                            <div class="mui-table">
+                                                <div class="mui-table-cell mui-col-xs-6 mui-text-left"> <t t-esc="sline['product_code']"/> </div>
+                                                <div class="mui-table-cell mui-col-xs-6 mui-text-right"> <t t-esc="sline['product_qty']"/> </div>
+                                            </div>
+                                            <div class="mui-table">
+                                                <div class="mui-table-cell mui-col-xs-6 mui-text-left"> <t t-esc="sline['product_lot']"/> </div>
+                                                <div class="mui-table-cell mui-col-xs-6 mui-text-right"> <t t-esc="sline['label_name']"/> </div>
+                                            </div>
+                                        </li>
+                                    </t>
+                                </ul>
+                            </t>
+                        </div>
+                    </div>
+                    <div id="label_detail_buttons" class="mui-popover mui-popover-action mui-popover-bottom">
+                        <ul class="mui-table-view">
+                            <li class="mui-table-view-cell"> <a id="print_label" href="javascript:;">标签打印</a> </li>
+                            <li class="mui-table-view-cell" t-attf-style="display:{{actionsplit}}">
+                                <a id="split_label" href="javascript:;">标签拆分</a>
+                            </li>
+                            <li class="mui-table-view-cell" t-attf-style="display:{{actionfrozen}}">
+                                <a id="frozen_label" href="javascript:;">冻结标签</a>
+                            </li>
+                            <li class="mui-table-view-cell" t-attf-style="display:{{actionunfrozen}}">
+                                <a id="unfrozen_label" href="javascript:;">解冻标签</a>
+                            </li>
+                        </ul>
+                        <ul class="mui-table-view">
+                            <li class="mui-table-view-cell"> <a href="#label_detail_buttons"><b>取消</b></a> </li>
+                        </ul>
+                    </div>
+                </body>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.picker.min.js"></script>
+                <script type="text/javascript" src="/aas_base/static/wechat/jquery-2.2.4.min.js"></script>
+                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_label_detail.js"></script>
+            </html>
+        </template>
+
+        <template id="wechat_wms_label_split" name="Wechat Label Split">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+                        <a class="mui-icon mui-icon-bars mui-pull-right" style="color: #0870d9;" href="#label_split_buttons"></a>
+                        <h1 class="mui-title"> 标签拆分 </h1>
+                    </header>
+                    <div id="label_split_pullrefresh" class="mui-content mui-scroll-wrapper" t-att-labelid="label_id">
+                        <div class="mui-scroll">
+                            <ul class="mui-table-view">
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">标签单号</span>
+                                    <span class="mui-pull-right"><t t-esc="label_name"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">产品编码</span>
+                                    <span class="mui-pull-right"><t t-esc="product_code"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">产品批次</span>
+                                    <span class="mui-pull-right"><t t-esc="product_lot"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">产品数量</span>
+                                    <span id="product_label_qty" class="mui-pull-right" t-att-qty="product_qty">
+                                        <t t-esc="product_qty"/>
+                                    </span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">拆分数量</span>
+                                    <span id="product_split_qty" class="mui-pull-right"></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">剩余数量</span>
+                                    <span id="product_balance_qty" class="mui-pull-right"></span>
+                                </li>
+                            </ul>
+                            <div class="aas-mui-table-view-title"> 拆分设置 </div>
+                            <ul id="split_settings" class="mui-table-view">
+                                <li class="mui-table-view-cell">
+                                    <div class="mui-table-cell mui-col-xs-4 mui-text-left">每标签数量</div>
+                                    <div class="mui-table-cell mui-col-xs-8 mui-text-right">
+                                        <input id="split_settings_label_qty" type="text" class="mui-input-clear" style='margin-bottom:0;height:30px;text-align:right;'/>
+                                    </div>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <div class="mui-table-cell mui-col-xs-4 mui-text-left">标签个数</div>
+                                    <div class="mui-table-cell mui-col-xs-8 mui-text-right">
+                                        <input id="split_settings_label_count" type="text" class="mui-input-clear" style='margin-bottom:0;height:30px;text-align:right;'/>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div id="label_split_buttons" class="mui-popover mui-popover-action mui-popover-bottom">
+                        <ul class="mui-table-view">
+                            <li class="mui-table-view-cell"> <a id="action_split" href="javascript:;">确认拆分</a> </li>
+                        </ul>
+                        <ul class="mui-table-view">
+                            <li class="mui-table-view-cell"> <a href="#label_split_buttons"><b>取消</b></a> </li>
+                        </ul>
+                    </div>
+                </body>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_label_split.js"></script>
+            </html>
+        </template>
+
     </data>
 </odoo>
