@@ -70,12 +70,20 @@ class Location(models.Model):
 
     usage = fields.Selection(selection_add=[('sundry', u'杂项'), ('wip', u'线边库')])
     mrblocation = fields.Boolean(string=u'MRB库位', default=False, copy=False)
-    barcode = fields.Char(string=u'条码', compute='_compute_barcode', store=True)
 
-    @api.depends('name')
-    def _compute_barcode(self):
-        for record in self:
-            record.barcode = 'AA'+record.name
+    @api.model
+    def create(self, vals):
+        vals['barcode'] = 'AA'+vals.get('name')
+        return super(Location, self).create(vals)
+
+
+    @api.multi
+    def write(self, vals):
+        if vals.get('name'):
+            vals['barcode'] = 'AA'+vals.get('name')
+        return super(Location, self).write(vals)
+
+
 
     @api.model
     def action_print_label(self, printer_id, ids=[], domain=[]):
