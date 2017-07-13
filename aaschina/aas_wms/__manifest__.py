@@ -34,7 +34,8 @@
 
         'wechat/views/aas_wechat_wms_template.xml',
         'wechat/views/aas_wechat_wms_receipt_template.xml',
-        'wechat/views/aas_wechat_wms_purchase_template.xml'
+        'wechat/views/aas_wechat_wms_purchase_template.xml',
+        'wechat/views/aas_wechat_wms_label_template.xml'
     ],
     'qweb':[],
     'installable': True,

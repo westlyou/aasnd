@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <template id="wechat_wms_label_list" name="Wechat Label List">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+                        <a class="mui-icon mui-icon-bars mui-pull-right" style="color: #0870d9;" href="#label_list_buttons"></a>
+                        <h1 class="mui-title"> 标签列表 </h1>
+                    </header>
+                    <div id="label_list_pullrefresh" class="mui-content mui-scroll-wrapper" t-att-labelindex="labelindex">
+                        <div class="mui-scroll">
+                            <div class="mui-input-row mui-search" style="height:34px;margin:10px;">
+                                <input id="label_search" type="search" class="mui-input-clear" placeholder="请输入产品编码或者批次"/>
+                            </div>
+                            <ul id="label_list" class="mui-table-view mui-table-view-chevron">
+                                <t t-if="labels">
+                                    <t t-foreach="labels" t-as="label">
+                                        <li class="aas-label mui-table-view-cell" t-att-labelid="label['label_id']">
+                                            <a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>
+                                                <div class='mui-table'>
+                                                    <div class="mui-table-cell mui-col-xs-8 mui-text-left">
+                                                        <div class="mui-ellipsis">  <t t-esc="label['product_code']"/> </div>
+                                                        <div class="mui-ellipsis">  <t t-esc="label['product_lot']"/> </div>
+                                                    </div>
+                                                    <div class="mui-table-cell mui-col-xs-4 mui-text-right">
+                                                        <div> <t t-esc="label['location_name']"/>  </div>
+                                                        <div> <t t-esc="label['product_qty']"/>  </div>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </li>
+                                    </t>
+                                </t>
+                            </ul>
+                        </div>
+                    </div>
+                    <div id="label_list_buttons" class="mui-popover mui-popover-action mui-popover-bottom">
+                        <ul class="mui-table-view">
+                            <li class="mui-table-view-cell"> <a id="scan_label" href="javascript:;">标签扫描</a> </li>
+                            <li class="mui-table-view-cell"> <a id="merge_label" href="javascript:;">标签合并</a> </li>
+                        </ul>
+                        <ul class="mui-table-view">
+                            <li class="mui-table-view-cell"> <a href="#label_list_buttons"><b>取消</b></a> </li>
+                        </ul>
+                    </div>
+                </body>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+                <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_label_list.js"></script>
+            </html>
+        </template>
+
+    </data>
+</odoo>
