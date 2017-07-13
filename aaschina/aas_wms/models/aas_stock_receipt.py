@@ -282,6 +282,9 @@ class AASStockReceiptLine(models.Model):
             return
         if not self.label_related:
             raise UserError(u'%s还未关联收货标签，不可以确认收货！'% self.product_id.default_code)
+        context = {'operate_order': self.receipt_id.name}
+        if self.env.context and len(self.env.context) > 0:
+            context.update(self.env.context)
         movedict, labels, receipt = {}, self.env['aas.product.label'], self.receipt_id
         for rlabel in self.label_list:
             label = rlabel.label_id
@@ -295,7 +298,7 @@ class AASStockReceiptLine(models.Model):
                     'origin_order': self.origin_order, 'receipt_type': self.receipt_type, 'partner_id': self.receipt_id.partner_id and self.receipt_id.partner_id.id,
                     'receipt_user': self.env.user.id, 'location_src_id': label.location_id.id, 'location_dest_id': self.location_id.id, 'product_qty': label.product_qty, 'company_id': self.company_id.id
                 }
-        labels.write({'location_id': self.location_id.id, 'stocked': True, 'state': 'normal'})
+        labels.with_context(context).write({'location_id': self.location_id.id, 'stocked': True, 'state': 'normal'})
         move_lines, receiptvals = [], {'receipt_lines': [(1, self.id, {'state': 'confirm'})]}
         for mkey, mval in movedict.items():
             move_lines.append((0, 0, mval))

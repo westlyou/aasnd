@@ -363,8 +363,19 @@ class AASProductLabelJournal(models.Model):
     location_dest_id = fields.Many2one(comodel_name='stock.location', string=u'收入', ondelete='set null')
     journal_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     balance_qty = fields.Float(string=u'结存', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    consume_order = fields.Char(string=u'操作单据', copy=False)
+    operate_order = fields.Char(string=u'操作单据', copy=False)
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null')
+
+    @api.model
+    def action_before_create(self, vals):
+        context = self.env.context
+        if context.get('operate_order'):
+            vals['operate_order'] = context.get('operate_order')
+
+    @api.model
+    def create(self, vals):
+        self.action_before_create(vals)
+        return super(AASProductLabelJournal, self).create(vals)
 
 
 

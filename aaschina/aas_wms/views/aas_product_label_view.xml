@@ -102,7 +102,7 @@
                                         <field name="location_dest_id"/>
                                         <field name="journal_qty"/>
                                         <field name="balance_qty"/>
-                                        <field name="consume_order"/>
+                                        <field name="operate_order"/>
                                         <field name="record_time"/>
                                     </tree>
                                     <form>
@@ -115,7 +115,7 @@
                                             <group>
                                                 <field name="journal_qty"/>
                                                 <field name="balance_qty"/>
-                                                <field name="consume_order"/>
+                                                <field name="operate_order"/>
                                             </group>
                                         </group>
                                     </form>
