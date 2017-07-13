@@ -36,6 +36,12 @@
             <field name="arch" type="xml">
                 <form create="false" edit="false" delete="false" labelprint="true">
                     <header>
+                        <button name="action_unpack" string="拆包" type="object" class="oe_highlight"
+                                attrs="{'invisible': ['|','|',('has_children','=',False),('state','!=','normal'),('locked','=',True)]}"
+                                groups="stock.group_stock_user,stock.group_stock_manager"/>
+                        <button name="action_split" string="拆分" type="object" class="oe_highlight"
+                                attrs="{'invisible': ['|','|',('has_children','=',True), ('state','!=','normal'),('locked','=',True)]}"
+                                groups="stock.group_stock_user,stock.group_stock_manager"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,normal,frozen,over"/>
                     </header>
                     <sheet>
@@ -85,6 +91,7 @@
                                 <field name="partner_id"/>
                                 <field name="company_id"/>
                                 <field name="barcode" invisible="1"/>
+                                <field name="has_children" invisible="1"/>
                             </group>
                         </group>
                         <notebook>
@@ -138,6 +145,7 @@
                     <filter string="正常" domain="[('state','=','normal')]" />
                     <filter string="冻结" domain="[('state','=','frozen')]" />
                     <filter string="消亡" domain="[('state','=','over')]" />
+                    <filter string="不合格品" domain="[('qualified','=',False)]" />
                     <group expand="0" string="分组">
                         <filter string="产品" context="{'group_by':'product_id'}"/>
                         <filter string="批次" context="{'group_by':'product_lot'}"/>

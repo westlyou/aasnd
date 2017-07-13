@@ -18,6 +18,7 @@
         'security/ir.model.access.csv',
         'views/aas_stock_models_view.xml',
         'views/aas_product_label_view.xml',
+        'wizard/aas_product_label_wizard_view.xml',
         'views/aas_receive_deliver_view.xml',
         'views/aas_stock_receipt_view.xml',
         'views/aas_stock_receipt_inside_view.xml',

@@ -42,6 +42,7 @@ class AASProductLabel(models.Model):
     parent_id = fields.Many2one(comodel_name='aas.product.label', string=u'父标签', ondelete='restrict', copy=False)
     parent_left = fields.Integer(string='Left Parent', select=1)
     parent_right = fields.Integer(string='Right Parent', select=1)
+    has_children = fields.Boolean(string=u'是否包裹', copy=False, compute='_compute_has_children', store=True)
     child_lines = fields.One2many(comodel_name='aas.product.label', inverse_name='parent_id', string=u'子标签', copy=False)
     origin_id = fields.Many2one(comodel_name='aas.product.label', string=u'源标签', ondelete='set null', copy=False, help=u'当前标签由拆解而得的源头标签')
     origin_lines = fields.One2many(comodel_name='aas.product.label', inverse_name='origin_id', string=u'拆解标签', copy=False)
@@ -56,6 +57,10 @@ class AASProductLabel(models.Model):
     product_code = fields.Char(string=u'产品编码')
     journal_lines = fields.One2many(comodel_name='aas.product.label.journal', inverse_name='label_id', string=u'查存卡', copy=False)
 
+    @api.depends('child_lines')
+    def _compute_has_children(self):
+        for record in self:
+            record.has_children = record.child_lines and len(record.child_lines) > 0
 
     @api.model
     def action_before_create(self, vals):
@@ -97,8 +102,30 @@ class AASProductLabel(models.Model):
         self.child_lines.write({'parent_id': False})
 
 
+    @api.multi
+    def action_split(self):
+        self.ensure_one()
+        wizard = self.env['aas.product.label.split.wizard'].create({
+            'label_id': self.id, 'product_id': self.product_id.id,
+            'product_lot': self.product_lot.id, 'product_qty': self.product_qty
+        })
+        view_form = self.env.ref('aas_wms.view_form_aas_product_label_split_wizard')
+        return {
+            'name': u"标签拆分",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.product.label.split.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
+
     @api.one
-    def action_split(self, label_qty, label_count=None):
+    def action_dosplit(self, label_qty, label_count=None):
         """
         标签拆分，将一个大包装的标签拆分成若干个小包装标签
         :param label_qty:
@@ -122,7 +149,7 @@ class AASProductLabel(models.Model):
         temp_qty, tlabel_qty = self.product_qty, label_qty
         for i in range(0, label_count):
             if float_compare(temp_qty, 0.0, precision_rounding=0.000001) <= 0.0:
-                break;
+                break
             if float_compare(temp_qty, label_qty, precision_rounding=0.000001) < 0.0:
                 tlabel_qty = temp_qty
             self.copy({'state': self.state,'origin_id': self.id, 'product_qty': tlabel_qty})

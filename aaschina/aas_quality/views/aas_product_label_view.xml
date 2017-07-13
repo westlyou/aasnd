@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_form_aas_product_label_quality" model="ir.ui.view">
+            <field name="name">aas.product.label.quality.form</field>
+            <field name="model">aas.product.label</field>
+            <field name="inherit_id" ref="aas_wms.view_form_aas_product_label"/>
+            <field name="arch" type="xml">
+                <field name="state" position="before">
+                    <button name="action_frozen" string="冻结" type="object" class="oe_highlight"
+                                attrs="{'invisible': [('state','!=','normal')]}"
+                                groups="aas_quality.group_aas_quality_user,aas_quality.group_aas_quality_manager"/>
+                    <button name="action_unfreeze" string="解冻" type="object" class="oe_highlight"
+                                attrs="{'invisible': [('state','!=','frozen')]}"
+                                groups="aas_quality.group_aas_quality_user,aas_quality.group_aas_quality_manager"/>
+                </field>
+            </field>
+        </record>
+
+        <menuitem id="menu_aas_product_label"  name="标签" parent="menu_aas_quality" sequence="2"
+                  groups="group_aas_quality_user,group_aas_quality_manager"/>
+
+        <menuitem id="menu_aas_product_label_list"  name="标签" action="aas_wms.action_aas_product_label"
+                          parent="menu_aas_product_label" sequence="1" groups="group_aas_quality_user,group_aas_quality_manager"/>
+
+    </data>
+</odoo>
