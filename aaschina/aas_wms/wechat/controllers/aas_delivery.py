@@ -77,7 +77,7 @@ class AASDeliveryWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/deliveryline/<int:deliverylineid>', type='http', auth='user')
-    def aas_wechat_wms_receiptlinedetail(self, deliverylineid):
+    def aas_wechat_wms_deliverylinedetail(self, deliverylineid):
         values = {'success': True, 'message': '', 'pickinglist': [], 'operationlist': []}
         deliveryline = request.env['aas.stock.delivery.line'].browse(deliverylineid)
         values.update({
@@ -218,7 +218,7 @@ class AASDeliveryWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/deliverymore', type='json', auth="user")
-    def aas_wechat_wms_deliverylinemore(self, deliveryindex=0, limit=20):
+    def aas_wechat_wms_deliverymore(self, deliveryindex=0, limit=20):
         values = {'deliverylines': [], 'deliveryindex': deliveryindex, 'deliverycount': 0}
         deliverydomain = [('delivery_type', '!=', 'purhase'), ('company_id', '=', request.env.user.company_id.id)]
         deliverydomain.append(('state', 'in', ['confirm', 'picking']))
@@ -234,7 +234,7 @@ class AASDeliveryWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/deliverydetail/<int:deliveryid>', type='http', auth='user')
-    def aas_wechat_wms_receiptlinedetail(self, deliveryid):
+    def aas_wechat_wms_deliverydetail(self, deliveryid):
         values = {'success': True, 'message': '', 'linelist': [], 'pickinglist': [], 'operationlist': []}
         delivery = request.env['aas.stock.delivery'].browse(deliveryid)
         values.update({'deliveryid': delivery.id, 'delivery_name': delivery.name, 'delivery_type': DELIVERYTYPEDICT[delivery.delivery_type]})
