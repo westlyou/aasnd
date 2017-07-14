@@ -11,3 +11,4 @@ import aas_label
 import aas_stock
 import aas_receipt
 import aas_purchase
+import aas_delivery

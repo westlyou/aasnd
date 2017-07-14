@@ -173,6 +173,7 @@ class AASStockDeliveryLine(models.Model):
     picking_qty = fields.Float(string=u'拣货数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
+    pickable = fields.Boolean(string=u'可否拣货', compute="_compute_pickable", store=True, help=u'是否可以拣货')
     picking_confirm = fields.Boolean(string=u'拣货确认', default=False, copy=False, help=u'发货员确认货物已分拣')
     picking_list = fields.One2many(comodel_name='aas.stock.picking.list', inverse_name='delivery_line', string=u'拣货清单')
     operation_lines = fields.One2many(comodel_name='aas.stock.delivery.operation', inverse_name='delivery_line', string=u'拣货作业')
@@ -180,6 +181,16 @@ class AASStockDeliveryLine(models.Model):
     _sql_constraints = [
         ('uniq_prodcut', 'unique (delivery_id, product_id)', u'请不要重复添加同一个产品！')
     ]
+
+    @api.depends('picking_confirm', 'product_qty', 'delivery_qty', 'picking_qty')
+    def _compute_pickable(self):
+        for record in self:
+            if record.picking_confirm:
+                record.pickable = False
+            elif float_compare(record.product_qty, record.delivery_qty+record.picking_qty, precision_rounding=0.000001) <= 0.0:
+                record.pickable = False
+            else:
+                record.pickable = True
 
     @api.model
     def action_before_create(self, vals):
@@ -290,7 +301,10 @@ class AASStockDeliveryLine(models.Model):
         operation_lines = self.env['aas.stock.delivery.operation'].search([('delivery_line', '=', self.id), ('deliver_done', '=', False)])
         if not operation_lines or len(operation_lines) <= 0:
             raise UserError(u'您还没有添加%s拣货作业，不可以确认拣货'% self.product_id.default_code)
-        self.delivery_id.action_picking_confirm()
+        self.write({'picking_confirm': True})
+        delivery = self.delivery_id
+        if all([dline.picking_confirm for dline in delivery.delivery_lines]):
+            delivery.write({'picking_confirm': True})
 
 
     @api.one

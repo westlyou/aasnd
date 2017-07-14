@@ -27,30 +27,30 @@
                         </div>
                         <ul class="mui-table-view mui-grid-view mui-grid-9">
                             <!-- 发货清单 -->
-                            <!--<li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
-                                <a href="/aaswechat/wms/picklist/sales">
+                            <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
+                                <a href="/aaswechat/wms/deliverylinelist">
+                                    <span class="mui-icon iconfont icon-picking"></span>
+                                    <div class="mui-media-body" style="font-size:12px;">拣货下架</div>
+                                </a>
+                            </li>
+                            <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
+                                <a href="/aaswechat/wms/deliverylist">
+                                    <span class="mui-icon iconfont icon-gongdan"></span>
+                                    <div class="mui-media-body" style="font-size:12px;">发货清单</div>
+                                </a>
+                            </li>
+                            <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
+                                <a href="#">
                                     <span class="mui-icon iconfont icon-fahuo"></span>
                                     <div class="mui-media-body" style="font-size:12px;">销售发货</div>
                                 </a>
                             </li>
                             <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
-                                <a href="/aaswechat/wms/picklist/manufacture">
-                                    <span class="mui-icon iconfont icon-lingliao"></span>
-                                    <div class="mui-media-body" style="font-size:12px;">生产领料</div>
+                                <a href="#">
+                                    <span class="mui-icon iconfont icon-gongdan"></span>
+                                    <div class="mui-media-body" style="font-size:12px;">销售发票</div>
                                 </a>
                             </li>
-                            <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
-                                <a href="/aaswechat/wms/picklist/purchase">
-                                    <span class="mui-icon iconfont icon-tuihuo"></span>
-                                    <div class="mui-media-body" style="font-size:12px;">采购退货</div>
-                                </a>
-                            </li>
-                            <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
-                                <a href="/aaswechat/wms/picklist/sundry">
-                                    <span class="mui-icon iconfont icon-zaqizaba"></span>
-                                    <div class="mui-media-body" style="font-size:12px;">杂项出库</div>
-                                </a>
-                            </li>-->
                             <!-- 收货清单 -->
                             <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
                                 <a href="/aaswechat/wms/receiptlinelist">
@@ -70,6 +70,13 @@
                                     <div class="mui-media-body" style="font-size:12px;">采购订单</div>
                                 </a>
                             </li>
+                            <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
+                                <a href="#">
+                                    <span class="mui-icon iconfont icon-tuihuo"></span>
+                                    <div class="mui-media-body" style="font-size:12px;">采购退货</div>
+                                </a>
+                            </li>
+                            <!-- 其他单据 -->
                             <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
                                 <a href="/aaswechat/wms/labellist">
                                     <span class="mui-icon iconfont icon-erweima"></span>
