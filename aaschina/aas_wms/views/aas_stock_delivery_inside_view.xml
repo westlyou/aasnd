@@ -55,12 +55,6 @@
                                 <field name="picking_confirm" invisible="1"/>
                             </group>
                         </group>
-                        <group>
-                            <group>
-                                <button name="action_label_deliver" string="标签发货" type="object" icon="fa-list" class="oe_highlight"
-                                        attrs="{'invisible':['|',('state','!=','draft'),('delivery_type','!=','purchase')]}" />
-                            </group>
-                        </group>
                         <notebook>
                             <page string="发货明细">
                                 <field name="delivery_lines"
@@ -114,7 +108,8 @@
                             <page string="发货作业">
                                 <field name="operation_lines" attrs="{'readonly':['|',('state','in',['draft','done','cancel']),('picking_confirm','=',True)]}">
                                     <tree editable="bottom" edit="false">
-                                        <field name="label_id" options="{'no_create':true}" required="1"/>
+                                        <field name="label_id" options="{'no_create':true}" required="1"
+                                                domain="[('parent_id','=',False),('locked','=',False),('state','=','normal')]"/>
                                         <field name="product_id" readonly="1"/>
                                         <field name="product_uom" readonly="1"/>
                                         <field name="product_lot" readonly="1"/>
@@ -256,7 +251,7 @@
                                 <field name="operation_lines" attrs="{'readonly':['|',('state','in',['draft','done','cancel']),('picking_confirm','=',True)]}">
                                     <tree editable="bottom">
                                         <field name="label_id" options="{'no_create':true}" required="1"
-                                                domain="[('product_id','=',parent.product_id)]"/>
+                                                domain="[('product_id','=',parent.product_id),('parent_id','=',False),('locked','=',False),('state','=','normal')]"/>
                                         <field name="product_id" readonly="1"/>
                                         <field name="product_uom" readonly="1"/>
                                         <field name="product_lot" readonly="1"/>
@@ -296,72 +291,6 @@
                 </form>
             </field>
         </record>
-
-
-        <record id="action_aas_stock_delivery_purchase" model="ir.actions.act_window">
-            <field name="name">采购退货</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">aas.stock.delivery</field>
-            <field name="limit">50</field>
-            <field name="view_mode">form,tree</field>
-            <field name="view_id" ref="view_tree_aas_stock_delivery_inside"/>
-            <field name="search_view_id" ref="view_search_aas_stock_delivery"/>
-            <field name="domain">[('delivery_type','=','purchase')]</field>
-            <field name="context">{'default_delivery_type':'purchase'}</field>
-            <field name="help" type="html">
-                <p class="oe_view_nocontent_create"> 单击添加发货</p>
-            </field>
-        </record>
-
-        <record id="act_view_tree_aas_stock_delivery_purchase" model="ir.actions.act_window.view">
-            <field name="sequence" eval="1"/>
-            <field name="view_mode">tree</field>
-            <field name="view_id" ref="view_tree_aas_stock_delivery_inside"/>
-            <field name="act_window_id" ref="action_aas_stock_delivery_purchase"/>
-        </record>
-
-        <record id="act_view_form_aas_stock_delivery_purchase" model="ir.actions.act_window.view">
-            <field name="sequence" eval="2"/>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="view_form_aas_stock_delivery_inside"/>
-            <field name="act_window_id" ref="action_aas_stock_delivery_purchase"/>
-        </record>
-
-        <menuitem id="menu_aas_stock_delivery_purchase"  name="采购退货" action="action_aas_stock_delivery_purchase"
-                          parent="menu_aas_stock_delivery" sequence="3" groups="stock.group_stock_user,stock.group_stock_manager"/>
-
-
-        <record id="action_aas_stock_delivery_line_purchase" model="ir.actions.act_window">
-            <field name="name">退货明细</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">aas.stock.delivery.line</field>
-            <field name="limit">50</field>
-            <field name="view_mode">form,tree</field>
-            <field name="view_id" ref="view_tree_aas_stock_delivery_line_inside"/>
-            <field name="search_view_id" ref="view_search_aas_stock_delivery_line"/>
-            <field name="domain">[('delivery_type','=','purchase'),('state','not in',['draft','cancel'])]</field>
-            <field name="context">{'default_delivery_type': 'purchase'}</field>
-        </record>
-
-        <record id="act_view_tree_aas_stock_delivery_line_purchase" model="ir.actions.act_window.view">
-            <field name="sequence" eval="1"/>
-            <field name="view_mode">tree</field>
-            <field name="view_id" ref="view_tree_aas_stock_delivery_line_inside"/>
-            <field name="act_window_id" ref="action_aas_stock_delivery_line_purchase"/>
-        </record>
-
-        <record id="act_view_form_aas_stock_delivery_line_purchase" model="ir.actions.act_window.view">
-            <field name="sequence" eval="2"/>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="view_form_aas_stock_delivery_line_inside"/>
-            <field name="act_window_id" ref="action_aas_stock_delivery_line_purchase"/>
-        </record>
-
-        <menuitem id="menu_aas_stock_delivery_line_purchase"  name="退货明细" action="action_aas_stock_delivery_line_purchase"
-                          parent="menu_aas_stock_delivery" sequence="4" groups="stock.group_stock_user,stock.group_stock_manager"/>
-
-
-
 
 
         <record id="action_aas_stock_delivery_sales" model="ir.actions.act_window">
@@ -492,8 +421,276 @@
 
 
 
+        <record id="view_form_aas_stock_delivery_purchase" model="ir.ui.view">
+            <field name="name">aas.stock.delivery.purchase.form</field>
+            <field name="model">aas.stock.delivery</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_confirm" string="确认订单" type="object" class="oe_highlight" states="draft"/>
+                        <button name="action_picking_confirm" string="确认拣货" type="object" class="oe_highlight"
+                                attrs="{'invisible':['|',('state','not in',['confirm','picking']),('picking_confirm','=',True)]}"/>
+                        <button name="action_deliver_done" string="确认发货" type="object" class="oe_highlight"
+                                attrs="{'invisible':[('picking_confirm','=',False)]}"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,picking,done,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="order_user" readonly="1"/>
+                                <field name="order_time" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="origin_order" readonly="1"/>
+                                <field name="delivery_type" readonly="1"/>
+                                <field name="done_time" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="location_id"/>
+                                <field name="partner_id"/>
+                                <field name="done_time" readonly="1"/>
+                                <field name="picking_confirm" invisible="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <button name="action_label_deliver" string="标签发货" type="object" icon="fa-list" class="oe_highlight"
+                                        attrs="{'invisible':['|',('state','!=','draft'),('delivery_type','!=','purchase')]}" />
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="发货明细">
+                                <field name="delivery_lines" readonly="1">
+                                    <tree editable="bottom">
+                                        <field name="product_id"/>
+                                        <field name="product_uom"/>
+                                        <field name="product_qty"/>
+                                        <field name="delivery_qty"/>
+                                        <field name="picking_qty"/>
+                                        <field name="state"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_uom"/>
+                                                <field name="state"/>
+                                            </group>
+                                            <group>
+                                                <field name="product_qty"/>
+                                                <field name="delivery_qty"/>
+                                                <field name="picking_qty"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="发货作业">
+                                <field name="operation_lines" attrs="{'readonly':['|',('state','in',['done','cancel']),('picking_confirm','=',True)]}">
+                                    <tree editable="bottom" create="false" edit="false">
+                                        <field name="label_id" readonly="1"/>
+                                        <field name="product_id" readonly="1"/>
+                                        <field name="product_uom" readonly="1"/>
+                                        <field name="product_lot" readonly="1"/>
+                                        <field name="product_qty" readonly="1"/>
+                                        <field name="location_id" readonly="1"/>
+                                        <field name="pick_user" readonly="1"/>
+                                        <field name="pick_time" readonly="1"/>
+                                        <field name="deliver_done" readonly="1"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group> <field name="label_id"/> </group>
+                                        </group>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_uom"/>
+                                                <field name="product_lot"/>
+                                                <field name="pick_user"/>
+                                            </group>
+                                            <group>
+                                                <field name="product_qty"/>
+                                                <field name="location_id"/>
+                                                <field name="deliver_done"/>
+                                                <field name="pick_time"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="执行明细">
+                                <field name="move_lines" readonly="1">
+                                    <tree>
+                                        <field name="product_id"/>
+                                        <field name="product_uom"/>
+                                        <field name="product_lot"/>
+                                        <field name="product_qty"/>
+                                        <field name="delivery_user"/>
+                                        <field name="delivery_time"/>
+                                        <field name="location_src_id"/>
+                                        <field name="location_dest_id"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <field name="product_id"/>
+                                            <field name="product_uom"/>
+                                            <field name="product_lot"/>
+                                            <field name="product_qty"/>
+                                        </group>
+                                        <group>
+                                            <field name="delivery_user"/>
+                                            <field name="delivery_time"/>
+                                            <field name="location_src_id"/>
+                                            <field name="location_dest_id"/>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_form_aas_stock_delivery_line_purchase" model="ir.ui.view">
+            <field name="name">aas.stock.delivery.line.purchase.form</field>
+            <field name="model">aas.stock.delivery.line</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" edit="false" delete="false">
+                    <header>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,picking,done,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="delivery_id" readonly="1"/>
+                                <field name="picking_confirm" invisible="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="product_id" readonly="1"/>
+                                <field name="product_uom" readonly="1"/>
+                                <field name="delivery_type" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="product_qty" readonly="1"/>
+                                <field name="delivery_qty" readonly="1"/>
+                                <field name="picking_qty" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="发货作业">
+                                <field name="operation_lines" readonly="1">
+                                    <tree editable="bottom">
+                                        <field name="label_id"/>
+                                        <field name="product_id"/>
+                                        <field name="product_uom"/>
+                                        <field name="product_lot"/>
+                                        <field name="product_qty"/>
+                                        <field name="location_id"/>
+                                        <field name="pick_user"/>
+                                        <field name="pick_time"/>
+                                        <field name="check_user"/>
+                                        <field name="check_time"/>
+                                        <field name="deliver_done"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group><field name="label_id"/></group>
+                                        </group>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_uom"/>
+                                                <field name="product_lot"/>
+                                                <field name="product_qty"/>
+                                                <field name="location_id"/>
+                                            </group>
+                                            <group>
+                                                <field name="pick_user"/>
+                                                <field name="pick_time"/>
+                                                <field name="check_user"/>
+                                                <field name="check_time"/>
+                                                <field name="deliver_done"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_aas_stock_delivery_purchase" model="ir.actions.act_window">
+            <field name="name">采购退货</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.stock.delivery</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_stock_delivery_inside"/>
+            <field name="search_view_id" ref="view_search_aas_stock_delivery"/>
+            <field name="domain">[('delivery_type','=','purchase')]</field>
+            <field name="context">{'default_delivery_type':'purchase'}</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加发货</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_stock_delivery_purchase" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_stock_delivery_inside"/>
+            <field name="act_window_id" ref="action_aas_stock_delivery_purchase"/>
+        </record>
+
+        <record id="act_view_form_aas_stock_delivery_purchase" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_stock_delivery_purchase"/>
+            <field name="act_window_id" ref="action_aas_stock_delivery_purchase"/>
+        </record>
+
+        <menuitem id="menu_aas_stock_delivery_purchase"  name="采购退货" action="action_aas_stock_delivery_purchase"
+                          parent="menu_aas_stock_delivery" sequence="3" groups="stock.group_stock_user,stock.group_stock_manager"/>
 
 
+        <record id="action_aas_stock_delivery_line_purchase" model="ir.actions.act_window">
+            <field name="name">退货明细</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.stock.delivery.line</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_stock_delivery_line_inside"/>
+            <field name="search_view_id" ref="view_search_aas_stock_delivery_line"/>
+            <field name="domain">[('delivery_type','=','purchase'),('state','not in',['draft','cancel'])]</field>
+            <field name="context">{'default_delivery_type': 'purchase'}</field>
+        </record>
+
+        <record id="act_view_tree_aas_stock_delivery_line_purchase" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_stock_delivery_line_inside"/>
+            <field name="act_window_id" ref="action_aas_stock_delivery_line_purchase"/>
+        </record>
+
+        <record id="act_view_form_aas_stock_delivery_line_purchase" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_stock_delivery_line_purchase"/>
+            <field name="act_window_id" ref="action_aas_stock_delivery_line_purchase"/>
+        </record>
+
+        <menuitem id="menu_aas_stock_delivery_line_purchase"  name="退货明细" action="action_aas_stock_delivery_line_purchase"
+                          parent="menu_aas_stock_delivery" sequence="4" groups="stock.group_stock_user,stock.group_stock_manager"/>
 
 
     </data>

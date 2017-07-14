@@ -101,7 +101,13 @@ class AASStockDelivery(models.Model):
         :return:
         """
         self.ensure_one()
-        wizard = self.env['aas.stock.delivery.label.wizard'].create({'delivery_id': self.id})
+        wizardvals = {'delivery_id': self.id}
+        if self.operation_lines and len(self.operation_lines) > 0:
+            operations = [(0, 0, {
+                'operation_id': oline.id, 'label_id': oline.label_id.id
+            }) for oline in self.operation_lines]
+            wizardvals['label_lines'] = operations
+        wizard = self.env['aas.stock.delivery.label.wizard'].create(wizardvals)
         view_form = self.env.ref('aas_wms.view_form_aas_stock_delivery_label_wizard')
         return {
             'name': u"标签明细",
@@ -323,9 +329,9 @@ class AASStockDeliveryLine(models.Model):
         deliveryvals['move_lines'] = [(0, 0, mval) for mkey, mval in movedict.items()]
         delivery.write(deliveryvals)
         if delivery.delivery_type == 'manufacture':
-            labels.write({'location_id': delivery.location_id.id})
+            labels.write({'location_id': delivery.location_id.id, 'locked': False, 'locked_order': False})
         else:
-            labels.write({'location_id': delivery.location_id.id, 'state': 'over'})
+            labels.write({'location_id': delivery.location_id.id, 'state': 'over', 'locked': False, 'locked_order': False})
 
 
 
@@ -375,12 +381,15 @@ class AASStockDeliveryOperation(models.Model):
     @api.one
     @api.constrains('label_id')
     def action_check_label(self):
-        if self.delivery_id.delivery_type != 'purchase':
-            product_id, location_id, product_lot = self.label_id.product_id, self.label_id.location_id, self.label_id.product_lot
-            listdomain = [('product_id', '=', product_id.id), ('product_lot', '=', product_lot.id)]
-            listdomain.extend([('location_id', '=', location_id.id), ('delivery_id', '=', self.delivery_id.id)])
-            if self.env['aas.stock.picking.list'].search_count(listdomain) <= 0:
-                raise ValidationError(u'请仔细检查是否已生成拣货清单；若拣货清单已生成，则说明当前标签%s不可以拣货到当前发货单！'% self.label_id.name)
+        if self.env.context.get('nocheck'):
+            return True
+        if self.delivery_id.delivery_type == 'purchase':
+            return True
+        product_id, location_id, product_lot = self.label_id.product_id, self.label_id.location_id, self.label_id.product_lot
+        listdomain = [('product_id', '=', product_id.id), ('product_lot', '=', product_lot.id)]
+        listdomain.extend([('location_id', '=', location_id.id), ('delivery_id', '=', self.delivery_id.id)])
+        if self.env['aas.stock.picking.list'].search_count(listdomain) <= 0:
+            raise ValidationError(u'请仔细检查是否已生成拣货清单；若拣货清单已生成，则说明当前标签%s不可以拣货到当前发货单！'% self.label_id.name)
 
 
     @api.onchange('label_id')
@@ -412,9 +421,11 @@ class AASStockDeliveryOperation(models.Model):
     def action_after_create(self):
         dline = self.delivery_line
         lineval = {'picking_qty': dline.picking_qty + self.product_qty}
-        if dline.state!='picking':
+        if dline.state != 'picking':
             lineval['state'] = 'picking'
         dline.write(lineval)
+        # 锁定标签
+        self.label_id.write({'locked': True, 'locked_order': self.delivery_id.name})
 
 
     @api.model
@@ -429,12 +440,13 @@ class AASStockDeliveryOperation(models.Model):
 
     @api.multi
     def unlink(self):
-        linedict = {}
+        linedict, labels = {}, self.env['aas.product.label']
         for record in self:
             if record.delivery_id.picking_confirm:
                 raise UserError(u'%s已确认拣货，不可以删除！'% record.delivery_id.name)
             if record.deliver_done:
                 raise UserError(u'%s已经发货，不可以删除！'% record.label_id.name)
+            labels |= record.label_id
             lkey = 'L'+str(record.delivery_line.id)
             if lkey not in linedict:
                 linedict[lkey] = {'line': record.delivery_line, 'product_qty': record.product_qty}
@@ -447,6 +459,8 @@ class AASStockDeliveryOperation(models.Model):
             if float_compare(product_qty, 0.0, precision_rounding=0.000001) < 0.0:
                 product_qty = 0.0
             dline.write({'picking_qty': product_qty})
+        if labels and len(labels) > 0:
+            labels.write({'locked': False, 'locked_order': False})
         return result
 
 

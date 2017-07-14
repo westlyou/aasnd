@@ -39,24 +39,15 @@ class AASStockDeliveryLabelWizard(models.TransientModel):
                 continue
             doperations.append((0, 0, {'label_id': lline.label_id.id}))
             dkey = 'P'+str(lline.product_id.id)
-            if dkey in dlinedict:
-                dlinedict[dkey]['lval']['product_qty'] += lline.product_qty
-            else:
-                dline = self.env['aas.stock.delivery.line'].search([('delivery_id', '=', self.id), ('product_id', '=', lline.product_id.id)], limit=1)
+            if dkey not in dlinedict:
+                dline = self.env['aas.stock.delivery.line'].search([('delivery_id', '=', self.delivery_id.id), ('product_id', '=', lline.product_id.id)], limit=1)
                 if not dline:
-                   dlinedict[dkey] = {'line': False, 'lval': {
+                   dlinedict[dkey] = {
                        'product_id': lline.product_id.id, 'product_uom': lline.product_uom.id, 'product_lot': lline.product_lot.id,
-                       'product_qty': lline.product_qty, 'delivery_type': self.delivery_id.delivery_type
-                   }}
-                else:
-                    dlinedict[dkey] = {'line': dline, 'lval': {'product_qty': lline.product_qty}}
-        dlines = []
+                       'product_qty': 0.0, 'delivery_type': self.delivery_id.delivery_type
+                   }
         if dlinedict and len(dlinedict) > 0:
-            for dkey, dval in dlinedict.items():
-                if not dval['line']:
-                    dlines.append((0, 0, dval['lval']))
-                else:
-                    dlines.append((1, dval['line'].id, dval['lval']))
+            dlines = [(0, 0, dval) for dkey, dval in dlinedict.items()]
             self.delivery_id.write({'delivery_lines': dlines})
         if doperations and len(doperations) > 0:
             self.delivery_id.write({'operation_lines': doperations})
@@ -122,8 +113,5 @@ class AASStockDeliveryLabelLineWizard(models.TransientModel):
                 operationlines |= record.operation_id
         result = super(AASStockDeliveryLabelLineWizard, self).unlink()
         if operationlines and len(operationlines) > 0:
-            for toperation in operationlines:
-                dline = toperation.delivery_line
-                dline.write({'product_qty': dline.product_qty-toperation.product_qty})
             operationlines.unlink()
         return result
