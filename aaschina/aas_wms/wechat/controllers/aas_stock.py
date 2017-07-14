@@ -52,6 +52,6 @@ class AASStockWechatController(http.Controller):
         cnoncestr = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(15))
         ctimestamp = int(time.time())
         csignature = aasjsapi.get_jsapi_signature(noncestr=cnoncestr, ticket=cticket, timestamp=ctimestamp, url=access_url)
-        wxvalues = {'debug': False, 'appId': self.CorpId, 'timestamp': ctimestamp, 'nonceStr': cnoncestr}
+        wxvalues = {'debug': False, 'appId': self.corpid, 'timestamp': ctimestamp, 'nonceStr': cnoncestr}
         wxvalues.update({'signature': csignature, 'jsApiList': ['scanQRCode']})
         return wxvalues
