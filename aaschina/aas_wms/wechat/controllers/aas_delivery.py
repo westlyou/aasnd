@@ -203,7 +203,7 @@ class AASDeliveryWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/deliverylist', type='http', auth='user')
-    def aas_wechat_wms_deliverylinelist(self, limit=20):
+    def aas_wechat_wms_deliverylist(self, limit=20):
         values = {'success': True, 'message': '', 'deliverylines': [], 'deliveryindex': '0'}
         deliverydomain = [('delivery_type', '!=', 'purhase'), ('company_id', '=', request.env.user.company_id.id)]
         deliverydomain.append(('state', 'in', ['confirm', 'picking']))
