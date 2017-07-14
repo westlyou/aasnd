@@ -21,7 +21,7 @@
         <menuitem id="menu_aas_product_label"  name="标签" parent="menu_aas_quality" sequence="2"
                   groups="group_aas_quality_user,group_aas_quality_manager"/>
 
-        <menuitem id="menu_aas_product_label_list"  name="标签" action="aas_wms.action_aas_product_label"
+        <menuitem id="menu_aas_product_label_list"  name="产品标签" action="aas_wms.action_aas_product_label"
                           parent="menu_aas_product_label" sequence="1" groups="group_aas_quality_user,group_aas_quality_manager"/>
 
     </data>

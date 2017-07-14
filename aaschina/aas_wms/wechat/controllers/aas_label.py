@@ -97,13 +97,19 @@ class AASLabelWechatController(http.Controller):
             values['stock_date'] = stock_date[0:10]
         if warranty_date:
             values['warranty_date'] = warranty_date[0:10]
-        values.update({'stock_qty': label.product_id.qty_available, 'origin_order': label.origin_order, 'journal_lines': [], 'split_lines': []})
+        values.update({'stock_qty': label.product_id.qty_available, 'origin_order': label.origin_order})
+        values.update({'journal_lines': [], 'split_lines': [], 'child_lines': []})
         if label.journal_lines and len(label.journal_lines) > 0:
             values['journal_lines'] = [{
                 'locationsrc': '' if not jline.location_src_id else jline.location_src_id.name,
                 'locationdest': '' if not jline.location_dest_id else jline.location_dest_id.name,
                 'journal_qty': jline.journal_qty, 'balance_qty': jline.balance_qty
             } for jline in label.journal_lines]
+        if label.child_lines and len(label.child_lines) > 0:
+            values['child_lines'] = [{
+                'label_id': cline.id, 'label_name': cline.name, 'product_code': cline.product_code,
+                'product_lot': cline.product_lot.name, 'product_qty': cline.product_qty
+            } for cline in label.child_lines]
         if label.origin_lines and len(label.origin_lines) > 0:
             values['split_lines'] = [{
                 'label_id': sline.id, 'label_name': sline.name, 'product_code': sline.product_code,
@@ -175,5 +181,52 @@ class AASLabelWechatController(http.Controller):
         values = {'success': True, 'message': ''}
         labels = request.env['aas.product.label'].browse(labelids)
         labels.action_unfreeze()
+        return values
+
+
+    @http.route('/aaswechat/wms/labelmerge', type='http', auth="user")
+    def aas_wechat_wms_labelmerge(self):
+        values = request.params.copy()
+        return request.render('aas_wms.wechat_wms_label_merge', values)
+
+
+    @http.route('/aaswechat/wms/labelmergelocation', type='json', auth="user")
+    def aas_wechat_labelmergelocation(self, barcode):
+        values = {'success': True, 'message': ''}
+        location = request.env['stock.location'].search([('barcode', '=', barcode)], limit=1)
+        values.update({'location_id': location.id, 'location_name': location.name})
+        return values
+
+
+    @http.route('/aaswechat/wms/labelmergelabel', type='json', auth="user")
+    def aas_wechat_labelmergelocation(self, barcode):
+        values = {'success': True, 'message': ''}
+        label = request.env['aas.product.label'].search([('barcode', '=', barcode)], limit=1)
+        if label.state != 'normal':
+            values.update({'success': False, 'message': u'标签状态异常不可以用于合并！'})
+            return values
+        if label.stocked:
+            values.update({'success': False, 'message': u'无效标签不可以合并！'})
+            return values
+        if label.locked:
+            values.update({'success': False, 'message': u'标签被单据%s锁定，暂时不可以操作！'% label.locked_order})
+            return values
+        values.update({'label_id': label.id, 'label_name': label.name, 'product_id': label.product_id.id})
+        values.update({'product_code': label.product_code, 'lot_id': label.product_lot.id, 'lot_name': label.product_lot.name})
+        values.update({'product_qty': label.product_qty, 'location_name': label.location_id.name})
+        return values
+
+
+    @http.route('/aaswechat/wms/labelmergedone', type='json', auth="user")
+    def aas_wechat_labelmergedone(self, labelids, locationid):
+        values = {'success': True, 'message': ''}
+        try:
+            labels = request.env['aas.product.label'].browse(labelids)
+            location = request.env['stock.location'].browse(locationid)
+            templabel = request.env['aas.product.label'].action_merge_labels(labels, location)
+            values['labelid'] = templabel.id
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
         return values
 

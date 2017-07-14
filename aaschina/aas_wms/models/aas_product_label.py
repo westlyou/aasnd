@@ -319,6 +319,7 @@ class AASProductLabel(models.Model):
             for mkey, mval in movevals.items():
                 movelist |= self.env['stock.move'].create(mval)
             movelist.action_done()
+        return parentlabel
 
 
     @api.multi
