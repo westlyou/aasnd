@@ -96,7 +96,7 @@ class AASDeliveryWechatController(http.Controller):
             } for pline in deliveryline.picking_list]
         if deliveryline.operation_lines and len(deliveryline.operation_lines) > 0:
             values['operationlist'] = [{
-                'operation_id': oline.id, 'deliver_done': oline.deliver_done,
+                'operation_id': oline.id, 'deliver_done': oline.deliver_done, 'location_name': oline.location_id.name,
                 'label_id': oline.label_id.id, 'label_name': oline.label_id.name, 'product_qty': oline.product_qty,
                 'product_code': oline.product_id.default_code, 'product_lot': oline.product_lot.name
             } for oline in deliveryline.operation_lines]
