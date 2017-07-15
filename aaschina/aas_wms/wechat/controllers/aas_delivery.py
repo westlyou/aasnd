@@ -116,7 +116,7 @@ class AASDeliveryWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/deliverylabelscan', type='json', auth="user")
-    def aas_wechat_wms_deliverypickinglist(self, barcode, delivery_id=None, line_id=None):
+    def aas_wechat_wms_deliverylabelscan(self, barcode, delivery_id=None, line_id=None):
         values = {'success': True, 'message': ''}
         if not delivery_id and not line_id:
             values.update({'success': False, 'message': u'异常出错，请检查请求参数设置！'})
@@ -190,7 +190,7 @@ class AASDeliveryWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/deliverypickdone', type='json', auth="user")
-    def aas_wechat_wms_deliverypickconfirm(self, delivery_id):
+    def aas_wechat_wms_deliverypickdone(self, delivery_id):
         values = {'success': True, 'message': ''}
         delivery = request.env['aas.stock.delivery'].browse(delivery_id)
         try:
