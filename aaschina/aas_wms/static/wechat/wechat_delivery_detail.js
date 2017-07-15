@@ -23,7 +23,7 @@ mui.ready(function(){
     //加载动画
     function aas_delivery_detail_loading(){
         var deliverymask = mui.createMask();
-        var loadimg = document.createElement('img'), maskEl = receiptmask[0];
+        var loadimg = document.createElement('img'), maskEl = deliverymask[0];
         maskEl.removeEventListener('tap', arguments.callee);
         loadimg.setAttribute('src', '/aas_base/static/wechat/aas/images/loading.gif');
         loadimg.setAttribute('width', '50px');
