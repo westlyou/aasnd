@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_aas_stock_delivery_material_picker,aas.stock.delivery material_picker,aas_wms.model_aas_stock_delivery,group_aas_material_picker,1,1,1,1
+access_aas_stock_delivery_line_material_picker,aas.stock.delivery.line material_picker,aas_wms.model_aas_stock_delivery_line,group_aas_material_picker,1,1,1,1
+access_aas_stock_delivery_operation_material_picker,aas.stock.delivery.operation material_picker,aas_wms.model_aas_stock_delivery_operation,group_aas_material_picker,1,0,0,0
+access_aas_stock_delivery_move_material_picker,aas.stock.delivery.move material_picker,aas_wms.model_aas_stock_delivery_move,group_aas_material_picker,1,0,0,0
+
+
+
