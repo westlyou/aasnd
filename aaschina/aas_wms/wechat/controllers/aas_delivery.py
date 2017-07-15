@@ -266,6 +266,7 @@ class AASDeliveryWechatController(http.Controller):
         if delivery.operation_lines and len(delivery.operation_lines) > 0:
             values['operationlist'] = [{
                 'label_name': oline.label_id.name, 'product_code': oline.product_id.default_code,
-                'product_qty': oline.product_qty, 'product_lot': oline.product_lot.name
+                'product_qty': oline.product_qty, 'product_lot': oline.product_lot.name,
+                'deliver_done': oline.deliver_done
             } for oline in delivery.operation_lines]
         return request.render('aas_wms.wechat_wms_delivery_detail', values)
