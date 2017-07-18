@@ -228,7 +228,7 @@ class AASStockReceiptLine(models.Model):
     receipt_type = fields.Selection(selection=RECEIPT_TYPE, string=u'收货类型')
     state = fields.Selection(selection=RECEIPT_STATE, string=u'状态', default='draft')
     need_push = fields.Boolean(string=u'可以上架', compute='_compute_receipt_need_push')
-    push_location = fields.Many2one(comodel_name='stock.location', string=u'推荐库位', help=u'最近上架库位')
+    push_location = fields.Many2one(comodel_name='stock.location', string=u'上架库位', help=u'最近上架库位')
     location_id = fields.Many2one(comodel_name='stock.location', string=u'收货库位', ondelete='restrict')
     warehouse_id = fields.Many2one(comodel_name='stock.warehouse', string=u'收货仓库', ondelete='restrict')
     product_qty = fields.Float(string=u'收货数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
@@ -308,7 +308,7 @@ class AASStockReceiptLine(models.Model):
     @api.one
     def action_push_all(self):
         if not self.push_location:
-            raise UserError(u'请先设置好推荐库位，再批量上架！')
+            raise UserError(u'请先设置好上架库位，再批量上架！')
         labellist = self.env['aas.stock.receipt.label'].search([('line_id', '=', self.id), ('checked', '=', False)])
         if labellist and len(labellist) > 0:
             operationlist = [(0, 0, {'rlabel_id': rlabel.id, 'location_id': self.push_location.id}) for rlabel in labellist]

@@ -270,3 +270,65 @@ class AASDeliveryWechatController(http.Controller):
                 'deliver_done': oline.deliver_done, 'operation_id': oline.id
             } for oline in delivery.operation_lines]
         return request.render('aas_wms.wechat_wms_delivery_detail', values)
+
+
+    @http.route('/aaswechat/wms/deliverypurchase', type='http', auth='user')
+    def aas_wechat_wms_deliverydetail(self):
+        values = {'success': True, 'message': ''}
+        return request.render('aas_wms.wechat_wms_delivery_purchase', values)
+
+
+    @http.route('/aaswechat/wms/deliverypurchaselabelscan', type='json', auth="user")
+    def aas_wechat_wms_deliverypurchaselabelscan(self, barcode):
+        values = {'success': True, 'message': ''}
+        label = request.env['aas.product.label'].search([('barcode', '=', barcode)], limit=1)
+        if not label:
+            values.update({'success': False, 'message': u'标签可能已删除！'})
+            return values
+        if label.state!='normal':
+            values.update({'success': False, 'message': u'标签状态异常不可以用于发货！'})
+            return values
+        if label.locked:
+            values.update({'success': False, 'message': u'标签已被%s锁定不可以用于发货！'% label.locked_order})
+            return values
+        if not label.origin_order or not label.partner_id:
+            values.update({'success': False, 'message': u'请仔细检查当前标签是否是采购收货进来的！'})
+            return values
+        values.update({
+            'label_id': label.id, 'label_name': label.name,
+            'product_code': label.product_code, 'product_qty': label.product_qty, 'product_lot': label.product_lot.name,
+            'origin_order': label.origin_order, 'partner_id': label.partner_id.id, 'partner_name': label.partner_id.name
+        })
+        return values
+
+
+    @http.route('/aaswechat/wms/deliverypurchasedone', type='json', auth="user")
+    def deliverypurchasedone(self, partnerid, purchaseorder, labelids):
+        values = {'success': True, 'message': ''}
+        deliveryvals = {
+            'partner_id': partnerid, 'state': 'picking', 'delivery_type': 'purchase',
+            'origin_order': purchaseorder, 'pick_user': request.env.user.id
+        }
+        supplier_location = request.env.ref('stock.stock_location_suppliers')
+        deliveryvals['location_id'] = supplier_location.id
+        labellist = request.env['aas.product.label'].browse(labelids)
+        dlinesdict, operationlines = {}, []
+        for tlabel in labellist:
+            pkey = 'P'+str(tlabel.product_id.id)
+            if pkey in dlinesdict:
+                dlinesdict[pkey]['product_qty'] += tlabel.product_qty
+            else:
+                dlinesdict[pkey] = {
+                    'product_id': tlabel.product_id.id, 'product_uom': tlabel.product_uom.id, 'product_qty': tlabel.product_qty,
+                    'state': 'picking', 'delivery_type': 'purchase'
+                }
+            operationlines.append((0, 0, {'label_id': tlabel.id}))
+        deliveryvals['delivery_lines'] = [(0, 0, dval) for dkey, dval in dlinesdict.items()]
+        try:
+            delivery = request.env['aas.stock.delivery'].create(deliveryvals)
+            delivery.write({'operation_lines': operationlines})
+            delivery.action_deliver_done
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
+        return values

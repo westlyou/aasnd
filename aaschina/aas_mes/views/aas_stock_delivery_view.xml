@@ -33,8 +33,7 @@
                         <group>
                             <group>
                                 <field name="name" readonly="1"/>
-                                <field name="order_user" options="{'no_create':true}"
-                                       string="领料人" attrs="{'readonly':[('state','!=','draft')]}"/>
+                                <field name="order_user" options="{'no_create':true}" string="领料人" readonly="1"/>
                                 <field name="pick_user" readonly="1"/>
                             </group>
                             <group>

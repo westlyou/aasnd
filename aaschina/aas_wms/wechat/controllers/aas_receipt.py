@@ -130,6 +130,7 @@ class AASReceiptWechatController(http.Controller):
         if not push_location:
             values.update({'success': False, 'message': u'无效库位， 请仔细检查是否库位已删除！'})
             return values
+        receiptline.write({'push_location': push_location.id})
         values.update({'location_id': push_location.id, 'location_name': push_location.name})
         return values
 
