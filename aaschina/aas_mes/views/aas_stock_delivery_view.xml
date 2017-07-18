@@ -27,6 +27,8 @@
                     <header>
                         <button name="action_confirm" type="object" string="确认订单" class="oe_highlight" states="draft"
                                 groups="aas_mes.group_aas_material_picker"/>
+                        <button name="action_deliver_done" string="确认领料" type="object" class="oe_highlight"
+                                attrs="{'invisible':[('picking_confirm','=',False)]}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,picking,done,cancle"/>
                     </header>
                     <sheet>

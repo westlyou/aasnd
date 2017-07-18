@@ -29,8 +29,8 @@
                         <button name="action_picking_list" string="拣货清单" type="object" states="confirm,picking" class="oe_highlight"/>
                         <button name="action_picking_confirm" string="确认拣货" type="object" class="oe_highlight"
                                 attrs="{'invisible':['|',('state','not in',['confirm','picking']),('picking_confirm','=',True)]}"/>
-                        <button name="action_deliver_done" string="确认发货" type="object" class="oe_highlight"
-                                attrs="{'invisible':[('picking_confirm','=',False)]}"/>
+                        <button name="action_deliver_done" string="执行发货" type="object" class="oe_highlight"
+                                attrs="{'invisible':['|',('picking_confirm','=',False),('delivery_type','=','manufacture')]}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,picking,done,cancel"/>
                     </header>
                     <sheet>
