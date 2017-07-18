@@ -348,7 +348,7 @@ class AASDeliveryWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/deliverysalesmore', type='json', auth="user")
-    def aas_wechat_wms_deliverylinemore(self, salesindex=0, limit=20):
+    def aas_wechat_wms_deliverysalesmore(self, salesindex=0, limit=20):
         values = {'deliverysales': [], 'salesindex': salesindex, 'salescount': 0}
         salesdomain = [('aas_delivery_id', '=', False)]
         deliverysales = request.env['aas.stock.sale.delivery'].search(salesdomain, offset=salesindex, limit=limit)
@@ -358,4 +358,50 @@ class AASDeliveryWechatController(http.Controller):
             } for dsales in deliverysales]
             values['salescount'] = len(deliverysales)
             values['salesindex'] = salesindex + values['salescount']
+        return values
+
+
+    @http.route('/aaswechat/wms/deliverysalesimport', type='http', auth='user')
+    def aas_wechat_wms_deliverysalesimport(self):
+        values = {'success': True, 'message': ''}
+        return request.render('aas_wms.wechat_wms_delivery_sales_import', values)
+
+
+    @http.route('/aaswechat/wms/deliverysalesimportdone', type='json', auth="user")
+    def aas_wechat_wms_deliverysalesimportdone(self, order_name):
+        values = {'success': True, 'message': ''}
+        try:
+            tempvals = request.env['aas.stock.sale.delivery'].action_import_order(order_name)
+            values.update(tempvals)
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
+        return values
+
+
+    @http.route('/aaswechat/wms/deliverysalesdetail/<int:salesid>', type='http', auth='user')
+    def aas_wechat_wms_deliverysalesdetail(self, salesid):
+        values = {'success': True, 'message': '', 'saleslines': []}
+        deliverysales = request.env['aas.stock.sale.delivery'].browse(salesid)
+        values.update({
+            'sales_name': deliverysales.name, 'shipment_date': get_current_time(deliverysales, deliverysales.shipment_date),
+            'sales_id': deliverysales.id, 'partner_name': '' if not deliverysales.partner_id else deliverysales.partner_id.name
+        })
+        if deliverysales.delivery_lines and len(deliverysales.delivery_lines) > 0:
+            values['saleslines'] = [{
+                'product_code': dline.product_id.default_code, 'product_qty': dline.product_qty
+            } for dline in deliverysales.delivery_lines]
+        return request.render('aas_wms.wechat_wms_delivery_sales_detail', values)
+
+
+    @http.route('/aaswechat/wms/deliverysalesdone', type='json', auth="user")
+    def aas_wechat_wms_deliverysalesdone(self, salesid):
+        values = {'success': True, 'message': ''}
+        deliverysales = request.env['aas.stock.sale.delivery'].browse(salesid)
+        try:
+            deliverysales.action_build_delivery()
+            values['delivery_id'] = deliverysales.aas_delivery_id.id
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
         return values

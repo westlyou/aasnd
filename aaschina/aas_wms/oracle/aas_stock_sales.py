@@ -108,23 +108,17 @@ class AASStockSaleDelivery(models.Model):
             'unit_price': dlist.unit_price, 'currency_code': dlist.currency_code, 'creation_date': dlist.creation_date,
             'created_by': dlist.created_by, 'last_update_date': dlist.last_update_date, 'last_update_by': dlist.last_update_by
         }) for dlist in deliverylist]
-        self.env['aas.stock.sale.delivery'].create({
+        deliversales = self.env['aas.stock.sale.delivery'].create({
             'name': ebsdelivery.name, 'shipment_date': ebsdelivery.shipment_date, 'partner_id': ebsdelivery.partner_id,
             'confirmed_by': ebsdelivery.confirmed_by, 'confirm_date': ebsdelivery.confirm_date, 'creation_date': ebsdelivery.creation_date,
             'created_by': ebsdelivery.created_by, 'last_update_date': ebsdelivery.last_update_date, 'last_updated_by': ebsdelivery.last_updated_by,
             'delivery_lines': delivery_lines, 'ebsdelivery': True
         })
+        values['salesid'] = deliversales.id
         return values
 
-
-
-    @api.multi
-    def action_delivery(self):
-        """
-        销售发票生成销售发货单
-        :return:
-        """
-        self.ensure_one()
+    @api.one
+    def action_build_delivery(self):
         location = self.env.ref('stock.stock_location_customers')
         deliveryvals = {
             'delivery_type': 'sales', 'partner_id': self.partner_id.id, 'origin_order': self.name, 'location_id': location.id
@@ -145,6 +139,17 @@ class AASStockSaleDelivery(models.Model):
         delivery = self.env['aas.stock.delivery'].create(deliveryvals)
         delivery.action_confirm()
         self.write({'aas_delivery_id': delivery.id})
+
+
+    @api.multi
+    def action_delivery(self):
+        """
+        销售发票生成销售发货单
+        :return:
+        """
+        self.ensure_one()
+        self.action_build_delivery()
+        stockdelivery = self.aas_delivery_id
         view_form = self.env.ref('aas_wms.view_form_aas_stock_delivery_inside')
         return {
             'name': u'销售发货',
@@ -155,7 +160,7 @@ class AASStockSaleDelivery(models.Model):
             'views': [(view_form.id, 'form')],
             'view_id': view_form.id,
             'target': 'self',
-            'res_id': delivery.id,
+            'res_id': stockdelivery.id,
             'context': self.env.context
         }
 

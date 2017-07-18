@@ -69,4 +69,9 @@ mui.ready(function(){
         mui.openWindow({'url': '/aaswechat/wms/deliverysalesdetail/'+salesid, 'id': 'deliverysalesdetail'});
     });
 
+    //导入发票
+    document.getElementById('action_sales_import').addEventListener('tap', function(){
+        mui.openWindow({'url': '/aaswechat/wms/deliverysalesimport', 'id': 'deliverysalesimport'});
+    });
+
 });
