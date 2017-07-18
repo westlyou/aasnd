@@ -45,6 +45,11 @@
                                 <field name="done_time" readonly="1"/>
                             </group>
                         </group>
+                        <group>
+                            <group>
+                                <field name="picking_confirm" invisible="1"/>
+                            </group>
+                        </group>
                         <notebook>
                             <page string="领料明细">
                                 <field name="delivery_lines" attrs="{'readonly':[('state','!=','draft')]}">
