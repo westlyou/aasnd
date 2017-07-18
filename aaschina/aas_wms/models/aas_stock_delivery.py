@@ -438,6 +438,8 @@ class AASStockDeliveryOperation(models.Model):
         if dline.state != 'picking':
             lineval['state'] = 'picking'
         dline.write(lineval)
+        if self.delivery_id.state != 'picking':
+            self.delivery_id.write({'state': 'picking'})
         # 锁定标签
         self.label_id.write({'locked': True, 'locked_order': self.delivery_id.name})
 
