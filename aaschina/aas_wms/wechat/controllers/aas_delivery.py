@@ -273,7 +273,7 @@ class AASDeliveryWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/deliverypurchase', type='http', auth='user')
-    def aas_wechat_wms_deliverydetail(self):
+    def aas_wechat_wms_deliverypurchase(self):
         values = {'success': True, 'message': ''}
         return request.render('aas_wms.wechat_wms_delivery_purchase', values)
 
@@ -303,7 +303,7 @@ class AASDeliveryWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/deliverypurchasedone', type='json', auth="user")
-    def deliverypurchasedone(self, partnerid, purchaseorder, labelids):
+    def aas_wechat_wms_deliverypurchasedone(self, partnerid, purchaseorder, labelids):
         values = {'success': True, 'message': ''}
         deliveryvals = {
             'partner_id': partnerid, 'state': 'picking', 'delivery_type': 'purchase',
@@ -327,8 +327,35 @@ class AASDeliveryWechatController(http.Controller):
         try:
             delivery = request.env['aas.stock.delivery'].create(deliveryvals)
             delivery.write({'operation_lines': operationlines})
-            delivery.action_deliver_done
+            delivery.action_deliver_done()
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
             return values
+        return values
+
+
+    @http.route('/aaswechat/wms/deliverysaleslist', type='http', auth='user')
+    def aas_wechat_wms_deliverysaleslist(self, limit=20):
+        values = {'success': True, 'message': '', 'salesindex': 0, 'deliverysales': []}
+        salesdomain = [('aas_delivery_id', '=', False)]
+        deliverysales = request.env['aas.stock.sale.delivery'].search(salesdomain, limit=limit)
+        if deliverysales and len(deliverysales):
+            values['deliverysales'] = [{
+                'sales_id': dsales.id, 'sales_name': dsales.name, 'partner_name': '' if not dsales.partner_id else dsales.partner_id.name
+            } for dsales in deliverysales]
+            values['salesindex'] = len(deliverysales)
+        return request.render('aas_wms.wechat_wms_delivery_sales_list', values)
+
+
+    @http.route('/aaswechat/wms/deliverysalesmore', type='json', auth="user")
+    def aas_wechat_wms_deliverylinemore(self, salesindex=0, limit=20):
+        values = {'deliverysales': [], 'salesindex': salesindex, 'salescount': 0}
+        salesdomain = [('aas_delivery_id', '=', False)]
+        deliverysales = request.env['aas.stock.sale.delivery'].search(salesdomain, offset=salesindex, limit=limit)
+        if deliverysales and len(deliverysales):
+            values['deliverysales'] = [{
+                'sales_id': dsales.id, 'sales_name': dsales.name, 'partner_name': '' if not dsales.partner_id else dsales.partner_id.name
+            } for dsales in deliverysales]
+            values['salescount'] = len(deliverysales)
+            values['salesindex'] = salesindex + values['salescount']
         return values
