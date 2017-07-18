@@ -174,12 +174,12 @@
                                         <li t-if="doperation['deliver_done']" class="mui-table-view-cell"
                                             t-att-operationid="doperation['operation_id']">
                                             <div class='mui-table'>
-                                                <div class='mui-table-cell mui-col-xs-8 mui-text-left'> <t t-esc="roperation['product_code']"/> </div>
-                                                <div class='mui-table-cell mui-col-xs-4 mui-text-right'> <t t-esc="roperation['product_qty']"/> </div>
+                                                <div class='mui-table-cell mui-col-xs-8 mui-text-left'> <t t-esc="doperation['product_code']"/> </div>
+                                                <div class='mui-table-cell mui-col-xs-4 mui-text-right'> <t t-esc="doperation['product_qty']"/> </div>
                                             </div>
                                             <div class='mui-table'>
-                                                <div class='mui-table-cell mui-col-xs-8 mui-text-left'> <t t-esc="roperation['label_name']"/> </div>
-                                                <div class='mui-table-cell mui-col-xs-4 mui-text-right'> <t t-esc="roperation['location_name']"/> </div>
+                                                <div class='mui-table-cell mui-col-xs-8 mui-text-left'> <t t-esc="doperation['label_name']"/> </div>
+                                                <div class='mui-table-cell mui-col-xs-4 mui-text-right'> <t t-esc="doperation['location_name']"/> </div>
                                             </div>
                                         </li>
                                     </t>
