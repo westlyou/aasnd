@@ -7,7 +7,7 @@
             <field name="model">aas.stock.receipt</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form create="false" delete="false">
+                <form create="false" delete="false" labelprint="true">
                     <header>
                         <button name="action_confirm" type="object" string="确认退料" class="oe_highlight" attrs="{'invisible':[('state','!=','draft')]}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,receipt,done,cancel"/>
