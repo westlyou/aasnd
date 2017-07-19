@@ -154,6 +154,12 @@ class AASReceiptWechatController(http.Controller):
         if receiptoperation:
             values.update({'success': False, 'message': u'标签已作业，请不要重复操作！'})
             return values
+        if label.qualified and receiptline.push_location.mrblocation:
+            values.update({'success': False, 'message': u'合格品请不要放在MRB库位上！'})
+            return values
+        elif not label.qualified and not receiptline.push_location.mrblocation:
+            values.update({'success': False, 'message': u'不合格品请放在MRB库位上！'})
+            return values
         try:
             tempoperation = request.env['aas.stock.receipt.operation'].create({
                 'rlabel_id': receiptlabel.id, 'location_id': receiptline.push_location.id

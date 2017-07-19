@@ -11,7 +11,7 @@
     """,
     'author': 'Luforn',
     'website': 'http://www.zhiq.info',
-    'depends': ['web', 'base_setup'],
+    'depends': ['web', 'base_setup', 'base_import'],
     'data': [
         'data/aas_base_schedule.xml',
         'data/aas_base_sequence.xml',
