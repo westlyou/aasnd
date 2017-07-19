@@ -252,7 +252,7 @@ class AASQualityOrder(models.Model):
             values.update({'success': False, 'message': u'暂时不需要打印任何标签！'})
             return values
         field_list = [fline.field_name for fline in printer.field_lines]
-        records = self.search_read(domain=[('id', 'in', labelids)], fields=field_list)
+        records = self.env['aas.product.label'].search_read(domain=[('id', 'in', labelids)], fields=field_list)
         if not records or len(records) <= 0:
             values.update({'success': False, 'message': u'未搜索到需要打印的标签！'})
             return values
