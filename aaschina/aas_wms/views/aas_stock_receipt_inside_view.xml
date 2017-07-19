@@ -238,6 +238,7 @@
                                 <field name="receipt_id" invisible="1"/>
                                 <field name="need_push" invisible="1"/>
                                 <field name="push_location" options="{'no_create':true}"/>
+                                <field name="receipt_id" readonly="1"/>
                             </group>
                         </group>
                         <notebook>
@@ -593,6 +594,7 @@
                                 <field name="receipt_id" invisible="1"/>
                                 <field name="need_push" invisible="1"/>
                                 <field name="push_location" options="{'no_create':true}"/>
+                                <field name="receipt_id" readonly="1"/>
                             </group>
                         </group>
                         <notebook>
