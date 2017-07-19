@@ -108,6 +108,7 @@ mui.ready(function(){
         var li = this.parentNode.parentNode;
         mui.confirm('确认删除该条记录？', '清除上架', ['确认', '取消'], function(e) {
             if(e.index!=0){
+                delivery_delete_flag = false;
                 mui.swipeoutClose(li);
                 return ;
             }
@@ -126,9 +127,7 @@ mui.ready(function(){
                         mui.toast(dresult.message);
                         return ;
                     }
-                    document.getElementById('delivery_operations').removeChild(li);
-                    var lineid = 'delivery_picking_'+dresult.line_id;
-                    document.getElementById(lineid).innerHTML = dresult.picking_qty;
+                    window.location.reload(true);
                 },
                 error:function(xhr,type,errorThrown){
                     console.log(type);
