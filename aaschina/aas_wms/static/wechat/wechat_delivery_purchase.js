@@ -143,6 +143,7 @@ mui.ready(function(){
         var purchaseorder = document.getElementById('purchaseorder').getAttribute('porder');
         var params = {'partnerid': partnerid, 'purchaseorder': purchaseorder, 'labelids': labelids};
         var deliverymask = aas_delivery_purchase_loading();
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         mui.ajax('/aaswechat/wms/deliverypurchasedone',{
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: params, id: access_id }),
             dataType:'json', type:'post', timeout:20000,
