@@ -136,7 +136,7 @@ mui.ready(function(){
             return ;
         }
         var labelids = [];
-        mui.each(labellist, function(labelli){
+        mui.each(labellist, function(index, labelli){
             labelids.push(parseInt(labelli.getAttribute('labelid')));
         });
         var partnerid = parseInt(document.getElementById('supplier').getAttribute('partnerid'));
