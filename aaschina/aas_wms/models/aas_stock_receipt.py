@@ -434,6 +434,11 @@ class AASStockReceiptOperation(models.Model):
     @api.one
     def action_after_create(self):
         rlabel, rline, receipt = self.rlabel_id, self.line_id, self.receipt_id
+        label, location = rlabel.label_id, self.location_id
+        if label.qualified and location.mrblocation:
+            raise UserError(u'合格品请不要放置在MRB库位上！')
+        elif not label.qualified and not location.mrblocation:
+            raise UserError(u'不合格品请放置在MRB库位上！')
         receiptvals = {'label_lines': [(1, rlabel.id, {'checked': True})]}
         if receipt.state!='receipt':
             receiptvals['state'] = 'receipt'

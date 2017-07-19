@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_form_aas_stock_receipt_manreturn_mes" model="ir.ui.view">
+            <field name="name">aas.stock.receipt.manreturn.mes.form</field>
+            <field name="model">aas.stock.receipt</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" delete="false">
+                    <header>
+                        <button name="action_confirm" type="object" string="确认退料" class="oe_highlight" attrs="{'invisible':[('state','!=','draft')]}"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,receipt,done,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="id" invisible="1"/>
+                                <field name="name" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="order_user" readonly="1"/>
+                                <field name="order_time" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="receipt_type" readonly="1"/>
+                                <field name="done_time" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <button name="action_receipt_labels" string="标签入库" type="object" icon="fa-list" class="oe_highlight"
+                                        attrs="{'invisible':[('state','!=','draft')]}"/>
+                            </group>
+                            <group>
+                                <button name="action_label_list" string="无标签入库" type="object" icon="fa-list" class="oe_highlight"
+                                        attrs="{'invisible':[('state','!=','draft')]}" />
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="收货明细">
+                                <field name="receipt_lines" readonly="1">
+                                    <tree>
+                                        <field name="product_id"/>
+                                        <field name="product_uom"/>
+                                        <field name="product_qty"/>
+                                        <field name="receipt_qty"/>
+                                        <field name="doing_qty"/>
+                                        <field name="label_related"/>
+                                    </tree>
+                                    <form>
+                                        <grou>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_uom"/>
+                                                <field name="label_related"/>
+                                            </group>
+                                            <group>
+                                                <field name="product_qty"/>
+                                                <field name="receipt_qty"/>
+                                                <field name="doing_qty"/>
+                                            </group>
+                                        </grou>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="收货标签">
+                                <field name="label_lines" readonly="1">
+                                    <tree>
+                                        <field name="label_id"/>
+                                        <field name="product_id"/>
+                                        <field name="product_uom"/>
+                                        <field name="product_lot"/>
+                                        <field name="product_qty"/>
+                                        <field name="origin_order"/>
+                                        <field name="checked"/>
+                                    </tree>
+                                    <from>
+                                        <group>
+                                            <group> <field name="label_id"/> </group>
+                                        </group>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_uom"/>
+                                                <field name="product_lot"/>
+                                            </group>
+                                            <group>
+                                                <field name="product_qty"/>
+                                                <field name="origin_order"/>
+                                                <field name="checked"/>
+                                            </group>
+                                        </group>
+                                    </from>
+                                </field>
+                            </page>
+                            <page string="备注信息">
+                                <field name="remark"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+        <!-- 生产退料 -->
+        <record id="action_aas_stock_receipt_manreturn_mes" model="ir.actions.act_window">
+            <field name="name">生产退料</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.stock.receipt</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="aas_wms.view_tree_aas_stock_receipt_outside"/>
+            <field name="search_view_id" ref="aas_wms.view_search_aas_stock_receipt"/>
+            <field name="domain">[('receipt_type','=','manreturn')]</field>
+            <field name="context">{'default_receipt_type': 'manreturn'}</field>
+        </record>
+
+        <record id="act_view_tree_aas_stock_receipt_manreturn_mes" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="aas_wms.view_tree_aas_stock_receipt_outside"/>
+            <field name="act_window_id" ref="action_aas_stock_receipt_manreturn_mes"/>
+        </record>
+
+        <record id="act_view_form_aas_stock_receipt_manreturn_mes" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_stock_receipt_manreturn_mes"/>
+            <field name="act_window_id" ref="action_aas_stock_receipt_manreturn_mes"/>
+        </record>
+
+        <menuitem id="menu_aas_stock_receipt_manreturn_mes"  name="生产退料" action="action_aas_stock_receipt_manreturn_mes"
+                          parent="menu_aas_mes_material" sequence="2" groups="aas_mes.group_aas_manufacture_user"/>
+
+
+
+        <record id="view_form_aas_stock_receipt_production_mes" model="ir.ui.view">
+            <field name="name">aas.stock.receipt.production.mes.form</field>
+            <field name="model">aas.stock.receipt</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" delete="false">
+                    <header>
+                        <button name="action_confirm" type="object" string="确认入库" class="oe_highlight" attrs="{'invisible':[('state','!=','draft')]}"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,receipt,done,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="id" invisible="1"/>
+                                <field name="name" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="order_user" readonly="1"/>
+                                <field name="order_time" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="receipt_type" readonly="1"/>
+                                <field name="done_time" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <button name="action_receipt_labels" string="标签入库" type="object" icon="fa-list" class="oe_highlight"
+                                        attrs="{'invisible':[('state','!=','draft')]}"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="收货明细">
+                                <field name="receipt_lines" readonly="1">
+                                    <tree>
+                                        <field name="product_id"/>
+                                        <field name="product_uom"/>
+                                        <field name="product_qty"/>
+                                        <field name="receipt_qty"/>
+                                        <field name="doing_qty"/>
+                                        <field name="label_related"/>
+                                    </tree>
+                                    <form>
+                                        <grou>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_uom"/>
+                                                <field name="label_related"/>
+                                            </group>
+                                            <group>
+                                                <field name="product_qty"/>
+                                                <field name="receipt_qty"/>
+                                                <field name="doing_qty"/>
+                                            </group>
+                                        </grou>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="收货标签">
+                                <field name="label_lines" readonly="1">
+                                    <tree>
+                                        <field name="label_id"/>
+                                        <field name="product_id"/>
+                                        <field name="product_uom"/>
+                                        <field name="product_lot"/>
+                                        <field name="product_qty"/>
+                                        <field name="origin_order"/>
+                                        <field name="checked"/>
+                                    </tree>
+                                    <from>
+                                        <group>
+                                            <group> <field name="label_id"/> </group>
+                                        </group>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_uom"/>
+                                                <field name="product_lot"/>
+                                            </group>
+                                            <group>
+                                                <field name="product_qty"/>
+                                                <field name="origin_order"/>
+                                                <field name="checked"/>
+                                            </group>
+                                        </group>
+                                    </from>
+                                </field>
+                            </page>
+                            <page string="备注信息">
+                                <field name="remark"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+        <!-- 生产退料 -->
+        <record id="action_aas_stock_receipt_production_mes" model="ir.actions.act_window">
+            <field name="name">成品入库</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.stock.receipt</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="aas_wms.view_tree_aas_stock_receipt_outside"/>
+            <field name="search_view_id" ref="aas_wms.view_search_aas_stock_receipt"/>
+            <field name="domain">[('receipt_type','=','manufacture')]</field>
+            <field name="context">{'default_receipt_type': 'manufacture'}</field>
+        </record>
+
+        <record id="act_view_tree_aas_stock_receipt_production_mes" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="aas_wms.view_tree_aas_stock_receipt_outside"/>
+            <field name="act_window_id" ref="action_aas_stock_receipt_production_mes"/>
+        </record>
+
+        <record id="act_view_form_aas_stock_receipt_production_mes" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_stock_receipt_production_mes"/>
+            <field name="act_window_id" ref="action_aas_stock_receipt_production_mes"/>
+        </record>
+
+        <menuitem id="menu_aas_stock_receipt_production_mes"  name="成品入库" action="action_aas_stock_receipt_production_mes"
+                          parent="menu_aas_mes_production" sequence="1" groups="aas_mes.group_aas_production_packer"/>
+
+
+    </data>
+</odoo>

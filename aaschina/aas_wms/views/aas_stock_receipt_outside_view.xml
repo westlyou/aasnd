@@ -25,7 +25,6 @@
             <field name="arch" type="xml">
                 <form create="false" delete="false">
                     <header>
-                        <button name="action_confirm" type="object" string="确认入库" class="oe_highlight" attrs="{'invisible':[('state','!=','draft')]}"/>
                         <button name="action_cancel" type="object" string="取消入库" class="oe_highlight"
                                 attrs="{'invisible':[('state','in',['draft','done','cancel'])]}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,receipt,done,cancel"/>
@@ -46,16 +45,6 @@
                             <group>
                                 <field name="receipt_type" readonly="1"/>
                                 <field name="done_time" readonly="1"/>
-                            </group>
-                        </group>
-                        <group>
-                            <group>
-                                <button name="action_receipt_labels" string="标签入库" type="object" icon="fa-list" class="oe_highlight"
-                                        attrs="{'invisible':[('state','!=','draft')]}"/>
-                            </group>
-                            <group>
-                                <button name="action_label_list" string="无标签入库" type="object" icon="fa-list" class="oe_highlight"
-                                        attrs="{'invisible':[('state','!=','draft')]}" />
                             </group>
                         </group>
                         <notebook>
@@ -313,8 +302,7 @@
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="view_tree_aas_stock_receipt_outside"/>
             <field name="search_view_id" ref="view_search_aas_stock_receipt"/>
-            <!-- , ('state','not in',['draft','cancel']) -->
-            <field name="domain">[('receipt_type','=','manufacture')]</field>
+            <field name="domain">[('receipt_type','=','manufacture'), ('state','not in',['draft'])]</field>
             <field name="context">{'default_receipt_type': 'manufacture'}</field>
         </record>
 
@@ -345,7 +333,7 @@
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="view_tree_aas_stock_receipt_line_outside"/>
             <field name="search_view_id" ref="view_search_aas_stock_receipt_line"/>
-            <field name="domain">[('receipt_type', '=', 'manufacture'), ('state','not in',['draft','cancle'])]</field>
+            <field name="domain">[('receipt_type', '=', 'manufacture'), ('state','not in',['draft'])]</field>
             <field name="context">{'default_receipt_type': 'manufacture'}</field>
         </record>
 

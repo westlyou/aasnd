@@ -154,9 +154,13 @@ class AASReceiptWechatController(http.Controller):
         if receiptoperation:
             values.update({'success': False, 'message': u'标签已作业，请不要重复操作！'})
             return values
-        tempoperation = request.env['aas.stock.receipt.operation'].create({
-            'rlabel_id': receiptlabel.id, 'location_id': receiptline.push_location.id
-        })
+        try:
+            tempoperation = request.env['aas.stock.receipt.operation'].create({
+                'rlabel_id': receiptlabel.id, 'location_id': receiptline.push_location.id
+            })
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
         values.update({
             'label_id': label.id, 'label_name': label.name, 'product_code': label.product_code,
             'product_lot': label.product_lot.name, 'product_qty': label.product_qty,

@@ -7,5 +7,8 @@
         <menuitem id="menu_aas_mes_material"  name="原材料" parent="menu_aas_mes" sequence="1"
                   groups="group_aas_material_picker"/>
 
+        <menuitem id="menu_aas_mes_production"  name="产成品" parent="menu_aas_mes" sequence="2"
+                  groups="group_aas_production_packer"/>
+
     </data>
 </odoo>
