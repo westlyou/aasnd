@@ -21,7 +21,7 @@ mui.init({
 mui.ready(function(){
 
     //加载动画
-    function aas_delivery_detail_loading(){
+    function aas_delivery_purchase_loading(){
         var deliverymask = mui.createMask();
         var loadimg = document.createElement('img'), maskEl = deliverymask[0];
         maskEl.removeEventListener('tap', arguments.callee);
@@ -73,6 +73,7 @@ mui.ready(function(){
                         var porder = purchaseorderdiv.getAttribute('porder');
                         if(porder=='' || porder==null){
                             purchaseorderdiv.setAttribute('porder', dresult.origin_order);
+                            purchaseorderdiv.innerHTML = dresult.origin_order;
                         }else if(porder!=dresult.origin_order){
                             mui.toast('请仔细检查当前标签是否和其他标签是同一采购订单！');
                             return ;
@@ -81,6 +82,7 @@ mui.ready(function(){
                         var partnerid = parseInt(supplierdiv.getAttribute('partnerid'));
                         if(partnerid==0){
                             supplierdiv.setAttribute('partnerid', dresult.partner_id);
+                            supplierdiv.innerHTML = dresult.partner_name;
                         }
                         var purchase_operations = document.getElementById('purchase_operations');
                         var operationli = document.createElement('li');
@@ -140,7 +142,7 @@ mui.ready(function(){
         var partnerid = parseInt(document.getElementById('supplier').getAttribute('partnerid'));
         var purchaseorder = document.getElementById('purchaseorder').getAttribute('porder');
         var params = {'partnerid': partnerid, 'purchaseorder': purchaseorder, 'labelids': labelids};
-        var deliverymask = aas_delivery_detail_loading();
+        var deliverymask = aas_delivery_purchase_loading();
         mui.ajax('/aaswechat/wms/deliverypurchasedone',{
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: params, id: access_id }),
             dataType:'json', type:'post', timeout:20000,

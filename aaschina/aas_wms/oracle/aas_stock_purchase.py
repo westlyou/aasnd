@@ -472,3 +472,30 @@ class AASStockReceiptLine(models.Model):
                 purchaseorder, purchaselines = pval['order'], pval['lines']
                 purchaseorder.write({'order_lines': purchaselines})
         return result
+
+
+class AASStockDelivery(models.Model):
+    _inherit = 'aas.stock.delivery'
+
+    @api.one
+    def action_deliver_done(self):
+        super(AASStockDelivery, self).action_deliver_done()
+        if self.delivery_type != 'purchase' or not self.origin_order or not self.partner_id:
+            return
+        purchaseorderdomain = [('name', '=', self.origin_order), ('partner_id', '=', self.partner_id.id)]
+        purchaseorder = self.env['aas.stock.purchase.order'].search(purchaseorderdomain, limit=1)
+        if not purchaseorder:
+            return
+        deliveryproductdict, purchaselines = {}, []
+        for dline in self.delivery_lines:
+            pkey = 'P'+str(dline.product_id.id)
+            if pkey in deliveryproductdict:
+                deliveryproductdict[pkey] += dline.product_qty
+            else:
+                deliveryproductdict[pkey] = dline.product_qty
+        for pline in purchaseorder.order_lines:
+            pkey = 'P'+str(pline.product_id.id)
+            if pkey in deliveryproductdict:
+                purchaselines.append((1, pline.id, {'rejected_qty': pline.rejected_qty+deliveryproductdict[pkey]}))
+        if purchaselines and len(purchaselines) > 0:
+            purchaseorder.write({'order_lines': purchaselines})

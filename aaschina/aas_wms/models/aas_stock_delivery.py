@@ -142,8 +142,6 @@ class AASStockDelivery(models.Model):
 
 
 
-
-
     @api.multi
     def unlink(self):
         for record in self:
