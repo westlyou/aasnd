@@ -320,7 +320,7 @@ class AASDeliveryWechatController(http.Controller):
             else:
                 dlinesdict[pkey] = {
                     'product_id': tlabel.product_id.id, 'product_uom': tlabel.product_uom.id, 'product_qty': tlabel.product_qty,
-                    'state': 'picking', 'delivery_type': 'purchase'
+                    'state': 'picking', 'delivery_type': 'purchase', 'picking_confirm': True
                 }
             operationlines.append((0, 0, {'label_id': tlabel.id}))
         deliveryvals['delivery_lines'] = [(0, 0, dval) for dkey, dval in dlinesdict.items()]
