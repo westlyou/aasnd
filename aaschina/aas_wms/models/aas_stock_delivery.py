@@ -340,10 +340,12 @@ class AASStockDeliveryLine(models.Model):
         deliveryvals = {'delivery_lines': [(1, self.id, linevals)], 'operation_lines': oplines}
         deliveryvals['move_lines'] = [(0, 0, mval) for mkey, mval in movedict.items()]
         delivery.write(deliveryvals)
+        labelvals = {'location_id': delivery.location_id.id, 'locked': False, 'locked_order': False}
         if delivery.delivery_type == 'manufacture':
-            labels.write({'location_id': delivery.location_id.id, 'locked': False, 'locked_order': False})
+            labels.write(labelvals)
         else:
-            labels.write({'location_id': delivery.location_id.id, 'state': 'over', 'locked': False, 'locked_order': False})
+            labelvals.update({'state': 'over'})
+            labels.write(labelvals)
 
 
 
