@@ -10,8 +10,8 @@ access_aas_stock_receipt_label_stock_user,aas.stock.receipt.label stock_user,mod
 access_aas_stock_receipt_label_stock_manager,aas.stock.receipt.label stock_manager,model_aas_stock_receipt_label,stock.group_stock_manager,1,1,1,1
 access_aas_stock_receipt_operation_stock_user,aas.stock.receipt.operation stock_user,model_aas_stock_receipt_operation,stock.group_stock_user,1,1,1,1
 access_aas_stock_receipt_operation_stock_manager,aas.stock.receipt.operation stock_manager,model_aas_stock_receipt_operation,stock.group_stock_manager,1,1,1,1
-access_aas_stock_receipt_stock_move_user,aas.stock.receipt.move stock_user,model_aas_stock_receipt_move,stock.group_stock_user,1,1,1,1
-access_aas_stock_receipt_stock_move_manager,aas.stock.receipt.move stock_manager,model_aas_stock_receipt_move,stock.group_stock_manager,1,1,1,1
+access_aas_stock_receipt_stock_move_stock_user,aas.stock.receipt.move stock_user,model_aas_stock_receipt_move,stock.group_stock_user,1,1,1,1
+access_aas_stock_receipt_stock_move_stock_manager,aas.stock.receipt.move stock_manager,model_aas_stock_receipt_move,stock.group_stock_manager,1,1,1,1
 access_aas_stock_receipt_move_report_stock_user,aas.stock.receipt.move.report stock_user,model_aas_stock_receipt_move_report,stock.group_stock_user,1,1,1,1
 access_aas_stock_receipt_move_report_stock_manager,aas.stock.receipt.move.report stock_manager,model_aas_stock_receipt_move_report,stock.group_stock_manager,1,1,1,1
 access_aas_stock_delivery_stock_user,aas.stock.delivery stock_user,model_aas_stock_delivery,stock.group_stock_user,1,1,1,1
