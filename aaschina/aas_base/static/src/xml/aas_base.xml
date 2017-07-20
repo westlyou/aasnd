@@ -62,12 +62,14 @@
         <button type="button" class="btn btn-sm btn-default o_delete_exported_list">删除</button>
     </t>
 
-    <t t-extend="ListView.buttons">
-        <t t-jquery="button.o_list_button_import" t-operation="replace">
-            <button t-if="widget.options.import_enabled and widget.is_action_enabled('import')" type="button" class="btn btn-sm btn-default o_list_button_import">
+    <t t-extend="ImportView.import_button">
+        <t t-jquery="button.o_button_import" t-operation="replace">
+            <button t-if="widget.is_action_enabled('import')" type="button" class="btn btn-sm btn-default o_button_import">
                 导入
             </button>
         </t>
+    </t>
+    <t t-extend="ListView.buttons">
         <t t-jquery="button.o_list_button_add" t-operation="after">
             <button t-if="widget.is_action_enabled('orderimport')" type="button" class="btn btn-sm btn-default o_list_button_orderimport">
                 订单导入
