@@ -4,7 +4,7 @@ from odoo import api, fields, models, _
 from odoo.addons import decimal_precision as dp
 from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.tools.float_utils import float_compare
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.tools.sql import drop_view_if_exists
 
 import logging
@@ -13,8 +13,6 @@ _logger = logging.getLogger(__name__)
 
 class Warehouse(models.Model):
     _inherit = 'stock.warehouse'
-
-    wh_wip_stock_loc_id = fields.Many2one(comodel_name='stock.location', string='WIP Location')
 
 
     @api.model
@@ -29,13 +27,10 @@ class Warehouse(models.Model):
         locations |= self.wh_input_stock_loc_id
         locations |= self.wh_output_stock_loc_id
         locations.write({'active': True})
-        wipvals = {'name': 'WIP', 'active': True, 'usage': 'wip', 'location_id': self.view_location_id.id, 'company_id': self.company_id.id}
-        wipacation = self.env['stock.location'].create(wipvals)
-        self.write({'wh_wip_stock_loc_id': wipacation.id})
 
     @api.model
     def action_upgrade_aas_stock_warehouse(self):
-        warehouses = self.env['stock.warehouse'].search([('wh_wip_stock_loc_id', '=', False)])
+        warehouses = self.env['stock.warehouse'].search([])
         if not warehouses or len(warehouses) <= 0:
             return
         for warehouse in warehouses:
@@ -68,8 +63,21 @@ class AASProductProduct(models.Model):
 class Location(models.Model):
     _inherit = 'stock.location'
 
-    usage = fields.Selection(selection_add=[('sundry', u'杂项'), ('wip', u'线边库')])
+    usage = fields.Selection(selection_add=[('sundry', u'杂项')])
     mrblocation = fields.Boolean(string=u'MRB库位', default=False, copy=False)
+    edgelocation = fields.Boolean(string=u'生产线边库', default=False, copy=False)
+
+    @api.one
+    @api.constrains('mrblocation', 'edgelocation', 'location_id')
+    def action_check_mrb_edge(self):
+        if not self.location_id:
+            return True
+        if self.location_id.edgelocation and not self.edgelocation:
+            raise ValidationError(u'父级库位是生产线边库，子库位也必须是生产线边库！')
+        if self.location_id.mrblocation and not self.mrblocation:
+            raise ValidationError(u'父级库位是MRB库位，子库位也必须是MRB库位！')
+
+
 
     @api.model
     def create(self, vals):

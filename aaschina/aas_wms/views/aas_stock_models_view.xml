@@ -105,6 +105,7 @@
             <field name="arch" type="xml">
                 <field name="return_location" position="after">
                     <field name="mrblocation"/>
+                    <field name="edgelocation"/>
                 </field>
             </field>
         </record>

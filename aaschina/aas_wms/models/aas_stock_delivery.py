@@ -254,6 +254,9 @@ class AASStockDeliveryLine(models.Model):
             return
         stock_location = deliveryline.delivery_id.warehouse_id.view_location_id.id
         labeldomain = [('product_id', '=', deliveryline.product_id.id), ('state', '=', 'normal'), ('qualified', '=', True), ('stocked', '=', True)]
+        nonestocklocations = self.env['stock.location'].search(['|', ('mrblocation', '=', True), ('edgelocation', '=', True)])
+        if nonestocklocations and len(nonestocklocations) > 0:
+            labeldomain.append(('location_id', 'not in', nonestocklocations.ids))
         labeldomain.extend([('parent_id', '=', False), ('locked', '=', False), ('company_id', '=', deliveryline.company_id.id), ('location_id', 'child_of', stock_location)])
         labelorder, label_qty, pickingdict, tempkey = 'onshelf_date,product_lot', 0.0, {}, False
         # 优先处理的标签，可能是生产退料的物料需要优先处理掉
