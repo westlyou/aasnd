@@ -12,3 +12,4 @@ import aas_stock
 import aas_receipt
 import aas_purchase
 import aas_delivery
+import aas_quant

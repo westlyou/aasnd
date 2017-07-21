@@ -76,6 +76,12 @@
                                     <div class="mui-media-body" style="font-size:12px;">标签清单</div>
                                 </a>
                             </li>
+                            <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
+                                <a href="/aaswechat/wms/stocklist">
+                                    <span class="mui-icon iconfont icon-kucun"></span>
+                                    <div class="mui-media-body" style="font-size:12px;">库存查询</div>
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </body>

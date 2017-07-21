@@ -1,10 +1,10 @@
 
 @font-face {font-family: "iconfont";
-  src: url('iconfont.eot?t=1499758175615'); /* IE9*/
-  src: url('iconfont.eot?t=1499758175615#iefix') format('embedded-opentype'), /* IE6-IE8 */
-  url('iconfont.woff?t=1499758175615') format('woff'), /* chrome, firefox */
-  url('iconfont.ttf?t=1499758175615') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
-  url('iconfont.svg?t=1499758175615#iconfont') format('svg'); /* iOS 4.1- */
+  src: url('iconfont.eot?t=1500619409194'); /* IE9*/
+  src: url('iconfont.eot?t=1500619409194#iefix') format('embedded-opentype'), /* IE6-IE8 */
+  url('iconfont.woff?t=1500619409194') format('woff'), /* chrome, firefox */
+  url('iconfont.ttf?t=1500619409194') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
+  url('iconfont.svg?t=1500619409194#iconfont') format('svg'); /* iOS 4.1- */
 }
 
 .iconfont {
@@ -27,6 +27,8 @@
 .icon-baobiao:before { content: "\e647"; }
 
 .icon-gongdan:before { content: "\e645"; }
+
+.icon-kucun:before { content: "\e607"; }
 
 .icon-push:before { content: "\e6c4"; }
 
