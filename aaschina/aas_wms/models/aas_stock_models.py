@@ -157,3 +157,17 @@ class AASStockQuantReport(models.Model):
         drop_view_if_exists(self._cr, self._table)
         self._cr.execute("""CREATE or REPLACE VIEW %s as ( %s FROM %s %s )""" % (self._table, self._select(), self._from(), self._group_by()))
 
+
+
+class StockSettings(models.TransientModel):
+    _inherit = 'stock.config.settings'
+
+
+    @api.model
+    def action_init_aaswms(self):
+        self = self.with_context(active_test=False)
+        classified = self._get_classified_fields()
+        check_group_fields = ['group_stock_multiple_locations', 'group_stock_production_lot', 'group_uom']
+        for name, groups, implied_group in classified['group']:
+            if name in check_group_fields:
+                groups.write({'implied_ids': [(4, implied_group.id)]})
