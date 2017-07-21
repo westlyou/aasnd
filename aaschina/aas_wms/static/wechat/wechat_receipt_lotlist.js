@@ -78,7 +78,7 @@ mui.ready(function(){
     });
 
     //删除批次
-    mui('#receipt_product_lotnumber').on('tap', 'button.aas-lot-del', function(event){
+    mui('#receipt_lotlist').on('tap', 'button.aas-lot-del', function(event){
         var lotul = this.parentNode.parentNode.parentNode.parentNode;
         var lotqtyipt= lotul.children[1].children[0].children[1].children[0];
         if (lotqtyipt.value==undefined || lotqtyipt.value==null || lotqtyipt.value==''){
