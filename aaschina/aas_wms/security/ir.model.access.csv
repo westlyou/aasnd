@@ -1,4 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_stock_production_lot_all_user,stock.production.lot all_user,stock.model_stock_production_lot,base.group_user,1,1,1,0
 access_aas_product_label_user,aas.product.label user,model_aas_product_label,base.group_user,1,1,1,1
 access_aas_product_label_journal_user,aas.product.label.journal user,model_aas_product_label_journal,base.group_user,1,1,1,1
 access_aas_receive_deliver_user,aas.receive.deliver user,model_aas_receive_deliver,base.group_user,1,1,1,0
