@@ -24,23 +24,22 @@ wms_crypto, wms_client = None, None
 
 class AASStockWechatController(http.Controller):
 
-    token, encoding_aesey, corpid, role_secret = None, None, None, None
+    def __init__(self):
+        appdomain = [('app_code', '=', 'aas_wms')]
+        aas_application = request.env['aas.wechat.enapplication'].sudo().search(appdomain, limit=1)
+        self.token = aas_application.app_token
+        self.encoding_aesey = aas_application.encoding_aes_key
+        self.corpid = aas_application.corp_id
+        self.role_secret = aas_application.role_secret
+
+        global wms_crypto
+        wms_crypto = WeChatCrypto(self.token, self.encoding_aesey, self.corpid)
+        global wms_client
+        wms_client = WeChatClient(self.corpid, self.role_secret)
+
 
     @http.route('/aaswechat/wms', type='http', auth="user", methods=['GET', 'POST'])
     def aas_wechat_wms_index(self, **kwargs):
-
-        if not wms_client or not wms_crypto:
-            appdomain = [('app_code', '=', 'aas_wms'), ('company_id', '=', request.env.user.company_id.id)]
-            aas_application = request.env['aas.wechat.enapplication'].sudo().search(appdomain, limit=1)
-            self.token = aas_application.app_token
-            self.encoding_aesey = aas_application.encoding_aes_key
-            self.corpid = aas_application.corp_id
-            self.role_secret = aas_application.role_secret
-            global wms_crypto
-            wms_crypto = WeChatCrypto(self.token, self.encoding_aesey, self.corpid)
-            global wms_client
-            wms_client = WeChatClient(self.corpid, self.role_secret)
-
         values = request.params.copy()
         values['user'] = request.env.user.name
         return request.render('aas_wms.wechat_wms_index', values)

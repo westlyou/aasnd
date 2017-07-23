@@ -245,7 +245,7 @@ class AASQualityOrder(models.Model):
             qoperations = self.env['aas.quality.operation'].search(operationdoamin)
             if qoperations and len(qoperations) > 0:
                 labelids.extend([qoperation.qlabel_id.label_id.id for qoperation in qoperations])
-            qrejections = self.env['aas.quality.rejection'].search([('current_label', '=', True), ('order_id', '=', quality.id)])
+            qrejections = self.env['aas.quality.rejection'].search([('order_id', '=', quality.id)])
             if qrejections and len(qrejections) > 0:
                 labelids.extend([qrejection.label_id.id for qrejection in qrejections])
         if not labelids or len(labelids) <= 0:

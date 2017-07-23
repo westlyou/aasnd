@@ -17,7 +17,7 @@ from odoo.exceptions import AccessDenied,UserError,ValidationError
 logger = logging.getLogger(__name__)
 
 DELIVERYTYPEDICT = {'purchase': u'采购退货', 'manufacture': u'生产领料', 'sales': u'销售发货', 'sundry': u'杂项出库'}
-DELIVERYSTATEDICT = {'draft': u'草稿', 'confirm': u'确认', 'picking': u'拣货', 'done': u'完成', 'cancel': u'取消'}
+DELIVERYSTATEDICT = {'draft': u'草稿', 'confirm': u'确认', 'picking': u'拣货', 'pickconfirm': u'待确认发货', 'done': u'完成', 'cancel': u'取消'}
 
 def get_current_time(record, timestr):
     if not timestr:
@@ -31,7 +31,7 @@ class AASDeliveryWechatController(http.Controller):
     def aas_wechat_wms_deliverylinelist(self, limit=20):
         values = {'success': True, 'message': '', 'deliverylines': [], 'lineindex': '0'}
         linesdomain = [('delivery_type', '!=', 'purhase'), ('company_id', '=', request.env.user.company_id.id)]
-        linesdomain.append(('state', 'in', ['confirm', 'picking']))
+        linesdomain.append(('state', 'in', ['confirm', 'picking', 'pickconfirm']))
         deliverylines = request.env['aas.stock.delivery.line'].search(linesdomain, limit=limit)
         if deliverylines and len(deliverylines):
             values['deliverylines'] = [{
@@ -46,7 +46,7 @@ class AASDeliveryWechatController(http.Controller):
     def aas_wechat_wms_deliverylinemore(self, lineindex=0, product_code=None, limit=20):
         values = {'deliverylines': [], 'lineindex': lineindex, 'linecount': 0}
         linesdomain = [('delivery_type', '!=', 'purhase'), ('company_id', '=', request.env.user.company_id.id)]
-        linesdomain.append(('state', 'in', ['confirm', 'picking']))
+        linesdomain.append(('state', 'in', ['confirm', 'picking', 'pickconfirm']))
         if product_code:
             linesdomain.append(('product_id', 'ilike', product_code))
         deliverylines = request.env['aas.stock.delivery.line'].search(linesdomain, offset=lineindex, limit=limit)
@@ -65,7 +65,7 @@ class AASDeliveryWechatController(http.Controller):
     def aas_wechat_wms_deliverylinesearch(self, product_code, limit=20):
         values = {'deliverylines': [], 'lineindex': '0'}
         linesdomain = [('delivery_type', '!=', 'purhase'), ('company_id', '=', request.env.user.company_id.id)]
-        linesdomain.extend([('state', 'in', ['confirm', 'picking']), ('product_id', 'ilike', product_code)])
+        linesdomain.extend([('state', 'in', ['confirm', 'picking', 'pickconfirm']), ('product_id', 'ilike', product_code)])
         deliverylines = request.env['aas.stock.delivery.line'].search(linesdomain, limit=limit)
         if deliverylines and len(deliverylines):
             values['deliverylines'] = [{
@@ -207,7 +207,7 @@ class AASDeliveryWechatController(http.Controller):
     def aas_wechat_wms_deliverylist(self, limit=20):
         values = {'success': True, 'message': '', 'deliverylines': [], 'deliveryindex': '0'}
         deliverydomain = [('delivery_type', '!=', 'purhase'), ('company_id', '=', request.env.user.company_id.id)]
-        deliverydomain.append(('state', 'in', ['confirm', 'picking']))
+        deliverydomain.append(('state', 'in', ['confirm', 'picking', 'pickconfirm']))
         deliverylist = request.env['aas.stock.delivery'].search(deliverydomain, limit=limit)
         if deliverylist and len(deliverylist):
             values['deliverylist'] = [{
@@ -222,7 +222,7 @@ class AASDeliveryWechatController(http.Controller):
     def aas_wechat_wms_deliverymore(self, deliveryindex=0, limit=20):
         values = {'deliverylines': [], 'deliveryindex': deliveryindex, 'deliverycount': 0}
         deliverydomain = [('delivery_type', '!=', 'purhase'), ('company_id', '=', request.env.user.company_id.id)]
-        deliverydomain.append(('state', 'in', ['confirm', 'picking']))
+        deliverydomain.append(('state', 'in', ['confirm', 'picking', 'pickconfirm']))
         deliverylist = request.env['aas.stock.delivery'].search(deliverydomain, limit=limit)
         if deliverylist and len(deliverylist):
             values['deliverylist'] = [{

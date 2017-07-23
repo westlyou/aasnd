@@ -40,7 +40,7 @@
                             </group>
                             <group>
                                 <field name="location_id" options="{'no_create':true}" domain="[('edgelocation','=',True)]"
-                                       string="收货库位" attrs="{'readonly':[('state','!=','draft')]}"/>
+                                       string="收货库位" attrs="{'readonly':[('state','!=','draft')]}" required="1"/>
                                 <field name="order_time" readonly="1"/>
                                 <field name="done_time" readonly="1"/>
                             </group>

@@ -19,7 +19,7 @@ _logger = logging.getLogger(__name__)
 
 
 DELIVERY_TYPE = [('manufacture', u'生产领料'), ('purchase', u'采购退货'), ('sales', u'销售发货'), ('sundry', u'杂项出库')]
-DELIVERY_STATE = [('draft', u'草稿'), ('confirm', u'确认'), ('picking', u'拣货'), ('done', u'完成'), ('cancel', u'取消')]
+DELIVERY_STATE = [('draft', u'草稿'), ('confirm', u'确认'), ('picking', u'拣货'), ('pickconfirm', u'待确认发货'), ('done', u'完成'), ('cancel', u'取消')]
 
 
 
@@ -91,7 +91,10 @@ class AASStockDelivery(models.Model):
         operation_lines = self.env['aas.stock.delivery.operation'].search([('delivery_id', '=', self.id), ('deliver_done', '=', False)])
         if not operation_lines or len(operation_lines) <= 0:
             raise UserError(u'您还没有添加拣货作业，不可以确认拣货')
-        self.write({'picking_confirm': True, 'delivery_lines': [(1, dline.id, {'picking_confirm': True}) for dline in self.delivery_lines]})
+        self.write({
+            'picking_confirm': True, 'state': 'pickconfirm',
+            'delivery_lines': [(1, dline.id, {'picking_confirm': True, 'state': 'pickconfirm'}) for dline in self.delivery_lines]
+        })
 
 
     @api.multi
@@ -138,6 +141,8 @@ class AASStockDelivery(models.Model):
         deliveryvals = {'picking_confirm': False}
         if all([dline.state == 'done' for dline in self.delivery_lines]):
             deliveryvals.update({'state': 'done', 'done_time': fields.Datetime.now()})
+        else:
+            deliveryvals.update({'state': 'picking'})
         self.write(deliveryvals)
 
 
@@ -337,7 +342,7 @@ class AASStockDeliveryLine(models.Model):
                     'partner_id': delivery.partner_id and delivery.partner_id.id, 'delivery_user': self.env.user.id
                 }
         delivery_qty = self.delivery_qty + self.picking_qty
-        linevals = {'picking_confirm': False, 'delivery_qty': delivery_qty, 'picking_qty': 0.0}
+        linevals = {'picking_confirm': False, 'delivery_qty': delivery_qty, 'picking_qty': 0.0, 'state': 'picking'}
         if float_compare(self.product_qty, delivery_qty, precision_rounding=0.000001) <= 0.0:
             linevals['state'] = 'done'
         deliveryvals = {'delivery_lines': [(1, self.id, linevals)], 'operation_lines': oplines}
