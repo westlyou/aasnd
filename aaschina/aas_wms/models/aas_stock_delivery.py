@@ -154,6 +154,21 @@ class AASStockDelivery(models.Model):
                 raise UserError(u'发货单%s已经开始处理，不可以删除！'% record.name)
         return super(AASStockDelivery, self).unlink()
 
+    @api.one
+    def action_over(self):
+        """
+        结束发货单
+        :return:
+        """
+        operationlines = self.env['aas.stock.delivery.operation'].search([('delivery_id', '=', self.id), ('deliver_done', '=', False)])
+        if operationlines and len(operationlines) > 0:
+            raise UserError(u'还有部分已拣货并且未执行发货处理！')
+        deliveryvals = {'state': 'done'}
+        deliverylines = self.env['aas.stock.delivery.line'].search([('delivery_id', '=', self.id), ('state', '!=', 'done')])
+        if deliverylines and len(deliverylines) > 0:
+            deliveryvals['delivery_lines'] = [(1, dline.id, {'state': 'done'}) for dline in deliverylines]
+        self.write(deliveryvals)
+
 
 
 

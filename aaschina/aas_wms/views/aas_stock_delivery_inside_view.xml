@@ -32,6 +32,8 @@
                                 attrs="{'invisible':['|',('state','not in',['confirm','picking']),('picking_confirm','=',True)]}"/>
                         <button name="action_deliver_done" string="确认发货" type="object" class="oe_highlight"
                                 attrs="{'invisible':[('picking_confirm','=',False)]}"/>
+                        <button name="action_over" string="结束发货" type="object" class="oe_highlight"
+                                attrs="{'invisible':[('state','in',['draft','done','cancel'])]}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,picking,pickconfirm,done,cancel"/>
                     </header>
                     <sheet>
