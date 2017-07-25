@@ -265,7 +265,9 @@ class AASDeliveryWechatController(http.Controller):
             values['linelist'] = deliverylines
         if pickable:
             values.update({'labelscan': 'block', 'pickconfirm': 'block', 'picklist': 'block'})
-        if delivery.picking_confirm:
+        if delivery.delivery_type == 'manufacture':
+            values['pickconfirm']
+        if delivery.picking_confirm and delivery.delivery_type != 'manufacture':
             values['pickdone'] = 'block'
         if delivery.picking_list and len(delivery.picking_list) > 0:
             values['pickinglist'] = [{
