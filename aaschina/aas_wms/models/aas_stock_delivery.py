@@ -420,8 +420,10 @@ class AASStockDeliveryOperation(models.Model):
     ]
 
     @api.one
-    @api.constrains('label_id')
-    def action_check_label(self):
+    @api.constrains('delivery_id', 'label_id')
+    def action_check_operation(self):
+        if self.delivery_id and self.delivery_id.picking_confirm:
+            raise ValidationError(u'发货单正在等待确认发货，请等待发货完成再继续拣货！')
         if self.env.context.get('nocheck'):
             return True
         if self.delivery_id.delivery_type == 'purchase':
