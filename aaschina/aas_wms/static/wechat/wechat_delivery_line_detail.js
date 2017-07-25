@@ -211,5 +211,12 @@ mui.ready(function(){
     });
 
 
+    //跳转到发货单详情页面
+    document.getElementById('action_moveto_delivery').addEventListener('tap', function(){
+        var deliveryid = document.getElementById('delivery_line_detail_pullrefresh').getAttribute('deliveryid');
+        mui.openWindow({'url': '/aaswechat/wms/deliverydetail/'+deliveryid, 'id': 'deliverydetail'});
+    });
+
+
 
 });

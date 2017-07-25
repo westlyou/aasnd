@@ -81,6 +81,7 @@ class AASDeliveryWechatController(http.Controller):
         values = {'success': True, 'message': '', 'pickinglist': [], 'operationlist': []}
         deliveryline = request.env['aas.stock.delivery.line'].browse(deliverylineid)
         values.update({
+            'deliveryid': deliveryline.delivery_id.id,
             'deliverylineid': deliveryline.id, 'delivery_name': deliveryline.delivery_id.name,
             'product_code': deliveryline.product_id.default_code, 'product_uom': deliveryline.product_uom.name,
             'delivery_type': DELIVERYTYPEDICT[deliveryline.delivery_type], 'state_name': DELIVERYSTATEDICT[deliveryline.state],
