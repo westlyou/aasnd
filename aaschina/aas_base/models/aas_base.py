@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
-import odoo
 from odoo import api, fields, models
 import logging
 import pytz
@@ -20,15 +18,19 @@ class IRSequence(models.Model):
 
     @api.one
     def alert_sequence(self, number_increment=None, number_next=None):
+        numbervals = {}
         if not number_increment:
-            number_increment = 1
+            number_increment = self.number_increment
         else:
-            self.sudo().write({'number_increment': number_increment})
+            numbervals['number_increment'] = number_increment
         if not number_next:
-            number_next = 1
+            number_next = self.number_next
         else:
-            self.sudo().write({'number_next': number_next})
+            numbervals['number_next'] = number_next
+        if numbervals and len(numbervals) > 0:
+            self.sudo().write(numbervals)
         _alter_sequence(self.env.cr, "ir_sequence_%03d" % self.id, number_increment=number_increment, number_next=number_next)
+
 
     def convert2timezonetime(self, origintime, tzname='Asia/Shanghai'):
         temptime = pytz.timezone('UTC').localize(origintime, is_dst=False)
