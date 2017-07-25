@@ -12,7 +12,7 @@ import werkzeug
 
 from odoo import http, fields
 from odoo.http import request
-from odoo.exceptions import AccessDenied,UserError,ValidationError
+from odoo.exceptions import AccessDenied, UserError, ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +144,14 @@ class AASDeliveryWechatController(http.Controller):
         operationvals = {'label_id': label.id, 'delivery_id': delivery_id}
         if line_id:
             operationvals['delivery_line'] = line_id
-        toperation = request.env['aas.stock.delivery.operation'].with_context({'no_check': True}).create(operationvals)
+        try:
+            toperation = request.env['aas.stock.delivery.operation'].with_context({'no_check': True}).create(operationvals)
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
+        except ValidationError, ve:
+            values.update({'success': False, 'message': ve.name})
+            return values
         values.update({
             'operation_id': toperation.id, 'delivery_line': toperation.delivery_line.id,
             'picking_qty': toperation.delivery_line.picking_qty, 'label_name': label.name, 'product_code': label.product_code,
