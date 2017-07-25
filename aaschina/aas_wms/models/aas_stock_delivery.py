@@ -91,10 +91,14 @@ class AASStockDelivery(models.Model):
         operation_lines = self.env['aas.stock.delivery.operation'].search([('delivery_id', '=', self.id), ('deliver_done', '=', False)])
         if not operation_lines or len(operation_lines) <= 0:
             raise UserError(u'您还没有添加拣货作业，不可以确认拣货')
-        self.write({
-            'picking_confirm': True, 'state': 'pickconfirm',
-            'delivery_lines': [(1, dline.id, {'picking_confirm': True, 'state': 'pickconfirm'}) for dline in self.delivery_lines]
-        })
+        deliverylines = []
+        for dline in self.delivery_lines:
+            if dline.state != 'pickconfirm' and float_compare(dline.picking_qty, 0.0, precision_rounding=0.000001) > 0:
+                deliverylines.append((1, dline.id, {'picking_confirm': True, 'state': 'pickconfirm'}))
+        deliveryvals = {'picking_confirm': True, 'state': 'pickconfirm'}
+        if deliverylines and len(deliverylines) > 0:
+            deliveryvals['delivery_lines'] = deliverylines
+        self.write(deliveryvals)
 
 
     @api.multi
@@ -322,10 +326,10 @@ class AASStockDeliveryLine(models.Model):
         operation_lines = self.env['aas.stock.delivery.operation'].search([('delivery_line', '=', self.id), ('deliver_done', '=', False)])
         if not operation_lines or len(operation_lines) <= 0:
             raise UserError(u'您还没有添加%s拣货作业，不可以确认拣货'% self.product_id.default_code)
-        self.write({'picking_confirm': True})
+        self.write({'picking_confirm': True, 'state': 'pickconfirm'})
         delivery = self.delivery_id
         if all([dline.picking_confirm for dline in delivery.delivery_lines]):
-            delivery.write({'picking_confirm': True})
+            delivery.write({'picking_confirm': True, 'state': 'pickconfirm'})
 
 
     @api.one
