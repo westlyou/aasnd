@@ -14,7 +14,7 @@ from odoo import http
 from odoo.http import request
 from odoo.exceptions import AccessDenied,UserError,ValidationError
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 class AASInventoryWechatController(http.Controller):
 
@@ -64,9 +64,10 @@ class AASInventoryWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/inventorylabelscan', type='json', auth="user")
-    def aas_wechat_wms_inventorylabelscan(self, inventory_id, barcode):
+    def aas_wechat_wms_inventorylabelscan(self, inventoryid, barcode):
         values = {'success': True, 'message': ''}
-        inventory = request.env['aas.stock.inventory'].browse(inventory_id)
+        _logger.info('inventoryid: '+str(inventoryid))
+        inventory = request.env['aas.stock.inventory'].browse(inventoryid)
         if not inventory:
             values.update({'success': False, 'message': u'请仔细检查盘点单可能被删除了！'})
             return values
@@ -74,7 +75,7 @@ class AASInventoryWechatController(http.Controller):
         if not label:
             values.update({'success': False, 'message': u'无效标签， 请仔细检查标签可能状态异常或已删除！'})
             return values
-        inventorylabel = request.env['aas.stock.inventory.label'].search([('inventory_id', '=', inventory_id), ('label_id', '=', label.id)], limit=1)
+        inventorylabel = request.env['aas.stock.inventory.label'].search([('inventory_id', '=', inventoryid), ('label_id', '=', label.id)], limit=1)
         if inventorylabel:
             values.update({'success': False, 'message': u'标签已存在，请不要重复扫描！'})
             return values

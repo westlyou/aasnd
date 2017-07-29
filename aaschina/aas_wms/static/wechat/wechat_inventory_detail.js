@@ -59,8 +59,8 @@ mui.ready(function(){
             scanType: ["qrCode"],
             success: function (result) {
                 var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
-                var params = {'barcode': result.resultStr};
-                params['inventory_id'] = parseInt(document.getElementById('inventory_detail_pullrefresh').getAttribute('inventoryid'));
+                var inventoryid = parseInt(document.getElementById('inventory_detail_pullrefresh').getAttribute('inventoryid'));
+                var params = {'barcode': result.resultStr, 'inventoryid': inventoryid};
                 mui.ajax('/aaswechat/wms/inventorylabelscan',{
                     data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: params, id: access_id }),
                     dataType:'json', type:'post', timeout:20000,
