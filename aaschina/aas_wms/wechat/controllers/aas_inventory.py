@@ -79,7 +79,7 @@ class AASInventoryWechatController(http.Controller):
             values.update({'success': False, 'message': u'标签已存在，请不要重复扫描！'})
             return values
         try:
-            templabel = request.env['aas.stock.inventory.label'].create({'label_id': label.id})
+            templabel = request.env['aas.stock.inventory.label'].create({'label_id': label.id, 'inventory_id': inventoryid})
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
             return values
