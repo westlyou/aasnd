@@ -66,6 +66,7 @@ class AASInventoryWechatController(http.Controller):
     @http.route('/aaswechat/wms/inventorylabelscan', type='json', auth="user")
     def aas_wechat_wms_inventorylabelscan(self, inventoryid, barcode):
         values = {'success': True, 'message': ''}
+        _logger.info('barcode: '+barcode)
         _logger.info('inventoryid: '+str(inventoryid))
         inventory = request.env['aas.stock.inventory'].browse(inventoryid)
         if not inventory:
