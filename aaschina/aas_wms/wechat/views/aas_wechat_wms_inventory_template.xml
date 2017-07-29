@@ -61,7 +61,7 @@
                         <a class="mui-icon mui-icon-bars mui-pull-right" style="color: #0870d9;" href="#inventory_detail_buttons"></a>
                         <h1 class="mui-title"> 盘点详情 </h1>
                     </header>
-                    <div id="inventory_detail_pullrefresh" class="mui-content mui-scroll-wrapper" t-att-inventoryid="inventoryid">
+                    <div id="inventory_detail_pullrefresh" class="mui-content mui-scroll-wrapper" t-att-inventoryid="inventory_id">
                         <div class="mui-scroll">
                             <ul class="mui-table-view">
                                 <li class="mui-table-view-cell">
