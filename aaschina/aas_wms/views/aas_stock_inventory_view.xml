@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_stock_inventory" model="ir.ui.view">
+            <field name="name">aas.stock.inventory.tree</field>
+            <field name="model">aas.stock.inventory</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name" />
+                    <field name="product_id"/>
+                    <field name="location_id"/>
+                    <field name="product_lot"/>
+                    <field name="create_user"/>
+                    <field name="create_time"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_stock_inventory" model="ir.ui.view">
+            <field name="name">aas.stock.inventory.form</field>
+            <field name="model">aas.stock.inventory</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_confirm" states="draft" type="object" string="确认盘点" class="oe_highlight"/>
+                        <button name="action_addlabels" states="confirm" type="object" string="新增标签" class="oe_highlight"/>
+                        <button name="action_done" states="confirm" type="object" string="完成盘点" class="oe_highlight"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" attrs="{'readonly':[('state', '!=', 'draft')]}" required="1"/>
+                                <field name="create_user" readonly="1"/>
+                                <field name="create_time" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="location_id" options="{'no_create':true}" required="1" attrs="{'readonly':[('state', '!=', 'draft')]}"/>
+                                <field name="product_id" options="{'no_create':true}" attrs="{'readonly':[('state', '!=', 'draft')]}"/>
+                                <field name="product_lot" options="{'no_create':true}" domain="[('product_id','=',product_id)]" attrs="{'readonly':[('state', '!=', 'draft')]}"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="id" invisible="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="盘点明细">
+                                <field name="inventory_lines" readonly="1">
+                                    <tree editable="bottom">
+                                        <field name="location_id"/>
+                                        <field name="product_id"/>
+                                        <field name="product_lot"/>
+                                        <field name="stock_qty"/>
+                                        <field name="actual_qty"/>
+                                        <field name="differ_qty"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="盘点标签">
+                                <field name="inventory_labels" attrs="{'readonly':[('state', '!=', 'confirm')]}">
+                                    <tree editable="bottom" edit="false">
+                                        <field name="label_id" options="{'no_create':true}" required="1"/>
+                                        <field name="product_id" readonly="1"/>
+                                        <field name="product_lot" readonly="1"/>
+                                        <field name="product_qty" readonly="1"/>
+                                        <field name="location_id" readonly="1"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="标签调整">
+                                <field name="inventory_adjust" attrs="{'readonly':[('state', '!=', 'confirm')]}">
+                                    <tree editable="bottom" edit="false">
+                                        <field name="inventory_label" options="{'no_create':true}"
+                                               domian="[('inventory_id','=',parent.id)]" required="1"/>
+                                        <field name="product_id" readonly="1"/>
+                                        <field name="location_id" readonly="1"/>
+                                        <field name="product_lot" readonly="1"/>
+                                        <field name="adjust_before_qty" readonly="1"/>
+                                        <field name="adjust_after_qty" required="1"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="盘盈盘亏">
+                                <field name="inventory_moves" readonly="1">
+                                    <tree>
+                                        <field name="product_id"/>
+                                        <field name="product_lot"/>
+                                        <field name="product_qty"/>
+                                        <field name="location_src_id"/>
+                                        <field name="location_dest_id"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_stock_inventory" model="ir.ui.view">
+            <field name="name">aas.stock.inventory.search</field>
+            <field name="model">aas.stock.inventory</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="product_lot" string="批次" filter_domain="[('product_lot','ilike',self)]"/>
+                    <field name="location_id" string="库位" filter_domain="[('location_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="批次" context="{'group_by':'product_lot'}"/>
+                        <filter string="库位" context="{'group_by':'location_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_stock_inventory" model="ir.actions.act_window">
+            <field name="name">库存盘点</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.stock.inventory</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_stock_inventory"/>
+            <field name="search_view_id" ref="view_search_aas_stock_inventory"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加盘点</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_stock_inventory" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_stock_inventory"/>
+            <field name="act_window_id" ref="action_aas_stock_inventory"/>
+        </record>
+
+        <record id="act_view_form_aas_stock_inventory" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_stock_inventory"/>
+            <field name="act_window_id" ref="action_aas_stock_inventory"/>
+        </record>
+
+        <menuitem id="menu_aas_stock_inventory_list"  name="库存盘点" action="action_aas_stock_inventory"
+                          parent="stock.menu_aas_stock_inventory" sequence="10"/>
+
+    </data>
+</odoo>

@@ -28,7 +28,16 @@ access_aas_stock_delivery_stock_move_manager,aas.stock.delivery.move stock_manag
 access_aas_stock_delivery_move_report_stock_user,aas.stock.delivery.move.report stock_user,model_aas_stock_delivery_move_report,stock.group_stock_user,1,1,1,1
 access_aas_stock_delivery_move_report_stock_manager,aas.stock.delivery.move.report stock_manager,model_aas_stock_delivery_move_report,stock.group_stock_manager,1,1,1,1
 access_aas_stock_quant_report_user,aas.stock.quant.report user,model_aas_stock_quant_report,base.group_user,1,0,0,0
-
+access_aas_stock_inventory_stock_user,aas.stock.inventory stock_user,model_aas_stock_inventory,stock.group_stock_user,1,1,1,1
+access_aas_stock_inventory_stock_manager,aas.stock.inventory stock_manager,model_aas_stock_inventory,stock.group_stock_manager,1,1,1,1
+access_aas_stock_inventory_line_stock_user,aas.stock.inventory.line stock_user,model_aas_stock_inventory_line,stock.group_stock_user,1,1,1,1
+access_aas_stock_inventory_line_stock_manager,aas.stock.inventory.line stock_manager,model_aas_stock_inventory_line,stock.group_stock_manager,1,1,1,1
+access_aas_stock_inventory_label_stock_user,aas.stock.inventory.label stock_user,model_aas_stock_inventory_label,stock.group_stock_user,1,1,1,1
+access_aas_stock_inventory_label_stock_manager,aas.stock.inventory.label stock_manager,model_aas_stock_inventory_label,stock.group_stock_manager,1,1,1,1
+access_aas_stock_inventory_adjust_stock_user,aas.stock.inventory.adjust stock_user,model_aas_stock_inventory_adjust,stock.group_stock_user,1,1,1,1
+access_aas_stock_inventory_adjust_stock_manager,aas.stock.inventory.adjust stock_manager,model_aas_stock_inventory_adjust,stock.group_stock_manager,1,1,1,1
+access_aas_stock_inventory_move_stock_user,aas.stock.inventory.move stock_user,model_aas_stock_inventory_move,stock.group_stock_user,1,1,1,1
+access_aas_stock_inventory_move_stock_manager,aas.stock.inventory.move stock_manager,model_aas_stock_inventory_move,stock.group_stock_manager,1,1,1,1
 
 
 access_aas_ebs_purchase_order_stock_user,aas.ebs.purchase.order stock_user,model_aas_ebs_purchase_order,stock.group_stock_user,1,0,0,0

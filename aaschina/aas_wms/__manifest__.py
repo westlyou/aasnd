@@ -28,6 +28,8 @@
         'views/aas_stock_delivery_outside_view.xml',
         'views/aas_stock_delivery_inside_view.xml',
         'wizard/aas_stock_delivery_wizard_view.xml',
+        'views/aas_stock_inventory_view.xml',
+        'wizard/aas_stock_inventory_wizard_view.xml',
 
         'oracle/aas_stock_purchase_view.xml',
         'oracle/aas_stock_sales_view.xml',
@@ -37,7 +39,8 @@
         'wechat/views/aas_wechat_wms_purchase_template.xml',
         'wechat/views/aas_wechat_wms_label_template.xml',
         'wechat/views/aas_wechat_wms_delivery_template.xml',
-        'wechat/views/aas_wechat_wms_quant_template.xml'
+        'wechat/views/aas_wechat_wms_quant_template.xml',
+        'wechat/views/aas_wechat_wms_inventory_template.xml'
     ],
     'qweb':[],
     'installable': True,

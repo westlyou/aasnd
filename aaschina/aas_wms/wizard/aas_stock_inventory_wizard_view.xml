@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_form_aas_stock_inventory_addlabel_lots_wizard" model="ir.ui.view">
+            <field name="name">aas.stock.inventory.addlabel.wizard</field>
+            <field name="model">aas.stock.inventory.addlabel.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group><field name="inventory_location" invisible="1"/></group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="inventory_id" readonly="1"/>
+                            <field name="product_lot" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="product_id" required="1" options="{'no_create':true}"/>
+                            <field name="location_id" required="1" options="{'no_create':true}"
+                                    domain="[('id','child_of',inventory_location)]"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="批次明细">
+                            <field name="lot_lines" context="{'default_product_lot':product_lot}">
+                                <tree editable="bottom">
+                                    <field name="product_lot" required="1"/>
+                                    <field name="product_qty" required="1"/>
+                                    <field name="label_qty" required="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <footer>
+                        <button name="action_lots_split" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_form_aas_stock_inventory_addlabel_labels_wizard" model="ir.ui.view">
+            <field name="name">aas.stock.inventory.addlabel.wizard</field>
+            <field name="model">aas.stock.inventory.addlabel.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="inventory_id" readonly="1"/>
+                            <field name="product_lot" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="product_id" readonly="1"/>
+                            <field name="location_id" readonly="1"/>
+                            <field name="inventory_location" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="标签明细">
+                            <field name="label_lines" readonly="1">
+                                <tree editable="bottom">
+                                    <field name="product_lot"/>
+                                    <field name="label_qty"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</odoo>

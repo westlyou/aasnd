@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <template id="wechat_wms_inventory_list" name="Wechat WMS Inventory List">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/iconfont/iconfont.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+                        <h1 class="mui-title"> 盘点列表 </h1>
+                    </header>
+                    <div id="inventory_list_pullrefresh" class="mui-content mui-scroll-wrapper" t-att-inventoryindex="inventoryindex">
+                        <div class="mui-scroll">
+                            <ul id="inventory_list" class="mui-table-view">
+                                <t t-if="inventorylist">
+                                   <t t-foreach="inventorylist" t-as="tinventory">
+                                       <li class="aas-inventory mui-table-view-cell" t-att-inventoryid="tinventory['inventory_id']">
+                                           <a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>
+                                               <div class='mui-table'>
+                                                   <div class='mui-table-cell mui-col-xs-12 mui-text-left'> <t t-esc="tinventory['inventory_name']"/> </div>
+                                               </div>
+                                           </a>
+                                       </li>
+                                   </t>
+                                </t>
+                            </ul>
+                        </div>
+                    </div>
+                </body>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_inventory_list.js"></script>
+            </html>
+        </template>
+
+        <template id="wechat_wms_inventory_detail" name="Wechat WMS Inventory Detail">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+                        <a class="mui-icon mui-icon-bars mui-pull-right" style="color: #0870d9;" href="#inventory_detail_buttons"></a>
+                        <h1 class="mui-title"> 盘点详情 </h1>
+                    </header>
+                    <div id="inventory_detail_pullrefresh" class="mui-content mui-scroll-wrapper" t-att-inventoryid="inventoryid">
+                        <div class="mui-scroll">
+                            <ul class="mui-table-view">
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">盘点名称</span>
+                                    <span class="mui-pull-right"> <t t-esc="inventory_name"/> </span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">产品编码</span>
+                                    <span class="mui-pull-right"> <t t-esc="product_code"/> </span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">产品批次</span>
+                                    <span class="mui-pull-right"> <t t-esc="product_lot"/> </span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">盘点库位</span>
+                                    <span class="mui-pull-right"> <t t-esc="location_name"/> </span>
+                                </li>
+                            </ul>
+                            <div class="aas-mui-table-view-title"> 盘点标签 </div>
+                            <ul id="inventory_labels" class="mui-table-view">
+                                <li class="mui-table-view-cell">
+                                    <div class='mui-table'>
+                                        <div class='mui-table-cell mui-col-xs-8 mui-text-left'>标签名称</div>
+                                        <div class='mui-table-cell mui-col-xs-4 mui-text-right'>产品批次</div>
+                                    </div>
+                                    <div class='mui-table'>
+                                        <div class='mui-table-cell mui-col-xs-8 mui-text-left'>产品编码</div>
+                                        <div class='mui-table-cell mui-col-xs-4 mui-text-right'>产品数量</div>
+                                    </div>
+                                </li>
+                                <t t-if="labellist">
+                                    <t t-foreach="labellist" t-as="ilabel">
+                                        <li t-if="istate != 'confirm'" class="mui-table-view-cell" t-att-ilabelid="ilabel['ilabel_id']">
+                                            <div class='mui-table'>
+                                                <div class='mui-table-cell mui-col-xs-8 mui-text-left'> <t t-esc="ilabel['label_name']"/> </div>
+                                                <div class='mui-table-cell mui-col-xs-4 mui-text-right'> <t t-esc="ilabel['product_lot']"/> </div>
+                                            </div>
+                                            <div class='mui-table'>
+                                                <div class='mui-table-cell mui-col-xs-8 mui-text-left'> <t t-esc="ilabel['product_code']"/> </div>
+                                                <div class='mui-table-cell mui-col-xs-4 mui-text-right'> <t t-esc="ilabel['product_qty']"/> </div>
+                                            </div>
+                                        </li>
+                                        <li t-if="istate == 'confirm'" class="mui-table-view-cell" t-att-ilabelid="ilabel['ilabel_id']">
+                                            <div class="mui-slider-right mui-disabled"><a class="mui-btn mui-btn-red">删除</a></div>
+                                            <div class="mui-slider-handle">
+                                                <div class='mui-table'>
+                                                    <div class='mui-table-cell mui-col-xs-8 mui-text-left'> <t t-esc="ilabel['label_name']"/> </div>
+                                                    <div class='mui-table-cell mui-col-xs-4 mui-text-right'> <t t-esc="ilabel['product_lot']"/> </div>
+                                                </div>
+                                                <div class='mui-table'>
+                                                    <div class='mui-table-cell mui-col-xs-8 mui-text-left'> <t t-esc="ilabel['product_code']"/> </div>
+                                                    <div class='mui-table-cell mui-col-xs-4 mui-text-right'> <t t-esc="ilabel['product_qty']"/> </div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </t>
+                                </t>
+                            </ul>
+                        </div>
+                    </div>
+                    <div id="inventory_detail_buttons" class="mui-popover mui-popover-action mui-popover-bottom">
+                        <ul class="mui-table-view">
+                            <li class="mui-table-view-cell" t-attf-style="display:{{labelscan}}"> <a id="action_scan_label" href="javascript:;">扫描标签</a></li>
+                        </ul>
+                        <ul class="mui-table-view">
+                            <li class="mui-table-view-cell"> <a href="#inventory_detail_buttons"><b>取消</b></a> </li>
+                        </ul>
+                    </div>
+                </body>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+                <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_inventory_detail.js"></script>
+            </html>
+        </template>
+
+    </data>
+</odoo>

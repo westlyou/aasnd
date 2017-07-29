@@ -343,7 +343,7 @@ class AASReceiptWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/receiptcommitcheck', type='json', auth="user")
-    def aas_wechat_wms_receipt_commit_check(self, receiptid=None):
+    def aas_wechat_wms_receipt_commit_check(self, receiptid):
         values = {'success': True, 'message': ''}
         receipt = request.env['aas.stock.receipt'].browse(receiptid)
         try:
