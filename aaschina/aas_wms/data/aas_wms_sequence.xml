@@ -42,7 +42,7 @@
             <field name="company_id" eval="False"/>
         </record>
     </data>
-    <data>
+    <data noupdate="1">
         <record id="seq_aas_stock_inventory" model="ir.sequence">
             <field name="name">库存盘点</field>
             <field name="code">aas.stock.inventory</field>

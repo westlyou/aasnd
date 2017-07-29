@@ -58,7 +58,7 @@ class AASInventoryWechatController(http.Controller):
             values['labellist'] = [{
                 'ilabel_id': ilabel.id, 'product_qty': ilabel.product_qty,
                 'label_name': ilabel.label_id.name, 'prodcut_code': ilabel.product_id.default_code,
-                'product_lot': ilabel.prodcut_lot.name, 'location_name': ilabel.location_id.name
+                'product_lot': ilabel.product_lot.name, 'location_name': ilabel.location_id.name
             } for ilabel in inventory.inventory_labels]
         return request.render('aas_wms.wechat_wms_inventory_detail', values)
 
@@ -79,7 +79,7 @@ class AASInventoryWechatController(http.Controller):
             values.update({'success': False, 'message': u'标签已存在，请不要重复扫描！'})
             return values
         try:
-            templabel = request.env['aas.stock.inventory.label'].create({'label_id': label.id, 'inventory_id': inventoryid})
+            inventorylabel = request.env['aas.stock.inventory.label'].create({'label_id': label.id, 'inventory_id': inventoryid})
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
             return values
@@ -87,9 +87,8 @@ class AASInventoryWechatController(http.Controller):
             values.update({'success': False, 'message': ve.name})
             return values
         values.update({
-            'label_id': label.id, 'label_name': label.name, 'product_code': label.product_code,
-            'product_lot': label.product_lot.name, 'product_qty': label.product_qty,
-            'ilabel_id': templabel.id
+            'ilabel_id': inventorylabel.id, 'label_name': label.name, 'product_code': label.product_code,
+            'product_lot': label.product_lot.name, 'product_qty': label.product_qty
         })
         return values
 
