@@ -197,7 +197,7 @@
                             <li class="mui-table-view-cell" t-attf-style="display:{{picklist}}"> <a id="action_picking_list" href="javascript:;">拣货清单</a></li>
                             <li class="mui-table-view-cell" t-attf-style="display:{{labelscan}}"> <a id="action_scan_label" href="javascript:;">扫描标签</a></li>
                             <li class="mui-table-view-cell" t-attf-style="display:{{pickconfirm}}"> <a id="action_pick_confirm" href="javascript:;">确认拣货</a></li>
-                            <li class="mui-table-view-cell"> <a id="action_moveto_delivery" href="javascript:;">进入发货单</a></li>
+                            <li class="mui-table-view-cell" style="display:none;"> <a id="action_moveto_delivery" href="javascript:;">进入发货单</a></li>
                         </ul>
                         <ul class="mui-table-view">
                             <li class="mui-table-view-cell"> <a href="#delivery_line_buttons"><b>取消</b></a> </li>

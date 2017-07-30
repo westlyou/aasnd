@@ -62,7 +62,7 @@ class AASLabelWechatController(http.Controller):
             values['labelindex'] = values['labelcount'] + labelindex
         return values
 
-    @http.route('/aaswechat/wms/labelmore', type='json', auth="user")
+    @http.route('/aaswechat/wms/labelsearch', type='json', auth="user")
     def aas_wechat_labelsearch(self, searchkey=None, limit=20):
         values = {'labels': [], 'labelindex': 0}
         labeldomain = []

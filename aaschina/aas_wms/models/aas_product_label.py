@@ -55,6 +55,7 @@ class AASProductLabel(models.Model):
 
     product_name = fields.Char(string=u'产品名称')
     product_code = fields.Char(string=u'产品编码')
+    product_lotname = fields.Char(string=u'批次名称')
     journal_lines = fields.One2many(comodel_name='aas.product.label.journal', inverse_name='label_id', string=u'查存卡', copy=False)
 
     @api.depends('child_lines')
@@ -66,9 +67,11 @@ class AASProductLabel(models.Model):
     def action_before_create(self, vals):
         sequence = self.env['ir.sequence'].next_by_code('aas.product.label')
         vals.update({'name': sequence, 'barcode': sequence})
-        product_id = self.env['product.product'].browse(vals.get('product_id'))
+        product_lot = self.env['stock.production.lot'].browse(vals.get('product_lot'))
+        product_id = product_lot.product_id
         vals.update({
-            'product_uom': product_id.uom_id.id, 'product_name': product_id.name, 'product_code': product_id.default_code
+            'product_uom': product_id.uom_id.id, 'product_name': product_id.name,
+            'product_code': product_id.default_code, 'product_lotname': product_lot.name
         })
 
     @api.model

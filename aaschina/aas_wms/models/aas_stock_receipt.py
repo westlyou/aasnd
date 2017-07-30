@@ -238,6 +238,8 @@ class AASStockReceiptLine(models.Model):
     operation_list = fields.One2many(comodel_name='aas.stock.receipt.operation', inverse_name='line_id', string=u'收货作业')
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
+    product_code = fields.Char(string=u'产品编码')
+
     _sql_constraints = [
         ('uniq_receipt_line', 'unique (receipt_id, product_id, origin_order)', u'请不要在同一单据上对相同产品重复收货！')
     ]
@@ -261,9 +263,10 @@ class AASStockReceiptLine(models.Model):
             receipt_id = self.env['aas.stock.receipt'].browse(vals.get('receipt_id'))
             vals['receipt_type'] = receipt_id.receipt_type
         product_id = self.env['product.product'].browse(vals.get('product_id'))
-        vals['product_uom'] = product_id.uom_id.id
-        if product_id.push_location:
-            vals['push_location'] = product_id.push_location.id
+        vals.update({
+            'product_uom': product_id.uom_id.id, 'product_code': product_id.default_code,
+            'push_location': False if not product_id.push_location else product_id.push_location.id
+        })
 
     @api.model
     def create(self, vals):

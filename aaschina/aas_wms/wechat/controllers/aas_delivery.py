@@ -48,7 +48,7 @@ class AASDeliveryWechatController(http.Controller):
         linesdomain = [('delivery_type', '!=', 'purhase'), ('company_id', '=', request.env.user.company_id.id)]
         linesdomain.append(('state', 'in', ['confirm', 'picking', 'pickconfirm']))
         if product_code:
-            linesdomain.append(('product_id', 'ilike', product_code))
+            linesdomain.append(('product_id', 'ilike', '%'+product_code+'%'))
         deliverylines = request.env['aas.stock.delivery.line'].search(linesdomain, offset=lineindex, limit=limit)
         if deliverylines and len(deliverylines):
             values['deliverylines'] = [{
@@ -65,7 +65,7 @@ class AASDeliveryWechatController(http.Controller):
     def aas_wechat_wms_deliverylinesearch(self, product_code, limit=20):
         values = {'deliverylines': [], 'lineindex': '0'}
         linesdomain = [('delivery_type', '!=', 'purhase'), ('company_id', '=', request.env.user.company_id.id)]
-        linesdomain.extend([('state', 'in', ['confirm', 'picking', 'pickconfirm']), ('product_id', 'ilike', product_code)])
+        linesdomain.extend([('state', 'in', ['confirm', 'picking', 'pickconfirm']), ('product_code', 'ilike', '%'+product_code+'%')])
         deliverylines = request.env['aas.stock.delivery.line'].search(linesdomain, limit=limit)
         if deliverylines and len(deliverylines):
             values['deliverylines'] = [{

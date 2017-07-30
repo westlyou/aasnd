@@ -88,6 +88,7 @@ mui.ready(function(){
                             '</div>';
                         delivery_operations.appendChild(operationli);
                         document.getElementById('delivery_picking_qty').innerHTML = dresult.picking_qty;
+                        document.getElementById('delivery_label_count').innerHTML = dresult.label_count;
                     },
                     error:function(xhr,type,errorThrown){
                         console.log(type);

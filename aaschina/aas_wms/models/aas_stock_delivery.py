@@ -201,16 +201,16 @@ class AASStockDeliveryLine(models.Model):
     picking_list = fields.One2many(comodel_name='aas.stock.picking.list', inverse_name='delivery_line', string=u'拣货清单')
     operation_lines = fields.One2many(comodel_name='aas.stock.delivery.operation', inverse_name='delivery_line', string=u'拣货作业')
 
+    product_code = fields.Char(string=u'产品编码')
+
     _sql_constraints = [
         ('uniq_prodcut', 'unique (delivery_id, product_id)', u'请不要重复添加同一个产品！')
     ]
 
-    @api.depends('picking_confirm', 'product_qty', 'delivery_qty', 'picking_qty')
+    @api.depends('state', 'product_qty', 'delivery_qty', 'picking_qty')
     def _compute_pickable(self):
         for record in self:
-            if record.picking_confirm:
-                record.pickable = False
-            elif float_compare(record.product_qty, record.delivery_qty+record.picking_qty, precision_rounding=0.000001) <= 0.0:
+            if record.state not in ['confirm', 'picking']:
                 record.pickable = False
             else:
                 record.pickable = True
@@ -220,6 +220,10 @@ class AASStockDeliveryLine(models.Model):
         if not vals.get('delivery_type') and vals.get('delivery_id'):
             delivery = self.env['aas.stock.delivery'].browse(vals.get('delivery_id'))
             vals.update({'delivery_type': delivery.delivery_type})
+        if vals.get('product_id'):
+            tempproduct = self.env['product.product'].browse(vals.get('product_id'))
+            vals.update({'product_uom': tempproduct.uom_id.id, 'product_code': tempproduct.default_code})
+
 
     @api.model
     def create(self, vals):

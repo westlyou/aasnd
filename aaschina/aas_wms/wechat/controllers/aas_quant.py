@@ -38,19 +38,9 @@ class AASStockQuantWechatController(http.Controller):
         values = {'success': True, 'message': '', 'stocklist': [], 'stockindex': stockindex, 'stockcount': 0}
         stockdomain = [('company_id', '=', request.env.user.company_id.id)]
         if skey:
-            searchdomain = []
-            products = request.env['product.product'].search([('name', 'ilike', '%'+skey+'%')])
-            if products and len(products) > 0:
-                searchdomain.append(('product_id', 'in', products.ids))
-            locations = request.env['stock.location'].search([('name', 'ilike', '%'+skey+'%')])
-            if locations and len(locations) > 0:
-                searchdomain.append(('location_id', 'in', locations.ids))
-            searchdomainlen = len(searchdomain)
-            if searchdomainlen > 1:
-                searchdomain.insert(0, '|')
-            if searchdomainlen > 0:
-                stockdomain.insert(0, '&')
-                stockdomain.extend(searchdomain)
+            searchdomain = ['|', ('product_code', 'ilike', '%'+skey+'%'), ('location_name', 'ilike', '%'+skey+'%')]
+            stockdomain.insert(0, '&')
+            stockdomain.extend(searchdomain)
         stocklist = request.env['aas.stock.quant.report'].search(stockdomain, offset=stockindex, limit=limit)
         if stocklist and len(stocklist) > 0:
             values['stocklist'] = [{
@@ -67,19 +57,9 @@ class AASStockQuantWechatController(http.Controller):
         values = {'success': True, 'message': '', 'stocklist': [], 'stockindex': 0}
         stockdomain = [('company_id', '=', request.env.user.company_id.id)]
         if skey:
-            searchdomain = []
-            products = request.env['product.product'].search([('name', 'ilike', '%'+skey+'%')])
-            if products and len(products) > 0:
-                searchdomain.append(('product_id', 'in', products.ids))
-            locations = request.env['stock.location'].search([('name', 'ilike', '%'+skey+'%')])
-            if locations and len(locations) > 0:
-                searchdomain.append(('location_id', 'in', locations.ids))
-            searchdomainlen = len(searchdomain)
-            if searchdomainlen > 1:
-                searchdomain.insert(0, '|')
-            if searchdomainlen > 0:
-                stockdomain.insert(0, '&')
-                stockdomain.extend(searchdomain)
+            searchdomain = ['|', ('product_code', 'ilike', '%'+skey+'%'), ('location_name', 'ilike', '%'+skey+'%')]
+            stockdomain.insert(0, '&')
+            stockdomain.extend(searchdomain)
         stocklist = request.env['aas.stock.quant.report'].search(stockdomain, limit=limit)
         if stocklist and len(stocklist) > 0:
             values['stocklist'] = [{

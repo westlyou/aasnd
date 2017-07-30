@@ -115,6 +115,18 @@ class Location(models.Model):
         return values
 
 
+class StockQuant(models.Model):
+    _inherit = 'stock.quant'
+
+    product_code = fields.Char(string=u'产品编码')
+    location_name = fields.Char(string=u'库位名称')
+
+    @api.model
+    def create(self, vals):
+        record = super(StockQuant, self).create(vals)
+        record.write({'product_code': record.product_id.default_code, 'location_name': record.location_id.name})
+        return record
+
 
 class AASStockQuantReport(models.Model):
     _auto = False
@@ -126,6 +138,9 @@ class AASStockQuantReport(models.Model):
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), readonly=True)
     location_id = fields.Many2one(comodel_name='stock.location', string=u'库位',  readonly=True)
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', readonly=True)
+    product_code = fields.Char(string=u'产品编码', readonly=True)
+    location_name = fields.Char(string=u'库位名称', readonly=True)
+
 
     def _select(self):
         select_str = """
@@ -133,7 +148,9 @@ class AASStockQuantReport(models.Model):
         asq.product_id as product_id,
         sum(asq.qty) as product_qty,
         asq.company_id as company_id,
-        asq.location_id as location_id
+        asq.location_id as location_id,
+        asq.product_code as product_code,
+        asq.location_name as location_name
         """
         return select_str
 
@@ -147,7 +164,7 @@ class AASStockQuantReport(models.Model):
 
     def _group_by(self):
         group_by_str = """
-        GROUP BY asq.product_id,asq.company_id,asq.location_id
+        GROUP BY asq.product_id,asq.company_id,asq.location_id,asq.product_code,asq.location_name
         """
         return group_by_str
 

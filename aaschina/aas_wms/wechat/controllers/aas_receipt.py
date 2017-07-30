@@ -57,7 +57,7 @@ class AASReceiptWechatController(http.Controller):
         if not product_code:
             linesdomain.extend([('company_id', '=', request.env.user.company_id.id)])
         else:
-            linesdomain.extend(['&', ('company_id', '=', request.env.user.company_id.id), ('product_id', 'ilike', product_code)])
+            linesdomain.extend(['&', ('company_id', '=', request.env.user.company_id.id), ('product_code', 'ilike', '%'+product_code+'%')])
         receiptlines = request.env['aas.stock.receipt.line'].search(linesdomain, offset=lineindex, limit=limit)
         if receiptlines and len(receiptlines) > 0:
             values['receiptlines'] = [{
@@ -76,7 +76,7 @@ class AASReceiptWechatController(http.Controller):
         linesdomain = ['&', '|']
         linesdomain.extend(['&', ('receipt_type', '=', 'purchase'), ('state', 'in', ['checked', 'receipt'])])
         linesdomain.extend(['&', ('receipt_type', '!=', 'purchase'), ('state', 'in', ['confirm', 'receipt'])])
-        linesdomain.extend(['&', ('company_id', '=', request.env.user.company_id.id), ('product_id', 'ilike', product_code)])
+        linesdomain.extend(['&', ('company_id', '=', request.env.user.company_id.id), ('product_code', 'ilike', '%'+product_code+'%')])
         receiptlines = request.env['aas.stock.receipt.line'].search(linesdomain, limit=limit)
         if receiptlines and len(receiptlines) > 0:
             values['receiptlines'] = [{
@@ -240,7 +240,7 @@ class AASReceiptWechatController(http.Controller):
             search_domain = [('state', 'in', ['draft', 'confirm', 'tocheck', 'checked', 'receipt'])]
         if receipt_type!='all':
             search_domain.append(('receipt_type', '=', receipt_type))
-        search_domain.append(('product_id', 'ilike', product_code))
+        search_domain.append(('product_code', 'ilike', '%s'+product_code+'%s'))
         search_domain.append(('company_id', '=', request.env.user.company_id.id))
         receipt_line_list = request.env['aas.stock.receipt.line'].search(search_domain)
         if not receipt_line_list or len(receipt_line_list) <= 0:
@@ -265,7 +265,7 @@ class AASReceiptWechatController(http.Controller):
             search_domain.append(('receipt_type', '=', receipttype))
         search_domain.append(('company_id', '=', request.env.user.company_id.id))
         if product_code:
-            search_domain.append(('product_id', 'ilike', product_code))
+            search_domain.append(('product_code', 'ilike', '%'+product_code+'%'))
             receiptlines = request.env['aas.stock.receipt.line'].search(search_domain)
             if not receiptlines or len(receiptlines) <= 0:
                 receipts = []
