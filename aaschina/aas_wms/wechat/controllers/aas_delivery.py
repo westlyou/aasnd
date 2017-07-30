@@ -176,7 +176,14 @@ class AASDeliveryWechatController(http.Controller):
         if toperation.deliver_done:
             values.update({'success': False, 'message': u'当前的拣货作业已经完成了发货操作，不可以删除！'})
             return values
-        toperation.unlink()
+        try:
+            toperation.unlink()
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
+        except ValidationError, ve:
+            values.update({'success': False, 'message': ve.name})
+            return values
         values.update({'line_id': delivery_line.id, 'picking_qty': delivery_line.picking_qty})
         return values
 

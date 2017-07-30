@@ -426,8 +426,6 @@ class AASStockDeliveryOperation(models.Model):
     @api.one
     @api.constrains('delivery_id', 'label_id')
     def action_check_operation(self):
-        if self.delivery_id and self.delivery_id.picking_confirm:
-            raise ValidationError(u'发货单正在等待确认发货，请等待发货完成再继续拣货！')
         if self.env.context.get('nocheck'):
             return True
         if self.delivery_id.delivery_type == 'purchase':
@@ -491,8 +489,6 @@ class AASStockDeliveryOperation(models.Model):
     def unlink(self):
         linedict, labels = {}, self.env['aas.product.label']
         for record in self:
-            if record.delivery_id.picking_confirm:
-                raise UserError(u'%s已确认拣货，不可以删除！'% record.delivery_id.name)
             if record.deliver_done:
                 raise UserError(u'%s已经发货，不可以删除！'% record.label_id.name)
             labels |= record.label_id
