@@ -50,7 +50,7 @@ class AASReceiptWechatController(http.Controller):
 
     @http.route('/aaswechat/wms/receiptlinemore', type='json', auth="user")
     def aas_wechat_wms_receiptlinemore(self, lineindex=0, product_code=None, limit=20):
-        values = {'receiptlines': [], 'lineindex': lineindex, 'linecount': 0}
+        values = {'success': True, 'message': '', 'receiptlines': [], 'lineindex': lineindex, 'linecount': 0}
         linesdomain = ['&', '|']
         linesdomain.extend(['&', ('receipt_type', '=', 'purchase'), ('state', 'in', ['checked', 'receipt'])])
         linesdomain.extend(['&', ('receipt_type', '!=', 'purchase'), ('state', 'in', ['confirm', 'receipt'])])
@@ -72,7 +72,7 @@ class AASReceiptWechatController(http.Controller):
 
     @http.route('/aaswechat/wms/receiptlinesearch', type='json', auth="user")
     def aas_wechat_wms_receiptlinesearch(self, product_code, limit=20):
-        values = {'receiptlines': [], 'lineindex': '0'}
+        values = {'success': True, 'message': '', 'receiptlines': [], 'lineindex': '0'}
         linesdomain = ['&', '|']
         linesdomain.extend(['&', ('receipt_type', '=', 'purchase'), ('state', 'in', ['checked', 'receipt'])])
         linesdomain.extend(['&', ('receipt_type', '!=', 'purchase'), ('state', 'in', ['confirm', 'receipt'])])
@@ -257,7 +257,7 @@ class AASReceiptWechatController(http.Controller):
 
     @http.route('/aaswechat/wms/receiptmore', type='json', auth="user")
     def aas_wechat_wms_receiptmore(self, receipttype='all', product_code=None, receiptindex=0, limit=20):
-        values = {'receipts': [], 'receiptindex': receiptindex, 'receipttype': receipttype, 'receiptcount': 0}
+        values = {'success': True, 'message': '', 'receipts': [], 'receiptindex': receiptindex, 'receipttype': receipttype, 'receiptcount': 0}
         search_domain = [('state', 'in', ['confirm', 'receipt'])]
         if receipttype=='purchase':
             search_domain = [('state', 'in', ['draft', 'confirm', 'tocheck', 'checked', 'receipt'])]

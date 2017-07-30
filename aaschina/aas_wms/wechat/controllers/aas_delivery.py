@@ -63,7 +63,7 @@ class AASDeliveryWechatController(http.Controller):
 
     @http.route('/aaswechat/wms/deliverylinesearch', type='json', auth="user")
     def aas_wechat_wms_deliverylinesearch(self, product_code, limit=20):
-        values = {'deliverylines': [], 'lineindex': '0'}
+        values = {'success': True, 'message': '' ,'deliverylines': [], 'lineindex': '0'}
         linesdomain = [('delivery_type', '!=', 'purhase'), ('company_id', '=', request.env.user.company_id.id)]
         linesdomain.extend([('state', 'in', ['confirm', 'picking', 'pickconfirm']), ('product_code', 'ilike', '%'+product_code+'%')])
         deliverylines = request.env['aas.stock.delivery.line'].search(linesdomain, limit=limit)

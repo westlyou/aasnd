@@ -24,7 +24,7 @@ class AASPurchaseWechatController(http.Controller):
     def aas_wechat_wms_purchaselist(self, limit=20):
         values = {'success': True, 'message': '', 'purchaselist': [], 'purchaseindex': '0'}
         searchdomain = [('receiptable', '=', True)]
-        purchaselist = request.env['aas.stock.purchase.order'].search(searchdomain, limit=20)
+        purchaselist = request.env['aas.stock.purchase.order'].search(searchdomain, limit=limit)
         if purchaselist and len(purchaselist) > 0:
             values['purchaselist'] = [{
                 'order_id': purchase.id, 'order_name': purchase.name, 'partner_name': purchase.partner_id.name
@@ -34,7 +34,7 @@ class AASPurchaseWechatController(http.Controller):
 
     @http.route('/aaswechat/wms/purchasemore', type='json', auth="user")
     def aas_wechat_wms_purchasemore(self, purchaseindex=0, limit=20):
-        values = {'purchases': [], 'purchaseindex': purchaseindex, 'purchasecount': 0}
+        values = {'success': True, 'message': '', 'purchases': [], 'purchaseindex': purchaseindex, 'purchasecount': 0}
         searchdomain = [('receiptable', '=', True)]
         purchase_list = request.env['aas.stock.purchase.order'].search(searchdomain, offset=purchaseindex, limit=limit, order='id desc')
         if purchase_list:

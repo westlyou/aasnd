@@ -103,5 +103,53 @@ mui.ready(function(){
         mui.openWindow({'url': '/aaswechat/wms/labeldetail/'+labelid, 'id': 'labeldetail'});
     });
 
+    // 搜索
+    document.getElementById('label_search').addEventListener('keyup',function(event) {
+        if (!event || event.keyCode != 13) {
+            return;
+        }
+        var keyword = document.getElementById('label_search').value;
+        if (keyword == null || keyword == '') {
+            mui.toast('请输入请输入产品编码或者批次，搜索条件不能为空！');
+            return;
+        }
+        var search_accessid = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        mui.ajax('/aaswechat/wms/labelsearch', {
+            data: JSON.stringify({jsonrpc: "2.0", method: 'call', params: {'searchkey': keyword}, id: search_accessid}),
+            dataType: 'json', type: 'post', timeout: 10000,
+            headers: {'Content-Type': 'application/json'},
+            success: function (data) {
+                mui('#label_list_pullrefresh').pullRefresh().endPullupToRefresh(true);
+                var label_list = document.getElementById('label_list');
+                label_list.innerHTML = '';
+                var dresult = data.result;
+                document.getElementById('label_list_pullrefresh').setAttribute('labelindex', dresult.labelindex);
+                if(!dresult.success){
+                    mui.toast(dresult.message);
+                    return ;
+                }
+                mui.each(dresult.labels, function(index, lline){
+                    var li = document.createElement('li');
+                    li.className = 'aas-label mui-table-view-cell';
+                    li.innerHTML = "<a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>" +
+                        "<div class='mui-table'>" +
+                            "<div class='mui-table-cell mui-col-xs-8 mui-text-left'>" +
+                                "<div class='mui-ellipsis'>"+lline.product_code+"</div>" +
+                                "<div class='mui-ellipsis'>"+lline.product_lot+"</div><" +
+                            "/div>"+
+                            "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>" +
+                                "<div class='mui-ellipsis'>"+lline.location_name+"</div>" +
+                                "<div class='mui-ellipsis'>"+lline.product_qty+"</div><" +
+                            "</div>"+
+                        "</div>"+
+                        "</a>";
+                    li.setAttribute('labelid', lline.label_id);
+                    label_list.appendChild(li);
+                });
+            },
+            error: function (xhr, type, errorThrown) {console.log(type);}
+        });
+    });
+
 
 });
