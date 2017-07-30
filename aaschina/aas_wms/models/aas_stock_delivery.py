@@ -193,6 +193,7 @@ class AASStockDeliveryLine(models.Model):
     delivery_type = fields.Selection(selection=DELIVERY_TYPE, string=u'发货类型')
     delivery_qty = fields.Float(string=u'已发数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     picking_qty = fields.Float(string=u'拣货数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    confirm_qty = fields.Float(string=u'确认数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
     pickable = fields.Boolean(string=u'可否拣货', compute="_compute_pickable", store=True, help=u'是否可以拣货')
@@ -326,10 +327,9 @@ class AASStockDeliveryLine(models.Model):
         operation_lines = self.env['aas.stock.delivery.operation'].search([('delivery_line', '=', self.id), ('deliver_done', '=', False)])
         if not operation_lines or len(operation_lines) <= 0:
             raise UserError(u'您还没有添加%s拣货作业，不可以确认拣货'% self.product_id.default_code)
-        self.write({'picking_confirm': True, 'state': 'pickconfirm'})
-        delivery = self.delivery_id
-        if all([dline.picking_confirm for dline in delivery.delivery_lines]):
-            delivery.write({'picking_confirm': True, 'state': 'pickconfirm'})
+        self.write({'picking_confirm': True, 'state': 'pickconfirm', 'confirm_qty': self.picking_qty})
+        if self.delivery_id.state != 'pickconfirm':
+            self.delivery_id.write({'picking_confirm': True, 'state': 'pickconfirm'})
 
 
     @api.one
@@ -361,7 +361,7 @@ class AASStockDeliveryLine(models.Model):
                     'partner_id': delivery.partner_id and delivery.partner_id.id, 'delivery_user': self.env.user.id
                 }
         delivery_qty = self.delivery_qty + self.picking_qty
-        linevals = {'picking_confirm': False, 'delivery_qty': delivery_qty, 'picking_qty': 0.0, 'state': 'picking'}
+        linevals = {'picking_confirm': False, 'delivery_qty': delivery_qty, 'picking_qty': 0.0, 'state': 'picking', 'confirm_qty': 0.0}
         if float_compare(self.product_qty, delivery_qty, precision_rounding=0.000001) <= 0.0:
             linevals['state'] = 'done'
         deliveryvals = {'delivery_lines': [(1, self.id, linevals)], 'operation_lines': oplines}

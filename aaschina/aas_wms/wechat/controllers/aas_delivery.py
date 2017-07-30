@@ -78,7 +78,7 @@ class AASDeliveryWechatController(http.Controller):
 
     @http.route('/aaswechat/wms/deliveryline/<int:deliverylineid>', type='http', auth='user')
     def aas_wechat_wms_deliverylinedetail(self, deliverylineid):
-        values = {'success': True, 'message': '', 'pickinglist': [], 'operationlist': []}
+        values = {'success': True, 'message': '', 'pickinglist': [], 'operationlist': [], 'label_count': 0}
         deliveryline = request.env['aas.stock.delivery.line'].browse(deliverylineid)
         values.update({
             'deliveryid': deliveryline.delivery_id.id,
@@ -101,6 +101,7 @@ class AASDeliveryWechatController(http.Controller):
                 'label_id': oline.label_id.id, 'label_name': oline.label_id.name, 'product_qty': oline.product_qty,
                 'product_code': oline.product_id.default_code, 'product_lot': oline.product_lot.name
             } for oline in deliveryline.operation_lines]
+        values['label_count'] = request.env['aas.stock.delivery.operation'].search_count([('delivery_line', '=', deliverylineid), ('deliver_done', '=', False)])
         return request.render('aas_wms.wechat_wms_delivery_line_detail', values)
 
 
@@ -118,7 +119,7 @@ class AASDeliveryWechatController(http.Controller):
 
     @http.route('/aaswechat/wms/deliverylabelscan', type='json', auth="user")
     def aas_wechat_wms_deliverylabelscan(self, barcode, delivery_id=None, line_id=None):
-        values = {'success': True, 'message': ''}
+        values = {'success': True, 'message': '', 'label_count': 0}
         if not delivery_id and not line_id:
             values.update({'success': False, 'message': u'异常出错，请检查请求参数设置！'})
             return values
@@ -157,6 +158,8 @@ class AASDeliveryWechatController(http.Controller):
             'picking_qty': toperation.delivery_line.picking_qty, 'label_name': label.name, 'product_code': label.product_code,
             'product_qty': label.product_qty, 'product_lot': label.product_lot.name, 'location_name': label.location_id.name
         })
+        if line_id:
+            values['label_count'] = request.env['aas.stock.delivery.operation'].search_count([('delivery_line', '=', line_id), ('deliver_done', '=', False)])
         return values
 
     @http.route('/aaswechat/wms/deliverydeloperation', type='json', auth="user")

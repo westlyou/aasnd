@@ -58,7 +58,7 @@
                                         <field name="product_uom" readonly="1"/>
                                         <field name="product_qty" required="1"/>
                                         <field name="delivery_qty" readonly="1"/>
-                                        <field name="picking_qty" readonly="1"/>
+                                        <field name="confirm_qty" readonly="1"/>
                                     </tree>
                                     <form>
                                         <group>
@@ -70,7 +70,7 @@
                                             <group>
                                                 <field name="product_qty"/>
                                                 <field name="delivery_qty"/>
-                                                <field name="picking_qty"/>
+                                                <field name="confirm_qty"/>
                                             </group>
                                         </group>
                                     </form>

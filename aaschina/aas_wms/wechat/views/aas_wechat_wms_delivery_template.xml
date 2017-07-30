@@ -114,6 +114,10 @@
                                     <span class="mui-pull-left">拣货数量</span>
                                     <span id="delivery_picking_qty" class="mui-pull-right"> <t t-esc="picking_qty"/> </span>
                                 </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">拣货标签</span>
+                                    <span id="delivery_label_count" class="mui-pull-right"> <t t-esc="label_count"/> </span>
+                                </li>
                             </ul>
                             <div class="aas-mui-table-view-title"> 拣货清单 </div>
                             <ul id="picking_lines" class="mui-table-view">
