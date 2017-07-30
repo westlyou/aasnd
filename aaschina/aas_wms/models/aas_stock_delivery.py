@@ -139,7 +139,7 @@ class AASStockDelivery(models.Model):
         if not self.delivery_lines or len(self.delivery_lines) <= 0:
             return
         for dline in self.delivery_lines:
-            if dline.state in ['draft', 'done', 'cancel']:
+            if not dline.picking_confirm:
                 continue
             dline.action_deliver()
         deliveryvals = {'picking_confirm': False}
@@ -341,7 +341,7 @@ class AASStockDeliveryLine(models.Model):
         operation_lines = self.env['aas.stock.delivery.operation'].search([('delivery_line', '=', self.id), ('deliver_done', '=', False)])
         if not operation_lines or len(operation_lines) <= 0:
             if self.picking_confirm:
-                self.write({'picking_confirm': False})
+                self.write({'picking_confirm': False, 'state': 'picking'})
             return
         if not self.picking_confirm:
             raise UserError(u'仓库人员还没有确认拣货结束，不可以操作！')
