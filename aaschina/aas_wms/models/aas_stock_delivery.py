@@ -465,6 +465,8 @@ class AASStockDeliveryOperation(models.Model):
     @api.one
     def action_after_create(self):
         dline = self.delivery_line
+        if dline.picking_confirm:
+            raise UserError(u'%s正在确认发货，请暂停此料的拣货操作！'% self.label_id.name)
         lineval = {'picking_qty': dline.picking_qty + self.product_qty}
         if dline.state != 'picking':
             lineval['state'] = 'picking'
@@ -491,6 +493,8 @@ class AASStockDeliveryOperation(models.Model):
         for record in self:
             if record.deliver_done:
                 raise UserError(u'%s已经发货，不可以删除！'% record.label_id.name)
+            if record.delivery_line.picking_confirm:
+                raise UserError(u'%s正在确认发货，不可以删除！'% record.label_id.name)
             labels |= record.label_id
             lkey = 'L'+str(record.delivery_line.id)
             if lkey not in linedict:
