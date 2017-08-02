@@ -287,7 +287,7 @@ class AASStockDeliveryLine(models.Model):
         if nonestocklocations and len(nonestocklocations) > 0:
             labeldomain.append(('location_id', 'not in', nonestocklocations.ids))
         labeldomain.extend([('parent_id', '=', False), ('locked', '=', False), ('company_id', '=', deliveryline.company_id.id), ('location_id', 'child_of', stock_location)])
-        labelorder, label_qty, pickingdict, tempkey = 'onshelf_date,product_lot', 0.0, {}, False
+        labelorder, label_qty, pickingdict, tempkey = 'onshelf_date,product_lotname', 0.0, {}, False
         # 优先处理的标签，可能是生产退料的物料需要优先处理掉
         prioritizedomain = labeldomain + [('prioritized', '=', True)]
         prioritizedlabels = self.env['aas.product.label'].search(prioritizedomain, order=labelorder)
