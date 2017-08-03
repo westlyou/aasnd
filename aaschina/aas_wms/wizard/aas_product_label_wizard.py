@@ -27,8 +27,7 @@ class AASProductLabelSplitWizard(models.TransientModel):
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'))
     label_qty = fields.Float(string=u'每标签数量', digits=dp.get_precision('Product Unit of Measure'))
-    label_count = fields.Integer(string=u'标签数量')
-
+    label_count = fields.Integer(string=u'标签个数')
 
     @api.one
     def action_done(self):
