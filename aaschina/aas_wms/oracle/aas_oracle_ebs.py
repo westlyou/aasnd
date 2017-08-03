@@ -21,14 +21,11 @@ _logger = logging.getLogger(__name__)
 class AASBaseCron(models.Model):
     _inherit = 'aas.base.cron'
 
-    @api.model
-    def action_month_cron(self):
-        super(AASBaseCron, self).action_month_cron()
-        self.action_synchronize_baseinformation()
 
     @api.model
     def action_day_cron(self):
         super(AASBaseCron, self).action_day_cron()
+        self.action_synchronize_baseinformation()
 
     @api.model
     def action_synchronize_baseinformation(self):

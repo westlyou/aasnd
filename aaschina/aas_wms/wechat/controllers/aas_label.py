@@ -63,11 +63,11 @@ class AASLabelWechatController(http.Controller):
         return values
 
     @http.route('/aaswechat/wms/labelsearch', type='json', auth="user")
-    def aas_wechat_labelsearch(self, searchkey=None, limit=20):
-        values = {'labels': [], 'labelindex': 0}
+    def aas_wechat_labelsearch(self, searchkey, limit=20):
+        values = {'success': True, 'message': '', 'labels': [], 'labelindex': 0}
         labeldomain = []
         if searchkey:
-            labeldomain = ['|', ('product_code', 'ilike', searchkey), ('product_lot', 'ilike', searchkey)]
+            labeldomain = ['|', ('product_code', 'ilike', '%'+searchkey+'%'), ('product_lot', 'ilike', '%'+searchkey+'%')]
         label_list = request.env['aas.product.label'].search(labeldomain, limit=limit)
         if label_list:
             values['labels'] = [{

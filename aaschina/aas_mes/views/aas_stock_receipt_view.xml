@@ -149,7 +149,7 @@
         </record>
 
         <menuitem id="menu_aas_stock_receipt_move_report_manreturn"  name="退料报表" action="action_aas_stock_receipt_move_report_manreturn"
-                          parent="menu_aas_mes_material" sequence="11" groups="aas_mes.group_aas_manufacture_user"/>
+                          parent="menu_aas_stock_report" sequence="2" groups="aas_mes.group_aas_manufacture_user"/>
 
         <record id="view_form_aas_stock_receipt_production_mes" model="ir.ui.view">
             <field name="name">aas.stock.receipt.production.mes.form</field>

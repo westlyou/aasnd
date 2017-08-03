@@ -17,7 +17,8 @@
         'security/ir.model.access.csv',
         'views/aas_mes_view.xml',
         'views/aas_stock_delivery_view.xml',
-        'views/aas_stock_receipt_view.xml'
+        'views/aas_stock_receipt_view.xml',
+        'views/aas_stock_report_view.xml'
     ],
     'qweb':[],
     'installable': True,

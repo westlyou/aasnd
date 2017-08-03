@@ -56,8 +56,9 @@
                                     <tree editable="bottom">
                                         <field name="product_id" options="{'no_create':true}" required="1"/>
                                         <field name="product_uom" readonly="1"/>
-                                        <field name="product_qty" required="1"/>
-                                        <field name="delivery_qty" readonly="1"/>
+                                        <field name="current_qty" readonly="1"/>
+                                        <field name="product_qty" required="1" string="领料数量"/>
+                                        <field name="delivery_qty" readonly="1" string="已领数量"/>
                                         <field name="confirm_qty" readonly="1"/>
                                     </tree>
                                     <form>
@@ -68,8 +69,8 @@
                                                 <field name="delivery_id"/>
                                             </group>
                                             <group>
-                                                <field name="product_qty"/>
-                                                <field name="delivery_qty"/>
+                                                <field name="product_qty" string="领料数量"/>
+                                                <field name="delivery_qty" string="已领数量"/>
                                                 <field name="confirm_qty"/>
                                             </group>
                                         </group>
@@ -219,6 +220,6 @@
         </record>
 
         <menuitem id="menu_aas_stock_delivery_move_report_picking"  name="领料报表" action="action_aas_stock_delivery_move_report_picking"
-                          parent="menu_aas_mes_material" sequence="10" groups="aas_mes.group_aas_material_picker"/>
+                          parent="menu_aas_stock_report" sequence="1" groups="aas_mes.group_aas_manufacture_user"/>
     </data>
 </odoo>

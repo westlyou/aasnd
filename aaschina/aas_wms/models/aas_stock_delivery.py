@@ -188,6 +188,7 @@ class AASStockDeliveryLine(models.Model):
     delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'发货单', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
+    current_qty = fields.Float(string=u'当前库存', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     product_qty = fields.Float(string=u'应发数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     state = fields.Selection(selection=DELIVERY_STATE, string=u'状态', default='draft')
     delivery_type = fields.Selection(selection=DELIVERY_TYPE, string=u'发货类型')
@@ -215,6 +216,14 @@ class AASStockDeliveryLine(models.Model):
             else:
                 record.pickable = True
 
+
+    @api.onchange('product_id')
+    def action_change_product(self):
+        if self.product_id:
+            self.product_uom, self.current_qty = self.product_id.uom_id.id, self.product_id.qty_available
+        else:
+            self.product_uom, self.current_qty = False, 0.0
+
     @api.model
     def action_before_create(self, vals):
         if not vals.get('delivery_type') and vals.get('delivery_id'):
@@ -222,13 +231,20 @@ class AASStockDeliveryLine(models.Model):
             vals.update({'delivery_type': delivery.delivery_type})
         if vals.get('product_id'):
             tempproduct = self.env['product.product'].browse(vals.get('product_id'))
-            vals.update({'product_uom': tempproduct.uom_id.id, 'product_code': tempproduct.default_code})
+            vals.update({
+                'product_uom': tempproduct.uom_id.id,
+                'product_code': tempproduct.default_code,
+                'current_qty': tempproduct.qty_available
+            })
 
 
     @api.model
     def create(self, vals):
         self.action_before_create(vals)
-        return super(AASStockDeliveryLine, self).create(vals)
+        record = super(AASStockDeliveryLine, self).create(vals)
+        if float_compare(record.product_qty, record.current_qty, precision_rounding=0.000001) > 0:
+            raise UserError(u'%s的当前库存数量为%s,需求数量不能大于库存数量！'%(record.product_code, record.current_qty))
+        return record
 
 
     @api.one

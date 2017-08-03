@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <menuitem id="menu_aas_stock_quant_report"  name="库存报表" action="aas_wms.action_aas_stock_quant_report"
+                          parent="menu_aas_stock_report" sequence="3" groups="aas_mes.group_aas_manufacture_user"/>
+
+
+        <!-- 库存查询 -->
+        <record id="view_tree_stock_quant_aas_mes" model="ir.ui.view">
+            <field name="name">stock.quant.aas.mes.tree</field>
+            <field name="model">stock.quant</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="product_id"/>
+                    <field name="product_uom_id"/>
+                    <field name="qty"/>
+                    <field name="lot_id"/>
+                    <field name="location_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_search_stock_quant_aas_mes" model="ir.ui.view">
+            <field name="name">stock.quant.aas.mes.search</field>
+            <field name="model">stock.quant</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="lot_id" string="批次" filter_domain="[('lot_id','ilike',self)]"/>
+                    <field name="location_id" string="库位" filter_domain="[('location_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="批次" context="{'group_by':'lot_id'}"/>
+                        <filter string="库位" context="{'group_by':'location_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_stock_quant_aas_mes" model="ir.actions.act_window">
+            <field name="name">库存查询</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">stock.quant</field>
+            <field name="limit">50</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_stock_quant_aas_mes"/>
+            <field name="search_view_id" ref="view_search_stock_quant_aas_mes"/>
+        </record>
+
+        <menuitem id="menu_stock_quant_aas_mes"  name="库存查询" action="action_stock_quant_aas_mes"
+                          parent="menu_aas_stock_report" sequence="4" groups="aas_mes.group_aas_manufacture_user"/>
+
+    </data>
+</odoo>

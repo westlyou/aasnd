@@ -2,13 +2,16 @@
 <odoo>
     <data>
 
-        <menuitem id="menu_aas_mes" name="生产"  sequence="11" groups="group_aas_material_picker"/>
+        <menuitem id="menu_aas_mes" name="生产"  sequence="11" groups="group_aas_manufacture_user"/>
 
         <menuitem id="menu_aas_mes_material"  name="原材料" parent="menu_aas_mes" sequence="1"
                   groups="group_aas_material_picker"/>
 
         <menuitem id="menu_aas_mes_production"  name="产成品" parent="menu_aas_mes" sequence="2"
                   groups="group_aas_production_packer"/>
+
+        <menuitem id="menu_aas_stock_report"  name="库存报表" parent="menu_aas_mes" sequence="20"
+                  groups="group_aas_manufacture_user"/>
 
     </data>
 </odoo>
