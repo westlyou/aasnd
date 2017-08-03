@@ -127,6 +127,16 @@ class StockQuant(models.Model):
         record.write({'product_code': record.product_id.default_code, 'location_name': record.location_id.name})
         return record
 
+    @api.multi
+    def write(self, vals):
+        if vals.get('product_id'):
+            product = self.env['product.product'].browse(vals.get('product_id'))
+            vals['product_code'] = product.default_code
+        if vals.get('location_id'):
+            location = self.env['stock.location'].browse(vals.get('location_id'))
+            vals['location_name'] = location.name
+        return super(StockQuant, self).write(vals)
+
 
 class AASStockQuantReport(models.Model):
     _auto = False

@@ -376,6 +376,7 @@ class AASStockReceiptLabel(models.Model):
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'产品单位')
     origin_order = fields.Char(string=u'来源单据', copy=False, default='')
     checked = fields.Boolean(string=u'是否作业', default=False, copy=False)
+    pushable = fields.Boolean(string=u'是否可以上架', default=True, copy=False)
     label_current = fields.Boolean(string=u'是否新建', default=False, copy=False)
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     label_location = fields.Many2one(comodel_name='stock.location', string=u'来源库位', ondelete='restrict')

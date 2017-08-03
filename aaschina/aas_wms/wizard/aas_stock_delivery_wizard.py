@@ -98,8 +98,8 @@ class AASStockDeliveryLabelLineWizard(models.TransientModel):
         record = super(AASStockDeliveryLabelLineWizard, self).create(vals)
         if not record.wizard_id.origin_order and record.origin_order:
             record.wizard_id.write({'origin_order': record.origin_order})
-        elif record.wizard_id.origin_order and record.origin_order and record.wizard_id.origin_order!=record.origin_order:
-            if record.wizard_id.delivery_id.delivery_type=='purchase':
+        elif record.wizard_id.origin_order and record.origin_order and record.wizard_id.origin_order != record.origin_order:
+            if record.wizard_id.delivery_id.delivery_type == 'purchase':
                 raise UserError(u'不同的采购订单标签不能同时退PO!')
             else:
                 raise UserError(u'标签来源不同不可以混合发货！')

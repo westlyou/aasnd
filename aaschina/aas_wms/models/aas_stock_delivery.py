@@ -442,9 +442,9 @@ class AASStockDeliveryOperation(models.Model):
     @api.one
     @api.constrains('delivery_id', 'label_id')
     def action_check_operation(self):
-        if self.env.context.get('nocheck'):
-            return True
         if self.delivery_id.delivery_type == 'purchase':
+            return True
+        if self.env.context.get('nocheck'):
             return True
         product_id, location_id, product_lot = self.label_id.product_id, self.label_id.location_id, self.label_id.product_lot
         listdomain = [('product_id', '=', product_id.id), ('product_lot', '=', product_lot.id)]
