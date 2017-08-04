@@ -322,7 +322,7 @@ class AASStockReceiptLine(models.Model):
         operationlist = self.env['aas.stock.receipt.operation'].search([('line_id', '=', self.id), ('push_onshelf', '=', False)])
         if not operationlist or len(operationlist) <= 0:
             raise UserError(u"请仔细检查，还可能还没有添加上架作业标签！")
-        productdict, receiptvals, movedict, operationlines = {}, {}, {}, []
+        productdict, receiptvals, movedict, operationlines, receiptlabels = {}, {}, {}, [], self.env['aas.stock.receipt.label']
         push_user, push_time, push_date = self.env.user.id, fields.Datetime.now(), fields.Date.today()
         for roperation in operationlist:
             pkey = 'P'+str(roperation.product_id.id)
@@ -344,6 +344,9 @@ class AASStockReceiptLine(models.Model):
             labelvals = {'locked': False, 'locked_order': False}
             labelvals.update({'onshelf_time': push_time, 'onshelf_date': push_date, 'location_id': roperation.location_id.id})
             label.write(labelvals)
+            receiptlabels |= roperation.rlabel_id
+        # 收货清单可上架标记更更新为False
+        receiptlabels.write({'pushable': False})
         # 记录原料最近一次存放位置，为下次上架提供推荐库位
         for pkey, pval in productdict.items():
             product_id, location_id = pval['product'], pval['location_id']
@@ -354,11 +357,12 @@ class AASStockReceiptLine(models.Model):
         receiptvals['receipt_lines'] = [(1, self.id, {'receipt_qty': self.receipt_qty+self.doing_qty, 'doing_qty': 0.0})]
         self.receipt_id.write(receiptvals)
         # 判断当前收货明细是否结束收货
-        labelist = self.env['aas.stock.receipt.label'].search([('line_id', '=', self.id), ('checked', '=', False)])
+        labelist = self.env['aas.stock.receipt.label'].search([('line_id', '=', self.id), ('pushable', '=', True)])
         if not labelist or len(labelist) <= 0:
             self.write({'state': 'done'})
         # 判断当前收货单是否结束收货
-        if all([rline.state=='done' for rline in self.receipt_id.receipt_lines]):
+        templabels = self.env['aas.stock.receipt.label'].search([('receipt_id', '=', self.receipt_id.id), ('pushable', '=', True)])
+        if not templabels or len(templabels) <= 0:
             self.receipt_id.write({'state': 'done', 'done_time': fields.Datetime.now()})
 
 
@@ -397,6 +401,7 @@ class AASStockReceiptOperation(models.Model):
     receipt_id = fields.Many2one(comodel_name='aas.stock.receipt', string=u'收货单', ondelete='cascade')
     line_id = fields.Many2one(comodel_name='aas.stock.receipt.line', string=u'收货明细', ondelete='cascade')
     rlabel_id = fields.Many2one(comodel_name='aas.stock.receipt.label', string=u'收货标签', ondelete='set null')
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品名称', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'产品单位')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
@@ -423,6 +428,7 @@ class AASStockReceiptOperation(models.Model):
     def action_before_create(self, vals):
         rlabel = self.env['aas.stock.receipt.label'].browse(vals.get('rlabel_id'))
         vals.update({
+            'label_id': rlabel.label_id.id,
             'receipt_id': rlabel.receipt_id.id, 'line_id': rlabel.line_id.id,
             'product_id': rlabel.product_id.id, 'product_lot': rlabel.product_lot.id,
             'product_qty': rlabel.label_id.product_qty, 'product_uom': rlabel.product_uom.id

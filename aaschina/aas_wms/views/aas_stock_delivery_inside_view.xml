@@ -51,7 +51,7 @@
                         </group>
                         <group>
                             <group>
-                                <field name="location_id"/>
+                                <field name="location_id" invisible="1"/>
                                 <field name="partner_id"/>
                                 <field name="done_time" readonly="1"/>
                                 <field name="picking_confirm" invisible="1"/>
@@ -456,7 +456,7 @@
                         </group>
                         <group>
                             <group>
-                                <field name="location_id"/>
+                                <field name="location_id" invisible="1"/>
                                 <field name="partner_id"/>
                                 <field name="done_time" readonly="1"/>
                                 <field name="picking_confirm" invisible="1"/>

@@ -15,7 +15,7 @@
                         <page string="标签明细">
                             <field name="label_lines">
                                 <tree edit="false" editable="bottom">
-                                    <field name="label_id" options="{'no_crete':true}" required="1"
+                                    <field name="label_id" options="{'no_create':true}" required="1"
                                             domain="[('parent_id','=',False),('state','=','normal')]"/>
                                     <field name="product_id" readonly="1"/>
                                     <field name="product_uom" readonly="1"/>

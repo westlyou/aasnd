@@ -40,17 +40,27 @@ class AASStockDeliveryLabelWizard(models.TransientModel):
             doperations.append((0, 0, {'label_id': lline.label_id.id}))
             dkey = 'P'+str(lline.product_id.id)
             if dkey not in dlinedict:
-                dline = self.env['aas.stock.delivery.line'].search([('delivery_id', '=', self.delivery_id.id), ('product_id', '=', lline.product_id.id)], limit=1)
-                if not dline:
-                   dlinedict[dkey] = {
-                       'product_id': lline.product_id.id, 'product_uom': lline.product_uom.id, 'product_lot': lline.product_lot.id,
-                       'product_qty': 0.0, 'delivery_type': self.delivery_id.delivery_type
-                   }
+                dlinedict[dkey] = {
+                    'product_id': lline.product_id.id, 'product_uom': lline.product_uom.id,
+                    'product_qty': lline.product_qty, 'delivery_type': self.delivery_id.delivery_type
+                }
+            else:
+                dlinedict[dkey]['product_qty'] += lline.product_qty
         if dlinedict and len(dlinedict) > 0:
-            dlines = [(0, 0, dval) for dkey, dval in dlinedict.items()]
+            dlines = []
+            if self.delivery_id.delivery_lines and len(self.delivery_id.delivery_lines) > 0:
+                for dline in self.delivery_id.delivery_lines:
+                    tkey = 'P'+str(dline.product_id.id)
+                    if tkey in dlinedict:
+                        dlines.append((1, dline.id, {'product_qty': dline.product_qty+dlinedict[tkey]['product_qty']}))
+                        del dlinedict[tkey]
+            if dlinedict and len(dlinedict) > 0:
+                dlines.extend([(0, 0, dval) for dkey, dval in dlinedict.items()])
             self.delivery_id.write({'delivery_lines': dlines})
         if doperations and len(doperations) > 0:
             self.delivery_id.write({'operation_lines': doperations})
+        if self.origin_order:
+            self.delivery_id.write({'origin_order': self.origin_order})
 
 
 

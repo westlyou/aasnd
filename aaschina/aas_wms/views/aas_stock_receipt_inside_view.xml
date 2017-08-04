@@ -276,7 +276,7 @@
                                 <field name="operation_list" context="{'default_location_id': push_location}">
                                     <tree editable="bottom" edit="false">
                                         <field name="rlabel_id" options="{'no_create':true}" required="1"
-                                                domain="[('line_id','=',parent.id)]"/>
+                                                domain="[('line_id','=',parent.id),('pushable','=',True)]"/>
                                         <field name="product_id" readonly="1"/>
                                         <field name="product_uom" readonly="1"/>
                                         <field name="product_lot" readonly="1"/>
@@ -632,7 +632,7 @@
                                 <field name="operation_list" context="{'default_location_id': push_location}">
                                     <tree editable="bottom" edit="false">
                                         <field name="rlabel_id" options="{'no_create':true}" required="1"
-                                                domain="[('line_id','=',parent.id)]"/>
+                                                domain="[('line_id','=',parent.id),('pushable','=',True)]"/>
                                         <field name="product_id" readonly="1"/>
                                         <field name="product_uom" readonly="1"/>
                                         <field name="product_lot" readonly="1"/>

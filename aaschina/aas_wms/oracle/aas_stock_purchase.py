@@ -62,10 +62,10 @@ class AASStockPurchaseOrder(models.Model):
     creation_date = fields.Datetime(string=u'创建日期')
     last_update_date = fields.Datetime(string=u'修改日期')
     last_updated_by = fields.Integer(string='last_updated_by')
-    order_lines = fields.One2many(comodel_name='aas.stock.purchase.order.line', inverse_name='order_id', string=u'采购明细')
     ebs_order_id = fields.Integer(string=u'EBS采购订单ID')
     ebsorder = fields.Boolean(string=u'Oracle订单', default=False, copy=False)
     receiptable = fields.Boolean(string=u'可否收货', compute='_compute_receiptable', store=True)
+    order_lines = fields.One2many(comodel_name='aas.stock.purchase.order.line', inverse_name='order_id', string=u'采购明细')
 
     @api.depends('order_lines.receiptable')
     def _compute_receiptable(self):
@@ -480,9 +480,9 @@ class AASStockDelivery(models.Model):
     @api.one
     def action_deliver_done(self):
         super(AASStockDelivery, self).action_deliver_done()
-        if self.delivery_type != 'purchase' or not self.origin_order or not self.partner_id:
+        if self.delivery_type != 'purchase' or not self.origin_order:
             return
-        purchaseorderdomain = [('name', '=', self.origin_order), ('partner_id', '=', self.partner_id.id)]
+        purchaseorderdomain = [('name', '=', self.origin_order)]
         purchaseorder = self.env['aas.stock.purchase.order'].search(purchaseorderdomain, limit=1)
         if not purchaseorder:
             return

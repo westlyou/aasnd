@@ -59,7 +59,14 @@ class AASStockDelivery(models.Model):
     @api.model
     def create(self, vals):
         self.action_before_create(vals)
-        return super(AASStockDelivery, self).create(vals)
+        record = super(AASStockDelivery, self).create(vals)
+        if record.delivery_type == 'purchase':
+            record.write({'location_id': self.env.ref('stock.stock_location_suppliers').id})
+        if record.delivery_type == 'sales':
+            record.write({'location_id': self.env.ref('stock.stock_location_customers').id})
+        if record.delivery_type == 'sundry':
+            record.write({'location_id': self.env.ref('aas_wms.stock_location_sundry').id})
+        return record
 
     @api.one
     def action_confirm(self):
@@ -369,6 +376,7 @@ class AASStockDeliveryLine(models.Model):
         for doperation in operation_lines:
             labels |= doperation.label_id
             oplines.append((1, doperation.id, {'deliver_done': True}))
+            pkey = 'D_'+str(doperation.product_id.id)
             dkey = 'D_'+str(doperation.product_id.id)+'_'+str(doperation.product_lot.id)+'_'+str(doperation.location_id.id)
             if dkey in movedict:
                 movedict[dkey]['product_qty'] += doperation.product_qty
@@ -393,6 +401,7 @@ class AASStockDeliveryLine(models.Model):
         else:
             labelvals.update({'state': 'over'})
             labels.write(labelvals)
+
 
 
 
@@ -465,6 +474,12 @@ class AASStockDeliveryOperation(models.Model):
 
     @api.model
     def action_before_create(self, vals):
+        doperations = self.env['aas.stock.delivery.operation'].search([('label_id', '=', vals.get('label_id')), ('deliver_done', '=', False)])
+        if doperations and len(doperations) > 0:
+            raise UserError(u'当前标签已经在发货作业中，请不要重复操作！')
+        roperations = self.env['aas.stock.receipt.operation'].search([('label_id', '=', vals.get('label_id')), ('push_onshelf', '=', False)])
+        if roperations and len(roperations) > 0:
+            raise UserError(u'当前标签已在收货作业中，请在收货作业还未结束时不要使用此标签！')
         label, dline = self.env['aas.product.label'].browse(vals.get('label_id')), False
         if vals.get('delivery_line') and not vals.get('delivery_id'):
             dline = self.env['aas.stock.delivery.line'].browse(vals.get('delivery_line'))
@@ -491,6 +506,20 @@ class AASStockDeliveryOperation(models.Model):
             self.delivery_id.write({'state': 'picking'})
         # 锁定标签
         self.label_id.write({'locked': True, 'locked_order': self.delivery_id.name})
+        # 如果是采购退货检查标签是否商检，未上架需要禁止上架，如果无可上架的标签直接结束收货
+        if self.delivery_id.delivery_type == 'purchase':
+            receiptlabel = self.env['aas.stock.receipt.label'].search([('label_id', '=', self.label_id.id), ('checked', '=', False)], limit=1)
+            if receiptlabel:
+                receiptlabel.write({'pushable': False})
+                receiptline, tempreceipt = receiptlabel.line_id, receiptlabel.receipt_id
+                receiptlabellist = self.env['aas.stock.receipt.label'].search([('line_id', '=', receiptline.id), ('pushable', '=', True)])
+                # 收货明细无可收货标签直接结束收货明细
+                if not receiptlabellist or len(receiptlabellist) <= 0:
+                    receiptline.write({'state': 'done'})
+                templabellist = self.env['aas.stock.receipt.label'].search([('receipt_id', '=', tempreceipt.id), ('pushable', '=', True)])
+                # 无可收货标签直接结束收货
+                if not templabellist or len(templabellist) <= 0:
+                    tempreceipt.write({'state': 'done', 'done_time': fields.Datetime.now()})
 
 
     @api.model

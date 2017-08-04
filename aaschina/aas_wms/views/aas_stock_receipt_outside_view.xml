@@ -108,7 +108,7 @@
                                 <field name="operation_lines" attrs="{'readonly': [('state','not in',['confirm','receipt'])]}">
                                     <tree editable="bottom" edit="false">
                                         <field name="rlabel_id" options="{'no_create':true}" required="1"
-                                                domain="[('receipt_id','=',parent.id)]"/>
+                                                domain="[('receipt_id','=',parent.id),('pushable','=',True)]"/>
                                         <field name="product_id" readonly="1"/>
                                         <field name="product_uom" readonly="1"/>
                                         <field name="product_lot" readonly="1"/>
@@ -261,7 +261,7 @@
                                        attrs="{'readonly':[('state','not in',['confirm','receipt'])]}">
                                     <tree editable="bottom" edit="false">
                                         <field name="rlabel_id" options="{'no_create':true}" required="1"
-                                                domain="[('line_id','=',parent.id)]"/>
+                                                domain="[('line_id','=',parent.id),('pushable','=',True)]"/>
                                         <field name="product_id" readonly="1"/>
                                         <field name="product_uom" readonly="1"/>
                                         <field name="product_lot" readonly="1"/>
