@@ -48,6 +48,7 @@ class AASStockDelivery(models.Model):
     picking_list = fields.One2many(comodel_name='aas.stock.picking.list', inverse_name='delivery_id', string=u'拣货清单')
     operation_lines = fields.One2many(comodel_name='aas.stock.delivery.operation', inverse_name='delivery_id', string=u'拣货作业')
     move_lines = fields.One2many(comodel_name='aas.stock.delivery.move', inverse_name='delivery_id', string=u'执行明细')
+    note_lines = fields.One2many(comodel_name='aas.stock.delivery.note', inverse_name='delivery_id', string=u'备注明细')
 
     @api.model
     def action_before_create(self, vals):
@@ -181,7 +182,27 @@ class AASStockDelivery(models.Model):
         self.write(deliveryvals)
 
 
-
+    @api.multi
+    def action_note(self):
+        """
+        添加备注
+        :return:
+        """
+        self.ensure_one()
+        wizard = self.env['aas.stock.delivery.note.wizard'].create({'delivery_id': self.id})
+        view_form = self.env.ref('aas_wms.view_form_aas_stock_delivery_note_wizard')
+        return {
+            'name': u"发货备注",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.stock.delivery.note.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
 
 
 
@@ -208,6 +229,7 @@ class AASStockDeliveryLine(models.Model):
     picking_confirm = fields.Boolean(string=u'拣货确认', default=False, copy=False, help=u'发货员确认货物已分拣')
     picking_list = fields.One2many(comodel_name='aas.stock.picking.list', inverse_name='delivery_line', string=u'拣货清单')
     operation_lines = fields.One2many(comodel_name='aas.stock.delivery.operation', inverse_name='delivery_line', string=u'拣货作业')
+    note_lines = fields.One2many(comodel_name='aas.stock.delivery.note', inverse_name='delivery_line', string=u'备注明细')
 
     product_code = fields.Char(string=u'产品编码')
 
@@ -402,7 +424,29 @@ class AASStockDeliveryLine(models.Model):
             labelvals.update({'state': 'over'})
             labels.write(labelvals)
 
-
+    @api.multi
+    def action_note(self):
+        """
+        添加备注
+        :return:
+        """
+        self.ensure_one()
+        wizard = self.env['aas.stock.delivery.note.wizard'].create({
+            'delivery_id': self.delivery_id.id, 'delivery_line': self.id
+        })
+        view_form = self.env.ref('aas_wms.view_form_aas_stock_delivery_note_wizard')
+        return {
+            'name': u"发货备注",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.stock.delivery.note.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
 
 
 
@@ -672,3 +716,13 @@ class AASStockDeliveryMoveReport(models.Model):
 
 
 
+class AASStockDeliveryNote(models.Model):
+    _name = 'aas.stock.delivery.note'
+    _description = u'发货备注清单'
+    _order = "id desc"
+
+    delivery_id = fields.Many2one(comodel_name='aas.stock.receipt', string=u'收货单', ondelete='cascade')
+    delivery_line = fields.Many2one(comodel_name='aas.stock.receipt.line', string=u'收货明细', ondelete='cascade')
+    action_user = fields.Many2one(comodel_name='res.users', string=u'备注用户', default=lambda self: self.env.user)
+    action_time = fields.Datetime(string=u'时间', default=fields.Datetime.now, copy=False)
+    action_note = fields.Text(string=u'备注内容')

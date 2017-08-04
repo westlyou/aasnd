@@ -125,3 +125,19 @@ class AASStockDeliveryLabelLineWizard(models.TransientModel):
         if operationlines and len(operationlines) > 0:
             operationlines.unlink()
         return result
+
+
+class AASStockDeliveryNoteWizard(models.TransientModel):
+    _name = "aas.stock.delivery.note.wizard"
+    _description = u"发货备注向导"
+
+    delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'发货单', ondelete='cascade')
+    delivery_line = fields.Many2one(comodel_name='aas.stock.delivery.line', string=u'发货明细', ondelete='cascade')
+    action_note = fields.Text(string=u'备注内容')
+
+    @api.one
+    def action_done(self):
+        notevals = {'action_note': self.action_note, 'delivery_id': self.delivery_id.id}
+        if self.delivery_line:
+            notevals['delivery_line'] = self.delivery_line.id
+        self.env['aas.stock.delivery.note'].create(notevals)

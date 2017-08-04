@@ -27,6 +27,8 @@
                     <header>
                         <button name="action_cancel" type="object" string="取消入库" class="oe_highlight"
                                 attrs="{'invisible':[('state','in',['draft','done','cancel'])]}"/>
+                        <button name="action_note" string="收货备注" type="object" class="oe_highlight"
+                                attrs="{'invisible':[('state','in',['draft','done','cancel'])]}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,receipt,done,cancel"/>
                     </header>
                     <sheet>
@@ -163,8 +165,26 @@
                                     </form>
                                 </field>
                             </page>
-                            <page string="备注信息">
-                                <field name="remark"/>
+                            <page string="备注明细">
+                                <field name="note_lines" readonly="1">
+                                    <tree edit="false" delete="1" editable="top">
+                                        <field name="action_time"/>
+                                        <field name="action_user"/>
+                                        <field name="action_note"/>
+                                    </tree>
+                                    <form edit="false" delete="1">
+                                        <group>
+                                            <group><field name="action_time"/></group>
+                                            <group><field name="action_user"/></group>
+                                        </group>
+                                        <group>
+                                            <div>
+                                                <label for="action_note" string="备注"/>
+                                                <field name="action_note" required="1"/>
+                                            </div>
+                                        </group>
+                                    </form>
+                                </field>
                             </page>
                         </notebook>
                     </sheet>
@@ -202,6 +222,8 @@
                                 attrs="{'invisible':[('need_push','=',False)]}"/>
                         <button name="action_push_done" type="object" string="确认上架" class="oe_highlight"
                                 attrs="{'invisible':[('doing_qty','=',0.0)]}"/>
+                        <button name="action_note" string="收货备注" type="object" class="oe_highlight"
+                                attrs="{'invisible':[('state','in',['draft','done','cancel'])]}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,tocheck,checked,done,cancel"/>
                     </header>
                     <sheet>
@@ -283,6 +305,27 @@
                                             <field name="push_user"/>
                                             <field name="push_time"/>
                                             <field name="push_onshelf"/>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="备注明细">
+                                <field name="note_lines" readonly="1">
+                                    <tree edit="false" delete="1" editable="top">
+                                        <field name="action_time"/>
+                                        <field name="action_user"/>
+                                        <field name="action_note"/>
+                                    </tree>
+                                    <form edit="false" delete="1">
+                                        <group>
+                                            <group><field name="action_time"/></group>
+                                            <group><field name="action_user"/></group>
+                                        </group>
+                                        <group>
+                                            <div>
+                                                <label for="action_note" string="备注"/>
+                                                <field name="action_note" required="1"/>
+                                            </div>
                                         </group>
                                     </form>
                                 </field>

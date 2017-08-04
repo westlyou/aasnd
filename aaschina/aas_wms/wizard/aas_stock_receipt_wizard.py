@@ -381,3 +381,20 @@ class AASStockReceiptLabelDelWizard(models.TransientModel):
     def create(self, vals):
         self.action_before_create(vals)
         super(AASStockReceiptLabelDelWizard, self).create(vals)
+
+
+
+class AASStockReceiptNoteWizard(models.TransientModel):
+    _name = "aas.stock.receipt.note.wizard"
+    _description = u"收货备注向导"
+
+    receipt_id = fields.Many2one(comodel_name='aas.stock.receipt', string=u'收货单', ondelete='cascade')
+    receipt_line = fields.Many2one(comodel_name='aas.stock.receipt.line', string=u'收货明细', ondelete='cascade')
+    action_note = fields.Text(string=u'备注内容')
+
+    @api.one
+    def action_done(self):
+        notevals = {'action_note': self.action_note, 'receipt_id': self.receipt_id.id}
+        if self.receipt_line:
+            notevals['receipt_line'] = self.receipt_line.id
+        self.env['aas.stock.receipt.note'].create(notevals)

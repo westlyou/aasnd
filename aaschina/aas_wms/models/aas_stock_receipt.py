@@ -32,6 +32,7 @@ class AASStockReceipt(models.Model):
     label_lines = fields.One2many(comodel_name='aas.stock.receipt.label', inverse_name='receipt_id', string=u'收货标签')
     operation_lines = fields.One2many(comodel_name='aas.stock.receipt.operation', inverse_name='receipt_id', string=u'收货作业')
     move_lines = fields.One2many(comodel_name='aas.stock.receipt.move', inverse_name='receipt_id', string=u'执行明细')
+    note_lines = fields.One2many(comodel_name='aas.stock.receipt.note', inverse_name='receipt_id', string=u'备注明细')
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
 
@@ -214,6 +215,29 @@ class AASStockReceipt(models.Model):
         return values
 
 
+    @api.multi
+    def action_note(self):
+        """
+        添加备注
+        :return:
+        """
+        self.ensure_one()
+        wizard = self.env['aas.stock.receipt.note.wizard'].create({'receipt_id': self.id})
+        view_form = self.env.ref('aas_wms.view_form_aas_stock_receipt_note_wizard')
+        return {
+            'name': u"收货备注",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.stock.receipt.note.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
+
 class AASStockReceiptLine(models.Model):
     _name = 'aas.stock.receipt.line'
     _description = u'收货明细'
@@ -237,6 +261,7 @@ class AASStockReceiptLine(models.Model):
     label_list = fields.One2many(comodel_name='aas.stock.receipt.label', inverse_name='line_id', string=u'收货标签')
     operation_list = fields.One2many(comodel_name='aas.stock.receipt.operation', inverse_name='line_id', string=u'收货作业')
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
+    note_lines = fields.One2many(comodel_name='aas.stock.receipt.note', inverse_name='receipt_line', string=u'备注明细')
 
     product_code = fields.Char(string=u'产品编码')
 
@@ -365,6 +390,30 @@ class AASStockReceiptLine(models.Model):
         if not templabels or len(templabels) <= 0:
             self.receipt_id.write({'state': 'done', 'done_time': fields.Datetime.now()})
 
+
+    @api.multi
+    def action_note(self):
+        """
+        添加备注
+        :return:
+        """
+        self.ensure_one()
+        wizard = self.env['aas.stock.receipt.note.wizard'].create({
+            'receipt_id': self.receipt_id.id, 'receipt_line': self.id
+        })
+        view_form = self.env.ref('aas_wms.view_form_aas_stock_receipt_note_wizard')
+        return {
+            'name': u"收货备注",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.stock.receipt.note.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
 
 
 class AASStockReceiptLabel(models.Model):
@@ -598,3 +647,15 @@ class AASStockReceiptMoveReport(models.Model):
     def init(self):
         drop_view_if_exists(self._cr, self._table)
         self._cr.execute("""CREATE or REPLACE VIEW %s as ( %s FROM %s %s )""" % (self._table, self._select(), self._from(), self._group_by()))
+
+
+class AASStockReceiptNote(models.Model):
+    _name = 'aas.stock.receipt.note'
+    _description = u'收货备注清单'
+    _order = "id desc"
+
+    receipt_id = fields.Many2one(comodel_name='aas.stock.receipt', string=u'收货单', ondelete='cascade')
+    receipt_line = fields.Many2one(comodel_name='aas.stock.receipt.line', string=u'收货明细', ondelete='cascade')
+    action_user = fields.Many2one(comodel_name='res.users', string=u'备注用户', default=lambda self: self.env.user)
+    action_time = fields.Datetime(string=u'时间', default=fields.Datetime.now, copy=False)
+    action_note = fields.Text(string=u'备注内容')
