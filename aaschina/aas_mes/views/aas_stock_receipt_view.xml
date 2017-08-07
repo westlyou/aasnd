@@ -31,16 +31,16 @@
                         </group>
                         <group>
                             <group>
-                                <button name="action_receipt_labels" string="标签入库" type="object" icon="fa-list" class="oe_highlight"
+                                <button name="action_receipt_labels" string="标签退料" type="object" icon="fa-list" class="oe_highlight"
                                         attrs="{'invisible':[('state','!=','draft')]}"/>
                             </group>
                             <group>
-                                <button name="action_label_list" string="无标签入库" type="object" icon="fa-list" class="oe_highlight"
+                                <button name="action_label_list" string="无标签退料" type="object" icon="fa-list" class="oe_highlight"
                                         attrs="{'invisible':[('state','!=','draft')]}" />
                             </group>
                         </group>
                         <notebook>
-                            <page string="收货明细">
+                            <page string="退料明细">
                                 <field name="receipt_lines" readonly="1">
                                     <tree>
                                         <field name="product_id"/>
@@ -66,7 +66,7 @@
                                     </form>
                                 </field>
                             </page>
-                            <page string="收货标签">
+                            <page string="退料标签">
                                 <field name="label_lines" readonly="1">
                                     <tree>
                                         <field name="label_id"/>
@@ -95,9 +95,6 @@
                                         </group>
                                     </from>
                                 </field>
-                            </page>
-                            <page string="备注信息">
-                                <field name="remark"/>
                             </page>
                         </notebook>
                     </sheet>
