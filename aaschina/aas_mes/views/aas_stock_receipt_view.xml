@@ -131,7 +131,7 @@
         </record>
 
         <menuitem id="menu_aas_stock_receipt_manreturn_mes"  name="生产退料" action="action_aas_stock_receipt_manreturn_mes"
-                          parent="menu_aas_mes_material" sequence="2" groups="aas_mes.group_aas_manufacture_user"/>
+                          parent="menu_aas_mes_material" sequence="2" groups="aas_mes.group_aas_material_picker"/>
 
 
         <record id="action_aas_stock_receipt_move_report_manreturn" model="ir.actions.act_window">
@@ -237,9 +237,6 @@
                                         </group>
                                     </from>
                                 </field>
-                            </page>
-                            <page string="备注信息">
-                                <field name="remark"/>
                             </page>
                         </notebook>
                     </sheet>
