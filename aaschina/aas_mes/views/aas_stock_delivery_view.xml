@@ -60,6 +60,7 @@
                                         <field name="product_qty" required="1" string="领料数量"/>
                                         <field name="delivery_qty" readonly="1" string="已领数量"/>
                                         <field name="confirm_qty" readonly="1"/>
+                                        <field name="picking_qty" readonly="1"/>
                                     </tree>
                                     <form>
                                         <group>
