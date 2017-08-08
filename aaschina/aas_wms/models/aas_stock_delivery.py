@@ -264,7 +264,6 @@ class AASStockDeliveryLine(models.Model):
                 'product_code': tempproduct.default_code,
                 'current_qty': tempproduct.get_current_qty()
             })
-        print vals
 
 
     @api.model

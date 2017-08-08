@@ -390,8 +390,8 @@ class ProductProduct(models.Model):
     @api.multi
     def get_current_qty(self):
         self.ensure_one()
-        labeldomain = [('product_id', '=', self.id), ('state', 'in', ['normal', 'frozen'])]
-        labeldomain.extend([('locked', '=', False), ('location_id.edgelocation', '=', False)])
+        labeldomain = [('product_id', '=', self.id), ('state', '=', 'normal'), ('locked', '=', False)]
+        labeldomain.extend([('location_id.edgelocation', '=', False), ('location_id.mrblocation', '=', False)])
         product_labels = self.env['aas.product.label'].search(labeldomain)
         if product_labels and len(product_labels) > 0:
             return sum([plabel.product_qty for plabel in product_labels])
