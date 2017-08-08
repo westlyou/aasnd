@@ -245,11 +245,10 @@ class AASStockDeliveryLine(models.Model):
             else:
                 record.pickable = True
 
-
     @api.onchange('product_id')
     def action_change_product(self):
         if self.product_id:
-            self.product_uom, self.current_qty = self.product_id.uom_id.id, self.product_id.qty_available
+            self.product_uom, self.current_qty = self.product_id.uom_id.id, self.product_id.get_current_qty()
         else:
             self.product_uom, self.current_qty = False, 0.0
 
@@ -263,8 +262,9 @@ class AASStockDeliveryLine(models.Model):
             vals.update({
                 'product_uom': tempproduct.uom_id.id,
                 'product_code': tempproduct.default_code,
-                'current_qty': tempproduct.qty_available
+                'current_qty': tempproduct.get_current_qty()
             })
+        print vals
 
 
     @api.model
