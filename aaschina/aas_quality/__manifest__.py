@@ -1,11 +1,11 @@
 # -*-  coding: utf-8 -*-
 
 {
-    'name': u'安费诺质量管理',
+    'name': u'安费诺质量',
     'version': '1.0',
     'category': 'Zhiq Amphenol',
     'sequence': 3,
-    'summary': u'安费诺质量管理',
+    'summary': u'安费诺质量',
     'description': """
         安费诺质量管理
      """,

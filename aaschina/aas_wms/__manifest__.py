@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 {
-    'name': u'安费诺仓库管理',
+    'name': u'安费诺库存',
     'version': '1.0',
     'category': 'Zhiq Amphenol',
     'sequence': 2,
-    'summary': u'安费诺仓库管理',
+    'summary': u'安费诺库存',
     'description': """
-        安费诺仓库管理
+        安费诺库存管理
     """,
     'author': 'Luforn',
     'website': 'http://www.zhiq.info',
