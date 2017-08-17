@@ -1,0 +1,41 @@
+@charset "utf-8";
+
+.equipment_status {
+  margin: -3px 2px -5px 2px;
+  display: inline-block;
+  height: 20px;
+  width: 20px;
+  border-radius: 10px;
+  background-position: center center;
+  box-shadow: 0 0 3px;
+}
+
+.equipment_kanban_left {
+  display: inline-block;
+  float: left;
+  padding-right: 8px;
+  height: 100%;
+}
+.equipment_kanban_left .equipment_status {
+  display: block;
+  margin: 7px 22px;
+}
+
+.equipment_status_color_1 {
+  background-color: #00A65A;
+}
+.equipment_status_color_2 {
+  background-color: #00C0EF;
+}
+.equipment_status_color_3 {
+  background-color: #3C8DBC;
+}
+.equipment_status_color_4 {
+  background-color: #F56954;
+}
+.equipment_status_color_5 {
+  background-color: #F39C12;
+}
+.equipment_status_color_6 {
+  background-color: #D2D6DE;
+}

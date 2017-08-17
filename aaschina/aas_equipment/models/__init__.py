@@ -9,3 +9,4 @@
 
 import aas_base_models
 import aas_equipment_data
+import aas_equipment_equipment

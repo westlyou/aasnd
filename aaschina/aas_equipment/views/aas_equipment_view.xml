@@ -5,7 +5,7 @@
         <menuitem id="menu_aas_equipment" name="设备"  sequence="4"
                   groups="group_aas_equipment_user,group_aas_equipment_mechanic,group_aas_equipment_manager"/>
 
-        <menuitem id="menu_aas_equipment_information"  name="设备信息" parent="menu_aas_equipment" sequence="10"
+        <menuitem id="menu_aas_equipment_information"  name="设备" parent="menu_aas_equipment" sequence="1"
                 groups="group_aas_equipment_user,group_aas_equipment_mechanic,group_aas_equipment_manager"/>
 
     </data>
