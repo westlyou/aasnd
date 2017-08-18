@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <template id="assets_backend" name="AAS Employee Assets" inherit_id="web.assets_backend">
+            <xpath expr="." position="inside">
+                <link rel="stylesheet" href="/aas_hr/static/src/css/employee.css"/>
+            </xpath>
+        </template>
+
+        <menuitem id="menu_aas_hr" name="HR"  sequence="6" groups="aas_hr.group_aas_hr_user,aas_hr.group_aas_hr_manager"/>
+
+    </data>
+</odoo>

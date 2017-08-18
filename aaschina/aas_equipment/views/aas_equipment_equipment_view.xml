@@ -72,7 +72,8 @@
             <field name="name">aas.equipment.equipment.kanban</field>
             <field name="model">aas.equipment.equipment</field>
             <field name="arch" type="xml">
-                <kanban>
+                <kanban default_group_by="state"
+                        group_create="false" group_edit="false" group_delete="false">
                     <field name="name"/>
                     <field name="code"/>
                     <field name="state"/>

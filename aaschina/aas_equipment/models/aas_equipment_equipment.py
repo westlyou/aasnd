@@ -26,6 +26,7 @@ class AASEquipmentCategory(models.Model):
     _description = 'AAS Equipment Category'
 
     name = fields.Char(string=u'名称', copy=False)
+    company = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'请不要重复添加同一个名称！')
@@ -46,12 +47,13 @@ class AASEquipmentEquipment(models.Model):
     category = fields.Many2one(comodel_name='aas.equipment.category', string=u'类别')
     purchase_date = fields.Date(string=u'采购日期', default=fields.Date.today, copy=False)
     state_color = fields.Integer(string=u'状态颜色值', compute='_compute_state_color', store=True)
-    state = fields.Selection(selection=EQUIPMENTSTATES, string=u'状态', default='normal', copy=False)
+    state = fields.Selection(selection=EQUIPMENTSTATES, string=u'状态', default='normal', readonly=True)
     priority = fields.Selection(EQUIPMENTPRIORITY, string=u'设备等级', index=True, default='common')
 
     image = fields.Binary("Image")
     image_small = fields.Binary("Small-sized image")
     image_medium = fields.Binary("Medium-sized image")
+    company = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     _sql_constraints = [
         ('uniq_code', 'unique (code)', u'设备编码已存在，请不要重复添加！')

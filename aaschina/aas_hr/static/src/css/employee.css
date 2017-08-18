@@ -1,0 +1,38 @@
+@charset "utf-8";
+
+.employee_status {
+  margin: -3px 2px -5px 2px;
+  display: inline-block;
+  height: 20px;
+  width: 20px;
+  border-radius: 10px;
+  background-position: center center;
+  box-shadow: 0 0 3px;
+}
+
+.employee_kanban_left {
+  display: inline-block;
+  float: left;
+  padding-right: 8px;
+  height: 100%;
+}
+.employee_kanban_left .employee_status {
+  display: block;
+  margin: 7px 22px;
+}
+
+.employee_status_color_1 {
+  background-color: #00C0EF;
+}
+.employee_status_color_2 {
+  background-color: #F56954;
+}
+.employee_status_color_3 {
+  background-color: #FFCA28;
+}
+.employee_status_color_4 {
+  background-color: #FF8F00;
+}
+.employee_status_color_5 {
+  background-color: #D2D6DE;
+}
