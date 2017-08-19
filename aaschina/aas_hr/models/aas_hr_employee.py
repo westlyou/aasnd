@@ -69,3 +69,16 @@ class AASHREmployee(models.Model):
         statedict = {'working': 1, 'leave': 2, 'atop': 3, 'vacation': 4, 'dimission': 5}
         for record in self:
             record.state_color = statedict[record.state]
+
+
+
+class AASHRAttendance(models.Model):
+    _name = 'aas.hr.attendance'
+    _description = 'AAS HR Attendance'
+    _rec_name = 'employee'
+
+    employee = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict')
+    time_start = fields.Datetime(string=u'开始时间', default=fields.Datetime.now, copy=False)
+    time_finish = fields.Datetime(string=u'结束时间', copy=False)
+    worktime = fields.Float(string=u'工时', default=0.0)
+

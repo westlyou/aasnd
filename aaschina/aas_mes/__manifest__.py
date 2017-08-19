@@ -11,7 +11,7 @@
     """,
     'author': 'Luforn',
     'website': 'http://www.zhiq.info',
-    'depends': ['aas_wms'],
+    'depends': ['aas_wms', 'aas_equipment'],
     'data': [
         'security/aas_mes_security.xml',
         'security/ir.model.access.csv',
