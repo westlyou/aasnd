@@ -30,13 +30,13 @@ class AASHREmployee(models.Model):
         image_path = get_module_resource('aas_hr', 'static/src/images', 'default_image.png')
         return tools.image_resize_image_big(open(image_path, 'rb').read().encode('base64'))
 
-    name = fields.Char(string=u'名称')
-    code = fields.Char(string=u'工号')
+    name = fields.Char(string=u'名称', index=True)
+    code = fields.Char(string=u'工号', index=True)
     barcode = fields.Char(string=u'条码')
     leader_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'领导')
     login_user = fields.Many2one(comodel_name='res.users', string=u'登录账号')
     active = fields.Boolean(string=u'是否有效', default=True, copy=False)
-    state = fields.Selection(selection=EMPLOYEESTATES, string=u'状态', default='leave', readonly=True)
+    state = fields.Selection(selection=EMPLOYEESTATES, string=u'状态', default='leave', index=True, readonly=True)
     state_color = fields.Integer(string=u'状态颜色值', compute='_compute_state_color', store=True)
     birthday = fields.Date(string=u'生日', copy=False)
     identification_id = fields.Char(string=u'身份证号')
@@ -55,12 +55,10 @@ class AASHREmployee(models.Model):
     image = fields.Binary("Photo", default=_default_image, attachment=True,
         help="This field holds the image used as photo for the employee, limited to 1024x1024px.")
     image_medium = fields.Binary("Medium-sized photo", attachment=True,
-        help="Medium-sized photo of the employee. It is automatically "
-             "resized as a 128x128px image, with aspect ratio preserved. "
+        help="Medium-sized photo of the employee. It is automatically resized as a 128x128px image, with aspect ratio preserved. "
              "Use this field in form views or some kanban views.")
     image_small = fields.Binary("Small-sized photo", attachment=True,
-        help="Small-sized photo of the employee. It is automatically "
-             "resized as a 64x64px image, with aspect ratio preserved. "
+        help="Small-sized photo of the employee. It is automatically resized as a 64x64px image, with aspect ratio preserved. "
              "Use this field anywhere a small image is required.")
 
 
@@ -69,16 +67,4 @@ class AASHREmployee(models.Model):
         statedict = {'working': 1, 'leave': 2, 'atop': 3, 'vacation': 4, 'dimission': 5}
         for record in self:
             record.state_color = statedict[record.state]
-
-
-
-class AASHRAttendance(models.Model):
-    _name = 'aas.hr.attendance'
-    _description = 'AAS HR Attendance'
-    _rec_name = 'employee'
-
-    employee = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict')
-    time_start = fields.Datetime(string=u'开始时间', default=fields.Datetime.now, copy=False)
-    time_finish = fields.Datetime(string=u'结束时间', copy=False)
-    worktime = fields.Float(string=u'工时', default=0.0)
 
