@@ -18,7 +18,9 @@
         'views/aas_mes_view.xml',
         'views/aas_stock_delivery_view.xml',
         'views/aas_stock_receipt_view.xml',
-        'views/aas_stock_report_view.xml'
+        'views/aas_stock_report_view.xml',
+        'views/aas_mes_manufacture_view.xml',
+        'wizard/aas_mes_manufacture_wizard_view.xml'
     ],
     'qweb':[],
     'installable': True,

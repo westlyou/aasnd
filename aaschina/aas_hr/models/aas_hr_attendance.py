@@ -21,13 +21,15 @@ _logger = logging.getLogger(__name__)
 class AASHRAttendance(models.Model):
     _name = 'aas.hr.attendance'
     _description = 'AAS HR Attendance'
-    _rec_name = 'employee'
+    _rec_name = 'employee_id'
+    _order = 'id desc'
 
-    employee = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', index=True, ondelete='restrict')
+    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', index=True, ondelete='restrict')
     time_start = fields.Datetime(string=u'开始时间', default=fields.Datetime.now, copy=False)
     time_finish = fields.Datetime(string=u'结束时间', copy=False)
     work_time = fields.Float(string=u'工时', compute='_compute_worktime', store=True)
     work_date = fields.Char(string=u'工作日', compute='_compute_workdate', store=True, index=True)
+    work_over = fields.Boolean(string=u'出勤结束', compute='_compute_worktime', store=True)
 
     @api.model
     def get_local_work_date(self, datetime, tz='Asia/Shanghai'):
@@ -45,11 +47,13 @@ class AASHRAttendance(models.Model):
             if record.time_start and record.time_finish:
                 temptimes = fields.Datetime.from_string(record.time_finish) - fields.Datetime.from_string(record.time_start)
                 record.work_time = temptimes.total_seconds() / 3600.00
+                record.work_over = True
             else:
                 record.work_time = 0.00
+                record.work_over = False
 
 
-    @api.depends('time_start', 'time_finish')
+    @api.depends('time_start')
     def _compute_workdate(self):
         tz_name = self._context.get('tz') or self.env.user.tz
         for record in self:
@@ -57,3 +61,16 @@ class AASHRAttendance(models.Model):
                 record.work_date = self.get_local_work_date(record.time_start, tz=tz_name)
             else:
                 record.work_date = ''
+
+    @api.model
+    def action_attend(self, employee_id):
+        attendance = self.env['aas.hr.attendance'].search([('employee_id', '=', employee_id.id), ('work_over', '=', False)], limit=1)
+        if not attendance:
+            attendance = self.env['aas.hr.attendance'].create({'employee_id': employee_id.id, 'time_start': fields.Datetime.now()})
+            employee_id.write({'state': 'working'})
+        else:
+            attendance.write({'time_finish': fields.Datetime.now()})
+            employee_id.write({'state': 'leave'})
+        return attendance
+
+

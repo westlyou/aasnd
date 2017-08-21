@@ -55,6 +55,7 @@
                     <field name="work_phone"/>
                     <field name="work_email"/>
                     <field name="state"/>
+                    <field name="entry_time"/>
                 </tree>
             </field>
         </record>
@@ -82,7 +83,7 @@
                                         <field name="gender" widget="radio"/>
                                         <field name="identification_id"/>
                                         <field name="marital"/>
-                                        <field name="login_user" readonly="1"/>
+                                        <field name="entry_time"/>
                                     </group>
                                     <group>
                                         <field name="work_phone"/>
@@ -92,6 +93,28 @@
                                         <field name="address_home"/>
                                     </group>
                                 </group>
+                            </page>
+                            <page string="出勤信息">
+                                <field name="attendance_lines" readonly="1">
+                                    <tree>
+                                        <field name="time_start"/>
+                                        <field name="time_finish"/>
+                                        <field name="work_time"/>
+                                        <field name="work_date"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="time_start"/>
+                                                <field name="time_finish"/>
+                                            </group>
+                                            <group>
+                                                <field name="work_time"/>
+                                                <field name="work_date"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
                             </page>
                         </notebook>
                     </sheet>

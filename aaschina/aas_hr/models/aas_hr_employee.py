@@ -49,7 +49,10 @@ class AASHREmployee(models.Model):
     work_phone = fields.Char(string=u'工作电话')
     work_email = fields.Char(string=u'工作邮箱')
     work_location = fields.Char(string=u'办公地址')
-    company = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
+    entry_time = fields.Datetime(string=u'入职时间', default=fields.Datetime.now, copy=False)
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
+
+    attendance_lines = fields.One2many(comodel_name='aas.hr.attendance', inverse_name='employee_id', string=u'出勤记录')
 
 
     image = fields.Binary("Photo", default=_default_image, attachment=True,

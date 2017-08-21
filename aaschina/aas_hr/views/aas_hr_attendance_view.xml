@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <tree>
                     <field name="work_date"/>
-                    <field name="employee"/>
+                    <field name="employee_id"/>
                     <field name="time_start"/>
                     <field name="time_finish"/>
                     <field name="work_time"/>
@@ -25,7 +25,7 @@
                 <form>
                     <sheet>
                         <group>
-                            <group> <field name="employee" options="{'no_create':true}"/> </group>
+                            <group> <field name="employee_id" options="{'no_create':true}"/> </group>
                             <group></group>
                         </group>
                         <group>
@@ -48,10 +48,10 @@
             <field name="model">aas.hr.attendance</field>
             <field name="arch" type="xml">
                 <search>
-                    <field name="employee" string="员工" filter_domain="[('employee','ilike',self)]"/>
+                    <field name="employee_id" string="员工" filter_domain="[('employee_id','ilike',self)]"/>
                     <field name="work_date" string="工作日" filter_domain="[('work_date','=',self)]"/>
                     <group expand="0" string="分组">
-                        <filter string="员工" context="{'group_by':'employee'}"/>
+                        <filter string="员工" context="{'group_by':'employee_id'}"/>
                         <filter string="工作日" context="{'group_by':'work_date'}"/>
                     </group>
                 </search>

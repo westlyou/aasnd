@@ -19,8 +19,8 @@ class AASProductLabel(models.Model):
 
     name = fields.Char(string=u'名称', copy=False)
     barcode = fields.Char(string='Barcode', copy=False)
-    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', required=True, ondelete='restrict')
-    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', required=True, ondelete='restrict')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', required=True, index=True, ondelete='restrict')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', required=True, index=True, ondelete='restrict')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='set null')
     location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='restrict')
@@ -385,6 +385,38 @@ class AASProductLabelJournal(models.Model):
 
 class ProductProduct(models.Model):
     _inherit = 'product.product'
+
+
+    stock_labels = fields.One2many(comodel_name='aas.product.label', inverse_name='product_id', string=u'当前库存标签',
+        domain=[('state', '=', 'normal'), ('locked', '=', False), ('location_id.edgelocation', '=', False),
+            ('location_id.mrblocation', '=', False), ('location_id.usage', '=', 'internal')])
+
+    edge_labels = fields.One2many(comodel_name='aas.product.label', inverse_name='product_id', string=u'线边库存标签',
+        domain=[('state', '=', 'normal'), ('locked', '=', False), ('location_id.edgelocation', '=', True)])
+
+    stock_qty = fields.Float(string=u'仓库库存', digits=dp.get_precision('Product Unit of Measure'),
+                             compute='_compute_stock_qty', store=True)
+
+    edge_qty = fields.Float(string=u'线边库存', digits=dp.get_precision('Product Unit of Measure'),
+                             compute='_compute_edge_qty', store=True)
+
+    @api.depends('stock_labels.product_qty')
+    def _compute_stock_qty(self):
+        for record in self:
+            if record.stock_labels and len(record.stock_labels) > 0:
+                record.stock_qty = sum([plabel.product_qty for plabel in record.stock_labels])
+            else:
+                record.stock_qty = 0.0
+
+
+    @api.depends('edge_labels.product_qty')
+    def _compute_edge_qty(self):
+        for record in self:
+            if record.edge_labels and len(record.edge_labels) > 0:
+                record.edge_qty = sum([plabel.product_qty for plabel in record.edge_labels])
+            else:
+                record.edge_qty = 0.0
+
 
 
     @api.multi
