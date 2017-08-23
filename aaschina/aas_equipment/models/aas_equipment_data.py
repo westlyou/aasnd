@@ -15,6 +15,7 @@ from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.tools.float_utils import float_compare, float_is_zero
 from odoo.exceptions import UserError, ValidationError
 
+import pytz
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -25,16 +26,68 @@ class AASEquipmentData(models.Model, RedisModel):
     _description = 'AAS Equipment Data'
     _rec_name = 'app_code'
 
+    data = fields.Text(string=u'数据集')
     app_code = fields.Char(string=u'设备编码')
     app_secret = fields.Integer(string=u'秘钥')
-    staff_code = fields.Char(string=u'员工编码')
-    station_code = fields.Char(string=u'工位编码')
-    job_code = fields.Char(string=u'工单编码')
-    product_code = fields.Char(string=u'产品编码')
-    operate_time = fields.Datetime(string=u'操作时间')
     timstamp = fields.Datetime(string=u'传输时间')
+    operate_time = fields.Datetime(string=u'操作时间')
     data_type = fields.Selection(selection=[('D', 'Debug'), ('P', 'Production'), ('T', 'Test')], string=u'数据类型')
-    data = fields.Text(string=u'数据集')
+
+    station_code = fields.Char(string=u'工位编码')
+    product_code = fields.Char(string=u'成品编码')
+    job_id = fields.Integer(string=u'主工单')
+    job_code = fields.Char(string=u'主工单号')
+    workorder_id = fields.Integer(string=u'子工单')
+    workorder_code = fields.Integer(string=u'子工单号')
+    staff_code = fields.Char(string=u'员工编码')
+    staff_name = fields.Char(string=u'员工名称')
+    material_info = fields.Text(string=u'原料信息')
+
+    @api.model
+    def utctimestr2localtimestr(self, timestr):
+        if not timestr:
+            return False
+        temptime = pytz.timezone('UTC').localize(fields.Datetime.from_string(timestr), is_dst=False)
+        return fields.Datetime.to_string(temptime.astimezone(pytz.timezone('UTC')))
+
+    @api.model
+    def localtimestr2utctimestr(self, localtimestr):
+        if not localtimestr:
+            return False
+        tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
+        temptime = pytz.timezone('UTC').localize(fields.Datetime.from_string(localtimestr), is_dst=False)
+        return fields.Datetime.to_string(temptime.astimezone(pytz.timezone(tz_name)))
+
+
+    @api.model
+    def utctime2localtimestr(self, utctime):
+        if not utctime:
+            return False
+        temptime = pytz.timezone('UTC').localize(utctime, is_dst=False)
+        return fields.Datetime.to_string(temptime.astimezone(pytz.timezone('UTC')))
+
+    @api.model
+    def localtimestr2utctime(self, localtimestr):
+        if not localtimestr:
+            return False
+        tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
+        temptime = pytz.timezone('UTC').localize(fields.Datetime.from_string(localtimestr), is_dst=False)
+        return temptime.astimezone(pytz.timezone(tz_name))
+
+    @api.model
+    def localtime2utctimestr(self, localtime):
+        if not localtime:
+            return False
+        tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
+        temptime = pytz.timezone('UTC').localize(localtime, is_dst=False)
+        return fields.Datetime.to_string(temptime.astimezone(pytz.timezone(tz_name)))
+
+
+
+
+
+
+
 
     @api.model
     def action_persist_data(self):
@@ -52,27 +105,46 @@ class AASEquipmentData(models.Model, RedisModel):
                 break
             if not record:
                 continue
-            recorddata = ''
-            if record['data']:
-                recorddata = record['data']
-                if isinstance(record['data'], dict):
-                    recorddata = self.json2str(record['data'])
-            self.env['aas.equipment.data'].create({
-                'app_code': record['app_code']+'01', 'app_secret': record['app_secret'], 'staff_code': record['staff_code'],
-                'job_code': record['job_code'], 'product_code': record['product_code'], 'station_code': record['station_code'],
-                'operate_time': '2017-07-09 14:29:11',
-                'timstamp': '2017-07-09 14:29:50',
-                # 'timstamp': fields.Datetime.to_string(fields.Datetime.context_timestamp(self, record.timstamp)),
-                'data_type': record['data_type'], 'data': recorddata
-            })
+            if not isinstance(record, dict):
+                continue
+            datavals = {'data': False, 'app_code': record.get('app_code', False)}
+            datavals.update({'app_secret': record.get('app_secret', False), 'data_type': record.get('data_type', False)})
+            appdata = record.get('data', False)
+            timstamp, operate_time = record.get('timstamp', False),  record.get('operate_time', False)
+            if timstamp:
+                if isinstance(timstamp, (str, unicode)):
+                    datavals['timstamp'] = self.localtimestr2utctimestr(timstamp)
+                else:
+                    datavals['timstamp'] = self.localtime2utctimestr(timstamp)
+            if operate_time:
+                if isinstance(operate_time, (str, unicode)):
+                    datavals['operate_time'] = self.localtimestr2utctimestr(operate_time)
+                else:
+                    datavals['operate_time'] = self.localtime2utctimestr(operate_time)
+            if appdata and isinstance(appdata, dict):
+                datavals.update({
+                    'data': self.json2str(appdata), 'station_code': appdata.get('station_code', False),
+                    'product_code': appdata.get('product_code', False), 'job_id': appdata.get('job_id', False),
+                    'job_code': appdata.get('job_code', False), 'workorder_id': appdata.get('workorder_id', False),
+                    'workorder_code': appdata.get('workorder_code', False), 'staff_code': appdata.get('staff_code', False),
+                    'staff_name': appdata.get('staff_name', False), 'material_info': appdata.get('material_info', False)
+                })
+            if datavals and len(datavals) > 0:
+                self.env['aas.equipment.data'].create(datavals)
+
+
+
 
 
     @api.one
     def action_push_data(self):
         record = {
-            'app_code': 'EQ0001', 'app_secret': 121232423, 'staff_code': 'EM0002', 'job_code': '1535530',
-            'product_code': 'A-1743', 'station_code': 'ST00006', 'operate_time': '2017-07-09 14:29:50',
-            'timstamp': '2017-07-09 14:29:50', 'data_type': 'P', 'data': {'Tempresure': 337.5, 'Presdf': 224}
+            'app_code': 'EQ0001', 'app_secret': 121232423,
+            'timstamp': '2017-07-09 14:29:50', 'data_type': 'P', 'operate_time': '2017-07-09 14:29:50',
+            'data': {
+                'Tempresure': 337.5, 'Presdf': 224, 'job_code': '1535530',
+                'product_code': 'A-1743', 'station_code': 'ST00006', 'staff_code': 'EM0002'
+            }
         }
         self.redis_push(record)
 

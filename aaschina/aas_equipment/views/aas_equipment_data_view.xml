@@ -10,13 +10,16 @@
                 <tree create="false" edit="false" delete="false">
                     <field name="app_code"/>
                     <field name="app_secret"/>
-                    <field name="staff_code"/>
-                    <field name="job_code"/>
-                    <field name="product_code"/>
-                    <field name="station_code"/>
                     <field name="operate_time"/>
                     <field name="timstamp"/>
                     <field name="data_type"/>
+                    <field name="product_code"/>
+                    <field name="station_code"/>
+                    <field name="job_code"/>
+                    <field name="workorder_code"/>
+                    <field name="staff_code"/>
+                    <field name="staff_name"/>
+                    <field name="material_info"/>
                 </tree>
             </field>
         </record>
@@ -27,30 +30,34 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form create="false" edit="false" delete="false">
+                    <header>
+                        <button name="action_push_data" string="推送数据" type="object" class="oe_highlight"/>
+                    </header>
                     <sheet>
                         <group>
                             <group>
                                 <field name="app_code"/>
                                 <field name="app_secret"/>
-                                <field name="staff_code"/>
-                                <field name="station_code"/>
-
+                                <field name="data_type"/>
                             </group>
                             <group>
-                                <field name="job_code"/>
-                                <field name="product_code"/>
+                                <field name="station_code"/>
                                 <field name="operate_time"/>
                                 <field name="timstamp"/>
                             </group>
                         </group>
                         <group>
-                            <group><field name="data_type"/></group>
+                            <group>
+                                <field name="product_code"/>
+                                <field name="job_code"/>
+                                <field name="workorder_code"/>
+                            </group>
+                            <group>
+                                <field name="staff_code"/>
+                                <field name="staff_name"/>
+                                <field name="material_info"/>
+                            </group>
                         </group>
-                        <notebook>
-                            <page string="数据集">
-                                <field name="data"/>
-                            </page>
-                        </notebook>
                     </sheet>
                 </form>
             </field>
@@ -63,9 +70,11 @@
                 <search>
                     <field name="app_code" string="设备编码" filter_domain="[('app_code','ilike',self)]"/>
                     <field name="staff_code" string="员工编码" filter_domain="[('staff_code','ilike',self)]"/>
+                    <field name="staff_name" string="员工名称" filter_domain="[('staff_name','ilike',self)]"/>
                     <field name="station_code" string="工位编码" filter_domain="[('station_code','ilike',self)]"/>
-                    <field name="job_code" string="工单编码" filter_domain="[('job_code','ilike',self)]"/>
-                    <field name="product_code" string="产品编码" filter_domain="[('product_code','ilike',self)]"/>
+                    <field name="job_code" string="主工单号" filter_domain="[('job_code','ilike',self)]"/>
+                    <field name="workorder_code" string="子工单号" filter_domain="[('workorder_code','ilike',self)]"/>
+                    <field name="product_code" string="成品编码" filter_domain="[('product_code','ilike',self)]"/>
                     <separator/>
                     <filter string="调试数据" domain="[('data_type','=','D')]"/>
                     <filter string="生产数据" domain="[('data_type','=','P')]"/>
@@ -75,8 +84,9 @@
                         <filter string="设备编码" context="{'group_by':'app_code'}"/>
                         <filter string="员工编码" context="{'group_by':'staff_code'}"/>
                         <filter string="工位编码" context="{'group_by':'station_code'}"/>
-                        <filter string="工单编码" context="{'group_by':'job_code'}"/>
-                        <filter string="产品编码" context="{'group_by':'product_code'}"/>
+                        <filter string="主工单号" context="{'group_by':'job_code'}"/>
+                        <filter string="子工单号" context="{'group_by':'workorder_code'}"/>
+                        <filter string="成品编码" context="{'group_by':'product_code'}"/>
                         <filter string="数据类型" context="{'group_by':'data_type'}"/>
                     </group>
                 </search>
