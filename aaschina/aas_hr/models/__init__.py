@@ -8,4 +8,3 @@
 """
 
 import aas_hr_employee
-import aas_hr_attendance

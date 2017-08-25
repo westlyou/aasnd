@@ -32,7 +32,7 @@ class AASHREmployee(models.Model):
 
     name = fields.Char(string=u'名称', index=True)
     code = fields.Char(string=u'工号', index=True)
-    barcode = fields.Char(string=u'条码')
+    barcode = fields.Char(string=u'条码', compute='_compute_barcode', store=True)
     leader_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'领导')
     login_user = fields.Many2one(comodel_name='res.users', string=u'登录账号')
     active = fields.Boolean(string=u'是否有效', default=True, copy=False)
@@ -52,8 +52,6 @@ class AASHREmployee(models.Model):
     entry_time = fields.Datetime(string=u'入职时间', default=fields.Datetime.now, copy=False)
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
-    attendance_lines = fields.One2many(comodel_name='aas.hr.attendance', inverse_name='employee_id', string=u'出勤记录')
-
 
     image = fields.Binary("Photo", default=_default_image, attachment=True,
         help="This field holds the image used as photo for the employee, limited to 1024x1024px.")
@@ -70,4 +68,12 @@ class AASHREmployee(models.Model):
         statedict = {'working': 1, 'leave': 2, 'atop': 3, 'vacation': 4, 'dimission': 5}
         for record in self:
             record.state_color = statedict[record.state]
+
+
+    @api.multi
+    @api.depends('code')
+    def _compute_barcode(self):
+        for record in self:
+            record.barcode = 'AM'+record.code
+
 

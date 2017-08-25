@@ -16,8 +16,7 @@
         'security/aas_hr_security.xml',
         'security/ir.model.access.csv',
         'views/aas_hr_view.xml',
-        'views/aas_hr_employee_view.xml',
-        'views/aas_hr_attendance_view.xml'
+        'views/aas_hr_employee_view.xml'
     ],
     'qweb':[],
     'installable': True,

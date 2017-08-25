@@ -11,7 +11,7 @@
     """,
     'author': 'Luforn',
     'website': 'http://www.zhiq.info',
-    'depends': ['aas_wms', 'aas_equipment'],
+    'depends': ['aas_wms', 'aas_equipment', 'aas_hr'],
     'data': [
         'security/aas_mes_security.xml',
         'security/ir.model.access.csv',
@@ -20,7 +20,8 @@
         'views/aas_stock_receipt_view.xml',
         'views/aas_stock_report_view.xml',
         'views/aas_mes_manufacture_view.xml',
-        'wizard/aas_mes_manufacture_wizard_view.xml'
+        'wizard/aas_mes_manufacture_wizard_view.xml',
+        'views/aas_mes_working_view.xml'
     ],
     'qweb':[],
     'installable': True,

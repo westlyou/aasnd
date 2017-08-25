@@ -94,28 +94,6 @@
                                     </group>
                                 </group>
                             </page>
-                            <page string="出勤信息">
-                                <field name="attendance_lines" readonly="1">
-                                    <tree>
-                                        <field name="time_start"/>
-                                        <field name="time_finish"/>
-                                        <field name="work_time"/>
-                                        <field name="work_date"/>
-                                    </tree>
-                                    <form>
-                                        <group>
-                                            <group>
-                                                <field name="time_start"/>
-                                                <field name="time_finish"/>
-                                            </group>
-                                            <group>
-                                                <field name="work_time"/>
-                                                <field name="work_date"/>
-                                            </group>
-                                        </group>
-                                    </form>
-                                </field>
-                            </page>
                         </notebook>
                     </sheet>
                 </form>

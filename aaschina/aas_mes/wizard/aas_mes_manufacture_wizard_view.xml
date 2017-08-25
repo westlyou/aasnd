@@ -11,11 +11,7 @@
                         <group>
                             <field name="employee_id" readonly="1"/>
                         </group>
-                        <group></group>
-                    </group>
-                    <group>
-                        <group> <field name="mesline_id" options="{'no_create':true}" required="1"/> </group>
-                        <group> <field name="schedule_id" options="{'no_create':true}" required="1" domain="[('mesline_id','=',mesline_id)]"/> </group>
+                        <group><field name="mesline_id" options="{'no_create':true}" required="1"/></group>
                     </group>
                     <footer>
                         <button name="action_done" string="确认" type="object" class="btn-primary"/>
@@ -42,38 +38,6 @@
                             <field name="employee_lines">
                                 <tree editable="bottom">
                                     <field name="employee_id" options="{'no_create':true}" required="1"/>
-                                    <field name="schedule_id" options="{'no_create':true}" required="1" domain="[('mesline_id','=',parent.mesline_id)]"/>
-                                </tree>
-                            </field>
-                        </page>
-                    </notebook>
-                    <footer>
-                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
-                        <button string="取消" class="btn-default" special="cancel"/>
-                    </footer>
-                </form>
-            </field>
-        </record>
-
-
-        <record id="view_form_aas_mes_schedule_allocate_wizard" model="ir.ui.view">
-            <field name="name">aas.mes.schedule.allocate.wizard</field>
-            <field name="model">aas.mes.schedule.allocate.wizard</field>
-            <field name="arch" type="xml">
-                <form>
-                    <group>
-                        <group>
-                            <field name="schedule_id" readonly="1"/>
-                        </group>
-                        <group>
-                            <field name="mesline_id" readonly="1"/>
-                        </group>
-                    </group>
-                    <notebook>
-                        <page string="员工清单">
-                            <field name="employee_lines">
-                                <tree editable="bottom">
-                                    <field name="employee_id" required="1" options="{'no_create':true}"/>
                                 </tree>
                             </field>
                         </page>

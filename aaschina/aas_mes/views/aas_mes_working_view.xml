@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_kanban_aas_mes_workstation" model="ir.ui.view">
+            <field name="name">aas.mes.workstation.kanban</field>
+            <field name="model">aas.mes.workstation</field>
+            <field name="arch" type="xml">
+                <kanban default_group_by="mesline_id"
+                        create="false" edit="false" delete="false"
+                        group_create="false" group_edit="false" group_delete="false">
+                    <field name="name"/>
+                    <field name="mesline_id"/>
+                    <field name="employeelist"/>
+                    <field name="equipmentlist"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_vignette oe_kanban_global_click">
+                                <div class="oe_kanban_details">
+                                    <h4> <a type="open" style="font-size:20px;"><field name="name"/></a> </h4>
+                                    <ul>
+                                        <li>员工: <field name="employeelist"/></li>
+                                        <li>设备: <field name="equipmentlist"/></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <record id="view_tree_aas_mes_workstation" model="ir.ui.view">
+            <field name="name">aas.mes.workstation.tree</field>
+            <field name="model">aas.mes.workstation</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="mesline_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_workstation" model="ir.ui.view">
+            <field name="name">aas.mes.workstation.form</field>
+            <field name="model">aas.mes.workstation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group> <field name="name"/> </group>
+                            <group> <field name="mesline_id"/> </group>
+                        </group>
+                        <notebook>
+                            <page string="员工清单">
+                                <field name="employee_lines" readonly="1">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="code"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group><field name="name"/></group>
+                                            <group><field name="code"/></group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="设备明细" readonly="1">
+                                <field name="equipment_lines">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="code"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group><field name="name"/></group>
+                                            <group><field name="code"/></group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_workstation" model="ir.ui.view">
+            <field name="name">aas.mes.workstation.search</field>
+            <field name="model">aas.mes.workstation</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="mesline_id" string="生产线" filter_domain="[('mesline_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="生产线" context="{'group_by':'mesline_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_workstation" model="ir.actions.act_window">
+            <field name="name">生产工位</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.workstation</field>
+            <field name="limit">50</field>
+            <field name="view_mode">kanban,form,tree</field>
+            <field name="view_id" ref="view_kanban_aas_mes_workstation"/>
+            <field name="search_view_id" ref="view_search_aas_mes_workstation"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加生产工位</p>
+            </field>
+        </record>
+
+        <record id="act_view_kanban_aas_mes_workstation" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">kanban</field>
+            <field name="view_id" ref="view_kanban_aas_mes_workstation"/>
+            <field name="act_window_id" ref="action_aas_mes_workstation"/>
+        </record>
+
+        <record id="act_view_tree_aas_mes_workstation" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_workstation"/>
+            <field name="act_window_id" ref="action_aas_mes_workstation"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_workstation" model="ir.actions.act_window.view">
+            <field name="sequence" eval="3"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_workstation"/>
+            <field name="act_window_id" ref="action_aas_mes_workstation"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_workstation"  name="工位" action="action_aas_mes_workstation"
+                          parent="menu_aas_mes_resources" sequence="6" groups="group_aas_manufacture_foreman"/>
+
+        <record id="view_form_aas_equipment_equipment_mes" model="ir.ui.view">
+            <field name="name">aas.equipment.equipment.aas.form</field>
+            <field name="model">aas.equipment.equipment</field>
+            <field name="inherit_id" ref="aas_equipment.view_form_aas_equipment_equipment"/>
+            <field name="arch" type="xml">
+                <field name="purchase_date" position="after">
+                    <field name="mesline_id" options="{'no_create':true}"/>
+                </field>
+                <field name="supplier" position="after">
+                    <field name="workstation_id" options="{'no_create':true}" domain="[('mesline_id','=',mesline_id)]"/>
+                </field>
+            </field>
+        </record>
+
+        <record id="view_tree_aas_hr_employee_mes_workstation" model="ir.ui.view">
+            <field name="name">aas.hr.employee.mes.workstation.tree</field>
+            <field name="model">aas.hr.employee</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="aas_mes.view_tree_aas_hr_employee_mes"/>
+            <field name="arch" type="xml">
+                <field name="mesline_id" position="after">
+                    <field name="workstation_id"/>
+                </field>
+            </field>
+        </record>
+
+        <record id="view_form_aas_hr_employee_mes_workstation" model="ir.ui.view">
+            <field name="name">aas.hr.employee.mes.workstation.form</field>
+            <field name="model">aas.hr.employee</field>
+            <field name="inherit_id" ref="aas_mes.view_form_aas_hr_employee_mes"/>
+            <field name="arch" type="xml">
+                <field name="mesline_id" position="after">
+                    <field name="workstation_id" options="{'no_create':true}"/>
+                </field>
+            </field>
+        </record>
+
+        <record id="view_tree_aas_mes_work_attendance" model="ir.ui.view">
+            <field name="name">aas.mes.work.attendance.tree</field>
+            <field name="model">aas.mes.work.attendance</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="attend_date"/>
+                    <field name="employee_id"/>
+                    <field name="mesline_id"/>
+                    <field name="workstation_id"/>
+                    <field name="equipment_id"/>
+                    <field name="attendance_start"/>
+                    <field name="attendance_finish"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_work_attendance" model="ir.ui.view">
+            <field name="name">aas.mes.work.attendance.form</field>
+            <field name="model">aas.mes.work.attendance</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="mesline_id" options="{'no_create':true}"/>
+                                <field name="workstation_id" options="{'no_create':true}" domain="[('mesline_id','=',mesline_id)]"/>
+                            </group>
+                            <group>
+                                <field name="employee_id" options="{'no_create':true}"/>
+                                <field name="equipment_id" options="{'no_create':true}"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="attend_date"/>
+                                <field name="attendance_start"/>
+                                <field name="attendance_finish"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_work_attendance" model="ir.ui.view">
+            <field name="name">aas.mes.work.attendance.search</field>
+            <field name="model">aas.mes.work.attendance</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="mesline_name" string="产线名称" filter_domain="[('mesline_name','ilike',self)]"/>
+                    <field name="employee_name" string="员工名称" filter_domain="[('employee_name','ilike',self)]"/>
+                    <field name="employee_code" string="员工工号" filter_domain="[('employee_code','ilike',self)]"/>
+                    <field name="equipment_name" string="设备名称" filter_domain="[('equipment_name','ilike',self)]"/>
+                    <field name="equipment_code" string="设备编码" filter_domain="[('equipment_code','ilike',self)]"/>
+                    <field name="workstation_name" string="工位名称" filter_domain="[('workstation_name','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="产线" context="{'group_by':'mesline_id'}"/>
+                        <filter string="工位" context="{'group_by':'workstation_id'}"/>
+                        <filter string="员工" context="{'group_by':'employee_id'}"/>
+                        <filter string="设备" context="{'group_by':'equipment_id'}"/>
+                        <filter string="日期" context="{'group_by':'attend_date'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_work_attendance" model="ir.actions.act_window">
+            <field name="name">员工出勤</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.work.attendance</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_work_attendance"/>
+            <field name="search_view_id" ref="view_search_aas_mes_work_attendance"/>
+        </record>
+
+        <record id="act_view_tree_aas_mes_work_attendance" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_work_attendance"/>
+            <field name="act_window_id" ref="action_aas_mes_work_attendance"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_work_attendance" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_work_attendance"/>
+            <field name="act_window_id" ref="action_aas_mes_work_attendance"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_work_attendance"  name="员工出勤" action="action_aas_mes_work_attendance"
+                          parent="menu_aas_mes_resources" sequence="7" groups="aas_mes.group_aas_manufacture_user,aas_mes.group_aas_manufacture_foreman"/>
+
+    </data>
+</odoo>
