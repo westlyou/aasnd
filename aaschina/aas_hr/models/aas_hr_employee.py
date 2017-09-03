@@ -32,7 +32,7 @@ class AASHREmployee(models.Model):
 
     name = fields.Char(string=u'名称', index=True)
     code = fields.Char(string=u'工号', index=True)
-    barcode = fields.Char(string=u'条码', compute='_compute_barcode', store=True)
+    barcode = fields.Char(string=u'条码', compute='_compute_barcode', store=True, index=True)
     leader_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'领导')
     login_user = fields.Many2one(comodel_name='res.users', string=u'登录账号')
     active = fields.Boolean(string=u'是否有效', default=True, copy=False)

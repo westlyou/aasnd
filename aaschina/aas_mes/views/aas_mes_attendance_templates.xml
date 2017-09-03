@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="aas_attendance_scanner" name="AAS MES Attendance Scanner Test">
+        &lt;!DOCTYPE html&gt;
+        <html>
+            <head>
+                <meta charset="utf-8" />
+                <title>安费诺先进传感器</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                <meta name="apple-mobile-web-app-capable" content="yes"/>
+                <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/skins/skin-blue.min.css"/>
+                <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+                <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+                <!--[if lt IE 9]>
+                   <script src="/aas_base/static/libs/html5shiv.min.js"></script>
+                   <script src="/aas_base/static/libs/respond.min.js"></script>
+                <![endif]-->
+            </head>
+            <body class="hold-transition skin-blue fixed">
+                <div class="wrapper">
+                    <header class="main-header">
+                        <a href="#" class="logo">
+                            <span><b>安费诺先进传感器</b></span>
+                        </a>
+                        <nav class="navbar navbar-static-top">
+                            <div class="navbar-custom-menu">
+                                <ul class="nav navbar-nav">
+                                    <li class="dropdown messages-menu">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                            <i class="fa fa-user"></i> <span t-esc="checker"/>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li class="header">欢迎您，<t t-esc="checker"/></li>
+                                            <li>
+                                                <ul class="menu">
+                                                    <li>
+                                                        <a href="/web/session/logout">注销</a>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>
+                        </nav>
+                    </header>
+                    <aside class="main-sidebar">
+                        <section class="sidebar">
+                            <ul class="sidebar-menu">
+                                <li class="header"><t t-esc="mesline_name"/>工位</li>
+                                <t t-foreach="workstations" t-as="station">
+                                    <li class="station" t-att-stationid="station['station_id']"
+                                            t-att-stationname="station['station_name']">
+                                        <a href="#">
+                                            <span t-esc="station['station_name']"/>
+                                        </a>
+                                    </li>
+                                </t>
+                            </ul>
+                        </section>
+                    </aside>
+                    <div class="content-wrapper">
+                        <section class="content-header">
+                            <h1>当前工位：<span id="cstation" stationid="0"></span> </h1>
+                            <h1>当前员工：<span id="cemployee" employeeid="0"></span> </h1>
+                        </section>
+                        <section class="content" style="display:table; min-height:500px;">
+                            <div style="display: table-cell; vertical-align:middle;">
+                                <span t-esc="message"/>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="main-footer">
+                        <div class="container" style="text-align:center;">
+                            <span>
+                                Copyright © 安费诺先进传感器 &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <a href="http://www.miitbeian.gov.cn" target="_blank">苏ICP备16061622</a>
+                            </span>
+                        </div>
+                    </footer>
+                </div>
+                <script src="/aas_base/static/libs/jquery/jquery-2.2.4.min.js"></script>
+                <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
+                <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
+                <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
+                <script src="/aas_base/static/libs/layer/layer.js"></script>
+                <script src="/aas_base/static/libs/vscanner.js"></script>
+                <script src="/aas_mes/static/src/js/mes_attendance_scanner.js"></script>
+            </body>
+        </html>
+    </template>
+
+</odoo>
