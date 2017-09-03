@@ -153,7 +153,10 @@ class AASMESAttendanceChecker(models.Model):
 
     @api.one
     def action_after_create(self):
-        self.checker_id.write({'action_id': self.env.ref('aas_mes.aas_mes_attendance_scanner').id})
+        self.checker_id.write({
+            'action_id': self.env.ref('aas_mes.aas_mes_attendance_scanner').id,
+            'groups_id': [(4, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]
+        })
 
     @api.multi
     def unlink(self):
@@ -161,7 +164,10 @@ class AASMESAttendanceChecker(models.Model):
         for record in self:
             users |= record.checker_id
         result = super(AASMESAttendanceChecker, self).unlink()
-        users.write({'action_id': False})
+        users.write({
+            'action_id': False,
+            'groups_id': [(3, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]
+        })
         return result
 
 
