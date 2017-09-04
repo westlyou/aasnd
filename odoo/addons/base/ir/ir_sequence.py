@@ -167,7 +167,12 @@ class IrSequence(models.Model):
             return (s % d) if s else ''
 
         def _interpolation_dict():
-            now = range_date = effective_date = datetime.now(pytz.timezone(self._context.get('tz') or 'UTC'))
+            # Odoo原代码
+            # now = range_date = effective_date = datetime.now(pytz.timezone(self._context.get('tz') or 'UTC'))
+
+            # 修复根据当前用户时区
+            tz_name = self.env.user.tz or self.env.context.get('tz') or 'Asia/Shanghai'
+            now = range_date = effective_date = datetime.now(pytz.timezone(tz_name))
             if self._context.get('ir_sequence_date'):
                 effective_date = datetime.strptime(self._context.get('ir_sequence_date'), '%Y-%m-%d')
             if self._context.get('ir_sequence_date_range'):

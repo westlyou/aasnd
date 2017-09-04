@@ -126,7 +126,14 @@ class AASDeliveryWechatController(http.Controller):
         if line_id:
             deliveryline = request.env['aas.stock.delivery.line'].browse(line_id)
             delivery_id = deliveryline.delivery_id.id
-        label = request.env['aas.product.label'].search([('barcode', '=', barcode)], limit=1)
+            product_ids = [deliveryline.product_id.id]
+        else:
+            deliverylines = request.env['aas.stock.delivery.line'].search([('delivery_id', '=', delivery_id)])
+            product_ids = [dline.product_id.id for dline in deliverylines]
+        label = request.env['aas.product.label'].search([('barcode', '=', barcode), ('product_id', 'in', product_ids)], limit=1)
+        if not label:
+            values.update({'success': False, 'message': u'扫描异常，未查询到此标签！'})
+            return values
         pickingdomain = [('delivery_id', '=', delivery_id), ('product_id', '=', label.product_id.id)]
         pickingdomain.extend([('product_lot', '=', label.product_lot.id), ('location_id', '=', label.location_id.id)])
         pickinglistcount = request.env['aas.stock.picking.list'].search_count(pickingdomain)
@@ -306,7 +313,7 @@ class AASDeliveryWechatController(http.Controller):
         if not label:
             values.update({'success': False, 'message': u'标签可能已删除！'})
             return values
-        if label.state!='normal':
+        if label.state != 'normal':
             values.update({'success': False, 'message': u'标签状态异常不可以用于发货！'})
             return values
         if label.locked:
