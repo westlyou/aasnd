@@ -23,6 +23,7 @@ class AASMESWorkstation(models.Model):
     _description = 'AAS MES Workstation'
 
     name = fields.Char(string=u'名称', required=True, copy=False)
+    code = fields.Char(string=u'编码', required=True, copy=False)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'生产线', ondelete='restrict')
     active = fields.Boolean(string=u'是否有效', default=True, copy=False)
     station_type = fields.Selection(selection=[('scanner', u'扫描工位'), ('controller', u'工控工位')], string=u'工位类型', default='scanner', copy=False)
@@ -54,7 +55,7 @@ class AASMESWorkstation(models.Model):
 
 
     _sql_constraints = [
-        ('uniq_mesline_name', 'unique (mesline_id, name)', u'同一产线的工位名称不能重复！')
+        ('uniq_mesline_code', 'unique (mesline_id, code)', u'同一产线的工位编码不能重复！')
     ]
 
     @api.one

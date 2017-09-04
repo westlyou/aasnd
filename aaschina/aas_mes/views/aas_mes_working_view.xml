@@ -10,6 +10,7 @@
                         create="false" edit="false" delete="false"
                         group_create="false" group_edit="false" group_delete="false">
                     <field name="name"/>
+                    <field name="code"/>
                     <field name="mesline_id"/>
                     <field name="station_type"/>
                     <field name="employeelist"/>
@@ -20,6 +21,7 @@
                                 <div class="oe_kanban_details">
                                     <h4> <a type="open" style="font-size:20px;"><field name="name"/></a> </h4>
                                     <ul>
+                                        <li>编码：<field name="code"/></li>
                                         <li>类型：<field name="station_type"/></li>
                                         <li>员工: <field name="employeelist"/></li>
                                         <li>设备: <field name="equipmentlist"/></li>
@@ -39,6 +41,7 @@
             <field name="arch" type="xml">
                 <tree>
                     <field name="name"/>
+                    <field name="code"/>
                     <field name="mesline_id"/>
                     <field name="station_type"/>
                 </tree>
@@ -56,11 +59,14 @@
                     </header>
                     <sheet>
                         <group>
-                            <group><field name="name" required="1"/></group>
-                        </group>
-                        <group>
-                            <group> <field name="mesline_id" options="{'no_create':true}" required="1"/> </group>
-                            <group> <field name="station_type" required="1"/> </group>
+                            <group>
+                                <field name="name" required="1"/>
+                                <field name="mesline_id" options="{'no_create':true}" required="1"/>
+                            </group>
+                            <group>
+                                <field name="code" required="1"/>
+                                <field name="station_type" required="1"/>
+                            </group>
                         </group>
                         <notebook>
                             <page string="员工清单">
