@@ -115,7 +115,7 @@
             <field name="model">aas.equipment.equipment</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree labelprint="true">
                     <field name="code"/>
                     <field name="name"/>
                     <field name="category"/>
@@ -132,7 +132,7 @@
             <field name="model">aas.equipment.equipment</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form>
+                <form labelprint="true">
                     <header>
                         <field name="state" widget="statusbar" statusbar_visible="normal,test,produce,repair,maintain,scrap"/>
                     </header>

@@ -48,7 +48,7 @@
             <field name="model">aas.hr.employee</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree labelprint="true">
                     <field name="name"/>
                     <field name="code"/>
                     <field name="gender"/>
@@ -65,7 +65,7 @@
             <field name="model">aas.hr.employee</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form>
+                <form labelprint="true">
                     <header>
                         <field name="state" widget="statusbar" statusbar_visible="working,leave,atop,vacation,dimission"/>
                     </header>
