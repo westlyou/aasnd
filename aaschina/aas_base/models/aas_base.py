@@ -42,16 +42,17 @@ class IRSequence(models.Model):
         temp_sequence = self.env['ir.sequence'].search([('code', '=', sequence_code)], limit=1)
         if not temp_sequence or not temp_sequence.loop_type:
             return super(IRSequence, self).next_by_code(sequence_code)
-        tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
+        tz_name = self.env.user.tz or self.env.context.get('tz') or 'Asia/Shanghai'
         temptime = fields.Datetime.from_string(temp_sequence.loop_time)
-        looptime = self.convert2timezonetime(temptime, tzname=tz_name).strftime('%Y-%m-%d')
-        currenttime= datetime.now().strftime('%Y-%m-%d')
+        loopdate = self.convert2timezonetime(temptime, tzname=tz_name).strftime('%Y-%m-%d')
+        currenttime = fields.Datetime.from_string(fields.Datetime.now())
+        currentdate = self.convert2timezonetime(currenttime, tzname=tz_name).strftime('%Y-%m-%d')
         temp_type, temp_flag = temp_sequence.loop_type, False
-        if (temp_type == 'year') and (currenttime[0:4] != looptime[0:4]):
+        if (temp_type == 'year') and (currentdate[0:4] != loopdate[0:4]):
             temp_flag = True
-        elif (temp_type == 'month') and (currenttime[0:7] != looptime[0:7]):
+        elif (temp_type == 'month') and (currentdate[0:7] != loopdate[0:7]):
             temp_flag = True
-        elif (temp_type == 'day') and (currenttime != looptime):
+        elif (temp_type == 'day') and (currentdate != loopdate):
             temp_flag = True
         if temp_flag:
             temp_sequence.sudo().alert_sequence()
