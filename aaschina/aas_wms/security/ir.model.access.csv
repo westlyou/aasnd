@@ -42,7 +42,12 @@ access_aas_stock_inventory_adjust_stock_user,aas.stock.inventory.adjust stock_us
 access_aas_stock_inventory_adjust_stock_manager,aas.stock.inventory.adjust stock_manager,model_aas_stock_inventory_adjust,stock.group_stock_manager,1,1,1,1
 access_aas_stock_inventory_move_stock_user,aas.stock.inventory.move stock_user,model_aas_stock_inventory_move,stock.group_stock_user,1,1,1,1
 access_aas_stock_inventory_move_stock_manager,aas.stock.inventory.move stock_manager,model_aas_stock_inventory_move,stock.group_stock_manager,1,1,1,1
-
+access_aas_stock_move_stock_user,aas.stock.move stock_user,model_aas_stock_move,stock.group_stock_user,1,1,1,1
+access_aas_stock_move_stock_manager,aas.stock.move stock_manager,model_aas_stock_move,stock.group_stock_manager,1,1,1,1
+access_aas_stock_move_line_stock_user,aas.stock.move.line stock_user,model_aas_stock_move_line,stock.group_stock_user,1,1,1,1
+access_aas_stock_move_line_stock_manager,aas.stock.move.line stock_manager,model_aas_stock_move_line,stock.group_stock_manager,1,1,1,1
+access_aas_stock_move_label_stock_user,aas.stock.move.label stock_user,model_aas_stock_move_label,stock.group_stock_user,1,1,1,1
+access_aas_stock_move_label_stock_manager,aas.stock.move.label stock_manager,model_aas_stock_move_label,stock.group_stock_manager,1,1,1,1
 
 access_aas_ebs_purchase_order_stock_user,aas.ebs.purchase.order stock_user,model_aas_ebs_purchase_order,stock.group_stock_user,1,0,0,0
 access_aas_ebs_purchase_order_stock_manager,aas.ebs.purchase.order stock_manager,model_aas_ebs_purchase_order,stock.group_stock_manager,1,0,0,0

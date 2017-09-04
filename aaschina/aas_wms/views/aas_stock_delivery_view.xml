@@ -110,7 +110,7 @@
         </record>
 
         <menuitem id="menu_aas_stock_delivery_move_report"  name="发货报表" action="action_aas_stock_delivery_move_report"
-                          parent="stock.menu_aas_stock_inventory" sequence="3" groups="stock.group_stock_user,stock.group_stock_manager"/>
+                          parent="stock.menu_aas_stock_inventory" sequence="4" groups="stock.group_stock_user,stock.group_stock_manager"/>
 
 
     </data>

@@ -387,42 +387,48 @@ class ProductProduct(models.Model):
     _inherit = 'product.product'
 
 
-    stock_labels = fields.One2many(comodel_name='aas.product.label', inverse_name='product_id', string=u'当前库存标签',
-        domain=[('state', '=', 'normal'), ('locked', '=', False), ('location_id.edgelocation', '=', False),
-            ('location_id.mrblocation', '=', False), ('location_id.usage', '=', 'internal')])
-
-    edge_labels = fields.One2many(comodel_name='aas.product.label', inverse_name='product_id', string=u'线边库存标签',
-        domain=[('state', '=', 'normal'), ('locked', '=', False), ('location_id.edgelocation', '=', True)])
+    stock_labels = fields.One2many(comodel_name='aas.product.label', inverse_name='product_id', string=u'库存标签',
+        domain=[('state', '=', 'normal'), ('locked', '=', False)])
 
     stock_qty = fields.Float(string=u'仓库库存', digits=dp.get_precision('Product Unit of Measure'),
                              compute='_compute_stock_qty', store=True)
 
     edge_qty = fields.Float(string=u'线边库存', digits=dp.get_precision('Product Unit of Measure'),
-                             compute='_compute_edge_qty', store=True)
+                             compute='_compute_stock_qty', store=True)
 
     @api.depends('stock_labels.product_qty')
     def _compute_stock_qty(self):
+        stockdict, edgedict = {}, {}
+        labeldomain = [('state', '=', 'normal'), ('locked', '=', False)]
+        stockdomain = labeldomain + [('location_id.mrblocation', '=', False), ('location_id.usage', '=', 'internal')]
+        stockdomain.append(('location_id.edgelocation', '=', False))
+        stocklabels = self.env['aas.product.label'].search(stockdomain)
+        edgedomain = labeldomain + [('location_id.edgelocation', '=', True)]
+        edgelabels = self.env['aas.product.label'].search(edgedomain)
+        if stocklabels and len(stocklabels) > 0:
+            for slabel in stocklabels:
+                skey = slabel.product_id.id
+                if skey in stockdict:
+                    stockdict[skey] += slabel.product_qty
+                else:
+                    stockdict[skey] = slabel.product_qty
+        if edgelabels and len(edgelabels) > 0:
+            for elabel in edgelabels:
+                ekey = elabel.product_id.id
+                if ekey in edgedict:
+                    edgedict[ekey] += elabel.product_qty
+                else:
+                    edgedict[ekey] = elabel.product_qty
         for record in self:
-            if record.stock_labels and len(record.stock_labels) > 0:
-                record.stock_qty = sum([plabel.product_qty for plabel in record.stock_labels])
-            else:
-                record.stock_qty = 0.0
-
-
-    @api.depends('edge_labels.product_qty')
-    def _compute_edge_qty(self):
-        for record in self:
-            if record.edge_labels and len(record.edge_labels) > 0:
-                record.edge_qty = sum([plabel.product_qty for plabel in record.edge_labels])
-            else:
-                record.edge_qty = 0.0
+            record.stock_qty = 0.0 if record.id not in stockdict else stockdict[record.id]
+            record.edge_qty = 0.0 if record.id not in edgedict else edgedict[record.id]
 
 
 
     @api.multi
     def get_current_qty(self):
         self.ensure_one()
-        labeldomain = [('product_id', '=', self.id), ('state', '=', 'normal'), ('locked', '=', False)]
+        labeldomain = [('product_id', '=', self.id), ('state', '=', 'normal'), ('locked', '=', False), ('location_id.usage', '=', 'internal')]
         labeldomain.extend([('location_id.edgelocation', '=', False), ('location_id.mrblocation', '=', False)])
         product_labels = self.env['aas.product.label'].search(labeldomain)
         if product_labels and len(product_labels) > 0:

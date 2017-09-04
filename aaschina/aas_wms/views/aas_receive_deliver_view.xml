@@ -54,7 +54,7 @@
         </record>
 
         <menuitem id="menu_aas_receive_deliver"  name="收发汇总" action="action_aas_receive_deliver"
-                          parent="stock.menu_aas_stock_inventory" sequence="4"/>
+                          parent="stock.menu_aas_stock_inventory" sequence="5"/>
 
     </data>
 </odoo>
