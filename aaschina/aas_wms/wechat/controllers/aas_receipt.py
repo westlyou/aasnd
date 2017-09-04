@@ -142,7 +142,7 @@ class AASReceiptWechatController(http.Controller):
         if not receiptline:
             values.update({'success': False, 'message': u'请仔细检查收货明细可能被删除了！'})
             return values
-        label = request.env['aas.product.label'].search([('barcode', '=', barcode)])
+        label = request.env['aas.product.label'].search([('barcode', '=', barcode), ('product_id', '=', receiptline.product_id.id)], limit=1)
         if not label:
             values.update({'success': False, 'message': u'无效标签， 请仔细检查是否标签已删除！'})
             return values
