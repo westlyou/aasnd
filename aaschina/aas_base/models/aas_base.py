@@ -55,7 +55,7 @@ class IRSequence(models.Model):
         elif (temp_type == 'day') and (currentdate != loopdate):
             temp_flag = True
         if temp_flag:
-            temp_sequence.sudo().alert_sequence()
+            temp_sequence.sudo().alert_sequence(number_increment=1, number_next=1)
             temp_sequence.sudo().write({'loop_time': fields.Datetime.now()})
         return super(IRSequence, self).next_by_code(sequence_code)
 
