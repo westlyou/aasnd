@@ -26,9 +26,19 @@ class AASMESAttendanceController(http.Controller):
         checker = request.env['aas.mes.attendance.checker'].search([('checker_id', '=', login.id)], limit=1)
         mesline = checker.mesline_id
         values['mesline_name'] = mesline.name
-        workstations = request.env['aas.mes.workstation'].search([('mesline_id', '=', mesline.id), ('station_type', '=', 'scanner')])
+        workstations = request.env['aas.mes.workstation'].search([('mesline_id', '=', mesline.id)])
         if workstations and len(workstations) > 0:
-            values['workstations'] = [{'station_id': station.id, 'station_name': station.name} for station in workstations]
+            stationlist = []
+            for station in workstations:
+                stationitem = {'station_id': station.id, 'station_name': station.name, 'station_type': station.station_type, 'employees': []}
+                employeelen = 0 if not station.employee_lines or len(station.employee_lines) <= 0 else len(station.employee_lines)
+                if employeelen > 0:
+                    stationitem['employees'] = [{'employee_name': employee.name, 'employee_code': employee.code} for employee in station.employee_lines]
+                if employeelen < 2:
+                    for index in range(0, 2-employeelen):
+                        stationitem['employees'].append({'employee_name': '', 'employee_code': ''})
+                stationlist.append(stationitem)
+            values['workstations'] = stationlist
         else:
             values.update({'success': False, 'message': u'暂时没有工位可以选择，请联系管理员或相关负责人！'})
         return request.render('aas_mes.aas_attendance_scanner', values)

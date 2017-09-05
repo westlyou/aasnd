@@ -1,6 +1,8 @@
 
 $(function() {
 
+    var scanable = true; //是否可以继续扫描
+
     $(document).on('click', 'li.station', function(e){
         var station = $(this);
         var stationid = station.attr('stationid');
@@ -60,6 +62,10 @@ $(function() {
 
     //上岗
     function action_working(){
+        if (!scanable){
+            layer.msg('操作正在处理，请稍后！', {icon: 5});
+            return ;
+        }
         var stationid = parseInt($('#cstation').attr('stationid'));
         var employeeid = parseInt($('#cemployee').attr('employeeid'));
         if(stationid <=0 || employeeid <= 0){
@@ -74,6 +80,7 @@ $(function() {
             type: 'post', timeout:10000, dataType: 'json',
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: actionparams, id: access_id}),
             success:function(data){
+                scanable = true;
                 var dresult = data.result;
                 if(!dresult.success){
                     layer.msg(dresult.message, {icon: 5});
@@ -86,7 +93,10 @@ $(function() {
                     });
                 }
             },
-            error:function(xhr,type,errorThrown){ console.log(type);}
+            error:function(xhr,type,errorThrown){
+                scanable = true;
+                console.log(type);
+            }
         });
     }
 

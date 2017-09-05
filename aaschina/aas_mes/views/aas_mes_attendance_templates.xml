@@ -52,11 +52,11 @@
                     <aside class="main-sidebar">
                         <section class="sidebar">
                             <ul class="sidebar-menu">
-                                <li class="header"><t t-esc="mesline_name"/>工位</li>
+                                <li class="header" style="font-size:22px;"><t t-esc="mesline_name"/>工位</li>
                                 <t t-foreach="workstations" t-as="station">
-                                    <li class="station" t-att-stationid="station['station_id']"
+                                    <li t-if="station['station_type']=='scanner'" class="station" t-att-stationid="station['station_id']"
                                             t-att-stationname="station['station_name']">
-                                        <a href="#">
+                                        <a href="#" style="font-size:20px;">
                                             <span t-esc="station['station_name']"/>
                                         </a>
                                     </li>
@@ -66,12 +66,42 @@
                     </aside>
                     <div class="content-wrapper">
                         <section class="content-header">
+                            <div style="text-align:center;width:100%;font-size:18px;"> <span t-esc="message"/> </div>
                             <h1>当前工位：<span id="cstation" stationid="0"></span> </h1>
                             <h1>当前员工：<span id="cemployee" employeeid="0"></span> </h1>
                         </section>
-                        <section class="content" style="display:table; min-height:500px;">
-                            <div style="display: table-cell; vertical-align:middle;">
-                                <span t-esc="message"/>
+                        <section class="content">
+                            <div class="row">
+                                <t t-foreach="workstations" t-as="station">
+                                    <div class="col-md-3">
+                                        <div class="box box-widget widget-user-2">
+                                            <div t-if="station['station_type']=='scanner'" class="widget-user-header bg-aqua">
+                                                <h3 class="widget-user-username" style="margin-left:0;">
+                                                    <t t-esc="station['station_name']"/>
+                                                </h3>
+                                            </div>
+                                            <div t-if="station['station_type']=='controller'" class="widget-user-header bg-green">
+                                                <h3 class="widget-user-username" style="margin-left:0;">
+                                                    <t t-esc="station['station_name']"/>
+                                                </h3>
+                                            </div>
+                                            <div class="box-footer no-padding">
+                                                <ul class="nav nav-stacked">
+                                                    <t t-if="station['employees']">
+                                                        <t t-foreach="station['employees']" t-as="semployee">
+                                                            <li>
+                                                                <a href="#" style="font-size:16px; padding:5px 15px; height:32px;">
+                                                                    <t t-esc="semployee['employee_name']"/>
+                                                                    <span class="pull-right" t-esc="semployee['employee_code']"/>
+                                                                </a>
+                                                            </li>
+                                                        </t>
+                                                    </t>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </t>
                             </div>
                         </section>
                     </div>
