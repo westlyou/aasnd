@@ -23,6 +23,7 @@ class AASStockReceiptProductWizard(models.TransientModel):
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     need_warranty = fields.Boolean(string=u'质保期', default=False)
     receipt_locked = fields.Boolean(string=u'锁定', default=False)
+    build_labels = fields.Boolean(string=u'是否生成标签', default=False)
     origin_order = fields.Char(string=u'来源单据')
     split_qty = fields.Float(string=u'拆分数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_lot_split')
     balance_qty = fields.Float(string=u'剩余数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_lot_split')
@@ -118,10 +119,10 @@ class AASStockReceiptProductWizard(models.TransientModel):
     @api.multi
     def action_done_labels(self):
         self.ensure_one()
-        if self.receipt_locked:
+        if self.build_labels:
             return False
         else:
-            self.write({'receipt_locked': True})
+            self.write({'build_labels': True})
         self.action_check_labels()
         receipt, product, lotdict = self.receipt_id, self.product_id, {}
         if receipt.receipt_type=='purchase':

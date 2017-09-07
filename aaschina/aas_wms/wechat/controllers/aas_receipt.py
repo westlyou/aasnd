@@ -424,6 +424,8 @@ class AASReceiptWechatController(http.Controller):
         try:
             receiptwizard.write({'label_lines': [(0, 0, labelval) for labelval in label_line_list]})
             receiptwizard.action_done_labels()
+            if not receiptwizard.line_id.label_related:
+                receiptwizard.write({'build_labels': False})
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
             return values
