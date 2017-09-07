@@ -70,3 +70,26 @@ class AASMESAttendanceController(http.Controller):
         request.env['aas.mes.work.attendance'].create({'employee_id': employeeid, 'workstation_id': stationid})
         values['message'] = u'亲，您已上岗！努力工作吧，加油！'
         return values
+
+
+    @http.route('/aasmes/attendance/refreshstations', type='json', auth="user")
+    def aasmes_attendance_refreshstations(self):
+        values = {'success': True, 'message': '', 'workstations': []}
+        checker = request.env['aas.mes.attendance.checker'].search([('checker_id', '=', request.env.user.id)], limit=1)
+        if not checker:
+            values.update({'success': False, 'message': u'请确认，当前用户可能已经不是生产考勤员了！'})
+            return values
+        workstations = request.env['aas.mes.workstation'].search([('mesline_id', '=', checker.mesline_id.id)])
+        if workstations and len(workstations) > 0:
+            stationlist = []
+            for station in workstations:
+                stationitem = {'station_id': station.id, 'station_name': station.name, 'station_type': station.station_type, 'employees': []}
+                employeelen = 0 if not station.employee_lines or len(station.employee_lines) <= 0 else len(station.employee_lines)
+                if employeelen > 0:
+                    stationitem['employees'] = [{'employee_name': employee.name, 'employee_code': employee.code} for employee in station.employee_lines]
+                if employeelen < 2:
+                    for index in range(0, 2-employeelen):
+                        stationitem['employees'].append({'employee_name': '', 'employee_code': ''})
+                stationlist.append(stationitem)
+            values['workstations'] = stationlist
+        return values

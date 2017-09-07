@@ -100,4 +100,49 @@ $(function() {
         });
     }
 
+    function refreshstations(){
+        console.log(new Date());
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        $.ajax({
+            url: '/aasmes/attendance/refreshstations',
+            headers:{'Content-Type':'application/json'},
+            type: 'post', timeout:10000, dataType: 'json',
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {}, id: access_id}),
+            success:function(data){
+                var dresult = data.result;
+                if(!dresult.success){
+                    layer.msg(dresult.message, {icon: 5});
+                    return ;
+                }
+                $('#workstationlist').html('');
+                if(dresult.workstations.length<=0){
+                    return ;
+                }
+                _.each(dresult.workstations, function(station){
+                    var stationblock = $('<div class="col-md-3"></div>').appendTo($('#workstationlist'));
+                    var stationcontent = $('<div class="box box-widget widget-user-2"></div>').appendTo(stationblock);
+                    var stationheader = $('<div class="widget-user-header"></div>').appendTo(stationcontent);
+                    if (station.station_type=='scanner'){
+                        stationheader.addClass('bg-aqua');
+                    }else{
+                        stationheader.addClass('bg-green');
+                    }
+                    stationheader.html('<h3 class="widget-user-username" style="margin-left:0;">'+station.station_name+'</h3>');
+                    var stationfooter = $('<div class="box-footer no-padding"></div>').appendTo(stationcontent);
+                    var footerbox = $('<ul class="nav nav-stacked"></ul>').appendTo(stationfooter);
+                    _.each(station.employees, function(semployee){
+                        $('<li><a href="#" style="font-size:18px; padding:5px 15px; height:32px; font-weight:bold;">' +
+                            semployee.employee_name+'<span class="pull-right">'+semployee.employee_code+'</span>' +
+                            '</a></li>').appendTo(footerbox);
+                    });
+                });
+            },
+            error:function(xhr,type,errorThrown){
+                console.log(type);
+            }
+        });
+    }
+    // 20秒刷新一次工位看板
+    var refreshinterval = setInterval(_.throttle(refreshstations, 20000), 20000);
+
 });
