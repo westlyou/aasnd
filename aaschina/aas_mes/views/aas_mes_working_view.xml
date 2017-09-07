@@ -281,6 +281,7 @@
                     <field name="equipment_id"/>
                     <field name="attendance_start"/>
                     <field name="attendance_finish"/>
+                    <field name="attendance_hours" widget="float_time"/>
                 </tree>
             </field>
         </record>
@@ -307,6 +308,7 @@
                                 <field name="attend_date"/>
                                 <field name="attendance_start"/>
                                 <field name="attendance_finish"/>
+                                <field name="attendance_hours" widget="float_time" readonly="1"/>
                             </group>
                         </group>
                     </sheet>

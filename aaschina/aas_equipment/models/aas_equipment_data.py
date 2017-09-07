@@ -38,7 +38,7 @@ class AASEquipmentData(models.Model, RedisModel):
     job_id = fields.Integer(string=u'主工单')
     job_code = fields.Char(string=u'主工单号')
     workorder_id = fields.Integer(string=u'子工单')
-    workorder_code = fields.Integer(string=u'子工单号')
+    workorder_code = fields.Char(string=u'子工单号')
     staff_code = fields.Char(string=u'员工编码')
     staff_name = fields.Char(string=u'员工名称')
     material_info = fields.Text(string=u'原料信息')
@@ -123,11 +123,11 @@ class AASEquipmentData(models.Model, RedisModel):
                     datavals['operate_time'] = self.localtime2utctimestr(operate_time)
             if appdata and isinstance(appdata, dict):
                 datavals.update({
-                    'data': self.json2str(appdata), 'station_code': appdata.get('station_code', False),
-                    'product_code': appdata.get('product_code', False), 'job_id': appdata.get('job_id', False),
-                    'job_code': appdata.get('job_code', False), 'workorder_id': appdata.get('workorder_id', False),
-                    'workorder_code': appdata.get('workorder_code', False), 'staff_code': appdata.get('staff_code', False),
-                    'staff_name': appdata.get('staff_name', False), 'material_info': appdata.get('material_info', False)
+                    'data': self.json2str(appdata), 'station_code': record.get('station_code', False),
+                    'product_code': record.get('product_code', False), 'job_id': record.get('job_id', False),
+                    'job_code': record.get('job_code', False), 'workorder_id': record.get('workorder_id', False),
+                    'workorder_code': record.get('workorder_code', False), 'staff_code': record.get('staff_code', False),
+                    'staff_name': record.get('staff_name', False), 'material_info': record.get('material_info', False)
                 })
             if datavals and len(datavals) > 0:
                 self.env['aas.equipment.data'].create(datavals)
@@ -141,10 +141,8 @@ class AASEquipmentData(models.Model, RedisModel):
         record = {
             'app_code': 'EQ0001', 'app_secret': 121232423,
             'timstamp': '2017-07-09 14:29:50', 'data_type': 'P', 'operate_time': '2017-07-09 14:29:50',
-            'data': {
-                'Tempresure': 337.5, 'Presdf': 224, 'job_code': '1535530',
-                'product_code': 'A-1743', 'station_code': 'ST00006', 'staff_code': 'EM0002'
-            }
+            'job_code': '1535530', 'product_code': 'A-1743', 'station_code': 'ST00006', 'staff_code': 'EM0002',
+            'data': {'Tempresure': 337.5, 'Presdf': 224}
         }
         self.redis_push(record)
 

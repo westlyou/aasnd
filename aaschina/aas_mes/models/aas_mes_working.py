@@ -98,7 +98,16 @@ class AASMESWorkAttendance(models.Model):
     attend_date = fields.Date(string=u'日期', default=fields.Date.today, copy=False)
     attendance_start = fields.Datetime(string=u'上岗时间', default=fields.Datetime.now, copy=False)
     attendance_finish = fields.Datetime(string=u'离岗时间', copy=False)
+    attendance_hours = fields.Float(string=u'工时', compute='_compute_attendance_hours', store=True)
     attend_done = fields.Boolean(string=u'是否结束', default=False, copy=False)
+
+    @api.depends('attendance_start', 'attendance_finish')
+    def _compute_attendance_hours(self):
+        for record in self:
+            record.attendance_hours = 0.0
+            if record.attendance_start and record.attendance_finish:
+                temptimes = fields.Datetime.from_string(record.attendance_finish) - fields.Datetime.from_string(record.attendance_start)
+                record.attendance_hours = temptimes.total_seconds() / 3600.00
 
     @api.model
     def create(self, vals):
@@ -158,6 +167,27 @@ class AASMESAttendanceChecker(models.Model):
             'action_id': self.env.ref('aas_mes.aas_mes_attendance_scanner').id,
             'groups_id': [(4, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]
         })
+
+    @api.multi
+    def write(self, vals):
+        oldcheckers, currentcheckerid = self.env['res.users'], False
+        if vals.get('checker_id'):
+            currentcheckerid = vals.get('checker_id', False)
+            for record in self:
+                oldcheckers |= record.checker_id
+        result = super(AASMESAttendanceChecker, self).write(vals)
+        if oldcheckers and len(oldcheckers) > 0:
+            oldcheckers.write({
+                'action_id': False,
+                'groups_id': [(3, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]
+            })
+        if currentcheckerid:
+            currentchecker = self.env['res.users'].browse(currentcheckerid)
+            currentchecker.write({
+                'action_id': self.env.ref('aas_mes.aas_mes_attendance_scanner').id,
+                'groups_id': [(4, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]
+            })
+        return result
 
     @api.multi
     def unlink(self):
