@@ -101,7 +101,6 @@ $(function() {
     }
 
     function refreshstations(){
-        console.log(new Date());
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
             url: '/aasmes/attendance/refreshstations',
