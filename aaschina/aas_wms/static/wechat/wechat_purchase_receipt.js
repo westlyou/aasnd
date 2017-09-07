@@ -73,7 +73,7 @@ mui.ready(function(){
 
     mui('#purchase_receipt_lines').on('tap', '.mui-btn', function(event) {
         var li = this.parentNode.parentNode;
-        mui.confirm('确认删除该条记录？', '清除上架', ['确认', '取消'], function(e) {
+        mui.confirm('确认删除该条记录？', '清除收货', ['确认', '取消'], function(e) {
             if(e.index!=0){
                 mui.swipeoutClose(li);
                 return ;

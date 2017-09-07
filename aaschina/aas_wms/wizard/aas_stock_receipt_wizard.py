@@ -118,6 +118,10 @@ class AASStockReceiptProductWizard(models.TransientModel):
     @api.multi
     def action_done_labels(self):
         self.ensure_one()
+        if self.receipt_locked:
+            return False
+        else:
+            self.write({'receipt_locked': True})
         self.action_check_labels()
         receipt, product, lotdict = self.receipt_id, self.product_id, {}
         if receipt.receipt_type=='purchase':

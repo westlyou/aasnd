@@ -225,7 +225,7 @@ mui.ready(function(){
         var donemask = aas_receipt_labellist_loading();
         mui.ajax('/aaswechat/wms/receipt/labellistdone', {
             data: JSON.stringify({jsonrpc: "2.0",method: 'call',params: label_params, id: lot_access_id}),
-            dataType: 'json', type: 'post', timeout: 30000,
+            dataType: 'json', type: 'post', timeout: 60000,
             headers: {'Content-Type': 'application/json'},
             success: function (data) {
                 confirm_label_flag = false;

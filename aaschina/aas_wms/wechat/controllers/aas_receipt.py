@@ -99,7 +99,8 @@ class AASReceiptWechatController(http.Controller):
             'product_qty': receiptline.product_qty, 'receipt_qty': receiptline.receipt_qty, 'doing_qty': receiptline.doing_qty,
             'labelscan': 'none', 'pushall': 'none', 'pushdone': 'none'
         })
-        if (receiptline.receipt_type=='purchase' and receiptline.state in ['checked', 'receipt']) or (receiptline.receipt_type!='purchase' and receiptline.state in ['confirm', 'receipt']):
+        if (receiptline.receipt_type == 'purchase' and receiptline.state in ['checked', 'receipt']) or \
+                (receiptline.receipt_type != 'purchase' and receiptline.state in ['confirm', 'receipt']):
             values.update({'labelscan': 'block', 'pushall': 'block'})
         if float_compare(receiptline.doing_qty, 0.0, precision_rounding=0.000001) > 0:
             values.update({'pushdone': 'block'})
