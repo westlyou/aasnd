@@ -496,8 +496,6 @@ class AASStockDeliveryOperation(models.Model):
     def action_check_operation(self):
         if self.delivery_id.delivery_type == 'purchase':
             return True
-        if self.env.context.get('nocheck'):
-            return True
         product_id, location_id, product_lot = self.label_id.product_id, self.label_id.location_id, self.label_id.product_lot
         listdomain = [('product_id', '=', product_id.id), ('product_lot', '=', product_lot.id)]
         listdomain.extend([('location_id', '=', location_id.id), ('delivery_id', '=', self.delivery_id.id)])
@@ -517,12 +515,12 @@ class AASStockDeliveryOperation(models.Model):
 
     @api.model
     def action_before_create(self, vals):
-        doperations = self.env['aas.stock.delivery.operation'].search([('label_id', '=', vals.get('label_id')), ('deliver_done', '=', False)])
-        if doperations and len(doperations) > 0:
-            raise UserError(u'当前标签已经在发货作业中，请不要重复操作！')
-        roperations = self.env['aas.stock.receipt.operation'].search([('label_id', '=', vals.get('label_id')), ('push_onshelf', '=', False)])
-        if roperations and len(roperations) > 0:
-            raise UserError(u'当前标签已在收货作业中，请在收货作业还未结束时不要使用此标签！')
+        # doperations = self.env['aas.stock.delivery.operation'].search([('label_id', '=', vals.get('label_id')), ('deliver_done', '=', False)])
+        # if doperations and len(doperations) > 0:
+        #     raise UserError(u'当前标签已经在发货作业中，请不要重复操作！')
+        # roperations = self.env['aas.stock.receipt.operation'].search([('label_id', '=', vals.get('label_id')), ('push_onshelf', '=', False)])
+        # if roperations and len(roperations) > 0:
+        #     raise UserError(u'当前标签已在收货作业中，请在收货作业还未结束时不要使用此标签！')
         label, dline = self.env['aas.product.label'].browse(vals.get('label_id')), False
         if vals.get('delivery_line') and not vals.get('delivery_id'):
             dline = self.env['aas.stock.delivery.line'].browse(vals.get('delivery_line'))
@@ -538,6 +536,8 @@ class AASStockDeliveryOperation(models.Model):
 
     @api.one
     def action_after_create(self):
+        if self.delivery_id.delivery_type != 'purchase' and self.label_id.locked:
+            raise UserError(u'%被单据%s锁定，您无法使用此标签；如确定使用此标签请联系相关人员释放锁定！'% (self.label_id.name, self.label_id.locked_order))
         dline = self.delivery_line
         if dline.picking_confirm:
             raise UserError(u'%s正在确认发货，请暂停此料的拣货操作！'% self.label_id.name)

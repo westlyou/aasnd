@@ -148,7 +148,7 @@ class AASDeliveryWechatController(http.Controller):
         if line_id:
             operationvals['delivery_line'] = line_id
         try:
-            toperation = request.env['aas.stock.delivery.operation'].with_context({'no_check': True}).create(operationvals)
+            toperation = request.env['aas.stock.delivery.operation'].create(operationvals)
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
             return values
