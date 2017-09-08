@@ -52,7 +52,13 @@ mui.ready(function(){
     });
 
     //扫描标签
+    var delivery_labelscan_flag = false;
     document.getElementById('action_scan_label').addEventListener('tap', function(){
+        if (delivery_labelscan_flag){
+            mui.toast('操作正在处理中，请耐心等待！');
+            return ;
+        }
+        delivery_labelscan_flag = true;
         wx.scanQRCode({
             needResult: 1,
             desc: '扫描标签',
@@ -61,11 +67,14 @@ mui.ready(function(){
                 var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
                 var deliverylineid = parseInt(document.getElementById('delivery_line_detail_pullrefresh').getAttribute('lineid'));
                 var params = {'barcode': result.resultStr, 'line_id': deliverylineid};
+                var labelscanmask = aas_delivery_line_detail_loading();
                 mui.ajax('/aaswechat/wms/deliverylabelscan',{
                     data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: params, id: access_id }),
                     dataType:'json', type:'post', timeout:10000,
                     headers:{'Content-Type':'application/json'},
                     success:function(data){
+                        delivery_labelscan_flag = false;
+                        labelscanmask.close();
                         var dresult = data.result;
                         if (!dresult.success){
                             mui.toast(dresult.message);
@@ -91,6 +100,8 @@ mui.ready(function(){
                         document.getElementById('delivery_label_count').innerHTML = dresult.label_count;
                     },
                     error:function(xhr,type,errorThrown){
+                        delivery_labelscan_flag = false;
+                        labelscanmask.close();
                         console.log(type);
                     }
                 });
@@ -179,7 +190,7 @@ mui.ready(function(){
         }
         delivery_delete_flag = true;
         var li = this.parentNode.parentNode;
-        mui.confirm('确认删除该条记录？', '清除上架', ['确认', '取消'], function(e) {
+        mui.confirm('确认删除该条记录？', '清除发货', ['确认', '取消'], function(e) {
             if(e.index!=0){
                 delivery_delete_flag = false;
                 mui.swipeoutClose(li);
