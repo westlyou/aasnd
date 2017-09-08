@@ -150,8 +150,9 @@ class AASDeliveryWechatController(http.Controller):
         if line_id:
             operationvals['delivery_line'] = line_id
         try:
+            logger.info('operation_start_time: '+fields.Datetime.now())
             toperation = request.env['aas.stock.delivery.operation'].create(operationvals)
-            logger.info('operation_time: '+fields.Datetime.now())
+            logger.info('operation_finish_time: '+fields.Datetime.now())
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
             return values
