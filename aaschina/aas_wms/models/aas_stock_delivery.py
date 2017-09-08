@@ -515,12 +515,12 @@ class AASStockDeliveryOperation(models.Model):
 
     @api.model
     def action_before_create(self, vals):
-        # doperations = self.env['aas.stock.delivery.operation'].search([('label_id', '=', vals.get('label_id')), ('deliver_done', '=', False)])
-        # if doperations and len(doperations) > 0:
-        #     raise UserError(u'当前标签已经在发货作业中，请不要重复操作！')
-        # roperations = self.env['aas.stock.receipt.operation'].search([('label_id', '=', vals.get('label_id')), ('push_onshelf', '=', False)])
-        # if roperations and len(roperations) > 0:
-        #     raise UserError(u'当前标签已在收货作业中，请在收货作业还未结束时不要使用此标签！')
+        doperations = self.env['aas.stock.delivery.operation'].search([('label_id', '=', vals.get('label_id')), ('deliver_done', '=', False)])
+        if doperations and len(doperations) > 0:
+            raise UserError(u'当前标签已经在发货作业中，请不要重复操作！')
+        roperations = self.env['aas.stock.receipt.operation'].search([('label_id', '=', vals.get('label_id')), ('push_onshelf', '=', False)])
+        if roperations and len(roperations) > 0:
+            raise UserError(u'当前标签已在收货作业中，请在收货作业还未结束时不要使用此标签！')
         label, dline = self.env['aas.product.label'].browse(vals.get('label_id')), False
         if vals.get('delivery_line') and not vals.get('delivery_id'):
             dline = self.env['aas.stock.delivery.line'].browse(vals.get('delivery_line'))
