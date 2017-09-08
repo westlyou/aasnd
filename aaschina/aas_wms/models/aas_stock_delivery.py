@@ -536,8 +536,10 @@ class AASStockDeliveryOperation(models.Model):
 
     @api.one
     def action_after_create(self):
+        _logger.info('539 time: '+fields.Datetime.now())
         if self.delivery_id.delivery_type != 'purchase' and self.label_id.locked:
             raise UserError(u'%被单据%s锁定，您无法使用此标签；如确定使用此标签请联系相关人员释放锁定！'% (self.label_id.name, self.label_id.locked_order))
+        _logger.info('542 time: '+fields.Datetime.now())
         dline = self.delivery_line
         if dline.picking_confirm:
             raise UserError(u'%s正在确认发货，请暂停此料的拣货操作！'% self.label_id.name)
@@ -545,6 +547,7 @@ class AASStockDeliveryOperation(models.Model):
         if dline.state != 'picking':
             lineval['state'] = 'picking'
         dline.write(lineval)
+        _logger.info('delivery_line time: '+fields.Datetime.now())
         if self.delivery_id.state != 'picking':
             self.delivery_id.write({'state': 'picking'})
         # 锁定标签
