@@ -220,7 +220,7 @@
             <field name="model">aas.hr.employee</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree create="false" edit="false" delete="false">
+                <tree create="false" edit="false" delete="false" labelprint="true">
                     <field name="name"/>
                     <field name="code"/>
                     <field name="gender"/>
@@ -236,7 +236,7 @@
             <field name="model">aas.hr.employee</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form create="false" edit="false" delete="false">
+                <form create="false" edit="false" delete="false" labelprint="true">
                     <header>
                         <button name="action_allocate_mesline" string="分配产线" type="object" class="oe_highlight" groups="aas_mes.group_aas_manufacture_foreman"/>
                         <field name="state" widget="statusbar" statusbar_visible="working,leave,atop,vacation,dimission"/>

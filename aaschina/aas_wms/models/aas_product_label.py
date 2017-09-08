@@ -17,8 +17,8 @@ class AASProductLabel(models.Model):
     _description = u'产品标签'
     _order = 'id desc'
 
-    name = fields.Char(string=u'名称', copy=False)
-    barcode = fields.Char(string='Barcode', copy=False)
+    name = fields.Char(string=u'名称', copy=False, index=True)
+    barcode = fields.Char(string='Barcode', copy=False, index=True)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', required=True, index=True, ondelete='restrict')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', required=True, index=True, ondelete='restrict')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
