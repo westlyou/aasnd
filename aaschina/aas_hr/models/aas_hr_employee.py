@@ -50,6 +50,7 @@ class AASHREmployee(models.Model):
     work_email = fields.Char(string=u'工作邮箱')
     work_location = fields.Char(string=u'办公地址')
     entry_time = fields.Datetime(string=u'入职时间', default=fields.Datetime.now, copy=False)
+    dimission_time = fields.Datetime(string=u'离职时间', copy=False)
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
 
@@ -97,5 +98,10 @@ class AASHREmployee(models.Model):
         records = printer.action_correct_records(records)
         values['records'] = records
         return values
+
+
+    @api.multi
+    def action_dimission(self):
+        self.write({'dimission_time': fields.Datetime.now(), 'state': 'dimission'})
 
 
