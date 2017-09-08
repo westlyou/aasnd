@@ -567,9 +567,13 @@ class AASStockDeliveryOperation(models.Model):
 
     @api.model
     def create(self, vals):
+        _logger.info('before_start_time: '+fields.Datetime.now())
         self.action_before_create(vals)
+        _logger.info('before_finish_time: '+fields.Datetime.now())
         record = super(AASStockDeliveryOperation, self).create(vals)
+        _logger.info('after_start_time: '+fields.Datetime.now())
         record.action_after_create()
+        _logger.info('after_finish_time: '+fields.Datetime.now())
         return record
 
 
