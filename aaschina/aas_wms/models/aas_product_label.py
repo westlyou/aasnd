@@ -204,6 +204,7 @@ class AASProductLabel(models.Model):
 
     @api.multi
     def write(self, vals):
+        _logger.info('before write start time: '+fields.Datetime.now())
         if 'product_id' in vals:
             raise UserError(u'标签的产品不可以变更！')
         if 'product_lot' in vals:
@@ -212,8 +213,11 @@ class AASProductLabel(models.Model):
             self.action_journal_qty(vals.get('product_qty'))
         if vals.get('location_id'):
             self.action_journal_location(vals.get('location_id'))
+        _logger.info('before write finish time: '+fields.Datetime.now())
         result = super(AASProductLabel, self).write(vals)
+        _logger.info('after write start time: '+fields.Datetime.now())
         self.action_after_write(vals)
+        _logger.info('after write finish time: '+fields.Datetime.now())
         return result
 
 

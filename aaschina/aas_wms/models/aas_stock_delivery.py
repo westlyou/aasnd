@@ -548,10 +548,8 @@ class AASStockDeliveryOperation(models.Model):
         _logger.info('delivery_line time: '+fields.Datetime.now())
         if self.delivery_id.state != 'picking':
             self.delivery_id.write({'state': 'picking'})
-        _logger.info('delivery time: '+fields.Datetime.now())
         # 锁定标签
         self.label_id.write({'locked': True, 'locked_order': self.delivery_id.name})
-        _logger.info('label time: '+fields.Datetime.now())
         # 如果是采购退货检查标签是否商检，未上架需要禁止上架，如果无可上架的标签直接结束收货
         if self.delivery_id.delivery_type == 'purchase':
             receiptlabel = self.env['aas.stock.receipt.label'].search([('label_id', '=', self.label_id.id), ('checked', '=', False)], limit=1)
@@ -570,13 +568,9 @@ class AASStockDeliveryOperation(models.Model):
 
     @api.model
     def create(self, vals):
-        _logger.info('before_start_time: '+fields.Datetime.now())
         self.action_before_create(vals)
-        _logger.info('before_finish_time: '+fields.Datetime.now())
         record = super(AASStockDeliveryOperation, self).create(vals)
-        _logger.info('after_start_time: '+fields.Datetime.now())
         record.action_after_create()
-        _logger.info('after_finish_time: '+fields.Datetime.now())
         return record
 
 
