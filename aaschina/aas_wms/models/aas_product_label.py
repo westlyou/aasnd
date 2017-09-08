@@ -390,37 +390,14 @@ class AASProductLabelJournal(models.Model):
 class ProductProduct(models.Model):
     _inherit = 'product.product'
 
-
-    stock_labels = fields.One2many(comodel_name='aas.product.label', inverse_name='product_id', string=u'库存标签',
-                domain=[('state', '=', 'normal'), ('locked', '=', False), ('location_id.usage', '=', 'internal')])
-
-    stock_qty = fields.Float(string=u'仓库库存', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_stock_qty', store=True)
-
-    edge_qty = fields.Float(string=u'线边库存', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_stock_qty', store=True)
-    # , 'stock_labels.locked'
-    @api.depends('stock_labels.product_qty', 'stock_labels.state', 'stock_labels.location_id')
-    def _compute_stock_qty(self):
-        stockdict, edgedict = {}, {}
-        labeldomain = [('state', '=', 'normal'), ('locked', '=', False), ('location_id.usage', '=', 'internal'), ('qualified', '=', True)]
-        stockdomain = labeldomain + [('location_id.mrblocation', '=', False), ('location_id.edgelocation', '=', False)]
+    @api.multi
+    def get_current_qty(self):
+        self.ensure_one()
+        labeldomain = [('product_id', '=', self.id), ('state', '=', 'normal'), ('locked', '=', False), ('qualified', '=', True)]
+        stockdomain = labeldomain + [('location_id.mrblocation', '=', False), ('location_id.edgelocation', '=', False), ('location_id.usage', '=', 'internal')]
         stocklabels = self.env['aas.product.label'].search(stockdomain)
-        edgedomain = labeldomain + [('location_id.edgelocation', '=', True)]
-        edgelabels = self.env['aas.product.label'].search(edgedomain)
         if stocklabels and len(stocklabels) > 0:
-            for slabel in stocklabels:
-                skey = slabel.product_id.id
-                if skey in stockdict:
-                    stockdict[skey] += slabel.product_qty
-                else:
-                    stockdict[skey] = slabel.product_qty
-        if edgelabels and len(edgelabels) > 0:
-            for elabel in edgelabels:
-                ekey = elabel.product_id.id
-                if ekey in edgedict:
-                    edgedict[ekey] += elabel.product_qty
-                else:
-                    edgedict[ekey] = elabel.product_qty
-        for record in self:
-            record.stock_qty = 0.0 if record.id not in stockdict else stockdict[record.id]
-            record.edge_qty = 0.0 if record.id not in edgedict else edgedict[record.id]
+            return sum([plabel.product_qty for plabel in stocklabels])
+        else:
+            return 0.0
 

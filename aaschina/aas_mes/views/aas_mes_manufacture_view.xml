@@ -11,8 +11,6 @@
                     <field name="default_code" string="物料编码"/>
                     <field name="name"/>
                     <field name="uom_id"/>
-                    <field name="stock_qty"/>
-                    <field name="edge_qty"/>
                 </tree>
             </field>
         </record>
@@ -29,12 +27,10 @@
                             <group>
                                 <field name="default_code" string="物料编码"/>
                                 <field name="uom_id"/>
-                                <field name="stock_qty"/>
-                                <field name="edge_qty"/>
+                                <field name="tracking"/>
                             </group>
                             <group>
                                 <field name="name"/>
-                                <field name="tracking"/>
                                 <field name="need_warranty"/>
                                 <field name="stock_age"/>
                             </group>
