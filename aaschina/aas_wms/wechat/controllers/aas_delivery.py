@@ -123,19 +123,19 @@ class AASDeliveryWechatController(http.Controller):
         if not delivery_id and not line_id:
             values.update({'success': False, 'message': u'异常出错，请检查请求参数设置！'})
             return values
-        product_ids = []
-        if line_id:
-            deliveryline = request.env['aas.stock.delivery.line'].browse(line_id)
-            delivery_id = deliveryline.delivery_id.id
-            product_ids.append(deliveryline.product_id.id)
-        else:
-            deliveryproducts = request.env['aas.stock.delivery.line'].search_read([('delivery_id', '=', delivery_id)], fields=['product_id'])
-            product_ids.extend([dproduct['product_id'][0] for dproduct in deliveryproducts])
-        label = request.env['aas.product.label'].search([('barcode', '=', barcode), ('product_id', 'in', product_ids)], limit=1)
+        # product_ids = []
         # if line_id:
         #     deliveryline = request.env['aas.stock.delivery.line'].browse(line_id)
         #     delivery_id = deliveryline.delivery_id.id
-        # label = request.env['aas.product.label'].search([('barcode', '=', barcode)], limit=1)
+        #     product_ids.append(deliveryline.product_id.id)
+        # else:
+        #     deliveryproducts = request.env['aas.stock.delivery.line'].search_read([('delivery_id', '=', delivery_id)], fields=['product_id'])
+        #     product_ids.extend([dproduct['product_id'][0] for dproduct in deliveryproducts])
+        # label = request.env['aas.product.label'].search([('barcode', '=', barcode), ('product_id', 'in', product_ids)], limit=1)
+        if line_id:
+            deliveryline = request.env['aas.stock.delivery.line'].browse(line_id)
+            delivery_id = deliveryline.delivery_id.id
+        label = request.env['aas.product.label'].search([('barcode', '=', barcode)], limit=1)
         if not label:
             values.update({'success': False, 'message': u'扫描异常，未查询到此标签！'})
             return values
