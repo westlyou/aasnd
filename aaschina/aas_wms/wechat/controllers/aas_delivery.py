@@ -133,6 +133,7 @@ class AASDeliveryWechatController(http.Controller):
             deliveryproducts = request.env['aas.stock.delivery.line'].search_read([('delivery_id', '=', delivery_id)], fields=['product_id'])
             product_ids.extend([dproduct['product_id'][0] for dproduct in deliveryproducts])
         label = request.env['aas.product.label'].search([('barcode', '=', barcode), ('product_id', 'in', product_ids)], limit=1)
+        logger.info('checked_label_time: '+fields.Datetime.now())
         if not label:
             values.update({'success': False, 'message': u'扫描异常，未查询到此标签！'})
             return values
