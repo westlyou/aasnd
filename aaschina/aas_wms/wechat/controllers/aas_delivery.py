@@ -119,7 +119,6 @@ class AASDeliveryWechatController(http.Controller):
 
     @http.route('/aaswechat/wms/deliverylabelscan', type='json', auth="user")
     def aas_wechat_wms_deliverylabelscan(self, barcode, delivery_id=None, line_id=None):
-        logger.info('start_time: '+fields.Datetime.now())
         values = {'success': True, 'message': '', 'label_count': 0}
         if not delivery_id and not line_id:
             values.update({'success': False, 'message': u'异常出错，请检查请求参数设置！'})
@@ -133,7 +132,6 @@ class AASDeliveryWechatController(http.Controller):
             deliveryproducts = request.env['aas.stock.delivery.line'].search_read([('delivery_id', '=', delivery_id)], fields=['product_id'])
             product_ids.extend([dproduct['product_id'][0] for dproduct in deliveryproducts])
         label = request.env['aas.product.label'].search([('barcode', '=', barcode), ('product_id', 'in', product_ids)], limit=1)
-        logger.info('checked_label_time: '+fields.Datetime.now())
         if not label:
             values.update({'success': False, 'message': u'扫描异常，未查询到此标签！'})
             return values
@@ -150,9 +148,7 @@ class AASDeliveryWechatController(http.Controller):
         if line_id:
             operationvals['delivery_line'] = line_id
         try:
-            logger.info('operation_start_time: '+fields.Datetime.now())
             toperation = request.env['aas.stock.delivery.operation'].create(operationvals)
-            logger.info('operation_finish_time: '+fields.Datetime.now())
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
             return values
@@ -166,7 +162,6 @@ class AASDeliveryWechatController(http.Controller):
         })
         if line_id:
             values['label_count'] = request.env['aas.stock.delivery.operation'].search_count([('delivery_line', '=', line_id), ('deliver_done', '=', False)])
-        logger.info('finish_time: '+fields.Datetime.now())
         return values
 
     @http.route('/aaswechat/wms/deliverydeloperation', type='json', auth="user")
