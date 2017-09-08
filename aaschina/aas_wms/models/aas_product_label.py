@@ -397,8 +397,8 @@ class ProductProduct(models.Model):
     stock_qty = fields.Float(string=u'仓库库存', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_stock_qty', store=True)
 
     edge_qty = fields.Float(string=u'线边库存', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_stock_qty', store=True)
-
-    @api.depends('stock_labels.product_qty', 'stock_labels.state', 'stock_labels.location_id', 'stock_labels.locked')
+    # , 'stock_labels.locked'
+    @api.depends('stock_labels.product_qty', 'stock_labels.state', 'stock_labels.location_id')
     def _compute_stock_qty(self):
         stockdict, edgedict = {}, {}
         labeldomain = [('state', '=', 'normal'), ('locked', '=', False), ('location_id.usage', '=', 'internal'), ('qualified', '=', True)]
