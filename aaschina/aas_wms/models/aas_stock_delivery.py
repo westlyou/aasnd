@@ -471,10 +471,10 @@ class AASStockDeliveryOperation(models.Model):
     _description = u'拣货作业'
     _order = 'id desc'
 
-    delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'发货单', ondelete='cascade')
-    delivery_line = fields.Many2one(comodel_name='aas.stock.delivery.line', string=u'发货明细', ondelete='cascade')
-    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict')
-    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
+    delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'发货单', ondelete='cascade', index=True)
+    delivery_line = fields.Many2one(comodel_name='aas.stock.delivery.line', string=u'发货明细', ondelete='cascade', index=True)
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict', index=True)
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict', index=True)
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     product_qty = fields.Float(string=u'应发数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)

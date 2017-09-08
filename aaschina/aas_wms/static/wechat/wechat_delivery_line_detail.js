@@ -70,7 +70,7 @@ mui.ready(function(){
                 var labelscanmask = aas_delivery_line_detail_loading();
                 mui.ajax('/aaswechat/wms/deliverylabelscan',{
                     data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: params, id: access_id }),
-                    dataType:'json', type:'post', timeout:10000,
+                    dataType:'json', type:'post', timeout:30000,
                     headers:{'Content-Type':'application/json'},
                     success:function(data){
                         delivery_labelscan_flag = false;

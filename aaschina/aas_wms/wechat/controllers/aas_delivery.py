@@ -135,12 +135,6 @@ class AASDeliveryWechatController(http.Controller):
         if not label:
             values.update({'success': False, 'message': u'扫描异常，未查询到此标签！'})
             return values
-        pickingdomain = [('delivery_id', '=', delivery_id), ('product_id', '=', label.product_id.id)]
-        pickingdomain.extend([('product_lot', '=', label.product_lot.id), ('location_id', '=', label.location_id.id)])
-        pickinglistcount = request.env['aas.stock.picking.list'].search_count(pickingdomain)
-        if pickinglistcount <= 0:
-            values.update({'success': False, 'message': u'您添加的的标签可能不在拣货清单之中，或许您该重新计算一下拣货清单！'})
-            return values
         if not label:
             values.update({'success': False, 'message': u'标签可能已删除！'})
             return values
