@@ -119,6 +119,7 @@ class AASDeliveryWechatController(http.Controller):
 
     @http.route('/aaswechat/wms/deliverylabelscan', type='json', auth="user")
     def aas_wechat_wms_deliverylabelscan(self, barcode, delivery_id=None, line_id=None):
+        logger.info('start_time: '+fields.Datetime.now())
         values = {'success': True, 'message': '', 'label_count': 0}
         if not delivery_id and not line_id:
             values.update({'success': False, 'message': u'异常出错，请检查请求参数设置！'})
@@ -162,6 +163,7 @@ class AASDeliveryWechatController(http.Controller):
         })
         if line_id:
             values['label_count'] = request.env['aas.stock.delivery.operation'].search_count([('delivery_line', '=', line_id), ('deliver_done', '=', False)])
+        logger.info('finish_time: '+fields.Datetime.now())
         return values
 
     @http.route('/aaswechat/wms/deliverydeloperation', type='json', auth="user")
