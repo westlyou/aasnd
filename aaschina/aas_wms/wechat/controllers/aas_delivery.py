@@ -144,6 +144,13 @@ class AASDeliveryWechatController(http.Controller):
         if label.locked:
             values.update({'success': False, 'message': u'标签已被%s锁定不可以用于发货！'% label.locked_order})
             return values
+        tempdelivery = request.env['aas.stock.delivery'].browse(delivery_id)
+        if tempdelivery.delivery_type != 'purchase':
+            pickingdomain = [('product_id', '=', label.product_id.id), ('product_lot', '=', label.product_lot.id)]
+            pickingdomain.extends([('location_id', '=', label.location_id.id), ('delivery_id', '=', delivery_id)])
+            if request.env['aas.stock.delivery.list'].search_count(pickingdomain) <= 0:
+                values.update({'success': False, 'message': u'标签%s不在拣货清单中，请检查！！'% label.name})
+                return values
         operationvals = {'label_id': label.id, 'delivery_id': delivery_id}
         if line_id:
             operationvals['delivery_line'] = line_id
