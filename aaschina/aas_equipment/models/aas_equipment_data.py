@@ -33,6 +33,8 @@ class AASEquipmentData(models.Model, RedisModel):
     operate_time = fields.Datetime(string=u'操作时间')
     data_type = fields.Selection(selection=[('D', 'Debug'), ('P', 'Production'), ('T', 'Test')], string=u'数据类型')
 
+    lot_code = fields.Char(string=u'批次号')
+    serial_number = fields.Char(string=u'序列号')
     station_code = fields.Char(string=u'工位编码')
     product_code = fields.Char(string=u'成品编码')
     job_id = fields.Integer(string=u'主工单')
@@ -127,7 +129,8 @@ class AASEquipmentData(models.Model, RedisModel):
                     'product_code': record.get('product_code', False), 'job_id': record.get('job_id', False),
                     'job_code': record.get('job_code', False), 'workorder_id': record.get('workorder_id', False),
                     'workorder_code': record.get('workorder_code', False), 'staff_code': record.get('staff_code', False),
-                    'staff_name': record.get('staff_name', False), 'material_info': record.get('material_info', False)
+                    'staff_name': record.get('staff_name', False), 'material_info': record.get('material_info', False),
+                    'serial_number': record.get('serial_number', False), 'lot_code': record.get('lot_code', False)
                 })
             if datavals and len(datavals) > 0:
                 self.env['aas.equipment.data'].create(datavals)
