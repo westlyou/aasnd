@@ -148,7 +148,7 @@ class AASDeliveryWechatController(http.Controller):
         if tempdelivery.delivery_type != 'purchase':
             pickingdomain = [('product_id', '=', label.product_id.id), ('product_lot', '=', label.product_lot.id)]
             pickingdomain.extend([('location_id', '=', label.location_id.id), ('delivery_id', '=', delivery_id)])
-            if request.env['aas.stock.delivery.list'].search_count(pickingdomain) <= 0:
+            if request.env['aas.stock.picking.list'].search_count(pickingdomain) <= 0:
                 values.update({'success': False, 'message': u'标签%s不在拣货清单中，请检查！！'% label.name})
                 return values
         operationvals = {'label_id': label.id, 'delivery_id': delivery_id}
