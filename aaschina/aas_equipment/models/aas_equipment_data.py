@@ -50,32 +50,33 @@ class AASEquipmentData(models.Model, RedisModel):
     def utctimestr2localtimestr(self, timestr):
         if not timestr:
             return False
+        tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
         temptime = pytz.timezone('UTC').localize(fields.Datetime.from_string(timestr), is_dst=False)
-        return fields.Datetime.to_string(temptime.astimezone(pytz.timezone('UTC')))
+        return fields.Datetime.to_string(temptime.astimezone(pytz.timezone(tz_name)))
 
     @api.model
     def localtimestr2utctimestr(self, localtimestr):
         if not localtimestr:
             return False
-        tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
         temptime = pytz.timezone('UTC').localize(fields.Datetime.from_string(localtimestr), is_dst=False)
-        return fields.Datetime.to_string(temptime.astimezone(pytz.timezone(tz_name)))
+        return fields.Datetime.to_string(temptime.astimezone(pytz.timezone('UTC')))
 
 
     @api.model
     def utctime2localtimestr(self, utctime):
         if not utctime:
             return False
+        tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
         temptime = pytz.timezone('UTC').localize(utctime, is_dst=False)
-        return fields.Datetime.to_string(temptime.astimezone(pytz.timezone('UTC')))
+        return fields.Datetime.to_string(temptime.astimezone(pytz.timezone(tz_name)))
 
     @api.model
     def localtimestr2utctime(self, localtimestr):
         if not localtimestr:
             return False
-        tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
         temptime = pytz.timezone('UTC').localize(fields.Datetime.from_string(localtimestr), is_dst=False)
-        return temptime.astimezone(pytz.timezone(tz_name))
+        return temptime.astimezone(pytz.timezone('UTC'))
+
 
     @api.model
     def localtime2utctimestr(self, localtime):
