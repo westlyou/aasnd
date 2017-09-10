@@ -58,6 +58,10 @@
                                 <field name="material_info"/>
                             </group>
                         </group>
+                        <div>
+                            <label string="设备数据" for="data"/>
+                            <field name="data" readonly="1"/>
+                        </div>
                     </sheet>
                 </form>
             </field>
