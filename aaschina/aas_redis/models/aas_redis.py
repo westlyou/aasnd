@@ -7,13 +7,16 @@
 @time: 2017-7-8 14:08
 """
 
-
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 import json
 import logging
 from datetime import date, datetime
 #https://pypi.python.org/pypi/redis/
 import redis
+import chardet
 
 
 from odoo import api, fields, models, _
@@ -208,6 +211,12 @@ class AASBaseRedis(models.Model):
         _logger.info("Redis Pop Key(%s)" % name)
         try:
             tvalue = rconnection.rpop(name) if right else rconnection.lpop(name)
+            if tvalue:
+                tvencoding = chardet.detect(tvalue)
+                _logger.info(tvencoding)
+                if tvencoding['encoding'] not in ['utf-8', 'UTF-8']:
+                    tvalue = tvalue.decode(tvencoding['encoding'])
+                    tvalue = tvalue.encode('utf-8')
             result = json.loads(tvalue)
         except Exception,e:
             _logger.error("Redis Error: %s" % e)

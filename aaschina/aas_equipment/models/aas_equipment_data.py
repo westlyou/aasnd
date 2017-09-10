@@ -149,6 +149,7 @@ class AASEquipmentData(models.Model, RedisModel):
             'app_code': 'EQ0001', 'app_secret': 121232423,
             'timstamp': '2017-09-10 14:00:00', 'data_type': 'P', 'operate_time': '2017-09-10 14:00:00',
             'job_code': '1535530', 'product_code': 'A-1743', 'station_code': 'ST00006', 'staff_code': 'EM0002',
+            'staff_name': u'张三',
             'data': {'Tempresure': 337.5, 'Presdf': 224}
         }
         self.redis_push(record)
