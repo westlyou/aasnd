@@ -25,6 +25,7 @@ class AASEquipmentData(models.Model, RedisModel):
     _redis_name = 'aasequipment'
     _description = 'AAS Equipment Data'
     _rec_name = 'app_code'
+    _order = 'operate_time desc'
 
     data = fields.Text(string=u'数据集')
     app_code = fields.Char(string=u'设备编码')

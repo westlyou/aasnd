@@ -37,7 +37,7 @@
                         <group>
                             <group>
                                 <field name="app_code"/>
-                                <field name="app_secret"/>
+                                <field name="app_secret" widget="char"/>
                                 <field name="data_type"/>
                             </group>
                             <group>
