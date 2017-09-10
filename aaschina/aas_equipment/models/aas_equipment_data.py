@@ -58,7 +58,8 @@ class AASEquipmentData(models.Model, RedisModel):
     def localtimestr2utctimestr(self, localtimestr):
         if not localtimestr:
             return False
-        temptime = pytz.timezone('UTC').localize(fields.Datetime.from_string(localtimestr), is_dst=False)
+        tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
+        temptime = pytz.timezone(tz_name).localize(fields.Datetime.from_string(localtimestr), is_dst=False)
         return fields.Datetime.to_string(temptime.astimezone(pytz.timezone('UTC')))
 
 
@@ -74,7 +75,8 @@ class AASEquipmentData(models.Model, RedisModel):
     def localtimestr2utctime(self, localtimestr):
         if not localtimestr:
             return False
-        temptime = pytz.timezone('UTC').localize(fields.Datetime.from_string(localtimestr), is_dst=False)
+        tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
+        temptime = pytz.timezone(tz_name).localize(fields.Datetime.from_string(localtimestr), is_dst=False)
         return temptime.astimezone(pytz.timezone('UTC'))
 
 
@@ -145,7 +147,7 @@ class AASEquipmentData(models.Model, RedisModel):
     def action_push_data(self):
         record = {
             'app_code': 'EQ0001', 'app_secret': 121232423,
-            'timstamp': '2017-07-09 14:29:50', 'data_type': 'P', 'operate_time': '2017-07-09 14:29:50',
+            'timstamp': '2017-09-10 14:00:00', 'data_type': 'P', 'operate_time': '2017-09-10 14:00:00',
             'job_code': '1535530', 'product_code': 'A-1743', 'station_code': 'ST00006', 'staff_code': 'EM0002',
             'data': {'Tempresure': 337.5, 'Presdf': 224}
         }

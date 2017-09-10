@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <tree create="false" edit="false" delete="false">
                     <field name="app_code"/>
-                    <field name="app_secret"/>
+                    <field name="app_secret" widget="char"/>
                     <field name="operate_time"/>
                     <field name="timstamp"/>
                     <field name="data_type"/>
