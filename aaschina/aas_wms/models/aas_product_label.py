@@ -40,8 +40,8 @@ class AASProductLabel(models.Model):
     partner_id = fields.Many2one(comodel_name='res.partner', string=u'业务伙伴', ondelete='set null')
 
     parent_id = fields.Many2one(comodel_name='aas.product.label', string=u'父标签', ondelete='restrict', copy=False)
-    parent_left = fields.Integer(string='Left Parent', select=1)
-    parent_right = fields.Integer(string='Right Parent', select=1)
+    parent_left = fields.Integer(string='Left Parent', index=True)
+    parent_right = fields.Integer(string='Right Parent', index=True)
     has_children = fields.Boolean(string=u'是否包裹', copy=False, compute='_compute_has_children', store=True)
     child_lines = fields.One2many(comodel_name='aas.product.label', inverse_name='parent_id', string=u'子标签', copy=False)
     origin_id = fields.Many2one(comodel_name='aas.product.label', string=u'源标签', ondelete='set null', copy=False, help=u'当前标签由拆解而得的源头标签')
