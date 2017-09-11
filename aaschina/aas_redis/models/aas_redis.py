@@ -130,6 +130,7 @@ class AASBaseRedis(models.Model):
 
 
     def _get_pool_redis(self):
+        # redis.Redis(connection_pool=self._get_connection_pool(), charset='UTF-8')
         return redis.Redis(connection_pool=self._get_connection_pool())
 
 
@@ -173,6 +174,8 @@ class AASBaseRedis(models.Model):
     def get_value(self, name):
         rconnection = self._get_pool_redis()
         value = rconnection.get(name)
+        if value:
+                value = value.decode('raw_unicode-escape')
         _logger.info("Redis Get Key(%s) : Value(%s)" % (name, value))
         return value
 
@@ -212,11 +215,7 @@ class AASBaseRedis(models.Model):
         try:
             tvalue = rconnection.rpop(name) if right else rconnection.lpop(name)
             if tvalue:
-                tvencoding = chardet.detect(tvalue)
-                _logger.info(tvencoding)
-                if tvencoding['encoding'] not in ['utf-8', 'UTF-8']:
-                    tvalue = tvalue.decode(tvencoding['encoding'])
-                    tvalue = tvalue.encode('utf-8')
+                tvalue = tvalue.decode('raw_unicode-escape')
             result = json.loads(tvalue)
         except Exception,e:
             _logger.error("Redis Error: %s" % e)
