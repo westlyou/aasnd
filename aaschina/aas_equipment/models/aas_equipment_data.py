@@ -112,9 +112,7 @@ class AASEquipmentData(models.Model, RedisModel):
             except UserError, ue:
                 loop = False
                 continue
-            if not record:
-                continue
-            if not isinstance(record, dict):
+            if not record or not isinstance(record, dict):
                 continue
             datavals = {'data': False, 'app_code': record.get('app_code', False)}
             datavals.update({'app_secret': record.get('app_secret', False), 'data_type': record.get('data_type', False)})

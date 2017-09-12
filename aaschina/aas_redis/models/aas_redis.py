@@ -216,7 +216,9 @@ class AASBaseRedis(models.Model):
             _logger.info("Redis Pop Key(%s) Value(%s)" % (name, tvalue))
             if tvalue:
                 tvalue = tvalue.decode('raw_unicode-escape')
-            result = json.loads(tvalue)
+                result = json.loads(tvalue)
+            else:
+                result = None
         except Exception, e:
             _logger.error("Redis Error: %s" % e)
             raise UserError(u"Redis Pop错误，请检查配置")
