@@ -26,6 +26,7 @@ class AASEquipmentData(models.Model, RedisModel):
     _description = 'AAS Equipment Data'
     _rec_name = 'app_code'
     _order = 'operate_time desc'
+    _checking = False
 
     data = fields.Text(string=u'数据集')
     app_code = fields.Char(string=u'设备编码')
@@ -101,12 +102,15 @@ class AASEquipmentData(models.Model, RedisModel):
         将redis中缓存的生产设备信息持久化到pg中
         :return:
         """
-        loop = True
+        if self._checking:
+            return True
+        self._checking, loop = True, True
         while loop:
             try:
                 record = self.redis_pop()
             except UserError, ue:
                 loop = False
+                self._checking = False
             if not loop:
                 break
             if not record:
@@ -138,6 +142,8 @@ class AASEquipmentData(models.Model, RedisModel):
                 })
             if datavals and len(datavals) > 0:
                 self.env['aas.equipment.data'].create(datavals)
+        # 循环结束，更新标志
+        self._checking = False
 
 
 
