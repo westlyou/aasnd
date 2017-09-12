@@ -210,15 +210,8 @@ class AASBaseRedis(models.Model):
 
     def pop_value(self, name, right=True):
         rconnection = self._get_pool_redis()
-        _logger.info("Redis Pop Key(%s)" % name)
         try:
-            tvalue = rconnection.rpop(name) if right else rconnection.lpop(name)
-            _logger.info("Redis Pop Key(%s) Value(%s)" % (name, tvalue))
-            if tvalue:
-                tvalue = tvalue.decode('raw_unicode-escape')
-                result = json.loads(tvalue)
-            else:
-                result = None
+            result = rconnection.rpop(name) if right else rconnection.lpop(name)
         except Exception, e:
             _logger.error("Redis Error: %s" % e)
             raise UserError(u"Redis Pop错误，请检查配置")

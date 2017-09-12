@@ -15,6 +15,7 @@ from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.tools.float_utils import float_compare, float_is_zero
 from odoo.exceptions import UserError, ValidationError
 
+import json
 import pytz
 import logging
 
@@ -109,14 +110,16 @@ class AASEquipmentData(models.Model, RedisModel):
         while loop:
             try:
                 record = self.redis_pop()
+                if not record:
+                    continue
+                record = json.loads(record.decode('raw_unicode-escape'))
             except UserError, ue:
                 loop = False
                 continue
-            if not record or not isinstance(record, dict):
+            except Exception, te:
                 continue
             datavals = {'data': False, 'app_code': record.get('app_code', False)}
             datavals.update({'app_secret': record.get('app_secret', False), 'data_type': record.get('data_type', False)})
-            appdata = record.get('data', False)
             timstamp, operate_time = record.get('timstamp', False),  record.get('operate_time', False)
             if timstamp:
                 if isinstance(timstamp, (str, unicode)):
@@ -128,6 +131,7 @@ class AASEquipmentData(models.Model, RedisModel):
                     datavals['operate_time'] = self.localtimestr2utctimestr(operate_time)
                 else:
                     datavals['operate_time'] = self.localtime2utctimestr(operate_time)
+            appdata = record.get('data', False)
             if appdata and isinstance(appdata, dict):
                 datavals.update({
                     'data': self.json2str(appdata), 'station_code': record.get('station_code', False),
@@ -137,8 +141,7 @@ class AASEquipmentData(models.Model, RedisModel):
                     'staff_name': record.get('staff_name', False), 'material_info': record.get('material_info', False),
                     'serial_number': record.get('serial_number', False), 'lot_code': record.get('lot_code', False)
                 })
-            if datavals and len(datavals) > 0:
-                self.env['aas.equipment.data'].create(datavals)
+            self.env['aas.equipment.data'].create(datavals)
         # 循环结束，更新标志
         self._checking = False
 
