@@ -103,15 +103,12 @@ class AASEquipmentData(models.Model, RedisModel):
         :return:
         """
         if self._checking:
-            return True
-        self._checking, loop = True, True
-        while loop:
+            return
+        self._checking = True
+        while True:
             try:
                 record = self.redis_pop()
             except UserError, ue:
-                loop = False
-                self._checking = False
-            if not loop:
                 break
             if not record:
                 continue
