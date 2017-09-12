@@ -110,13 +110,11 @@ class AASEquipmentData(models.Model, RedisModel):
         while loop:
             try:
                 record = self.redis_pop()
-                if not record:
-                    continue
-                record = json.loads(record.decode('raw_unicode-escape'))
             except UserError, ue:
                 loop = False
+                _logger.info(ue.name)
                 continue
-            except Exception, te:
+            if not record or not isinstance(record, dict):
                 continue
             datavals = {'data': False, 'app_code': record.get('app_code', False)}
             datavals.update({'app_secret': record.get('app_secret', False), 'data_type': record.get('data_type', False)})

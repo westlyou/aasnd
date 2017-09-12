@@ -129,7 +129,6 @@ class AASBaseRedis(models.Model):
 
 
     def _get_pool_redis(self):
-        # redis.Redis(connection_pool=self._get_connection_pool(), charset='UTF-8')
         return redis.Redis(connection_pool=self._get_connection_pool())
 
 
@@ -210,12 +209,21 @@ class AASBaseRedis(models.Model):
 
     def pop_value(self, name, right=True):
         rconnection = self._get_pool_redis()
+        redisflag = True
         try:
-            result = rconnection.rpop(name) if right else rconnection.lpop(name)
+            tvalue = rconnection.rpop(name) if right else rconnection.lpop(name)
+            if tvalue:
+                result = json.loads(tvalue.decode('raw_unicode-escape'))
+            else:
+                result = None
+                if rconnection.llen(name) == 0:
+                    redisflag = False
         except Exception, e:
             _logger.error("Redis Error: %s" % e)
             raise UserError(u"Redis Pop错误，请检查配置")
         _logger.info("Redis Pop Key(%s) Ret(%s)" % (name, result))
+        if not redisflag:
+            raise UserError("Redis List Key(%s) is empty" % name)
         return result
 
 
