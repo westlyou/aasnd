@@ -16,7 +16,6 @@ import logging
 from datetime import date, datetime
 #https://pypi.python.org/pypi/redis/
 import redis
-import chardet
 
 
 from odoo import api, fields, models, _
