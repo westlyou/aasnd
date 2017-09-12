@@ -13,6 +13,7 @@ from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.tools.float_utils import float_compare, float_is_zero
 from odoo.exceptions import UserError, ValidationError
 
+import pytz
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -95,7 +96,7 @@ class AASMESWorkAttendance(models.Model):
     mesline_name = fields.Char(string=u'产线名称', copy=False)
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict', index=True)
     workstation_name = fields.Char(string=u'工位名称', copy=False)
-    attend_date = fields.Date(string=u'日期', default=fields.Date.today, copy=False)
+    attend_date = fields.Date(string=u'日期', compute='_compute_attend_date', store=True)
     attendance_start = fields.Datetime(string=u'上岗时间', default=fields.Datetime.now, copy=False)
     attendance_finish = fields.Datetime(string=u'离岗时间', copy=False)
     attendance_hours = fields.Float(string=u'工时', compute='_compute_attendance_hours', store=True)
@@ -108,6 +109,19 @@ class AASMESWorkAttendance(models.Model):
             if record.attendance_start and record.attendance_finish:
                 temptimes = fields.Datetime.from_string(record.attendance_finish) - fields.Datetime.from_string(record.attendance_start)
                 record.attendance_hours = temptimes.total_seconds() / 3600.00
+
+
+    @api.depends('attendance_start')
+    def _compute_attend_date(self):
+        for record in self:
+            if record.attendance_start:
+                utctime = fields.Datetime.from_string(record.attendance_start)
+                tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
+                temptime = pytz.timezone('UTC').localize(utctime, is_dst=False)
+                record.attend_date = fields.Date.to_string(temptime.astimezone(pytz.timezone(tz_name)))
+            else:
+                record.attend_date = False
+
 
     @api.model
     def create(self, vals):
