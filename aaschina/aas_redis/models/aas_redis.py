@@ -144,7 +144,7 @@ class AASBaseRedis(models.Model):
     def get_redis(self, key):
         record = self.search([('name', '=', key)], limit=1)
         if record:
-            return record;
+            return record
         else:
             raise UserError(u"无对应Redis缓存名称配置")
 
@@ -157,7 +157,7 @@ class AASBaseRedis(models.Model):
             _logger.info("Redis Test Instance: %s" % redis)
             result = redis.info()
             _logger.info("Redis Test Info: %s" % result)
-        except Exception,e:
+        except Exception, e:
             _logger.error("Redis Test Error: %s" % e)
             raise UserError(u"Redis连接测试错误，请检查配置：%s" % e)
         raise UserError(u"Redis连接测试成功：%s" % result)
@@ -185,7 +185,7 @@ class AASBaseRedis(models.Model):
         _logger.info("Redis Set Key(%s) Value(%s)" % (name, tvalue))
         try:
             result = rconnection.set(name, tvalue)
-        except Exception,e:
+        except Exception, e:
             _logger.error("Redis Error: %s" % e)
             raise UserError(u"Redis Set错误，请检查配置")
         _logger.info("Redis Set Key(%s) Ret(%s) : Value(%s)" % (name, result, tvalue))
@@ -201,7 +201,7 @@ class AASBaseRedis(models.Model):
                 result = rconnection.lpush(name, tvalue)
             else:
                 result = rconnection.rpush(name, tvalue)
-        except Exception,e:
+        except Exception, e:
             _logger.error("Redis Error: %s" % e)
             raise UserError(u"Redis Put错误，请检查配置")
         _logger.info("Redis Put Key(%s) Ret(%s) : Value(%s)" % (name, result, tvalue))
@@ -216,10 +216,8 @@ class AASBaseRedis(models.Model):
             _logger.info("Redis Pop Key(%s) Value(%s)" % (name, tvalue))
             if tvalue:
                 tvalue = tvalue.decode('raw_unicode-escape')
-                result = json.loads(tvalue)
-            else:
-                result = False
-        except Exception,e:
+            result = json.loads(tvalue)
+        except Exception, e:
             _logger.error("Redis Error: %s" % e)
             raise UserError(u"Redis Pop错误，请检查配置")
         _logger.info("Redis Pop Key(%s) Ret(%s)" % (name, result))

@@ -103,13 +103,15 @@ class AASEquipmentData(models.Model, RedisModel):
         :return:
         """
         if self._checking:
+            _logger.info(u"Redis缓存正在出队，放弃本次操作；当前时间：" % fields.Datetime.now())
             return
-        self._checking = True
-        while True:
+        self._checking, loop = True, True
+        while loop:
             try:
                 record = self.redis_pop()
             except UserError, ue:
-                break
+                loop = False
+                continue
             if not record:
                 continue
             if not isinstance(record, dict):
