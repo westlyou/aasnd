@@ -116,7 +116,7 @@ mui.ready(function(){
         var purchase_receipt_mask = aas_purchase_receipt_loading();
         mui.ajax('/aaswechat/wms/purchasereceiptdone', {
             data: JSON.stringify({jsonrpc: "2.0",method: 'call',params: receipt_params, id: access_id}),
-            dataType: 'json', type: 'post', timeout: 10000,
+            dataType: 'json', type: 'post', timeout: 30000,
             headers: {'Content-Type': 'application/json'},
             success: function (data) {
                 var dresult = data.result;
