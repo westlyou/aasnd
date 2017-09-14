@@ -147,6 +147,9 @@ class AASReceiptWechatController(http.Controller):
         if not label:
             values.update({'success': False, 'message': u'无效标签， 请仔细检查是否标签已删除！'})
             return values
+        if label.state != 'normal':
+            values.update({'success': False, 'message': u'标签状态异常，不可以扫描上架，请仔细检查！'})
+            return values
         receiptlabel = request.env['aas.stock.receipt.label'].search([('line_id', '=', lineid), ('label_id', '=', label.id)], limit=1)
         if not receiptlabel:
             values.update({'success': False, 'message': u'无效标签， 当前标签不在上架范围内！'})

@@ -204,7 +204,6 @@ class AASProductLabel(models.Model):
 
     @api.multi
     def write(self, vals):
-        _logger.info('before write start time: '+fields.Datetime.now())
         if 'product_id' in vals:
             raise UserError(u'标签的产品不可以变更！')
         if 'product_lot' in vals:
@@ -213,11 +212,8 @@ class AASProductLabel(models.Model):
             self.action_journal_qty(vals.get('product_qty'))
         if vals.get('location_id'):
             self.action_journal_location(vals.get('location_id'))
-        _logger.info('before write finish time: '+fields.Datetime.now())
         result = super(AASProductLabel, self).write(vals)
-        _logger.info('after write start time: '+fields.Datetime.now())
         self.action_after_write(vals)
-        _logger.info('after write finish time: '+fields.Datetime.now())
         return result
 
 
@@ -393,11 +389,11 @@ class ProductProduct(models.Model):
     @api.multi
     def get_current_qty(self):
         self.ensure_one()
+        temp_qty = 0.0
         labeldomain = [('product_id', '=', self.id), ('state', '=', 'normal'), ('locked', '=', False), ('qualified', '=', True)]
         stockdomain = labeldomain + [('location_id.mrblocation', '=', False), ('location_id.edgelocation', '=', False), ('location_id.usage', '=', 'internal')]
         stocklabels = self.env['aas.product.label'].search(stockdomain)
         if stocklabels and len(stocklabels) > 0:
-            return sum([plabel.product_qty for plabel in stocklabels])
-        else:
-            return 0.0
+            temp_qty = sum([plabel.product_qty for plabel in stocklabels])
+        return temp_qty
 

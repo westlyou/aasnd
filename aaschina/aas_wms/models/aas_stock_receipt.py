@@ -168,11 +168,15 @@ class AASStockReceipt(models.Model):
 
     @api.one
     def action_push_all(self):
+        if self.state in ['draft', 'cancel', 'tocheck',  'done']:
+            raise UserError(u'请仔细检查收货单，当前状态不可以批量上架！')
         for rline in self.receipt_lines:
             rline.action_push_all()
 
     @api.one
     def action_push_done(self):
+        if self.state in ['draft', 'cancel', 'tocheck', 'done']:
+            raise UserError(u'请仔细检查收货单，当前状态不可以收货上架！')
         for rline in self.receipt_lines:
             rline.action_push_done()
 
@@ -335,6 +339,8 @@ class AASStockReceiptLine(models.Model):
 
     @api.one
     def action_push_all(self):
+        if self.state in ['draft', 'cancel', 'tocheck', 'done']:
+            raise UserError(u'请仔细检查收货单或收货明细，当前状态不可以批量上架！')
         if not self.push_location:
             raise UserError(u'请先设置好上架库位，再批量上架！')
         labellist = self.env['aas.stock.receipt.label'].search([('line_id', '=', self.id), ('checked', '=', False)])
@@ -344,6 +350,8 @@ class AASStockReceiptLine(models.Model):
 
     @api.one
     def action_push_done(self):
+        if self.state in ['draft', 'cancel', 'tocheck', 'done']:
+            raise UserError(u'请仔细检查收货单或收货明细，当前状态不可以批量上架！')
         operationlist = self.env['aas.stock.receipt.operation'].search([('line_id', '=', self.id), ('push_onshelf', '=', False)])
         if not operationlist or len(operationlist) <= 0:
             raise UserError(u"请仔细检查，还可能还没有添加上架作业标签！")
@@ -356,6 +364,8 @@ class AASStockReceiptLine(models.Model):
             else:
                 productdict[pkey] = {'product': roperation.product_id, 'location_id': roperation.location_id.id}
             label = roperation.rlabel_id.label_id
+            if label.state != 'normal':
+                raise UserError(u'标签%s状态异常，非正常状态标签不可以上架！'% label.name)
             operationlines.append((1, roperation.id, {'push_onshelf': True, 'push_user': push_user, 'push_time': push_time}))
             mkey = 'move_'+str(label.product_lot.id)+'_'+str(label.location_id.id)+'_'+str(roperation.location_id.id)
             if mkey in movedict:

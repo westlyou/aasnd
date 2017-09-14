@@ -94,5 +94,16 @@ class AASPurchaseWechatController(http.Controller):
             'receipt_lines': [(0, 0, rline) for rline in receiptlines]
         })
         values['receiptid'] = purchase_receipt.id
+        productdict = {}
+        for rline in purchase_receipt.receipt_lines:
+            pkey = 'P_'+str(rline.product_id.id)
+            if pkey not in productdict:
+                productdict[pkey] = rline.product_qty
+            else:
+                productdict[pkey] += rline.product_qty
+        for oline in purchase_order.order_lines:
+            pkey = 'P_'+str(oline.product_id.id)
+            if pkey in productdict:
+                oline.write({'doing_qty': oline.doing_qty+productdict[pkey]})
         return values
 

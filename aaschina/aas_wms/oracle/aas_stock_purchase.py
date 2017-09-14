@@ -400,29 +400,23 @@ class AASStockReceipt(models.Model):
         super(AASStockReceipt, self).action_cancel()
         if self.receipt_type == 'purchase':
             # 采购收货单取消之后要更新采购订单明细的已收货数量或处理中的数量
-            purchasedict = {}
             for rline in self.receipt_lines:
-                if not rline.origin_order:
+                if not rline.origin_order or rline.state == 'cancel':
                     continue
                 linedomain = [('product_id', '=', rline.product_id.id), ('order_name', '=', rline.origin_order)]
                 purchaseline = self.env['aas.stock.purchase.order.line'].search(linedomain, limit=1)
                 if not purchaseline:
                     continue
-                purchaseorder, pkey = purchaseline.order_id, 'P'+str(purchaseline.order_id.id)
-                if pkey in purchasedict:
-                    if rline.state == 'draft':
-                       purchasedict[pkey]['lines'].append((1, purchaseline.id, {'doing_qty': purchaseline.doing_qty - rline.product_qty}))
-                    else:
-                        purchasedict[pkey]['lines'].append((1, purchaseline.id, {'receipt_qty': purchaseline.receipt_qty - rline.product_qty}))
+                if rline.state == 'draft':
+                    temp_qty = purchaseline.doing_qty - rline.product_qty
+                    if float_compare(temp_qty, 0.0, precision_rounding=0.000001) < 0.0:
+                        temp_qty = 0.0
+                    purchaseline.write({'doing_qty': temp_qty})
                 else:
-                    if rline.state == 'draft':
-                        purchasedict[pkey] = {'order': purchaseorder, 'lines': [(1, purchaseline.id, {'doing_qty': purchaseline.doing_qty - rline.product_qty})]}
-                    else:
-                        purchasedict[pkey] = {'order': purchaseorder, 'lines': [(1, purchaseline.id, {'receipt_qty': purchaseline.receipt_qty - rline.product_qty})]}
-            if purchasedict and len(purchasedict) > 0:
-                for pkey, pval in purchasedict.items():
-                    porder, plines = pval['order'], pval['lines']
-                    porder.write({'order_lines': plines})
+                    temp_qty = purchaseline.receipt_qty - rline.product_qty
+                    if float_compare(temp_qty, 0.0, precision_rounding=0.000001) < 0.0:
+                        temp_qty = 0.0
+                    purchaseline.write({'receipt_qty': temp_qty})
 
 
 
@@ -441,6 +435,8 @@ class AASStockReceiptLine(models.Model):
                 receipt_qty, doing_qty = purchaseline.receipt_qty + self.product_qty, purchaseline.doing_qty - self.product_qty
                 if float_compare(doing_qty, 0.0, precision_rounding=0.000001) < 0.0:
                     doing_qty = 0.0
+                if float_compare(receipt_qty, 0.0, precision_rounding=0.000001) < 0.0:
+                    receipt_qty = 0.0
                 purchaseline.write({'receipt_qty': receipt_qty, 'doing_qty': doing_qty})
 
 
