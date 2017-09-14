@@ -397,7 +397,6 @@ class AASStockReceipt(models.Model):
 
     @api.one
     def action_cancel(self):
-        super(AASStockReceipt, self).action_cancel()
         if self.receipt_type == 'purchase':
             # 采购收货单取消之后要更新采购订单明细的已收货数量或处理中的数量
             for rline in self.receipt_lines:
@@ -417,6 +416,8 @@ class AASStockReceipt(models.Model):
                     if float_compare(temp_qty, 0.0, precision_rounding=0.000001) < 0.0:
                         temp_qty = 0.0
                     purchaseline.write({'receipt_qty': temp_qty})
+        super(AASStockReceipt, self).action_cancel()
+
 
 
 
