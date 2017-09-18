@@ -6,7 +6,7 @@ from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.tools.float_utils import float_compare
 from odoo.exceptions import UserError
 
-
+import pytz
 import logging
 from datetime import date
 _logger = logging.getLogger(__name__)
@@ -34,14 +34,21 @@ class AASReceiveDeliver(models.Model):
         return super(AASReceiveDeliver, self).create(vals)
 
     @api.model
+    def action_check_year_month(self):
+        tz_name = self.env.user.tz or self.env.context.get('tz') or 'Asia/Shanghai'
+        utctime = fields.Datetime.from_string(fields.Datetime.now())
+        utctime = pytz.timezone('UTC').localize(utctime, is_dst=False)
+        currenttime = utctime.astimezone(pytz.timezone(tz_name))
+        return currenttime.year, currenttime.month
+
+    @api.model
     def action_receive(self, product_id, location_id, product_lot, receive_qty, action_year=None, action_month=None):
         templocation = self.env['stock.location'].browse(location_id)
         if templocation.usage != 'internal':
             raise UserError(u'非内部库位无需汇总！')
         company_id = self.env.user.company_id.id
         if not action_year or not action_month:
-            today = date.today()
-            action_year, action_month = today.year, today.month
+            action_year, action_month = self.action_check_year_month()
         action_domain = [('product_id', '=', product_id), ('location_id', '=', location_id), ('product_lot', '=', product_lot), ('company_id', '=', company_id)]
         month_domain = [('action_year', '=', action_year), ('action_month', '=', action_month)]
         receipt = self.env['aas.receive.deliver'].search(action_domain+month_domain, limit=1)
@@ -52,6 +59,8 @@ class AASReceiveDeliver(models.Model):
             last_year, last_month = action_year, action_month
             if action_month == 1:
                 last_year, last_month = action_year-1, 12
+            else:
+                last_month = action_month - 1
             last_month_domain = [('action_year', '=', last_year), ('action_month', '=', last_month)]
             last_receipt = self.env['aas.receive.deliver'].search(action_domain+last_month_domain, limit=1)
             if last_receipt:
@@ -84,6 +93,8 @@ class AASReceiveDeliver(models.Model):
             last_year, last_month = action_year, action_month
             if action_month == 1:
                 last_year, last_month = action_year-1, 12
+            else:
+                last_month = action_month - 1
             last_month_domain = [('action_year', '=', last_year), ('action_month', '=', last_month)]
             last_receipt = self.env['aas.receive.deliver'].search(action_domain+last_month_domain, limit=1)
             if last_receipt:
