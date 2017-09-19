@@ -55,6 +55,26 @@ class AASMESRouting(models.Model):
     @api.multi
     def action_change_routing(self):
         self.ensure_one()
+        wizard = self.env['aas.mes.routing.wizard'].create({
+            'routing_id': self.id, 'name': self.name, 'note': self.note,
+            'mesline_id': False if not self.mesline_id else self.mesline_id.id,
+            'wizard_lines': [(0, 0, {
+                'name': rline.name, 'sequence': rline.sequence, 'note': rline.note
+            }) for rline in self.routing_lines]
+        })
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_routing_wizard')
+        return {
+            'name': u"变更工艺",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.mes.routing.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
 
 
 # 工艺工序
@@ -69,3 +89,61 @@ class AASMESRoutingLine(models.Model):
     note = fields.Text(string=u'描述')
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
+
+
+
+
+
+
+
+#############################################向导#############################################
+
+
+
+class AASMESRoutingWizard(models.TransientModel):
+    _name = 'aas.mes.routing.wizard'
+    _description = 'AAS MES Routing Wizard'
+
+    routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺', required=True, ondelete='cascade')
+    name = fields.Char(string=u'名称')
+    note = fields.Text(string=u'描述')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
+    wizard_lines = fields.One2many(comodel_name='aas.mes.routing.line.wizard', inverse_name='wizard_id', string=u'工艺工序')
+
+    @api.multi
+    def action_done(self):
+        self.ensure_one()
+        if not self.wizard_lines or len(self.wizard_lines) <= 0:
+            raise UserError(u'请先添加工艺工序！')
+        routing = self.env['aas.mes.routing'].create({
+            'name': self.name, 'note': self.note, 'origin_id': self.routing_id.id,
+            'mesline_id': False if not self.mesline_id else self.mesline_id.id,
+            'routing_lines': [(0, 0, {
+                'name': wline.name, 'sequence': wline.sequence, 'note': wline.note
+            }) for wline in self.wizard_lines]
+        })
+        self.routing_id.write({'active': False, 'state': 'override'})
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_routing')
+        return {
+            'name': u"生产工艺",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.mes.routing',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'self',
+            'res_id': routing.id,
+            'context': self.env.context
+        }
+
+
+class AASMESRoutingLineWizard(models.TransientModel):
+    _name = 'aas.mes.routing.line.wizard'
+    _description = 'AAS MES Routing Line Wizard'
+    _order = 'sequence,id'
+
+    wizard_id = fields.Many2one(comodel_name='aas.mes.routing.wizard', string=u'工艺', ondelete='cascade')
+    name = fields.Char(string=u'名称')
+    sequence = fields.Integer(string=u'序号')
+    note = fields.Text(string=u'描述')
