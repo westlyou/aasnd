@@ -91,6 +91,8 @@ class AASHREmployee(models.Model):
             labeldomain = [('id', 'in', ids)]
         else:
             labeldomain = domain
+        if not labeldomain or len(labeldomain) <= 0:
+            return {'success': False, 'message': u'您可能已经选择了所有员工或未选择任何员工，请选中需要打印标签的员工！'}
         records = self.search_read(domain=labeldomain, fields=field_list)
         if not records or len(records) <= 0:
             values.update({'success': False, 'message': u'未搜索到需要打印的员工！'})
