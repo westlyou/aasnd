@@ -9,3 +9,5 @@
 
 import aas_mes_manufacture
 import aas_mes_working
+import aas_mes_routing
+import aas_mes_bom
