@@ -59,7 +59,8 @@ class AASMESRouting(models.Model):
             'routing_id': self.id, 'name': self.name, 'note': self.note,
             'mesline_id': False if not self.mesline_id else self.mesline_id.id,
             'wizard_lines': [(0, 0, {
-                'name': rline.name, 'sequence': rline.sequence, 'note': rline.note
+                'name': rline.name, 'sequence': rline.sequence, 'note': rline.note,
+                'workstation_id': False if not rline.workstation_id else rline.workstation_id.id
             }) for rline in self.routing_lines]
         })
         view_form = self.env.ref('aas_mes.view_form_aas_mes_routing_wizard')
@@ -87,6 +88,7 @@ class AASMESRoutingLine(models.Model):
     name = fields.Char(string=u'名称', required=True, copy=False)
     sequence = fields.Integer(string=u'序号')
     note = fields.Text(string=u'描述')
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
 
@@ -119,7 +121,8 @@ class AASMESRoutingWizard(models.TransientModel):
             'name': self.name, 'note': self.note, 'origin_id': self.routing_id.id,
             'mesline_id': False if not self.mesline_id else self.mesline_id.id,
             'routing_lines': [(0, 0, {
-                'name': wline.name, 'sequence': wline.sequence, 'note': wline.note
+                'name': wline.name, 'sequence': wline.sequence, 'note': wline.note,
+                'workstation_id': False if not wline.workstation_id else wline.workstation_id.id
             }) for wline in self.wizard_lines]
         })
         self.routing_id.write({'active': False, 'state': 'override'})
@@ -147,3 +150,4 @@ class AASMESRoutingLineWizard(models.TransientModel):
     name = fields.Char(string=u'名称')
     sequence = fields.Integer(string=u'序号')
     note = fields.Text(string=u'描述')
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')

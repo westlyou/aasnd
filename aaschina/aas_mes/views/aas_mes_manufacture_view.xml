@@ -20,7 +20,7 @@
             <field name="model">product.product</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form create="false" edit="false" delete="false">
+                <form>
                     <sheet>
                         <field name="image_medium" widget="image" class="oe_avatar"/>
                         <group>
@@ -33,6 +33,7 @@
                                 <field name="name"/>
                                 <field name="need_warranty"/>
                                 <field name="stock_age"/>
+                                <field name="virtual_material"/>
                             </group>
                         </group>
                     </sheet>
@@ -47,6 +48,8 @@
                 <search>
                     <field name="default_code" string="编码" filter_domain="[('default_code','ilike',self)]"/>
                     <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <separator/>
+                    <filter string="虚拟物料" domain="[('virtual_material','=',True)]" />
                 </search>
             </field>
         </record>

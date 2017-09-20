@@ -35,7 +35,7 @@
                                 <field name="origin_id" readonly="1" attrs="{'invisible':[('origin_id','=',False)]}"/>
                             </group>
                             <group>
-                                <field name="mesline_id" options="{'no_create':true}" attrs="{'readonly':[('active','=',False)]}"/>
+                                <field name="mesline_id" required="1" options="{'no_create':true}" attrs="{'readonly':[('active','=',False)]}"/>
                                 <field name="create_time" readonly="1"/>
                                 <field name="version" readonly="1"/>
                             </group>
@@ -52,6 +52,8 @@
                                     <tree editable="bottom">
                                         <field name="name" required="1"/>
                                         <field name="sequence"/>
+                                        <field name="workstation_id" options="{'no_create':true}"
+                                                domain="[('mesline_id','=',parent.mesline_id)]"/>
                                         <field name="note"/>
                                     </tree>
                                     <form>
@@ -59,6 +61,7 @@
                                             <group>
                                                 <field name="name" required="1"/>
                                                 <field name="sequence"/>
+                                                <field name="workstation_id"/>
                                                 <field name="note"/>
                                             </group>
                                         </group>
@@ -147,6 +150,8 @@
                                     <field name="name" required="1"/>
                                     <field name="sequence"/>
                                     <field name="note"/>
+                                    <field name="workstation_id" options="{'no_create':true}"
+                                                domain="[('mesline_id','=',parent.mesline_id)]"/>
                                 </tree>
                             </field>
                         </page>

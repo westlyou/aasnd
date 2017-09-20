@@ -17,7 +17,7 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-MESLINETYPE = [('station', u'生产单元'), ('flowing', u'流水线')]
+MESLINETYPE = [('station', u'工位式生产'), ('flowing', u'流水线生产')]
 
 # 生产线
 class AASMESLine(models.Model):
@@ -111,4 +111,11 @@ class AASMESLineEmployee(models.Model):
             empvals['mesline_id'] = self.mesline_id.id
         if empvals and len(empvals) > 0:
             self.employee_id.write(empvals)
+
+
+
+class ProductProduct(models.Model):
+    _inherit = 'product.product'
+
+    virtual_material = fields.Boolean(string=u'虚拟物料', default=False, copy=False)
 

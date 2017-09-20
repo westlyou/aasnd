@@ -23,7 +23,8 @@
         'wizard/aas_mes_manufacture_wizard_view.xml',
         'views/aas_mes_working_view.xml',
         'views/aas_mes_attendance_templates.xml',
-        'views/aas_mes_routing_view.xml'
+        'views/aas_mes_routing_view.xml',
+        'views/aas_mes_bom_view.xml'
     ],
     'qweb':[],
     'installable': True,
