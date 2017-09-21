@@ -39,7 +39,7 @@ class AASStockDelivery(models.Model):
     remark = fields.Text(string=u'备注')
     pick_user = fields.Many2one(comodel_name='res.users', string=u'拣货人', ondelete='restrict')
     partner_id = fields.Many2one(comodel_name='res.partner', string=u'业务伙伴', ondelete='restrict')
-    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='restrict')
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'目标库位', ondelete='restrict')
     warehouse_id = fields.Many2one(comodel_name='stock.warehouse', string=u'仓库', ondelete='restrict')
     picking_confirm = fields.Boolean(string=u'拣货确认', default=False, copy=False, help=u'发货员确认货物已分拣')
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)

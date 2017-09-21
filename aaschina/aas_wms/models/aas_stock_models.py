@@ -47,6 +47,7 @@ class ProductTemplate(models.Model):
     need_warranty = fields.Boolean(string=u'质保期', default=False, help=u"收货时是否需要设置质保期")
     stock_age = fields.Integer(string=u"库龄", default=0, help=u'物料在仓库保存时间，超过时间要给出提醒')
     push_location = fields.Many2one(comodel_name='stock.location', string=u'推荐库位', help=u'最近上架库位')
+    virtual_material = fields.Boolean(string=u'虚拟物料', default=False, copy=False)
 
 
 

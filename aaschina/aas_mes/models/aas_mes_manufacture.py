@@ -112,10 +112,3 @@ class AASMESLineEmployee(models.Model):
         if empvals and len(empvals) > 0:
             self.employee_id.write(empvals)
 
-
-
-class ProductProduct(models.Model):
-    _inherit = 'product.product'
-
-    virtual_material = fields.Boolean(string=u'虚拟物料', default=False, copy=False)
-

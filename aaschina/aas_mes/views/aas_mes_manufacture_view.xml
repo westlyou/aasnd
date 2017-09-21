@@ -2,38 +2,55 @@
 <odoo>
     <data>
 
-        <record id="view_tree_product_product_mes" model="ir.ui.view">
-            <field name="name">product.product.mes.tree</field>
-            <field name="model">product.product</field>
+        <record id="view_tree_product_template_mes" model="ir.ui.view">
+            <field name="name">product.template.mes.tree</field>
+            <field name="model">product.template</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree>
                     <field name="default_code" string="物料编码"/>
                     <field name="name"/>
                     <field name="uom_id"/>
+                    <field name="categ_id"/>
+                    <field name="type"/>
                 </tree>
             </field>
         </record>
 
-        <record id="view_form_product_product_mes" model="ir.ui.view">
-            <field name="name">product.product.mes.form</field>
-            <field name="model">product.product</field>
+        <record id="view_form_product_template_mes" model="ir.ui.view">
+            <field name="name">product.template.mes.form</field>
+            <field name="model">product.template</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
                     <sheet>
                         <field name="image_medium" widget="image" class="oe_avatar"/>
+                        <div class="oe_title">
+                            <label class="oe_edit_only" for="name" string="名称"/>
+                            <h1><field name="name" placeholder="产品名称"/></h1>
+                            <div name="options" groups="base.group_user">
+                                <div>
+                                    <field name="sale_ok"/>
+                                    <label for="sale_ok"/>
+                                </div>
+                                <div>
+                                    <field name="purchase_ok"/>
+                                    <label for="purchase_ok"/>
+                                </div>
+                            </div>
+                        </div>
                         <group>
                             <group>
                                 <field name="default_code" string="物料编码"/>
-                                <field name="uom_id"/>
                                 <field name="tracking"/>
+                                <field name="type"/>
+                                <field name="categ_id" string="内部分类"/>
                             </group>
                             <group>
-                                <field name="name"/>
                                 <field name="need_warranty"/>
                                 <field name="stock_age"/>
                                 <field name="virtual_material"/>
+                                <field name="uom_id"/>
                             </group>
                         </group>
                     </sheet>
@@ -41,9 +58,9 @@
             </field>
         </record>
 
-        <record id="view_search_product_product_mes" model="ir.ui.view">
-            <field name="name">product.product.mes.search</field>
-            <field name="model">product.product</field>
+        <record id="view_search_product_template_mes" model="ir.ui.view">
+            <field name="name">product.template.mes.search</field>
+            <field name="model">product.template</field>
             <field name="arch" type="xml">
                 <search>
                     <field name="default_code" string="编码" filter_domain="[('default_code','ilike',self)]"/>
@@ -54,31 +71,31 @@
             </field>
         </record>
 
-        <record id="action_product_product_mes" model="ir.actions.act_window">
+        <record id="action_product_template_mes" model="ir.actions.act_window">
             <field name="name">产品</field>
             <field name="type">ir.actions.act_window</field>
-            <field name="res_model">product.product</field>
+            <field name="res_model">product.template</field>
             <field name="limit">50</field>
             <field name="view_mode">form,tree</field>
-            <field name="view_id" ref="view_tree_product_product_mes"/>
-            <field name="search_view_id" ref="view_search_product_product_mes"/>
+            <field name="view_id" ref="view_tree_product_template_mes"/>
+            <field name="search_view_id" ref="view_search_product_template_mes"/>
         </record>
 
-        <record id="act_view_tree_product_product_mes" model="ir.actions.act_window.view">
+        <record id="act_view_tree_product_template_mes" model="ir.actions.act_window.view">
             <field name="sequence" eval="1"/>
             <field name="view_mode">tree</field>
-            <field name="view_id" ref="view_tree_product_product_mes"/>
-            <field name="act_window_id" ref="action_product_product_mes"/>
+            <field name="view_id" ref="view_tree_product_template_mes"/>
+            <field name="act_window_id" ref="action_product_template_mes"/>
         </record>
 
-        <record id="act_view_form_product_product_mes" model="ir.actions.act_window.view">
+        <record id="act_view_form_product_template_mes" model="ir.actions.act_window.view">
             <field name="sequence" eval="2"/>
             <field name="view_mode">form</field>
-            <field name="view_id" ref="view_form_product_product_mes"/>
-            <field name="act_window_id" ref="action_product_product_mes"/>
+            <field name="view_id" ref="view_form_product_template_mes"/>
+            <field name="act_window_id" ref="action_product_template_mes"/>
         </record>
 
-        <menuitem id="menu_product_product_mes"  name="产品" action="action_product_product_mes"
+        <menuitem id="menu_product_template_mes"  name="产品" action="action_product_template_mes"
                           parent="menu_aas_mes_resources" sequence="1" groups="group_aas_manufacture_user"/>
 
 
