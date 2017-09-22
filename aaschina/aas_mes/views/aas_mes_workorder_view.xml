@@ -12,7 +12,7 @@
                     <field name="mesline_id"/>
                     <field name="product_id"/>
                     <field name="product_uom"/>
-                    <field name="product_qty"/>
+                    <field name="input_qty"/>
                     <field name="aas_bom_id"/>
                     <field name="routing_id"/>
                     <field name="creator_id"/>
@@ -43,7 +43,7 @@
                                 <field name="product_id" options="{'no_create':true}"
                                         attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
                                 <field name="product_uom" readonly="1"/>
-                                <field name="product_qty" required="1"/>
+                                <field name="input_qty" required="1"/>
                                 <field name="creator_id" readonly="1"/>
                                 <field name="time_create" readonly="1"/>
                                 <field name="time_finish" readonly="1"/>
@@ -57,6 +57,13 @@
                                 <field name="routing_id" readonly="1"/>
                                 <field name="produce_start" readonly="1"/>
                                 <field name="produce_finish" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="date_code" readonly="1"/>
+                                <field name="output_qty" readonly="1"/>
+                                <field name="workcenter_name" readonly="1" string="当前工序"/>
                             </group>
                         </group>
                     </sheet>

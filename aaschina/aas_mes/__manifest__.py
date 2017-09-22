@@ -26,7 +26,9 @@
         'views/aas_mes_routing_view.xml',
         'views/aas_mes_bom_view.xml',
         'views/aas_mes_mainorder_view.xml',
-        'views/aas_mes_workorder_view.xml'
+        'views/aas_mes_workorder_view.xml',
+        'views/aas_mes_workticket_view.xml',
+        'views/aas_mes_tracing_view.xml'
     ],
     'qweb':[],
     'installable': True,

@@ -40,3 +40,5 @@ import aas_mes_routing
 import aas_mes_bom
 import aas_mes_mainorder
 import aas_mes_workorder
+import aas_mes_workticket
+import aas_mes_tracing

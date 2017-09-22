@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_mes_workticket" model="ir.ui.view">
+            <field name="name">aas.mes.workticket.tree</field>
+            <field name="model">aas.mes.workticket</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="mesline_id"/>
+                    <field name="name"/>
+                    <field name="seqence"/>
+                    <field name="workcenter_id"/>
+                    <field name="product_id"/>
+                    <field name="product_uom"/>
+                    <field name="input_qty"/>
+                    <field name="output_qty"/>
+                    <field name="time_wait"/>
+                    <field name="time_start"/>
+                    <field name="time_finish"/>
+                    <field name="workorder_id"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_workticket" model="ir.ui.view">
+            <field name="name">aas.mes.workticket.form</field>
+            <field name="model">aas.mes.workticket</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" edit="false" delete="false">
+                    <header>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,waiting,producing,done"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="product_id"/>
+                                <field name="product_uom"/>
+                                <field name="mesline_id"/>
+                            </group>
+                            <group>
+                                <field name="workcenter_id"/>
+                                <field name="seqence"/>
+                                <field name="input_qty"/>
+                                <field name="output_qty"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="time_wait"/>
+                                <field name="time_start"/>
+                                <field name="time_finish"/>
+                                <field name="workorder_id"/>
+                                <field name="mainorder_id"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_workticket" model="ir.ui.view">
+            <field name="name">aas.mes.workticket.search</field>
+            <field name="model">aas.mes.workticket</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="mesline_id" string="产线" filter_domain="[('mesline_id','ilike',self)]"/>
+                    <field name="workcenter_id" string="工序" filter_domain="[('workcenter_id','ilike',self)]"/>
+                    <field name="workorder_id" string="子工单" filter_domain="[('workorder_id','ilike',self)]"/>
+                    <field name="mainorder_id" string="主工单" filter_domain="[('mainorder_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="状态" context="{'group_by':'state'}"/>
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="产线" context="{'group_by':'mesline_id'}"/>
+                        <filter string="工序" context="{'group_by':'workcenter_id'}"/>
+                        <filter string="子工单" context="{'group_by':'workorder_id'}"/>
+                        <filter string="主工单" context="{'group_by':'mainorder_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_workticket" model="ir.actions.act_window">
+            <field name="name">生产工票</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.workticket</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_workticket"/>
+            <field name="search_view_id" ref="view_search_aas_mes_workticket"/>
+        </record>
+
+        <record id="act_view_tree_aas_mes_workticket" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_workticket"/>
+            <field name="act_window_id" ref="action_aas_mes_workticket"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_workticket" model="ir.actions.act_window.view">
+            <field name="sequence" eval="3"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_workticket"/>
+            <field name="act_window_id" ref="action_aas_mes_workticket"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_workticket"  name="生产工票" action="action_aas_mes_workticket"
+                          parent="menu_aas_mes_manufacture" sequence="3" groups="group_aas_manufacture_user"/>
+
+    </data>
+</odoo>
