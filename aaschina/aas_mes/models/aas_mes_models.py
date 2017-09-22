@@ -13,11 +13,11 @@ from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.tools.float_utils import float_compare, float_is_zero
 from odoo.exceptions import UserError, ValidationError
 
+from . import MESLINETYPE
+
 import logging
 
 _logger = logging.getLogger(__name__)
-
-MESLINETYPE = [('station', u'工位式生产'), ('flowing', u'流水线生产')]
 
 # 生产线
 class AASMESLine(models.Model):
@@ -96,7 +96,6 @@ class AASMESLineEmployee(models.Model):
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     action_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
     action_user = fields.Many2one(comodel_name='res.users', string=u'操作人', ondelete='restrict', default=lambda self: self.env.user)
-
 
     @api.model
     def create(self, vals):

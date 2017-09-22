@@ -4,8 +4,8 @@
 
         <menuitem id="menu_aas_mes" name="生产"  sequence="11" groups="group_aas_manufacture_user"/>
 
-        <!--<menuitem id="menu_aas_mes_manufacture"  name="生产" parent="menu_aas_mes" sequence="1"
-                  groups="group_aas_manufacture_user"/>-->
+        <menuitem id="menu_aas_mes_manufacture"  name="生产" parent="menu_aas_mes" sequence="1"
+                  groups="group_aas_manufacture_user"/>
 
         <menuitem id="menu_aas_mes_material"  name="原材料" parent="menu_aas_mes" sequence="2"
                   groups="group_aas_material_picker"/>

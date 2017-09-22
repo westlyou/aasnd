@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_mes_workorder" model="ir.ui.view">
+            <field name="name">aas.mes.workorder.tree</field>
+            <field name="model">aas.mes.workorder</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="mesline_id"/>
+                    <field name="product_id"/>
+                    <field name="product_uom"/>
+                    <field name="product_qty"/>
+                    <field name="aas_bom_id"/>
+                    <field name="routing_id"/>
+                    <field name="creator_id"/>
+                    <field name="time_create"/>
+                    <field name="time_finish"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_workorder" model="ir.ui.view">
+            <field name="name">aas.mes.workorder.form</field>
+            <field name="model">aas.mes.workorder</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_pause" type="object" states="producing" string="暂停生产" class="oe_highlight"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,producing,pause,done"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group> <field name="name" attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/> </group>
+                            <group> <field name="mainorder_id" readonly="1"/> </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="product_id" options="{'no_create':true}"
+                                        attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
+                                <field name="product_uom" readonly="1"/>
+                                <field name="product_qty" required="1"/>
+                                <field name="creator_id" readonly="1"/>
+                                <field name="time_create" readonly="1"/>
+                                <field name="time_finish" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="mesline_id" options="{'no_create':true}"
+                                        attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
+                                <field name="mesline_type" readonly="1"/>
+                                <field name="aas_bom_id" options="{'no_create':true}"
+                                        attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
+                                <field name="routing_id" readonly="1"/>
+                                <field name="produce_start" readonly="1"/>
+                                <field name="produce_finish" readonly="1"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_workorder" model="ir.ui.view">
+            <field name="name">aas.mes.workorder.search</field>
+            <field name="model">aas.mes.workorder</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="mesline_id" string="产线" filter_domain="[('mesline_id','ilike',self)]"/>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="aas_bom_id" string="BOM" filter_domain="[('aas_bom_id','ilike',self)]"/>
+                    <field name="routing_id" string="工艺" filter_domain="[('routing_id','ilike',self)]"/>
+                    <field name="creator_id" string="创建人" filter_domain="[('creator_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="产线" context="{'group_by':'mesline_id'}"/>
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="BOM" context="{'group_by':'aas_bom_id'}"/>
+                        <filter string="工艺" context="{'group_by':'routing_id'}"/>
+                        <filter string="创建人" context="{'group_by':'creator_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_workorder" model="ir.actions.act_window">
+            <field name="name">子工单</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.workorder</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_workorder"/>
+            <field name="search_view_id" ref="view_search_aas_mes_workorder"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加工单</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_mes_workorder" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_workorder"/>
+            <field name="act_window_id" ref="action_aas_mes_workorder"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_workorder" model="ir.actions.act_window.view">
+            <field name="sequence" eval="3"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_workorder"/>
+            <field name="act_window_id" ref="action_aas_mes_workorder"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_workorder"  name="子工单" action="action_aas_mes_workorder"
+                          parent="menu_aas_mes_manufacture" sequence="2" groups="group_aas_manufacture_user,group_aas_manufacture_planner"/>
+
+    </data>
+</odoo>

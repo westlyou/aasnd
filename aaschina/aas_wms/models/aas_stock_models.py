@@ -48,6 +48,19 @@ class ProductTemplate(models.Model):
     stock_age = fields.Integer(string=u"库龄", default=0, help=u'物料在仓库保存时间，超过时间要给出提醒')
     push_location = fields.Many2one(comodel_name='stock.location', string=u'推荐库位', help=u'最近上架库位')
     virtual_material = fields.Boolean(string=u'虚拟物料', default=False, copy=False)
+    split_qty = fields.Float(string=u'拆分批次数量', digits=dp.get_precision('Product Unit of Measure'), help=u'主工单拆分成子工单，子工单的生产数量')
+    product_yield = fields.Float(string=u'良率', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
+
+    @api.one
+    @api.constrains('split_qty', 'product_yield')
+    def action_check_template(self):
+        if self.split_qty and float_compare(self.split_qty, 0.0, precision_rounding=0.000001) < 0.0:
+            raise ValidationError(u'拆分批次必须是一个大于零的正数！')
+        if self.product_yield and (float_compare(self.product_yield, 0.0, precision_rounding=0.000001) <= 0.0 or
+                                           float_compare(self.product_yield, 1.0, precision_rounding=0.000001) > 0.0):
+            raise ValidationError(u'良率必须是一个介于0到1之间的数但不包含0！')
+
+
 
 
 

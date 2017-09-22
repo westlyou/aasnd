@@ -31,7 +31,12 @@
  *          佛祖正在审核代码......
 """
 
-import aas_mes_manufacture
+
+MESLINETYPE = [('station', u'工位式生产'), ('flowing', u'流水线生产')]
+
+import aas_mes_models
 import aas_mes_working
 import aas_mes_routing
 import aas_mes_bom
+import aas_mes_mainorder
+import aas_mes_workorder

@@ -7,4 +7,4 @@
 @time: 2017-8-21 13:30
 """
 
-import aas_mes_manufacture_wizard
+import aas_mes_models_wizard
