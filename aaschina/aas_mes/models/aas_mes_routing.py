@@ -82,7 +82,7 @@ class AASMESRouting(models.Model):
 class AASMESRoutingLine(models.Model):
     _name = 'aas.mes.routing.line'
     _description = 'AAS MES Routing Line'
-    _order = 'sequence,id'
+    _order = 'routing_id desc,sequence'
 
     routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺', required=True, ondelete='cascade')
     name = fields.Char(string=u'名称', required=True, copy=False)
@@ -91,7 +91,9 @@ class AASMESRoutingLine(models.Model):
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
-
+    _sql_constraints = [
+        ('uniq_sequence', 'unique (routing_id, sequence)', u'同一工艺的工序序号不可以重复！')
+    ]
 
 
 

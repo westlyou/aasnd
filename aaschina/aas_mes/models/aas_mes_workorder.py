@@ -49,6 +49,8 @@ class AASMESWorkorder(models.Model):
     product_code = fields.Char(string=u'产品编码', copy=False)
     workcenter_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'当前工序', ondelete='restrict')
     workcenter_name = fields.Char(string=u'当前工序名称', copy=False)
+    workcenter_start = fields.Many2one(comodel_name='aas.mes.workticket', string=u'开始工序', ondelete='restrict')
+    workcenter_finish = fields.Many2one(comodel_name='aas.mes.workticket', string=u'结束工序', ondelete='restrict')
 
 
     _sql_constraints = [
@@ -129,6 +131,39 @@ class AASMESWorkorder(models.Model):
     @api.one
     def action_pause(self):
         self.write({'state': 'pause'})
+
+    @api.one
+    def action_confirm(self):
+        self.write({'state': 'confirm'})
+        if self.mesline_type == 'station' and self.routing_id:
+            routline = self.env['aas.mes.routing.line'].search([('routing_id', '=', self.routing_id.id)],
+                                                                 order='routing_id desc,sequence', limit=1)
+
+            workticket = self.env['aas.mes.workticket'].create({
+                'name': self.name+'-'+str(routline.sequence), 'seqence': routline.sequence,
+                'routing_id': self.routing_id.id, 'workcenter_id': routline.id, 'workcenter_name': routline.name,
+                'product_id': self.product_id.id, 'product_uom': self.product_uom.id,
+                'input_qty': self.input_qty, 'state': 'waiting', 'time_wait': fields.Datetime.now(),
+                'workorder_id': self.id, 'workorder_name': self.name, 'mesline_id': self.mesline_id.id,
+                'mesline_name': self.mesline_name,
+                'mainorder_id': False if not self.mainorder_id else self.mainorder_id.id,
+                'mainorder_name': False if not self.mainorder_name else self.mainorder_name
+            })
+            self.write({
+                'workcenter_id': workticket.id, 'workcenter_name': routline.name, 'workcenter_start': workticket.id
+            })
+
+
+
+    @api.one
+    def action_done(self):
+        self.write({'state': 'done', 'produce_finish': fields.Datetime.now()})
+        if self.mainorder_id:
+            if self.env['aas.mes.workorder'].search_count([('mainorder_id', '=', self.mainorder_id.id), ('state', '!=', 'done')]) <= 0:
+               self.mainorder_id.write({'state': 'done', 'produce_finish': fields.Datetime.now()})
+
+
+
 
 
 
