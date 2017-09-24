@@ -36,7 +36,8 @@ class AASMESWorkticket(models.Model):
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     input_qty = fields.Float(string=u'投入数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'),
+                              compute='_compute_output_qty', store=True)
     state = fields.Selection(selection=TICKETSTATES, string=u'状态', default='draft', copy=False)
     time_wait = fields.Datetime(string=u'等待时间', copy=False)
     time_start = fields.Datetime(string=u'开工时间', copy=False)
@@ -48,8 +49,8 @@ class AASMESWorkticket(models.Model):
     mainorder_name = fields.Char(string=u'主工单')
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'生产线', ondelete='restrict')
     mesline_name = fields.Char(string=u'生产线')
-    starter_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'开工员工', ondelete='restrict')
-    finisher_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'完工员工', ondelete='restrict')
+    badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    badmode_lines = fields.One2many(comodel_name='aas.mes.workticket.badmode', inverse_name='workticket_id', string=u'不良明细')
 
 
 
@@ -57,6 +58,11 @@ class AASMESWorkticket(models.Model):
     def _compute_barcode(self):
         for record in self:
             record.barcode = 'AR'+record.name
+
+    @api.depends('input_qty', 'badmode_qty')
+    def _compute_output_qty(self):
+        for record in self:
+            record.output_qty = record.input_qty - record.badmode_qty
 
 
     @api.multi
@@ -68,9 +74,6 @@ class AASMESWorkticket(models.Model):
         if not workstation.employee_lines or len(workstation.employee_lines) <= 0:
             raise UserError(u'当前工位%s上没有员工在岗不可以开工！'% workstation.name)
         wizardvals = {'workticket_id': self.id, 'workstation_id': workstation.id, 'input_qty': self.input_qty}
-        if len(workstation.employee_lines) == 1:
-            starter = workstation.employee_lines[0]
-            wizardvals['starter_id'] = starter.id
         wizard = self.env['aas.mes.workticket.start.wizard'].create(wizardvals)
         view_form = self.env.ref('aas_mes.view_form_aas_mes_workticket_start_wizard')
         return {
@@ -88,12 +91,9 @@ class AASMESWorkticket(models.Model):
 
 
     @api.one
-    def action_doing_start(self, starter_id, input_qty):
+    def action_doing_start(self, input_qty):
         workstation = self.workcenter_id.workstation_id
-        self.write({
-            'starter_id': starter_id, 'time_start': fields.Datetime.now(),
-            'input_qty': input_qty, 'state': 'producing'
-        })
+        self.write({'time_start': fields.Datetime.now(), 'input_qty': input_qty, 'state': 'producing'})
         tracevals = {'date_start': fields.Datetime.now()}
         if workstation.employee_lines and len(workstation.employee_lines) > 0:
             tracevals['employeelist'] = ','.join([temployee.name+'['+temployee.code+']' for temployee in workstation.employee_lines])
@@ -132,10 +132,10 @@ class AASMESWorkticket(models.Model):
         if not workstation.employee_lines or len(workstation.employee_lines) <= 0:
             raise UserError(u'当前工位%s上没有员工在岗不可以完工！'% workstation.name)
         #判断有没有上料todo
-        wizardvals = {'workticket_id': self.id, 'workstation_id': workstation.id, 'output_qty': self.input_qty}
-        if len(workstation.employee_lines) == 1:
-            starter = workstation.employee_lines[0]
-            wizardvals['finisher_id'] = starter.id
+        wizardvals = {
+            'workticket_id': self.id, 'workstation_id': workstation.id,
+            'input_qty': self.input_qty, 'workcenter_id': self.workcenter_id.id
+        }
         wizard = self.env['aas.mes.workticket.finish.wizard'].create(wizardvals)
         view_form = self.env.ref('aas_mes.view_form_aas_mes_workticket_finish_wizard')
         return {
@@ -152,16 +152,24 @@ class AASMESWorkticket(models.Model):
         }
 
 
-
-
-
     @api.one
-    def action_doing_finish(self, finisher_id, output_qty):
+    def action_doing_finish(self):
+        badmode_qty = 0.0
+        if self.badmode_lines and len(self.badmode_lines) > 0:
+            badmode_qty = sum([bline.badmode_qty for bline in self.badmode_lines])
+        self.write({'time_finish': fields.Datetime.now(), 'state': 'done', 'badmode_qty': badmode_qty})
+        # 更新追溯信息
+        temptrace = self.action_refresh_tracing()
+        # 计算物料消耗
+        self.action_material_consume(temptrace)
+        # 创建下一个工票，或工单完成
+        self.action_after_done()
+
+
+    @api.multi
+    def action_refresh_tracing(self):
+        self.ensure_one()
         workstation = self.workcenter_id.workstation_id
-        self.write({
-            'finisher_id': finisher_id, 'time_finish': fields.Datetime.now(),
-            'output_qty': output_qty, 'state': 'done'
-        })
         temptrace = self.env['aas.mes.tracing'].search([('workorder_id', '=', self.workorder_id.id), ('workcenter_id', '=', self.workcenter_id.id)], limit=1)
         if not temptrace:
             temptrace = self.env['aas.mes.tracing'].create({
@@ -192,10 +200,8 @@ class AASMESWorkticket(models.Model):
         if equipmentlist and len(equipmentlist) > 0:
             tracevals['equipmentlist'] = ','.join(equipmentlist)
         temptrace.write(tracevals)
-        # 计算物料消耗
-        self.action_material_consume(temptrace)
-        # 创建下一个工票，或工单完成
-        self.action_after_done()
+        return temptrace
+
 
     @api.one
     def action_after_done(self):
@@ -231,6 +237,13 @@ class AASMESWorkticket(models.Model):
 
 
 
+class AASMESWorkticketBadmode(models.Model):
+    _name = 'aas.mes.workticket.badmode'
+    _description = 'AAS MES Workticket Badmode'
+
+    workticket_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'工票', ondelete='cascade')
+    badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')
+    badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
 
 
 
@@ -247,18 +260,13 @@ class AASMESWorkticketStartWizard(models.TransientModel):
 
     workticket_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'工票', ondelete='cascade')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位')
-    starter_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'开工员工')
-    selecter_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'开工员工')
     input_qty = fields.Float(string=u'投入数量', digits=dp.get_precision('Product Unit of Measure'))
 
     @api.one
     def action_done(self):
-        if not self.starter_id and not self.selecter_id:
-            raise UserError(u'当前工位%s上可能没有员工在岗，请相关员工先刷卡上岗！'% self.workstation_id.name)
         if not self.input_qty or float_compare(self.input_qty, 0.0, precision_rounding=0.000001) <= 0.0:
             raise UserError(u'投入数量必须是一个大于0的数！')
-        tempemployee = self.selecter_id if not self.starter_id else self.starter_id
-        self.workticket_id.action_doing_start(tempemployee.id, self.input_qty)
+        self.workticket_id.action_doing_start(self.input_qty)
 
 
 
@@ -269,19 +277,54 @@ class AASMESWorkticketFinishWizard(models.TransientModel):
 
 
     workticket_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'工票', ondelete='cascade')
+    workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='restrict')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位')
-    finisher_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'玩工员工')
-    selecter_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'玩工员工')
-    output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'))
+    input_qty = fields.Float(string=u'投入数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    badmode_lines = fields.One2many(comodel_name='aas.mes.workticket.badmode.wizard', inverse_name='wizard_id', string=u'不良信息')
+
+    @api.model
+    def create(self, vals):
+        record = super(AASMESWorkticketFinishWizard, self).create(vals)
+        if not record.workcenter_id:
+            record.write({'workcenter_id': record.workticket_id.workcenter_id.id})
+        return record
 
     @api.one
     def action_done(self):
-        if not self.finisher_id and not self.selecter_id:
-            raise UserError(u'当前工位%s上可能没有员工在岗，请相关员工先刷卡上岗！'% self.workstation_id.name)
-        if not self.output_qty or float_compare(self.output_qty, 0.0, precision_rounding=0.000001) <= 0.0:
-            raise UserError(u'投入数量必须是一个大于0的数！')
-        tempemployee = self.selecter_id if not self.finisher_id else self.finisher_id
-        self.workticket_id.action_doing_finish(tempemployee.id, self.output_qty)
+        badmode_qty, badmode_lines = 0.0, []
+        if self.badmode_lines and len(self.badmode_lines) > 0:
+            for bline in self.badmode_lines:
+                badmode_qty += bline.badmode_qty
+                badmode_lines.append((0, 0, {'badmode_id': bline.badmode_id.id, 'badmode_qty': bline.badmode_qty}))
+        if float_compare(badmode_qty, self.input_qty, precision_rounding=0.000001) > 0.0:
+            raise UserError(u'不良数量的总和不可以大于投入数量！')
+        self.write({'output_qty': self.input_qty-badmode_qty})
+        if badmode_lines and len(badmode_lines) > 0:
+            self.workticket_id.write({'badmode_lines': badmode_lines})
+        self.workticket_id.action_doing_finish()
+
+class AASMESWorkticketFinishBadmodeWizard(models.TransientModel):
+    _name = 'aas.mes.workticket.badmode.wizard'
+    _description = 'AAS MES Workticket Badmode Wizard'
+
+    wizard_id = fields.Many2one(comodel_name='aas.mes.workticket.finish.wizard', string=u'完工向导', ondelete='cascade')
+    badmode_id = fields.Many2one(comodel_name='aas.mes.routing.badmode', string=u'不良模式', ondelete='restrict')
+    badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+
+    _sql_constraints = [
+        ('uniq_badmode', 'unique (wizard_id, badmode_id)', u'请不要重复添加同一个不良模式！')
+    ]
+
+    @api.one
+    @api.constrains('badmode_qty')
+    def action_check_badmode_qty(self):
+        if not self.badmode_qty or float_compare(self.badmode_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+            raise ValidationError(u'不良数量必须是大于0的数！')
+
+
+
+
 
 
 

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_mes_badmode" model="ir.ui.view">
+            <field name="name">aas.mes.badmode.tree</field>
+            <field name="model">aas.mes.badmode</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="mesline_id"/>
+                    <field name="name"/>
+                    <field name="note"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_badmode" model="ir.ui.view">
+            <field name="name">aas.mes.badmode.form</field>
+            <field name="model">aas.mes.badmode</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group> <field name="name"/> </group>
+                            <group> <field name="mesline_id" required="1" options="{'no_create':true}"/> </group>
+                        </group>
+                        <group>
+                            <group> <field name="note"/> </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_badmode" model="ir.ui.view">
+            <field name="name">aas.mes.badmode.search</field>
+            <field name="model">aas.mes.badmode</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="mesline_id" string="产线" filter_domain="[('mesline_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="产线" context="{'group_by':'mesline_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_badmode" model="ir.actions.act_window">
+            <field name="name">不良模式</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.badmode</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_badmode"/>
+            <field name="search_view_id" ref="view_search_aas_mes_badmode"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加不良模式</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_mes_badmode" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_badmode"/>
+            <field name="act_window_id" ref="action_aas_mes_badmode"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_badmode" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_badmode"/>
+            <field name="act_window_id" ref="action_aas_mes_badmode"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_badmode"  name="不良模式" action="action_aas_mes_badmode"
+                          parent="menu_aas_mes_settings" sequence="3" groups="group_aas_mes_technologist"/>
+
+    </data>
+</odoo>

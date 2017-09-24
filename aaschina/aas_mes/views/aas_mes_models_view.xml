@@ -111,6 +111,7 @@
             <field name="arch" type="xml">
                 <tree>
                     <field name="name"/>
+                    <field name="line_type"/>
                 </tree>
             </field>
         </record>
@@ -127,9 +128,35 @@
                     <sheet>
                         <group>
                             <group> <field name="name" required="1"/> </group>
-                            <group> </group>
+                            <group> <field name="line_type" required="1"/> </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="location_production_id" options="{'no_create':true}" required="1"
+                                       domain="[('edgelocation','=',True)]"/>
+                            </group>
                         </group>
                         <notebook>
+                            <page string="原料库位">
+                                <field name="location_material_list" required="1">
+                                    <tree editable="bottom">
+                                        <field name="location_id" options="{'no_create':true}" required="1"
+                                            domain="[('edgelocation','=',True)]"/>
+                                        <field name="location_note"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="location_id" options="{'no_create':true}" required="1"
+                                                    domain="[('edgelocation','=',True)]"/>
+                                            </group>
+                                            <group>
+                                                <field name="location_note"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
                             <page string="员工清单">
                                 <field name="employees" readonly="1">
                                     <tree>
@@ -164,6 +191,7 @@
             <field name="arch" type="xml">
                 <search>
                     <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="location_production_id" string="成品库位" filter_domain="[('location_production_id','ilike',self)]"/>
                 </search>
             </field>
         </record>

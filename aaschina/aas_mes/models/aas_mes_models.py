@@ -28,6 +28,8 @@ class AASMESLine(models.Model):
     line_type = fields.Selection(selection=MESLINETYPE, string=u'生产类型', default='station', copy=False)
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
     employees = fields.One2many(comodel_name='aas.hr.employee', inverse_name='mesline_id', string=u'员工清单')
+    location_production_id = fields.Many2one(comodel_name='stock.location', string=u'成品库位', ondelete='restrict')
+    location_material_list = fields.One2many(comodel_name='aas.mes.line.material.location', inverse_name='mesline_id', string=u'原料库位')
 
     @api.multi
     def action_allocate_employee(self):
@@ -36,9 +38,7 @@ class AASMESLine(models.Model):
         :return:
         """
         self.ensure_one()
-        wizard = self.env['aas.mes.line.allocate.wizard'].create({
-            'mesline_id': self.id
-        })
+        wizard = self.env['aas.mes.line.allocate.wizard'].create({'mesline_id': self.id})
         view_form = self.env.ref('aas_mes.view_form_aas_mes_line_allocate_wizard')
         return {
             'name': u"员工分配",
@@ -52,6 +52,19 @@ class AASMESLine(models.Model):
             'res_id': wizard.id,
             'context': self.env.context
         }
+
+class AASMESLineMaterialLocation(models.Model):
+    _name = 'aas.mes.line.material.location'
+    _description = 'AAS MES Line Material Location'
+    _rec_name = 'location_id'
+
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='cascade')
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='restrict')
+    location_note = fields.Char(string=u'描述', copy=False)
+
+    _sql_constraints = [
+        ('uniq_location', 'unique (mesline_id, location_id)', u'同一产线的原料库位请不要重复！')
+    ]
 
 
 class AASHREmployee(models.Model):

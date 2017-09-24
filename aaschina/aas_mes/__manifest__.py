@@ -23,12 +23,14 @@
         'wizard/aas_mes_models_wizard_view.xml',
         'views/aas_mes_working_view.xml',
         'views/aas_mes_attendance_templates.xml',
+        'views/aas_mes_badmode_view.xml',
         'views/aas_mes_routing_view.xml',
         'views/aas_mes_bom_view.xml',
         'views/aas_mes_mainorder_view.xml',
         'views/aas_mes_workorder_view.xml',
         'views/aas_mes_workticket_view.xml',
-        'views/aas_mes_tracing_view.xml'
+        'views/aas_mes_tracing_view.xml',
+        'views/aas_mes_feedmaterial_view.xml'
     ],
     'qweb':[],
     'installable': True,

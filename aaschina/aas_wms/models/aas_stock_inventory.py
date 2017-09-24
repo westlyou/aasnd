@@ -19,6 +19,7 @@ _logger = logging.getLogger(__name__)
 
 INVENTORY_STATE = [('draft', u'草稿'),('confirm', u'确认'), ('done', u'完成')]
 
+# 库存盘点
 class AASStockInventory(models.Model):
     _name = 'aas.stock.inventory'
     _description = 'ASS Stock Inventory'

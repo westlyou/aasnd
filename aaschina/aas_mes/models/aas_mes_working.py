@@ -29,10 +29,8 @@ class AASMESWorkstation(models.Model):
     active = fields.Boolean(string=u'是否有效', default=True, copy=False)
     station_type = fields.Selection(selection=[('scanner', u'扫描工位'), ('controller', u'工控工位')], string=u'工位类型', default='scanner', copy=False)
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
-
     employee_lines = fields.One2many(comodel_name='aas.hr.employee', inverse_name='workstation_id', string=u'员工明细')
     employeelist = fields.Char(string=u'员工清单', compute='_compute_employeelist', store=True)
-
     equipment_lines = fields.One2many(comodel_name='aas.equipment.equipment', inverse_name='workstation_id', string=u'设备明细')
     equipmentlist = fields.Char(string=u'设备清单', compute='_compute_equipmentlist', store=True)
 
@@ -214,9 +212,3 @@ class AASMESAttendanceChecker(models.Model):
             'groups_id': [(3, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]
         })
         return result
-
-
-
-
-
-# 主工单 aas.mes.mainorder   子工单 aas.mes.workorder  工票 aas.mes.workticket

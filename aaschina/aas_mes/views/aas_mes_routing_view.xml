@@ -27,7 +27,6 @@
                         <button name="action_change_routing" type="object" string="更新工序" states="normal" class="oe_highlight"/>
                     </header>
                     <sheet>
-
                         <group>
                             <group>
                                 <field name="name" required="1" attrs="{'readonly':[('active','=',False)]}"/>
@@ -48,12 +47,13 @@
                         </group>
                         <notebook>
                             <page string="工艺工序" name="routing_lines">
-                                <field name="routing_lines" attrs="{'readonly':[('state','!=','draft')]}">
-                                    <tree editable="bottom">
+                                <field name="routing_lines" attrs="{'readonly':[('state','!=','draft')]}" context="{'default_mesline_id':mesline_id}">
+                                    <tree>
+                                        <field name="mesline_id" invisible="1"/>
                                         <field name="name" required="1"/>
                                         <field name="sequence"/>
                                         <field name="workstation_id" options="{'no_create':true}"
-                                                domain="[('mesline_id','=',parent.mesline_id)]"/>
+                                                domain="[('mesline_id','=',mesline_id)]"/>
                                         <field name="note"/>
                                     </tree>
                                     <form>
@@ -61,10 +61,24 @@
                                             <group>
                                                 <field name="name" required="1"/>
                                                 <field name="sequence"/>
-                                                <field name="workstation_id"/>
-                                                <field name="note"/>
+                                            </group>
+                                            <group>
+                                                <field name="mesline_id" invisible="1"/>
+                                                <field name="workstation_id" options="{'no_create':true}"
+                                                    domain="[('mesline_id','=',mesline_id)]"/>
                                             </group>
                                         </group>
+                                        <notebook>
+                                            <page string="不良模式">
+                                                <field name="badmode_lines">
+                                                    <tree editable="bottom">
+                                                        <field name="badmode_id" required="1" options="{'no_create':true}"
+                                                               domain="[('mesline_id','=',parent.mesline_id)]"/>
+                                                    </tree>
+                                                </field>
+                                            </page>
+                                            <page string="描述"> <field name="note"/> </page>
+                                        </notebook>
                                     </form>
                                 </field>
                             </page>

@@ -88,12 +88,48 @@ class AASMESRoutingLine(models.Model):
     name = fields.Char(string=u'名称', required=True, copy=False)
     sequence = fields.Integer(string=u'序号')
     note = fields.Text(string=u'描述')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
+    badmode_lines = fields.One2many(comodel_name='aas.mes.routing.badmode', inverse_name='workcenter_id', string=u'不良模式')
 
     _sql_constraints = [
         ('uniq_sequence', 'unique (routing_id, sequence)', u'同一工艺的工序序号不可以重复！')
     ]
+
+    @api.model
+    def create(self, vals):
+        if vals.get('routing_id', False) and not vals.get('mesline_id', False):
+            routing = self.env['aas.mes.routing'].browse(vals.get('routing_id'))
+            if routing.mesline_id:
+                vals['mesline_id'] = routing.mesline_id.id
+        return super(AASMESRoutingLine, self).create(vals)
+
+
+# 工序不良模式
+class AASMESRoutingBadmode(models.Model):
+    _name = 'aas.mes.routing.badmode'
+    _description = 'AAS MES Routing Bad Mode'
+    _rec_name = 'badmode_name'
+
+    workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='cascade')
+    badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')
+    badmode_name = fields.Char(string=u'不良名称', copy=False)
+
+    @api.model
+    def create(self, vals):
+        if vals.get('badmode_id', False):
+            badmode = self.env['aas.mes.badmode'].browse(vals.get('badmode_id'))
+            vals['badmode_name'] = badmode.name
+        return super(AASMESRoutingBadmode, self).create(vals)
+
+
+    @api.multi
+    def write(self, vals):
+        if vals.get('badmode_id', False):
+            badmode = self.env['aas.mes.badmode'].browse(vals.get('badmode_id'))
+            vals['badmode_name'] = badmode.name
+        return super(AASMESRoutingBadmode, self).write(vals)
 
 
 
