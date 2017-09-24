@@ -68,13 +68,17 @@ class AASStockInventory(models.Model):
         else:
            raise UserError(u'请检查当前条件下是否有库存！')
 
-
     @api.multi
     def action_refresh(self):
         """
         刷新库存
         :return:
         """
+        self.ensure_one()
+        return self.action_wms_refresh()
+
+    @api.multi
+    def action_wms_refresh(self):
         self.ensure_one()
         tempdomain = [('parent_id', '=', False), ('state', 'in', ['normal', 'frozen'])]
         if self.product_id:
@@ -109,6 +113,7 @@ class AASStockInventory(models.Model):
             templines.extend([(0, 0, tval) for tkey, tval in tempdict.items()])
         self.write({'inventory_lines': templines})
         return True
+
 
 
     @api.multi
@@ -296,9 +301,7 @@ class AASStockInventoryLabel(models.Model):
             iline = self.env['aas.stock.inventory.line'].search(linedomain, limit=1)
         self.write({'line_id': iline.id})
         iline.write({'actual_qty': iline.actual_qty+self.product_qty})
-        self.label_id.write({
-            'locked': True, 'locked_order': self.inventory_id.serialnumber
-        })
+        self.label_id.write({'locked': True, 'locked_order': self.inventory_id.serialnumber})
 
     @api.model
     def create(self, vals):
@@ -309,8 +312,9 @@ class AASStockInventoryLabel(models.Model):
 
     @api.multi
     def unlink(self):
-        inventorylinedict = {}
+        inventorylinedict, labellist = {}, self.env['aas.product.label']
         for record in self:
+            labellist |= record.label_id
             ikey = 'L'+str(record.line_id.id)
             if ikey not in inventorylinedict:
                 inventorylinedict[ikey] = {'line': record.line_id, 'qty': record.product_qty}
@@ -320,6 +324,7 @@ class AASStockInventoryLabel(models.Model):
         for lkey, lval in inventorylinedict.items():
             inventoryline, temp_qty = lval['line'], lval['qty']
             inventoryline.write({'actual_qty': inventoryline.actual_qty - temp_qty})
+        labellist.write({'locked': False, 'locked_order': False})
         return result
 
 
