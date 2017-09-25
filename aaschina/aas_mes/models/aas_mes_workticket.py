@@ -26,11 +26,11 @@ TICKETSTATES = [('draft', u'草稿'), ('waiting', u'等待'), ('producing', u'�
 class AASMESWorkticket(models.Model):
     _name = 'aas.mes.workticket'
     _description = 'AAS MES Workticket'
-    _order = 'workorder_id desc,seqence'
+    _order = 'workorder_id desc,sequence'
 
     name = fields.Char(string=u'名称', required=True, copy=False)
     barcode = fields.Char(string=u'名称', compute="_compute_barcode", store=True)
-    seqence = fields.Integer(string=u'序号')
+    sequence = fields.Integer(string=u'序号')
     routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺', ondelete='restrict')
     workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='restrict')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
@@ -205,11 +205,12 @@ class AASMESWorkticket(models.Model):
 
     @api.one
     def action_after_done(self):
-        nextworkcenter = self.env['aas.mes.routing.line'].search([('routing_id', '=', self.routing_id.id), ('sequence', '>', self.seqence)],
-                                                                 order='routing_id desc,sequence', limit=1)
+        currentworkcenter = self.workcenter_id
+        domain = [('routing_id', '=', self.routing_id.id), ('sequence', '>', currentworkcenter.sequence)]
+        nextworkcenter = self.env['aas.mes.routing.line'].search(domain, order='sequence', limit=1)
         if nextworkcenter:
             tempworkcenter = self.env['aas.mes.workticket'].create({
-                'name': self.workorder_id.name+'-'+nextworkcenter.sequence, 'sequence': nextworkcenter.sequence,
+                'name': self.workorder_id.name+'-'+str(nextworkcenter.sequence),
                 'routing_id': self.routing_id.id, 'workcenter_id': nextworkcenter.id,
                 'workcenter_name': nextworkcenter.name, 'product_id': self.product_id.id,
                 'product_uom': self.product_uom.id, 'input_qty': self.output_qty,
@@ -217,7 +218,7 @@ class AASMESWorkticket(models.Model):
                 'workorder_id': self.workorder_id.id, 'workorder_name': self.workorder_name,
                 'mainorder_id': False if not self.mainorder_id else self.mainorder_id.id,
                 'mainorder_name': self.mainorder_name, 'mesline_id': self.mesline_id.id,
-                'mesline_name': self.mesline_name
+                'mesline_name': self.mesline_name, 'sequence': nextworkcenter.sequence
             })
             self.workorder_id.write({
                 'workcenter_id': tempworkcenter.id, 'workcenter_name': nextworkcenter.name
@@ -225,6 +226,7 @@ class AASMESWorkticket(models.Model):
         else:
             self.workorder_id.write({'workcenter_id': False, 'workcenter_name': False, 'workcenter_finish': self.id})
             self.workorder_id.action_done()
+        self.workorder_id.write({'output_qty': self.output_qty})
 
     @api.one
     def action_material_consume(self, tracing):
@@ -240,6 +242,7 @@ class AASMESWorkticket(models.Model):
 class AASMESWorkticketBadmode(models.Model):
     _name = 'aas.mes.workticket.badmode'
     _description = 'AAS MES Workticket Badmode'
+    _rec_name = 'badmode_id'
 
     workticket_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'工票', ondelete='cascade')
     badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')
@@ -296,7 +299,8 @@ class AASMESWorkticketFinishWizard(models.TransientModel):
         if self.badmode_lines and len(self.badmode_lines) > 0:
             for bline in self.badmode_lines:
                 badmode_qty += bline.badmode_qty
-                badmode_lines.append((0, 0, {'badmode_id': bline.badmode_id.id, 'badmode_qty': bline.badmode_qty}))
+                badmode = bline.badmode_id.badmode_id
+                badmode_lines.append((0, 0, {'badmode_id': badmode.id, 'badmode_qty': bline.badmode_qty}))
         if float_compare(badmode_qty, self.input_qty, precision_rounding=0.000001) > 0.0:
             raise UserError(u'不良数量的总和不可以大于投入数量！')
         self.write({'output_qty': self.input_qty-badmode_qty})

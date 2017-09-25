@@ -35,8 +35,12 @@
                         <field name="state" widget="statusbar" statusbar_visible="draft,splited,producing,done"/>
                     </header>
                     <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_list_workorders" type="object" class="oe_stat_button"
+                                icon="fa-list" attrs="{'invisible': [('splited', '=', False)]}" string="拆分明细"/>
+                        </div>
                         <group>
-                            <group> <field name="name"/> </group>
+                            <group> <field name="name" attrs="{'readonly':[('state','!=','draft')]}"/> </group>
                             <group> <field name="mesline_type" readonly="1"/> </group>
                         </group>
                         <group>

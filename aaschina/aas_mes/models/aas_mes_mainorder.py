@@ -66,7 +66,7 @@ class AASMESMainorder(models.Model):
         if not self.start_index or self.start_index < 1:
             raise ValidationError(u'开始序号必须是一个大于等于1的整数！')
         if not self.split_unit_qty or float_compare(self.split_unit_qty, 0,0, precision_rounding=0.000001) <= 0.0:
-            raise ValidationError(u'拆分批次数量必须是一个有效的整数！')
+            raise ValidationError(u'拆分批次数量必须是一个有效的正数！')
         if float_compare(self.split_unit_qty, self.actual_qty, precision_rounding=0.000001) > 0.0:
             raise ValidationError(u'拆分批次数量不能大于实际生产数量')
 
@@ -144,4 +144,39 @@ class AASMESMainorder(models.Model):
 
     @api.one
     def action_split(self):
-        pass
+        tempqty, sequence = self.actual_qty, self.start_index
+        while float_compare(tempqty, 0.0, precision_rounding=0.000001) > 0:
+            if float_compare(tempqty, self.split_unit_qty, precision_rounding=0.000001) >= 0:
+                self.action_building_workorder(sequence, self.split_unit_qty)
+                tempqty -= self.split_unit_qty
+            else:
+                self.action_building_workorder(sequence, tempqty)
+                tempqty = 0.0
+            sequence += 1
+        self.write({'state': 'splited', 'splited': True})
+
+
+    @api.one
+    def action_building_workorder(self, sequence, product_qty):
+        workorder = self.env['aas.mes.workorder'].create({
+            'name': self.name+'-'+str(sequence), 'product_id': self.product_id.id,
+            'product_uom': self.product_uom.id, 'input_qty': product_qty, 'output_qty': product_qty,
+            'aas_bom_id': self.aas_bom_id.id, 'routing_id': self.routing_id.id,
+            'mesline_id': self.mesline_id.id, 'mainorder_id': self.id, 'product_code': self.product_id.default_code
+        })
+        workorder.action_confirm()
+
+
+    @api.multi
+    def action_list_workorders(self):
+        self.ensure_one()
+        if not self.workorder_lines or len(self.workorder_lines) <= 0:
+            raise UserError(u'当前主工单下没有子工单，可能已经被清理！')
+        productionids = str(tuple(self.workorder_lines.ids))
+        action = self.env.ref('aas_mes.action_aas_mes_workorder')
+        formview = self.env.ref('aas_mes.view_form_aas_mes_workorder')
+        treeview = self.env.ref('aas_mes.view_tree_aas_mes_workorder')
+        result = {'name': u'拆分明细', 'help': action.help, 'type': action.type}
+        result.update({'views': [[treeview.id, 'tree'], [formview.id, 'form']]})
+        result.update({'target': action.target, 'context': action.context, 'res_model': action.res_model, 'domain': "[('id','in',%s)]" % productionids})
+        return result

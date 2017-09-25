@@ -41,11 +41,12 @@
                         </div>
                         <group>
                             <group>
-                                <field name="default_code" string="物料编码"/>
-                                <field name="uom_id"/>
+                                <field name="default_code" string="物料编码" required="1"/>
+                                <field name="uom_id" options="{'no_create':true}"/>
+                                <field name="uom_po_id" invisible="1"/>
                                 <field name="tracking"/>
                                 <field name="type"/>
-                                <field name="categ_id" string="内部分类"/>
+                                <field name="categ_id" string="内部分类" options="{'no_create':true}"/>
                             </group>
                             <group>
                                 <field name="need_warranty"/>

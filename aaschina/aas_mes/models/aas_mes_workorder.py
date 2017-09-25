@@ -52,6 +52,7 @@ class AASMESWorkorder(models.Model):
     workcenter_start = fields.Many2one(comodel_name='aas.mes.workticket', string=u'开始工序', ondelete='restrict')
     workcenter_finish = fields.Many2one(comodel_name='aas.mes.workticket', string=u'结束工序', ondelete='restrict')
 
+    workticket_lines = fields.One2many(comodel_name='aas.mes.workticket', inverse_name='workorder_id', string=u'工票明细')
 
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'子工单名称不可以重复！')
@@ -140,7 +141,7 @@ class AASMESWorkorder(models.Model):
                                                                  order='routing_id desc,sequence', limit=1)
 
             workticket = self.env['aas.mes.workticket'].create({
-                'name': self.name+'-'+str(routline.sequence), 'seqence': routline.sequence,
+                'name': self.name+'-'+str(routline.sequence), 'sequence': routline.sequence,
                 'routing_id': self.routing_id.id, 'workcenter_id': routline.id, 'workcenter_name': routline.name,
                 'product_id': self.product_id.id, 'product_uom': self.product_uom.id,
                 'input_qty': self.input_qty, 'state': 'waiting', 'time_wait': fields.Datetime.now(),

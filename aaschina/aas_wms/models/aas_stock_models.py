@@ -60,6 +60,10 @@ class ProductTemplate(models.Model):
                                            float_compare(self.product_yield, 1.0, precision_rounding=0.000001) > 0.0):
             raise ValidationError(u'良率必须是一个介于0到1之间的数但不包含0！')
 
+    @api.onchange('uom_id')
+    def action_change_uom(self):
+        self.uom_po_id = self.uom_id.id
+
 
 
 

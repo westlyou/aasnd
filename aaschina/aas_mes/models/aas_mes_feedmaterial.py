@@ -26,11 +26,11 @@ class AASMESFeedmaterial(models.Model):
     _order = 'feed_time desc'
 
 
-    product_id = fields.Many2one(comodel_name='prodcut.prodcut', string=u'成品', ondelete='restrict')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'成品', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'成品单位', ondelete='restrict')
-    material_id = fields.Many2one(comodel_name='prodcut.prodcut', string=u'原料', ondelete='restrict')
+    material_id = fields.Many2one(comodel_name='product.product', string=u'原料', ondelete='restrict')
     material_uom = fields.Many2one(comodel_name='product.uom', string=u'原料单位', ondelete='restrict')
-    material_lot = fields.Many2one(comodel_name='stock.prodcution.lot', string=u'原料批次', ondelete='restrict')
+    material_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'原料批次', ondelete='restrict')
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'生产线', ondelete='restrict')
     material_qty = fields.Float(string=u'现场库存', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     feed_time = fields.Datetime(string=u'上料时间', default=fields.Datetime.now, copy=False)

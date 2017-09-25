@@ -292,19 +292,20 @@ class AASMESBOMWizard(models.TransientModel):
         if not self.wizard_lines or len(self.wizard_lines) <= 0:
             raise UserError(u'请先添加明细清单！')
         self.bom_id.write({'state': 'override', 'active': False})
-        tempbom = self.env['aas.mes.bom'].create({
-            'product_id': self.product_id.id, 'product_uom': self.product_uom.id, 'product_qty': self.product_qty,
+        tempvals = {
+            'product_id': self.product_id.id, 'product_uom': self.product_uom.id,
             'mesline_id': False if not self.mesline_id else self.mesline_id.id,
             'routing_id': False if not self.routing_id else self.routing_id.id,
-            'origin_id': self.bom_id.id,
+            'origin_id': self.bom_id.id, 'product_qty': self.product_qty,
             'workcenter_lines': [(0, 0, {
                 'product_id': wline.product_id.id, 'product_uom': wline.product_uom.id, 'product_qty': wline.product_qty,
                 'workcenter_id': False if not wline.workcenter_id else wline.workcenter_id.id
             }) for wline in self.wizard_lines]
-        })
+        }
+        tempbom = self.env['aas.mes.bom'].create(tempvals)
         view_form = self.env.ref('aas_mes.view_form_aas_mes_bom')
         return {
-            'name': u"物料清单",
+            'name': u"新物料清单",
             'type': 'ir.actions.act_window',
             'view_type': 'form',
             'view_mode': 'form',
