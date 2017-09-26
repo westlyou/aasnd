@@ -137,16 +137,15 @@ class AASMESWorkorder(models.Model):
     def action_confirm(self):
         self.write({'state': 'confirm'})
         if self.mesline_type == 'station' and self.routing_id:
-            routline = self.env['aas.mes.routing.line'].search([('routing_id', '=', self.routing_id.id)],
-                                                                 order='routing_id desc,sequence', limit=1)
-
+            domain = [('routing_id', '=', self.routing_id.id)]
+            routline = self.env['aas.mes.routing.line'].search(domain, order='sequence', limit=1)
             workticket = self.env['aas.mes.workticket'].create({
                 'name': self.name+'-'+str(routline.sequence), 'sequence': routline.sequence,
-                'routing_id': self.routing_id.id, 'workcenter_id': routline.id, 'workcenter_name': routline.name,
+                'workcenter_id': routline.id, 'workcenter_name': routline.name,
                 'product_id': self.product_id.id, 'product_uom': self.product_uom.id,
                 'input_qty': self.input_qty, 'state': 'waiting', 'time_wait': fields.Datetime.now(),
                 'workorder_id': self.id, 'workorder_name': self.name, 'mesline_id': self.mesline_id.id,
-                'mesline_name': self.mesline_name,
+                'mesline_name': self.mesline_name, 'routing_id': self.routing_id.id,
                 'mainorder_id': False if not self.mainorder_id else self.mainorder_id.id,
                 'mainorder_name': False if not self.mainorder_name else self.mainorder_name
             })

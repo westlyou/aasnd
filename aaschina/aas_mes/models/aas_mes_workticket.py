@@ -27,6 +27,7 @@ class AASMESWorkticket(models.Model):
     _name = 'aas.mes.workticket'
     _description = 'AAS MES Workticket'
     _order = 'workorder_id desc,sequence'
+    _rec_name = 'workcenter_name'
 
     name = fields.Char(string=u'名称', required=True, copy=False)
     barcode = fields.Char(string=u'名称', compute="_compute_barcode", store=True)
@@ -36,8 +37,7 @@ class AASMESWorkticket(models.Model):
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     input_qty = fields.Float(string=u'投入数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'),
-                              compute='_compute_output_qty', store=True)
+    output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_output_qty', store=True)
     state = fields.Selection(selection=TICKETSTATES, string=u'状态', default='draft', copy=False)
     time_wait = fields.Datetime(string=u'等待时间', copy=False)
     time_start = fields.Datetime(string=u'开工时间', copy=False)

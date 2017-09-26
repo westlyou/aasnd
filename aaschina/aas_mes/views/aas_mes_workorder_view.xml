@@ -65,6 +65,10 @@
                                 <field name="output_qty" readonly="1"/>
                                 <field name="workcenter_name" readonly="1" string="当前工序"/>
                                 <field name="mesline_type" invisible="1"/>
+                                <field name="workcenter_start" readonly="1"
+                                        attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
+                                <field name="workcenter_finish" readonly="1"
+                                        attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
                             </group>
                         </group>
                         <notebook>
