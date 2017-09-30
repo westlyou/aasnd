@@ -19,6 +19,62 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
+
+# 生产班次表
+class AASMESSchedule(models.Model):
+    _name = 'aas.mes.schedule'
+    _description = 'AAS MES Schedule'
+
+    name = fields.Char(string=u'名称')
+    sequence = fields.Integer(string=u'序号')
+    work_start = fields.Float(string=u'开始时间', default=0.0)
+    work_finish = fields.Float(string=u'结束时间', default=0.0)
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
+    state = fields.Selection(selection=[('working', u'生产'), ('break', u'休息')], string=u'状态', default='break')
+    employee_lines = fields.One2many(comodel_name='aas.hr.employee', inverse_name='schedule_id', string=u'员工清单')
+
+    _sql_constraints = [
+        ('uniq_name', 'unique (mesline_id, name)', u'同一产线的名称不能重复！'),
+        ('uniq_sequence', 'unique (mesline_id, sequence)', u'同一产线的序号不能重复！')
+    ]
+
+    @api.one
+    @api.constrains('work_start', 'work_finish')
+    def action_check_constrains(self):
+        if float_compare(self.work_start, 0.0, precision_rounding=0.0001) < 0.0 or float_compare(self.work_start, 24.0, precision_rounding=0.0001) >= 0.0:
+            raise ValidationError(u'班次开始时间只能在24小时以内！')
+        if float_compare(self.work_finish, 0.0, precision_rounding=0.0001) < 0.0 or float_compare(self.work_finish, 24.0, precision_rounding=0.0001) >= 0.0:
+            raise ValidationError(u'班次结束时间只能在24小时以内！')
+
+
+    @api.multi
+    def action_checkemployees(self):
+        self.ensure_one()
+        wizardvals = {'schedule_id': self.id, 'sequence': self.sequence, 'work_start': self.work_start, 'work_finish': self.work_finish}
+        if self.employee_lines and len(self.employee_lines) > 0:
+            wizardvals['employee_lines'] = [(0, 0, {'employee_id': temployee.id, 'employee_code': temployee.code}) for temployee in self.employee_lines]
+        wizard = self.env['aas.mes.schedule.employee.wizard'].create(wizardvals)
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_schedule_employee_wizard')
+        return {
+            'name': u"员工调整",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.mes.schedule.employee.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
+
+
+
+
+
+
+
 class AASMESWorkstation(models.Model):
     _name = 'aas.mes.workstation'
     _description = 'AAS MES Workstation'
@@ -69,6 +125,7 @@ class AASMESWorkstation(models.Model):
 class AASHREmployee(models.Model):
     _inherit = 'aas.hr.employee'
 
+    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', ondelete='restrict')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
 
 class AASEquipmentEquipment(models.Model):
@@ -212,3 +269,62 @@ class AASMESAttendanceChecker(models.Model):
             'groups_id': [(3, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]
         })
         return result
+
+
+
+#######################向导#################################
+
+# 生产班次调整员工
+class AASMESScheduleEmployeeWizard(models.TransientModel):
+    _name = 'aas.mes.schedule.employee.wizard'
+    _description = 'AAS MES Schedule Employee Wizard'
+
+    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', ondelete='cascade')
+    sequence = fields.Integer(string=u'序号')
+    work_start = fields.Float(string=u'开始时间', default=0.0)
+    work_finish = fields.Float(string=u'结束时间', default=0.0)
+    employee_lines = fields.One2many(comodel_name='aas.mes.schedule.employee.line.wizard', inverse_name='wizard_id', string=u'员工明细')
+
+    @api.one
+    def action_done(self):
+        self.schedule_id.employee_lines.write({'schedule_id': False})
+        if self.employee_lines and len(self.employee_lines) > 0:
+            employeelist = self.env['aas.hr.employee']
+            for temployee in self.employee_lines:
+                employeelist |= temployee.employee_id
+            employeelist.write({'schedule_id': self.schedule_id.id})
+
+
+
+class AASMESScheduleEmployeeLineWizard(models.TransientModel):
+    _name = 'aas.mes.schedule.employee.line.wizard'
+    _description = 'AAS MES Schedule Employee Line Wizard'
+
+    wizard_id = fields.Many2one(comodel_name='aas.mes.schedule.employee.wizard', string=u'员工调整', ondelete='cascade')
+    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict')
+    employee_code = fields.Char(string=u'员工工号')
+
+    _sql_constraints = [
+        ('uniq_employee', 'unique (wizard_id, employee_id)', u'请不要重复添加同一个员工！')
+    ]
+
+    @api.onchange('employee_id')
+    def action_change_employee(self):
+        if self.employee_id:
+            self.employee_code = self.employee_id.code
+        else:
+            self.employee_code = False
+
+    @api.model
+    def create(self, vals):
+        if vals.get('employee_id', False) and not vals.get('employee_code', False):
+            employee = self.env['aas.hr.employee'].browse(vals.get('employee_id'))
+            vals['employee_code'] = employee.code
+        return super(AASMESScheduleEmployeeLineWizard, self).create(vals)
+
+    @api.multi
+    def write(self, vals):
+        if vals.get('employee_id', False) and not vals.get('employee_code', False):
+            employee = self.env['aas.hr.employee'].browse(vals.get('employee_id'))
+            vals['employee_code'] = employee.code
+        return super(AASMESScheduleEmployeeLineWizard, self).write(vals)
