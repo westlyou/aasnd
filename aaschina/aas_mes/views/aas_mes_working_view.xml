@@ -526,8 +526,8 @@
                             <field name="sequence" readonly="1"/>
                         </group>
                         <group>
-                            <field name="work_start" readonly="1"/>
-                            <field name="work_finish" readonly="1"/>
+                            <field name="work_start" widget="float_time" readonly="1"/>
+                            <field name="work_finish" widget="float_time" readonly="1"/>
                         </group>
                     </group>
                     <notebook>

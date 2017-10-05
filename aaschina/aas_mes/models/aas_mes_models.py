@@ -31,6 +31,10 @@ class AASMESLine(models.Model):
     location_production_id = fields.Many2one(comodel_name='stock.location', string=u'成品库位', ondelete='restrict')
     location_material_list = fields.One2many(comodel_name='aas.mes.line.material.location', inverse_name='mesline_id', string=u'原料库位')
 
+    _sql_constraints = [
+        ('uniq_name', 'unique (name)', u'产线名称不可以重复！')
+    ]
+
     @api.multi
     def action_allocate_employee(self):
         """

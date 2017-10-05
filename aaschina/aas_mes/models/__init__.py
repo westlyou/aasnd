@@ -44,3 +44,4 @@ import aas_mes_workorder
 import aas_mes_workticket
 import aas_mes_tracing
 import aas_mes_feedmaterial
+import aas_mes_stockadjust

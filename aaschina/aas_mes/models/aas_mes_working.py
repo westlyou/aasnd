@@ -211,6 +211,48 @@ class AASMESWorkAttendance(models.Model):
         self.employee_id.write({'workstation_id': False, 'state': 'leave'})
 
 
+    @api.model
+    def action_workstation_scanning(self, workstation_code, employee_barcode, equipment_barcode=None):
+        """
+        工控工位扫描员工卡
+        :param workstation_code:
+        :param employee_barcode:
+        :return:
+        """
+        result = {'success': True, 'message': ''}
+        if not employee_barcode:
+            result.update({'success': False, 'message': u'您确认已经扫描了员工卡了吗？'})
+            return result
+        if not workstation_code:
+            result.update({'success': False, 'message': u'您确认已经配置好工位的编码了吗？'})
+            return result
+        employee = self.env['aas.hr.employee'].search([('barcode', '=', employee_barcode)], limit=1)
+        if not employee:
+            result.update({'success': False, 'message': u'请确认是否有此员工存在，或许当前员已被删除，请仔细检查！'})
+            return result
+        attendance_domain = [('employee_id', '=', employee.id), ('attend_done', '=', False)]
+        attendance = self.env['aas.mes.work.attendance'].search(attendance_domain, limit=1)
+        if attendance:
+            message = u"%s,您已经离开工位%s"% (attendance.employee_name, attendance.workstation_name)
+            attendance.action_done()
+            result.update({'message': message})
+            return result
+        workstation = self.env['aas.mes.workstation'].search([('code', '=', workstation_code)], limit=1)
+        if not workstation:
+            result.update({'success': False, 'message': u'库位异常可能已删除，请仔细检查库位信息！'})
+            return result
+        attendancevals = {'employee_id': employee.id, 'workstation_id': workstation.id}
+        if equipment_barcode:
+            equipment = self.env['aas.equipment.equipment'].search([('barcode', '=', equipment_barcode)], limit=1)
+            if not equipment:
+                result.update({'success': False, 'message': u'设备异常，请仔细检查系统是否存在此设备！'})
+                return result
+            attendancevals['equipment_id'] = equipment.id
+        self.env['aas.mes.work.attendance'].create(attendancevals)
+        result['message'] = u"%s,您已经在工位%s上上岗了，加油工作吧！"% (employee.name, workstation.name)
+        return result
+
+
 # 生产考勤员
 class AASMESAttendanceChecker(models.Model):
     _name = 'aas.mes.attendance.checker'
