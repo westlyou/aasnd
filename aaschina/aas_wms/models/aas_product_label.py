@@ -296,7 +296,7 @@ class AASProductLabel(models.Model):
                         movevals[mkey]['product_uom_qty'] += tlabel.product_qty
                     else:
                         movevals[mkey] = {
-                            'name': tlabel.name, 'product_id': tlabel.product_id.id, 'product_uom': tlabel.product_uom.id, 'create_date': fields.datetime.now,
+                            'name': tlabel.name, 'product_id': tlabel.product_id.id, 'product_uom': tlabel.product_uom.id, 'create_date': fields.Datetime.now(),
                             'restrict_lot_id': product_lot, 'product_uom_qty': tlabel.product_qty, 'location_id': tlabel.location_id.id, 'location_dest_id': location_id, 'company_id': company_id
                         }
             if not labelvals['onshelf_time'] or (tlabel.onshelf_time and tlabel.onshelf_time < labelvals['onshelf_time']):

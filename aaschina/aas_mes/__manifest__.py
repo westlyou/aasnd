@@ -30,7 +30,8 @@
         'views/aas_mes_workorder_view.xml',
         'views/aas_mes_workticket_view.xml',
         'views/aas_mes_tracing_view.xml',
-        'views/aas_mes_feedmaterial_view.xml'
+        'views/aas_mes_feedmaterial_view.xml',
+        'views/aas_mes_stockadjust_view.xml'
     ],
     'qweb':[],
     'installable': True,

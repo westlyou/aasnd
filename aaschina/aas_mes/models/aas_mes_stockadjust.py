@@ -56,21 +56,62 @@ class AASMESStockadjust(models.Model):
             for tlocation in mesline.location_material_list:
                 locationids.append(tlocation.location_id.id)
             domain.append(('location_id', 'in', locationids))
-        quants = self.env['stock.qunat'].search(domain)
+        quants = self.env['stock.quant'].search(domain)
         if quants and len(quants) > 0:
             stock_qty = sum([quant.qty for quant in quants])
         return stock_qty
 
+
     @api.one
     @api.constrains('location_id', 'adjustafter_qty')
     def action_check_adjustment(self):
-        pass
-
+        if self.adjustafter_qty:
+            if float_compare(self.adjustafter_qty, 0.0, precision_rounding=0.000001) < 0.0:
+                raise ValidationError(u'调整后的数量必须是大于等于零的数！')
+            if float_is_zero(self.adjustafter_qty - self.adjustbefore_qty, precision_rounding=0.000001):
+                raise ValidationError(u'调整后的数量不可以和调整前的数量相同！')
+        if self.location_id:
+            location_flag = False
+            templeft, tempright = self.location_id.parent_left, self.location_id.parent_right
+            plocation = self.mesline_id.location_production_id
+            if templeft <= plocation.parent_left and tempright >= plocation.parent_right:
+                location_flag = True
+            for materiallocation in self.mesline_id.location_material_list:
+                if location_flag:
+                    break
+                mlocation = materiallocation.location_id
+                if templeft <= mlocation.parent_left and tempright >= mlocation.parent_right:
+                    location_flag = True
+            if not location_flag:
+                raise ValidationError(u'您选择的库位异常，并非是的产线%s的成品和原料库位！'% self.mesline_id.name)
 
 
 
     @api.one
     def action_done(self):
-        pass
+        stock_qty = self.get_stock_qty(self)
+        if float_compare(stock_qty, self.adjustbefore_qty, precision_rounding=0.000001) != 0.0:
+            self.write({'adjustbefore_qty': stock_qty})
+        location_inventory = self.env.ref('stock.location_inventory')
+        location_mesline = self.location_id
+        if not location_mesline:
+            materiallocation = self.mesline_id.location_material_list[0]
+            location_mesline = materiallocation.location_id
+        balance_qty = self.adjustafter_qty - self.adjustbefore_qty
+        movevals = {
+            'name': self.name, 'product_id': self.product_id.id, 'product_uom': self.product_uom.id,
+            'create_date': fields.Datetime.now(), 'restrict_lot_id': self.product_lot.id,
+            'product_uom_qty': abs(balance_qty), 'company_id': self.env.user.company_id.id
+        }
+        if float_compare(balance_qty, 0.0, precision_rounding=0.000001) > 0.0:
+            movevals.update({'location_id': location_inventory.id, 'location_dest_id': location_mesline.id})
+        if float_compare(balance_qty, 0.0, precision_rounding=0.0000001) < 0.0:
+            movevals.update({'location_id': location_mesline.id, 'location_dest_id': location_inventory.id})
+        if float_is_zero(balance_qty, precision_rounding=0.000001):
+            raise UserError(u'调整前和调整后的数量不可以相同！')
+        tempmove = self.env['stock.move'].create(movevals)
+        tempmove.action_done()
+        self.write({'state': 'done'})
+
 
 

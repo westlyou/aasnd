@@ -217,6 +217,7 @@ class AASMESWorkAttendance(models.Model):
         工控工位扫描员工卡
         :param workstation_code:
         :param employee_barcode:
+        :param equipment_barcode:
         :return:
         """
         result = {'success': True, 'message': ''}
