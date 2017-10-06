@@ -112,6 +112,18 @@ class AASMESStockadjust(models.Model):
         tempmove = self.env['stock.move'].create(movevals)
         tempmove.action_done()
         self.write({'state': 'done'})
+        if self.workstation_id:
+            # 添加上料信息
+            fmdomain = [('workstation_id', '=', self.workstation_id.id), ('material_id', '=', self.product_id.id)]
+            fmdomain.extend([('material_lot', '=', self.product_lot.id), ('mesline_id', '=', self.mesline_id.id)])
+            feedmaterial = self.env['aas.mes.feedmaterial'].search(fmdomain, limit=1)
+            if not feedmaterial:
+                self.env['aas.mes.feedmaterial'].create({
+                    'workstation_id': self.workstation_id.id,
+                    'material_id': self.product_id.id, 'material_lot': self.product_lot.id
+                })
+
+
 
 
 

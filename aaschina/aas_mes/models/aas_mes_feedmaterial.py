@@ -22,19 +22,16 @@ _logger = logging.getLogger(__name__)
 class AASMESFeedmaterial(models.Model):
     _name = 'aas.mes.feedmaterial'
     _description = 'AAS MES Feed Material'
-    _rec_name = 'product_id'
+    _rec_name = 'material_id'
     _order = 'feed_time desc'
 
 
-    product_id = fields.Many2one(comodel_name='product.product', string=u'成品', ondelete='restrict')
-    product_uom = fields.Many2one(comodel_name='product.uom', string=u'成品单位', ondelete='restrict')
     material_id = fields.Many2one(comodel_name='product.product', string=u'原料', ondelete='restrict')
-    material_uom = fields.Many2one(comodel_name='product.uom', string=u'原料单位', ondelete='restrict')
-    material_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'原料批次', ondelete='restrict')
-    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'生产线', ondelete='restrict')
+    material_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
+    material_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     material_qty = fields.Float(string=u'现场库存', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     feed_time = fields.Datetime(string=u'上料时间', default=fields.Datetime.now, copy=False)
-    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='restrict')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
 
 
@@ -43,8 +40,10 @@ class AASMESFeedmaterial(models.Model):
     def get_material_qty(self, record):
         material_qty = 0.0
         domain = [('product_id', '=', record.material_id.id), ('lot_id', '=', record.material_lot.id)]
-        location_id = record.mesline_id.location_id
-        domain.append(('location_id', 'child_of', location_id.id))
+        location_ids = [record.mesline_id.location_production_id.id]
+        for mlocation in record.mesline_id.location_material_list:
+            location_ids.append(mlocation.location_id.id)
+        domain.append(('location_id', 'in', location_ids))
         quants = self.env['stock.quant'].search(domain)
         if quants and len(quants) > 0:
             material_qty = sum([quant.qty for quant in quants])
@@ -59,6 +58,28 @@ class AASMESFeedmaterial(models.Model):
 
     @api.model
     def create(self, vals):
+        if vals.get('material_id', False):
+            material = self.env['product.product'].browse(vals.get('material_id'))
+            vals['material_uom'] = material.uom_id.id
+        if vals.get('workstation_id', False):
+            workstation = self.env['aas.mes.workstation'].browse(vals.get('workstation_id'))
+            vals['mesline_id'] = workstation.mesline_id.id
         record = super(AASMESFeedmaterial, self).create(vals)
         record.action_refresh_stock()
         return record
+
+
+    @api.onchange('material_id')
+    def action_change_material(self):
+        if self.material_id:
+            self.material_uom = self.material_id.uom_id.id
+        else:
+            self.material_uom = False
+
+
+    @api.onchange('workstation_id')
+    def action_change_workstation(self):
+        if self.workstation_id:
+            self.mesline_id = self.workstation_id.mesline_id.id
+        else:
+            self.mesline_id = False

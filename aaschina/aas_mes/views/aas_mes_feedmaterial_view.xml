@@ -7,16 +7,13 @@
             <field name="model">aas.mes.feedmaterial</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree create="false" edit="false" delete="false">
+                <tree edit="false">
                     <field name="mesline_id"/>
-                    <field name="product_id"/>
-                    <field name="product_uom"/>
                     <field name="material_id"/>
                     <field name="material_uom"/>
                     <field name="material_lot"/>
                     <field name="material_qty"/>
                     <field name="feed_time"/>
-                    <field name="workorder_id"/>
                     <field name="workstation_id"/>
                 </tree>
             </field>
@@ -27,30 +24,26 @@
             <field name="model">aas.mes.feedmaterial</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form create="false" edit="false" delete="false">
+                <form edit="false">
                     <header>
                         <button name="action_refresh_stock" type="object" string="刷新库存" class="oe_highlight"/>
                     </header>
                     <sheet>
                         <group>
                             <group>
-                                <field name="mesline_id"/>
-                                <field name="product_id"/>
-                                <field name="product_uom"/>
-                                <field name="feed_time"/>
+                                <field name="workstation_id" options="{'no_create':true}" required="1"/>
+                                <field name="mesline_id" readonly="1"/>
+                                <field name="feed_time" readonly="1"/>
                             </group>
                             <group>
-                                <field name="material_id"/>
-                                <field name="material_uom"/>
-                                <field name="material_lot"/>
-                                <field name="material_qty"/>
+                                <field name="material_id" options="{'no_create':true}" required="1"/>
+                                <field name="material_uom" readonly="1"/>
+                                <field name="material_lot" options="{'no_create':true}" required="1"
+                                       domain="[('product_id','=',material_id)]"/>
                             </group>
                         </group>
                         <group>
-                            <group>
-                                <field name="workorder_id"/>
-                                <field name="workstation_id"/>
-                            </group>
+                            <group> <field name="material_qty" readonly="1"/> </group>
                         </group>
                     </sheet>
                 </form>
@@ -63,19 +56,14 @@
             <field name="arch" type="xml">
                 <search>
                     <field name="mesline_id" string="产线" filter_domain="[('mesline_id','ilike',self)]"/>
-                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
                     <field name="material_id" string="原料" filter_domain="[('material_id','ilike',self)]"/>
                     <field name="material_lot" string="批次" filter_domain="[('material_lot','ilike',self)]"/>
-                    <field name="workorder_id" string="工单" filter_domain="[('workorder_id','ilike',self)]"/>
                     <field name="workstation_id" string="工位" filter_domain="[('workstation_id','ilike',self)]"/>
                     <separator/>
-                    <filter string="现场零库存" domain="[('product_qty','=',0.0)]" />
                     <group expand="0" string="分组">
                         <filter string="产线" context="{'group_by':'mesline_id'}"/>
-                        <filter string="产品" context="{'group_by':'product_id'}"/>
                         <filter string="原料" context="{'group_by':'material_id'}"/>
                         <filter string="批次" context="{'group_by':'material_lot'}"/>
-                        <filter string="工单" context="{'group_by':'workorder_id'}"/>
                         <filter string="工位" context="{'group_by':'workstation_id'}"/>
                     </group>
                 </search>
@@ -90,6 +78,9 @@
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="view_tree_aas_mes_feedmaterial"/>
             <field name="search_view_id" ref="view_search_aas_mes_feedmaterial"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加上料信息</p>
+            </field>
         </record>
 
         <record id="act_view_tree_aas_mes_feedmaterial" model="ir.actions.act_window.view">
