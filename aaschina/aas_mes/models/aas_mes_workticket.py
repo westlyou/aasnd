@@ -228,6 +228,7 @@ class AASMESWorkticket(models.Model):
             self.workorder_id.action_done()
         self.workorder_id.write({'output_qty': self.output_qty})
 
+
     @api.one
     def action_material_consume(self, tracing):
         """
@@ -235,7 +236,62 @@ class AASMESWorkticket(models.Model):
         :param tracing:
         :return:
         """
-        pass
+        workcenter, workstation = self.workcenter_id, self.workcenter_id.workstation_id
+        if not workstation:
+            raise UserError(u'工位%s还未设置工位，请先设置工序工位！')
+        mesbom = self.workorder_id.aas_bom_id
+        bomworkcenterlist = self.env['aas.mes.bom.workcenter'].search([('bom_id', '=', mesbom.id), ('workcenter_id', '=', workcenter.id)])
+        if not bomworkcenterlist or len(bomworkcenterlist) <= 0:
+            return
+        location_production = self.env.ref('aas_wms.location_production')
+        movedict, productlotlist, todeletefeedmateriallist = {}, [], self.env['aas.mes.feedmaterial']
+        for bomworkcenter in bomworkcenterlist:
+            product_id, product_qty = bomworkcenter.product_id, bomworkcenter.product_qty
+            feedmaterials = self.env['aas.mes.feedmaterial'].search([('material_id', '=', product_id.id), ('workstation_id', '=', workstation.id)])
+            if not feedmaterials or len(feedmaterials) <= 0:
+                raise UserError(u'工位%s还未上料%s'% (workstation.name, product_id.default_code))
+            for feedmaterial in feedmaterials:
+                quantlist = feedmaterial.action_checking_quants()
+                if not quantlist or len(quantlist) <= 0:
+                    todeletefeedmateriallist |= feedmaterial
+                    break
+                if float_compare(feedmaterial.material_qty, product_qty, precision_rounding=0.000001) < 0.0:
+                    raise UserError(u'工位%s的原料%s上料不足，请联系上料员或领班上料或调整产线库存！'% (workstation.name, product_id.default_code))
+                if float_is_zero(feedmaterial.material_qty - product_qty, precision_rounding=0.000001):
+                    # 库存正好消耗完，清除上料记录
+                    todeletefeedmateriallist |= feedmaterial
+                for quant in quantlist:
+                    if float_compare(product_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+                        break
+                    tempqty = product_qty if float_compare(quant.qty, product_qty, precision_rounding=0.000001) >= 0.0 else quant.qty
+                    qkey = 'P-'+str(product_id.id)+'-'+str(quant.lot_id.id)+'-'+str(quant.location_id.id)
+                    if qkey in movedict:
+                        movedict[qkey]['product_uom_qty'] += quant.qty
+                    else:
+                        movedict[qkey] = {
+                            'name': self.name, 'product_id': product_id.id, 'product_uom': product_id.uom_id.id,
+                            'create_date': fields.Datetime.now(), 'restrict_lot_id': quant.lot_id.id,
+                            'product_uom_qty': quant.qty, 'company_id': self.env.user.company_id.id,
+                            'trace_id': tracing.id, 'location_id': quant.location_id.id, 'location_dest_id': location_production.id
+                        }
+                        productlotlist.append(quant.product_id.default_code+'['+quant.lot_id.name+']')
+                    product_qty -= tempqty
+        if movedict and len(movedict) > 0:
+            movelist = self.env['stock.move']
+            for mkey, mval in movedict.items():
+                tempmove = self.env['stock.move'].create(mval)
+                movelist |= tempmove
+            movelist.action_done()
+        tracing.write({'materiallist': '.'.join(productlotlist)})
+        if todeletefeedmateriallist and len(todeletefeedmateriallist) > 0:
+            todeletefeedmateriallist.unlink()
+
+
+
+
+
+
+
 
 
 

@@ -55,6 +55,24 @@ class AASMESFeedmaterial(models.Model):
     def action_refresh_stock(self):
         self.get_material_qty(self)
 
+    @api.multi
+    def action_checking_quants(self):
+        """
+        整理库存份
+        :return:
+        """
+        self.ensure_one()
+        domain = [('product_id', '=', self.material_id.id), ('lot_id', '=', self.material_lot.id)]
+        location_ids = [self.mesline_id.location_production_id.id]
+        for mlocation in self.mesline_id.location_material_list:
+            location_ids.append(mlocation.location_id.id)
+        domain.append(('location_id', 'in', location_ids))
+        quants = self.env['stock.quant'].search(domain)
+        if quants and len(quants) > 0:
+            material_qty = sum([quant.qty for quant in quants])
+        self.write({'material_qty': material_qty})
+        return quants
+
 
     @api.model
     def create(self, vals):
