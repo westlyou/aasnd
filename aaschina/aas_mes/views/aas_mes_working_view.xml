@@ -304,6 +304,48 @@
         <menuitem id="menu_aas_mes_workstation"  name="工位" action="action_aas_mes_workstation"
                           parent="menu_aas_mes_resources" sequence="7" groups="group_aas_manufacture_foreman"/>
 
+        <record id="view_kanban_aas_equipment_equipment_mes" model="ir.ui.view">
+            <field name="name">aas.equipment.equipment.aas.kanban</field>
+            <field name="model">aas.equipment.equipment</field>
+            <field name="inherit_id" ref="aas_equipment.view_kanban_aas_equipment_equipment"/>
+            <field name="arch" type="xml">
+                <kanban position="attributes">
+                    <attribute name="default_group_by">mesline_id</attribute>
+                    <attribute name="default_order">state_color</attribute>
+                    <attribute name="quick_create">false</attribute>
+                </kanban>
+                <field name="priority" position="after">
+                    <field name="workstation_id"/>
+                </field>
+                <templates position="replace">
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_vignette">
+                                <div class="equipment_kanban_left">
+                                    <a type="open"><img t-att-src="kanban_image('aas.equipment.equipment', 'image_small', record.id.value)" class="oe_kanban_image"/></a>
+                                    <div t-attf-title="#{record.state.value}" t-attf-class="equipment_status_color_#{record.state_color.raw_value} equipment_status"></div>
+                                </div>
+                                <div class="oe_kanban_details">
+                                    <h4> <a type="open"><field name="code"/></a> </h4>
+                                    <ul>
+                                        <li>名称: <field name="name"/></li>
+                                        <li>状态: <field name="state"/></li>
+                                        <li>类别: <field name="category"/></li>
+                                        <li>级别: <field name="priority" widget="priority"/></li>
+                                        <li>工位：<field name="workstation_id"/></li>
+                                        <li>
+                                            责任人: <field name="responsible"/>
+                                            <img t-att-src="kanban_image('res.users', 'image_small', record.responsible.raw_value)" t-att-title="record.responsible.value" width="24" height="24" class="oe_kanban_avatar"/>
+                                        </li>
+                                        <li>供应商: <field name="supplier"/></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </templates>
+            </field>
+        </record>
 
         <record id="view_form_aas_equipment_equipment_mes" model="ir.ui.view">
             <field name="name">aas.equipment.equipment.aas.form</field>
@@ -318,6 +360,54 @@
                 </field>
             </field>
         </record>
+
+        <record id="view_tree_aas_equipment_equipment_mes" model="ir.ui.view">
+            <field name="name">aas.equipment.equipment.aas.tree</field>
+            <field name="model">aas.equipment.equipment</field>
+            <field name="inherit_id" ref="aas_equipment.view_tree_aas_equipment_equipment"/>
+            <field name="arch" type="xml">
+                <field name="code" position="before">
+                    <field name="mesline_id"/>
+                </field>
+                <field name="state" position="after">
+                    <field name="workstation_id"/>
+                </field>
+            </field>
+        </record>
+
+        <record id="view_search_aas_equipment_equipment_mes" model="ir.ui.view">
+            <field name="name">aas.equipment.equipment.aas.search</field>
+            <field name="model">aas.equipment.equipment</field>
+            <field name="inherit_id" ref="aas_equipment.view_search_aas_equipment_equipment"/>
+            <field name="arch" type="xml">
+                <search position="replace">
+                    <search>
+                        <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                        <field name="code" string="编码" filter_domain="[('code','ilike',self)]"/>
+                        <field name="mesline_id" string="产线" filter_domain="[('mesline_id','ilike',self)]"/>
+                        <field name="workstation_id" string="工位" filter_domain="[('workstation_id','ilike',self)]"/>
+                        <field name="category" string="类别" filter_domain="[('category','ilike',self)]"/>
+                        <field name="supplier" string="供应商" filter_domain="[('supplier','ilike',self)]"/>
+                        <separator/>
+                        <filter string="正常设备" domain="[('state','=','normal')]"/>
+                        <filter string="测试设备" domain="[('state','=','test')]"/>
+                        <filter string="生产设备" domain="[('state','=','produce')]"/>
+                        <filter string="维修设备" domain="[('state','=','repair')]"/>
+                        <filter string="保养设备" domain="[('state','=','maintain')]"/>
+                        <filter string="报废设备" domain="[('active','=',False)]"/>
+                        <separator/>
+                        <group expand="0" string="分组">
+                            <filter string="产线" context="{'group_by':'mesline_id'}"/>
+                            <filter string="工位" context="{'group_by':'workstation_id'}"/>
+                            <filter string="类别" context="{'group_by':'category'}"/>
+                            <filter string="供应商" context="{'group_by':'supplier'}"/>
+                        </group>
+                    </search>
+                </search>
+            </field>
+        </record>
+
+
 
         <record id="view_tree_aas_hr_employee_mes_workstation" model="ir.ui.view">
             <field name="name">aas.hr.employee.mes.workstation.tree</field>

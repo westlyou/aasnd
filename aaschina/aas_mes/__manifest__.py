@@ -31,7 +31,10 @@
         'views/aas_mes_workticket_view.xml',
         'views/aas_mes_tracing_view.xml',
         'views/aas_mes_feedmaterial_view.xml',
-        'views/aas_mes_stockadjust_view.xml'
+        'views/aas_mes_stockadjust_view.xml',
+
+        'wechat/views/aas_wechat_mes_template.xml',
+        'wechat/views/aas_wechat_mes_feedmaterial_template.xml'
     ],
     'qweb':[],
     'installable': True,

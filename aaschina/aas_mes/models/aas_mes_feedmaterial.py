@@ -34,6 +34,9 @@ class AASMESFeedmaterial(models.Model):
     feed_time = fields.Datetime(string=u'上料时间', default=fields.Datetime.now, copy=False)
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
 
+    _sql_constraints = [
+        ('uniq_lot', 'unique (workstation_id, material_id, material_lot)', u'请不要在工位上不要重复添加同一批次的物料！')
+    ]
 
 
     @api.model
