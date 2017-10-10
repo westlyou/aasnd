@@ -28,17 +28,37 @@ mui.ready(function(){
 
     //投料
     document.getElementById('feeding').addEventListener('tap', function(){
+        mui.openWindow({'url': '/aaswechat/mes/linefeeding', 'id': 'linefeeding'});
+    });
+
+    //生产工单
+    document.getElementById('workorder').addEventListener('tap', function(){
         wx.scanQRCode({
             needResult: 1,
-            desc: '扫描工位',
+            desc: '扫描工单',
             scanType: ["qrCode"],
             success: function (result) {
-                var barcode = result.resultStr;
-                mui.openWindow({'url': '/aaswechat/mes/workstationfeeding/'+barcode, 'id': 'workstationfeeding'});
+                var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+                mui.ajax('/aaswechat/mes/workorderscan',{
+                    data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {'barcode': result.resultStr}, id: access_id }),
+                    dataType:'json', type:'post', timeout:10000,
+                    headers:{'Content-Type':'application/json'},
+                    success:function(data){
+                        var dresult = data.result;
+                        if (!dresult.success){
+                            mui.toast(dresult.message);
+                            return ;
+                        }
+                        if (dresult.start){
+                            mui.openWindow({'url': '/aaswechat/mes/workticket/start/'+dresult.workticketid, 'id': 'workticketstart'});
+                        }else{
+                            mui.openWindow({'url': '/aaswechat/mes/workticket/finish/'+dresult.workticketid, 'id': 'workticketfinish'});
+                        }
+                    },
+                    error:function(xhr,type,errorThrown){ console.log(type);}
+                });
             },
-            fail: function (result) {
-                mui.toast(result.errMsg);
-            }
+            fail: function (result) {mui.toast(result.errMsg);}
         });
     });
 

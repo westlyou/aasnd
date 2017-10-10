@@ -30,7 +30,7 @@ class AASMESWorkticket(models.Model):
     _rec_name = 'workcenter_name'
 
     name = fields.Char(string=u'名称', required=True, copy=False)
-    barcode = fields.Char(string=u'名称', compute="_compute_barcode", store=True)
+    barcode = fields.Char(string=u'条码', compute="_compute_barcode", store=True)
     sequence = fields.Integer(string=u'序号')
     routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺', ondelete='restrict')
     workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='restrict')
@@ -244,7 +244,7 @@ class AASMESWorkticket(models.Model):
         if not bomworkcenterlist or len(bomworkcenterlist) <= 0:
             return
         location_production = self.env.ref('aas_wms.location_production')
-        movedict, productlotlist, todeletefeedmateriallist = {}, [], self.env['aas.mes.feedmaterial']
+        movedict, productlotlist, feedlistneedrefresh = {}, [], self.env['aas.mes.feedmaterial']
         for bomworkcenter in bomworkcenterlist:
             product_id, product_qty = bomworkcenter.product_id, bomworkcenter.product_qty
             feedmaterials = self.env['aas.mes.feedmaterial'].search([('material_id', '=', product_id.id), ('workstation_id', '=', workstation.id)])
@@ -253,13 +253,9 @@ class AASMESWorkticket(models.Model):
             for feedmaterial in feedmaterials:
                 quantlist = feedmaterial.action_checking_quants()
                 if not quantlist or len(quantlist) <= 0:
-                    todeletefeedmateriallist |= feedmaterial
                     break
                 if float_compare(feedmaterial.material_qty, product_qty, precision_rounding=0.000001) < 0.0:
                     raise UserError(u'工位%s的原料%s上料不足，请联系上料员或领班上料或调整产线库存！'% (workstation.name, product_id.default_code))
-                if float_is_zero(feedmaterial.material_qty - product_qty, precision_rounding=0.000001):
-                    # 库存正好消耗完，清除上料记录
-                    todeletefeedmateriallist |= feedmaterial
                 for quant in quantlist:
                     if float_compare(product_qty, 0.0, precision_rounding=0.000001) <= 0.0:
                         break
@@ -276,15 +272,17 @@ class AASMESWorkticket(models.Model):
                         }
                         productlotlist.append(quant.product_id.default_code+'['+quant.lot_id.name+']')
                     product_qty -= tempqty
+                feedlistneedrefresh |= feedmaterial
         if movedict and len(movedict) > 0:
             movelist = self.env['stock.move']
             for mkey, mval in movedict.items():
                 tempmove = self.env['stock.move'].create(mval)
                 movelist |= tempmove
             movelist.action_done()
+        if feedlistneedrefresh and len(feedlistneedrefresh) > 0:
+            for feedmaterial in feedlistneedrefresh:
+                feedmaterial.action_refresh_stock()
         tracing.write({'materiallist': '.'.join(productlotlist)})
-        if todeletefeedmateriallist and len(todeletefeedmateriallist) > 0:
-            todeletefeedmateriallist.unlink()
 
 
 

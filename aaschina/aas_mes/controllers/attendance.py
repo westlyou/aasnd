@@ -23,8 +23,11 @@ class AASMESAttendanceController(http.Controller):
         login = request.env.user
         values = {'success': True, 'message': u'上岗需要先选择工位，再扫描员工卡；如果是离岗直接扫描员工卡即可！', 'workstations': []}
         values['checker'] = login.name
-        checker = request.env['aas.mes.attendance.checker'].search([('checker_id', '=', login.id)], limit=1)
-        mesline = checker.mesline_id
+        checkdomain = [('lineuser_id', '=', login.id), ('ischecker', '=', True)]
+        lineuser = request.env['aas.mes.lineusers'].search(checkdomain, limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录用户可能不是考勤员，请仔细检查！'})
+        mesline = lineuser.mesline_id
         values['mesline_name'] = mesline.name
         workstations = request.env['aas.mes.workstation'].search([('mesline_id', '=', mesline.id)])
         if workstations and len(workstations) > 0:

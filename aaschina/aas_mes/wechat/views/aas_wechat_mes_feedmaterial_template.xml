@@ -2,5 +2,66 @@
 <odoo>
     <data>
 
+        <template id="wechat_mes_linefeeding" name="Wechat MES Line Feeding">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/iconfont/iconfont.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+                        <h1 class="mui-title"> 产线上料 </h1>
+                    </header>
+                    <div id="linefeeding_pullrefresh" class="mui-content mui-scroll-wrapper">
+                        <div class="mui-scroll">
+                            <t t-foreach="workstationlist" t-as="wkstation">
+                                <div class="mui-card">
+                                    <div class="mui-card-header">
+                                        <t t-esc="wkstation['workstation_name']"/> [ <t t-esc="wkstation['workstation_code']"/> ]
+                                        <a t-att-workstationid="wkstation['workstation_id']" class="mui-card-link aas-feeding">上料</a>
+                                    </div>
+                                    <div class="mui-card-content">
+                                        <div class="mui-card-content-inner">
+                                            <ul class="mui-table-view" t-attf-id="workstation_{{wkstation['workstation_id']}}">
+                                                <t t-foreach="wkstation['materiallist']" t-as="material">
+                                                    <li t-attf-id="feeding_{{material['feeding_id']}}" t-att-feedingid="material['feeding_id']" class="mui-table-view-cell">
+                                                        <div class='mui-slider-right mui-disabled'> <a class='mui-btn mui-btn-red aas-feeding-del'>删除</a> </div>
+                                                        <div class="mui-slider-handle">
+                                                            <div class='mui-table'>
+                                                                <div class='mui-table-cell mui-col-xs-4 mui-text-left'>
+                                                                    <t t-esc="material['material_code']"/>
+                                                                </div>
+                                                                <div class='mui-table-cell mui-col-xs-4 mui-text-center'>
+                                                                    <t t-esc="material['material_lot']"/>
+                                                                </div>
+                                                                <div class='mui-table-cell mui-col-xs-4 mui-text-right'>
+                                                                    <t t-esc="material['material_qty']"/>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                </t>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </body>
+                <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+                <script src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+                <script src="/aas_mes/static/wechat/wechat_mes_linefeeding.js"></script>
+            </html>
+        </template>
+
     </data>
 </odoo>

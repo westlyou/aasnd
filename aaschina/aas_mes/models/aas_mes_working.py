@@ -91,6 +91,10 @@ class AASMESWorkstation(models.Model):
     equipment_lines = fields.One2many(comodel_name='aas.equipment.equipment', inverse_name='workstation_id', string=u'设备明细')
     equipmentlist = fields.Char(string=u'设备清单', compute='_compute_equipmentlist', store=True)
 
+    _sql_constraints = [
+        ('uniq_code', 'unique (code)', u'工位编码不可以重复！')
+    ]
+
     @api.multi
     @api.depends('employee_lines')
     def _compute_employeelist(self):

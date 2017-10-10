@@ -72,8 +72,9 @@ class AASMESFeedmaterial(models.Model):
         domain.append(('location_id', 'in', location_ids))
         quants = self.env['stock.quant'].search(domain)
         if quants and len(quants) > 0:
-            material_qty = sum([quant.qty for quant in quants])
-        self.write({'material_qty': material_qty})
+            temp_qty = sum([quant.qty for quant in quants])
+            if not float_is_zero(self.material_qty-temp_qty, precision_rounding=0.000001):
+                self.write({'material_qty': temp_qty})
         return quants
 
 

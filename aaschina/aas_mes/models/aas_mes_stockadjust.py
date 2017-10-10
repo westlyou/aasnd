@@ -28,7 +28,6 @@ class AASMESStockadjust(models.Model):
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='restrict')
-    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
     adjustbefore_qty = fields.Float(string=u'调整前数量', digits=dp.get_precision('Product Unit of Measure'),
                                     default=0.0, compute="_compute_adjustbefore_qty", store=True)
     adjustafter_qty = fields.Float(string=u'调整后数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
@@ -36,7 +35,7 @@ class AASMESStockadjust(models.Model):
     adjustuser_id = fields.Many2one(comodel_name='res.users', string=u'操作人', ondelete='restrict', default= lambda self: self.env.user)
     state = fields.Selection(selection=[('draft', u'草稿'), ('done', u'完成')], string=u'状态', default='draft', copy=False)
 
-    @api.depends('location_id', 'workstation_id')
+    @api.depends('location_id')
     def _compute_adjustbefore_qty(self):
         for record in self:
             record.adjustbefore_qty = self.get_stock_qty(record)
@@ -45,17 +44,10 @@ class AASMESStockadjust(models.Model):
     @api.model
     def get_stock_qty(self, record):
         stock_qty = 0.0
-        domain = [('product_id', '=', record.product_id.id), ('lot_id', '=', self.product_lot.id)]
-        if record.location_id:
-            domain.append(('location_id', '=', record.location_id.id))
-        elif record.mesline_id:
-            mesline = record.mesline_id
-            if not mesline.location_production_id or not mesline.location_material_list or len(mesline.location_material_list) <= 0:
-                raise UserError(u'请先设置好产线的原料和成品库位信息！')
-            locationids = [mesline.location_production_id.id]
-            for tlocation in mesline.location_material_list:
-                locationids.append(tlocation.location_id.id)
-            domain.append(('location_id', 'in', locationids))
+        if (not record.location_id) or (not record.product_id) or (not record.product_lot):
+            return stock_qty
+        domain = [('product_id', '=', record.product_id.id), ('lot_id', '=', record.product_lot.id)]
+        domain.append(('location_id', '=', record.location_id.id))
         quants = self.env['stock.quant'].search(domain)
         if quants and len(quants) > 0:
             stock_qty = sum([quant.qty for quant in quants])
@@ -112,16 +104,13 @@ class AASMESStockadjust(models.Model):
         tempmove = self.env['stock.move'].create(movevals)
         tempmove.action_done()
         self.write({'state': 'done'})
-        if self.workstation_id:
-            # 添加上料信息
-            fmdomain = [('workstation_id', '=', self.workstation_id.id), ('material_id', '=', self.product_id.id)]
-            fmdomain.extend([('material_lot', '=', self.product_lot.id), ('mesline_id', '=', self.mesline_id.id)])
-            feedmaterial = self.env['aas.mes.feedmaterial'].search(fmdomain, limit=1)
-            if not feedmaterial:
-                self.env['aas.mes.feedmaterial'].create({
-                    'workstation_id': self.workstation_id.id,
-                    'material_id': self.product_id.id, 'material_lot': self.product_lot.id
-                })
+        # 刷新上料信息
+        feeddomain = [('material_id', '=', self.product_id.id), ('material_lot', '=', self.product_lot.id)]
+        feeddomain.append(('mesline_id', '=', self.mesline_id.id))
+        feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
+        if feedmateriallist and len(feedmateriallist) > 0:
+            for feedmaterial in feedmateriallist:
+                feedmaterial.action_refresh_stock()
 
 
 
