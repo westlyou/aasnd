@@ -32,6 +32,7 @@ class AASMESFeedmaterial(models.Model):
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     material_qty = fields.Float(string=u'现场库存', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     feed_time = fields.Datetime(string=u'上料时间', default=fields.Datetime.now, copy=False)
+    feeder_id = fields.Many2one(comodel_name='res.users', string=u'上料员', default= lambda self:self.env.user)
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
 
     _sql_constraints = [

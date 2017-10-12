@@ -11,7 +11,8 @@
                     <field name="mesline_id"/>
                     <field name="lineuser_id"/>
                     <field name="ischecker"/>
-                    <field name="isforeman"/>
+                    <field name="isfeeder"/>
+                    <field name="isserialnumber"/>
                 </tree>
             </field>
         </record>
@@ -29,8 +30,9 @@
                                 <field name="lineuser_id" options="{'no_create':true}" required="1"/>
                             </group>
                             <group>
-                                <field name="isforeman"/>
+                                <field name="isfeeder"/>
                                 <field name="ischecker"/>
+                                <field name="isserialnumber"/>
                             </group>
                         </group>
                     </sheet>
@@ -46,8 +48,9 @@
                     <field name="mesline_id" string="产线" filter_domain="[('mesline_id','ilike',self)]"/>
                     <field name="lineuser_id" string="用户" filter_domain="[('lineuser_id','ilike',self)]"/>
                     <separator/>
-                    <filter string="领班" domain="[('isforeman','=',True)]" />
+                    <filter string="上料员" domain="[('isfeeder','=',True)]" />
                     <filter string="考勤员" domain="[('ischecker','=',True)]" />
+                    <filter string="序列号" domain="[('isserialnumber','=',True)]" />
                     <separator/>
                     <group expand="0" string="分组">
                         <filter string="产线" context="{'group_by':'mesline_id'}"/>

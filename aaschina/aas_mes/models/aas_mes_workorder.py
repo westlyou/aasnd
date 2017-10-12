@@ -54,6 +54,8 @@ class AASMESWorkorder(models.Model):
 
     workticket_lines = fields.One2many(comodel_name='aas.mes.workticket', inverse_name='workorder_id', string=u'工票明细')
 
+    isproducing = fields.Boolean(string=u'正在生产', default=False, copy=False, help=u'当前工单在相应的产线上正在生产')
+
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'子工单名称不可以重复！')
     ]
@@ -163,7 +165,49 @@ class AASMESWorkorder(models.Model):
                self.mainorder_id.write({'state': 'done', 'produce_finish': fields.Datetime.now()})
 
 
+    @api.multi
+    def action_producing(self):
+        """
+        设置当前工单为相应产线的即将生产的工单
+        :return:
+        """
+        self.ensure_one()
+        if self.mesline_type == 'station':
+            return False
+        action_message = u"您确认接下来开始生产当前工单吗？"
+        if self.mesline_id.workorder_id:
+            action_message = u"当前产线上工单：%s正在生产，您确认切换到当前工单吗？"% self.mesline_id.workorder_id.name
+        wizard = self.env['aas.mes.workorder.producing.wizard'].create({'workorder_id': self.id, 'action_message': action_message})
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_workorder_producing_wizard')
+        return {
+            'name': u"工单开工",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.mes.workorder.producing.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
 
 
 
+################################## 向导 #################################
 
+class AASMESWorkorderProducingWizard(models.TransientModel):
+    _name = 'aas.mes.workorder.producing.wizard'
+    _description = 'AAS MES Workorder Producing Wizard'
+
+    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='cascade')
+    action_message = fields.Char(string=u'提示信息', copy=False)
+
+    @api.one
+    def action_done(self):
+        workorder = self.workorder_id
+        mesline = workorder.mesline_id
+        if mesline.workorder_id:
+            mesline.workorder_id.write({'isproducing': False})
+        mesline.write({'workorder_id': workorder.id})
+        workorder.write({'isproducing': True})

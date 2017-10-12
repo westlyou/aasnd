@@ -47,6 +47,7 @@
                                 <field name="tracking"/>
                                 <field name="type"/>
                                 <field name="categ_id" string="内部分类" options="{'no_create':true}"/>
+                                <field name="customer_product_code"/>
                             </group>
                             <group>
                                 <field name="need_warranty"/>
@@ -113,6 +114,8 @@
                 <tree>
                     <field name="name"/>
                     <field name="line_type"/>
+                    <field name="workorder_id"/>
+                    <field name="schedule_id"/>
                 </tree>
             </field>
         </record>
@@ -128,8 +131,16 @@
                     </header>
                     <sheet>
                         <group>
-                            <group> <field name="name" required="1"/> </group>
-                            <group> <field name="line_type" required="1"/> </group>
+                            <group>
+                                <field name="name" required="1"/>
+                                <field name="line_type" required="1"/>
+                                <field name="workorder_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="isautoswitch"/>
+                                <field name="schedule_id" readonly="1"/>
+                                <field name="refresh_time" readonly="1"/>
+                            </group>
                         </group>
                         <group>
                             <group>
@@ -193,6 +204,8 @@
                 <search>
                     <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
                     <field name="location_production_id" string="成品库位" filter_domain="[('location_production_id','ilike',self)]"/>
+                    <field name="workorder_id" string="当前工单" filter_domain="[('workorder_id','ilike',self)]"/>
+                    <field name="schedule_id" string="当前班次" filter_domain="[('schedule_id','ilike',self)]"/>
                 </search>
             </field>
         </record>

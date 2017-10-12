@@ -139,30 +139,26 @@ mui.ready(function(){
                     var badmodeul = document.getElementById('badmode_lines');
                     var badmodelist = badmodeul.getAttribute('badmodelist');
                     if (badmodelist==undefined || badmodelist==null || badmodelist==''){
-                        self.innerText = items[0].text;
-                        self.setAttribute('badmodeid', items[0].value);
                         badmodelist = items[0].value+'';
                     }else{
                         var templist = [];
                         var currentid = items[0].value;
-                        if(oldbadmodeid=='0'){
-                            badmodelist = badmodelist + ',' + currentid;
-                        }else{
-                            var badmodes = badmodelist.split(',');
-                            for(var i=0 ; i<badmodes.length; i++){
-                                var tempid = badmodes[i];
-                                if(tempid==currentid){
-                                    mui.toast('不良模式重复，请选择其他模式！');
-                                    return ;
-                                }
-                                if(tempid != oldbadmodeid){
-                                    templist.append(tempid);
-                                }
+                        var badmodes = badmodelist.split(',');
+                        for(var i=0 ; i<badmodes.length; i++){
+                            var tempid = badmodes[i];
+                            if(tempid==currentid){
+                                mui.toast('不良模式重复，请选择其他模式！');
+                                return ;
                             }
-                            templist.push(currentid);
-                            badmodelist = templist.join(',');
+                            if(tempid != oldbadmodeid){
+                                templist.append(tempid);
+                            }
                         }
+                        templist.push(currentid);
+                        badmodelist = templist.join(',');
                     }
+                    self.innerText = items[0].text;
+                    self.setAttribute('badmodeid', items[0].value);
                     badmodeul.setAttribute('badmodelist', badmodelist);
                 });
             },

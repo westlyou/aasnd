@@ -13,8 +13,10 @@ from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.tools.float_utils import float_compare, float_is_zero
 from odoo.exceptions import UserError, ValidationError
 
+import math
 import pytz
 import logging
+from datetime import timedelta
 
 _logger = logging.getLogger(__name__)
 
@@ -24,11 +26,14 @@ _logger = logging.getLogger(__name__)
 class AASMESSchedule(models.Model):
     _name = 'aas.mes.schedule'
     _description = 'AAS MES Schedule'
+    _order = 'mesline_id,sequence'
 
     name = fields.Char(string=u'名称')
     sequence = fields.Integer(string=u'序号')
     work_start = fields.Float(string=u'开始时间', default=0.0)
     work_finish = fields.Float(string=u'结束时间', default=0.0)
+    actual_start = fields.Datetime(string=u'实际开始时间', copy=False)
+    actual_finish = fields.Datetime(string=u'实际结束时间', copy=False)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     state = fields.Selection(selection=[('working', u'生产'), ('break', u'休息')], string=u'状态', default='break')
     employee_lines = fields.One2many(comodel_name='aas.hr.employee', inverse_name='schedule_id', string=u'员工清单')
@@ -67,6 +72,27 @@ class AASMESSchedule(models.Model):
             'res_id': wizard.id,
             'context': self.env.context
         }
+
+    @api.multi
+    def action_refresh_actualtime(self):
+        currenttime = fields.Datetime.to_timezone_time(fields.Datetime.now(), 'Asia/Shanghai')
+        for record in self:
+            start_hour = int(math.floor(record.work_start))
+            start_minutes = int(math.floor((record.work_start - start_hour) * 60))
+            starttime = currenttime.replace(hour=start_hour, minute=start_minutes)
+            finish_hour = int(math.floor(record.work_finish))
+            finish_minutes = int(math.floor((record.work_finish - finish_hour) * 60))
+            if record.work_finish >= record.work_start:
+                finishtime = currenttime.replace(hour=finish_hour, minute=finish_minutes)
+            else:
+                temptime = currenttime + timedelta(days=1)
+                finishtime = temptime.replace(hour=finish_hour, minute=finish_minutes)
+            record.write({
+                'actual_start': fields.Datetime.to_utc_string(starttime, 'Asia/Shanghai'),
+                'actual_finish': fields.Datetime.to_utc_string(finishtime, 'Asia/Shanghai')
+            })
+
+
 
 
 

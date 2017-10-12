@@ -10,11 +10,9 @@
 import logging
 import werkzeug
 
-from odoo import http
+from odoo import http, fields
 from odoo.http import request
 from odoo.exceptions import AccessDenied, UserError, ValidationError
-
-from . import get_china_time
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +106,7 @@ class AASWorkorderWechatController(http.Controller):
             'workticket_id': workticketid, 'workticket_name': workticket.name,
             'sequence': workticket.sequence, 'workcenter_name': workticket.workcenter_name,
             'product_code': workticket.product_id.default_code, 'input_qty': workticket.input_qty,
-            'mesline_name': workticket.mesline_name, 'time_start': get_china_time(workticket.time_start),
+            'mesline_name': workticket.mesline_name, 'time_start': fields.Datetime.to_timezone_string(workticket.time_start, 'Asia/Shanghai'),
             'workstation_name': '', 'employeelist': [], 'equipmentlist': []
         })
         if workticket.workcenter_id.workstation_id:

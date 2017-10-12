@@ -1551,6 +1551,25 @@ class Datetime(Field):
         """ Convert a :class:`datetime` value into the format expected by the ORM. """
         return value.strftime(DATETIME_FORMAT) if value else False
 
+    @staticmethod
+    def to_timezone_time(value, timezone):
+        utctime = Datetime.from_string(value)
+        temptime = pytz.timezone('UTC').localize(utctime, is_dst=False)
+        return temptime.astimezone(pytz.timezone(timezone))
+
+    @staticmethod
+    def to_timezone_string(value, timezone):
+        utctime = Datetime.from_string(value)
+        temptime = pytz.timezone('UTC').localize(utctime, is_dst=False)
+        timezone_time = temptime.astimezone(pytz.timezone(timezone))
+        return Datetime.to_string(timezone_time)
+
+    @staticmethod
+    def to_utc_string(value, timezone):
+        temptime = pytz.timezone(timezone).localize(value, is_dst=False)
+        utctime = temptime.astimezone(pytz.timezone('UTC'))
+        return Datetime.to_string(utctime)
+
     def convert_to_cache(self, value, record, validate=True):
         if not value:
             return False

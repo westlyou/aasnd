@@ -33,6 +33,7 @@
         'views/aas_mes_feedmaterial_view.xml',
         'views/aas_mes_stockadjust_view.xml',
         'views/aas_mes_lineusers_view.xml',
+        'views/aas_mes_serialnumber_view.xml',
 
         'wechat/views/aas_wechat_mes_template.xml',
         'wechat/views/aas_wechat_mes_feedmaterial_template.xml',

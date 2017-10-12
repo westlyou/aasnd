@@ -182,3 +182,18 @@ class AASBaseCron(models.Model):
     @api.model
     def action_minute_cron(self):
         pass
+
+
+    @api.model
+    def excute_thirty_minutes_cron(self):
+        """
+        每30分钟执行一次
+        :return:
+        """
+        tempcron = self.env['aas.base.cron'].create({'cron_method': 'action_thirty_minutes_cron'})
+        self.action_thirty_minutes_cron()
+        tempcron.write({'thend_time': fields.Datetime.now()})
+
+    @api.model
+    def action_thirty_minutes_cron(self):
+        pass

@@ -25,8 +25,10 @@ class AASMESLineusers(models.Model):
 
     lineuser_id = fields.Many2one(comodel_name='res.users', string=u'用户', ondelete='restrict')
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
+    isfeeder = fields.Boolean(string=u'上料员', default=False, copy=False)
     ischecker = fields.Boolean(string=u'考勤员', default=False, copy=False)
-    isforeman = fields.Boolean(string=u'领班', default=False, copy=False)
+    isserialnumber = fields.Boolean(string=u'序列号', default=False, copy=False)
+
 
 
     _sql_constraints = [
@@ -42,71 +44,50 @@ class AASMESLineusers(models.Model):
     @api.one
     def action_after_create(self):
         uservals = {}
+        if self.ischecker or self.isfeeder or self.isserialnumber:
+            if not self.lineuser_id.has_group('aas_mes.group_aas_manufacture_user'):
+                uservals['groups_id'] = [(4, self.env.ref('aas_mes.group_aas_manufacture_user').id, False)]
         if self.ischecker:
             uservals['action_id'] = self.env.ref('aas_mes.aas_mes_attendance_scanner').id
-            uservals['groups_id'] = [(4, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]
-        if self.isforeman:
-            if uservals.get('groups_id', False):
-                uservals['groups_id'].append((4, self.env.ref('aas_mes.group_aas_manufacture_foreman').id, False))
-            else:
-                uservals['groups_id'] = [(4, self.env.ref('aas_mes.group_aas_manufacture_foreman').id, False)]
-        if uservals and  len(uservals) > 0:
+        if self.isserialnumber:
+            uservals['action_id'] = self.env.ref('aas_mes.aas_mes_serailnumber_creation').id
+        if uservals and len(uservals) > 0:
             self.lineuser_id.write(uservals)
 
 
 
     @api.multi
     def write(self, vals):
-        oldcheckers, oldforemen = self.env['res.users'], self.env['res.users']
+        userlist = self.env['res.users']
         for record in self:
-            if record.ischecker:
-                oldcheckers |= record.lineuser_id
-            if record.isforeman:
-                oldforemen |= record.lineuser_id
+            if record.ischecker or record.isserialnumber:
+                userlist |= record.lineuser_id
         result = super(AASMESLineusers, self).write(vals)
-        if oldcheckers and len(oldcheckers) > 0:
-            oldcheckers.write({
-                'action_id': False,
-                'groups_id': [(3, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]
-            })
-        if oldforemen and len(oldforemen) > 0:
-            oldforemen.write({
-                'groups_id': [(3, self.env.ref('aas_mes.group_aas_manufacture_foreman').id, False)]
-            })
-        newcheckers, newforemen = self.env['res.users'], self.env['res.users']
-        for trecord in self:
-            if trecord.ischecker:
-                newcheckers |= trecord.lineuser_id
-            if trecord.isforeman:
-                newforemen |= trecord.lineuser_id
+        if userlist and len(userlist) > 0:
+            userlist.write({'action_id': False})
+        tempuserlist = self.env['res.users']
+        newcheckers, newserialnumbers = self.env['res.users'], self.env['res.users']
+        for record in self:
+            if record.lineuser_id.has_group('aas_mes.group_aas_manufacture_user'):
+                tempuserlist |= record.lineuser_id
+            if record.ischecker:
+                newcheckers |= record.lineuser_id
+            if record.isserialnumber:
+                newserialnumbers |= record.lineuser_id
+        if tempuserlist and len(tempuserlist) > 0:
+            tempuserlist.write({'groups_id': [(4, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]})
         if newcheckers and len(newcheckers) > 0:
-            newcheckers.write({
-                'action_id': self.env.ref('aas_mes.aas_mes_attendance_scanner').id,
-                'groups_id': [(4, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]
-            })
-        if newforemen and len(newforemen) > 0:
-            newforemen.write({
-                'groups_id': [(4, self.env.ref('aas_mes.group_aas_manufacture_foreman').id, False)]
-            })
+            newcheckers.write({'action_id': self.env.ref('aas_mes.aas_mes_attendance_scanner').id})
+        if newserialnumbers and len(newserialnumbers) > 0:
+            newcheckers.write({'action_id': self.env.ref('aas_mes.aas_mes_serailnumber_creation').id})
         return result
 
 
     @api.multi
     def unlink(self):
-        checkers, foremen = self.env['res.users'], self.env['res.users']
+        userlist = self.env['res.users']
         for record in self:
-            if record.ischecker:
-                checkers |= record.lineuser_id
-            if record.isforeman:
-                foremen |= record.lineuser_id
+            userlist |= record.lineuser_id
         result = super(AASMESLineusers, self).unlink()
-        if checkers and len(checkers) > 0:
-            checkers.write({
-                'action_id': False,
-                'groups_id': [(3, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]
-            })
-        if foremen and len(foremen) > 0:
-            foremen.write({
-               'groups_id': [(3, self.env.ref('aas_mes.group_aas_manufacture_foreman').id, False)]
-            })
+        userlist.write({'action_id': False})
         return result
