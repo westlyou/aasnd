@@ -7,7 +7,7 @@
             <field name="model">aas.mes.serialnumber</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree create="false" edit="false">
+                <tree create="false" edit="false" labelprint="true">
                     <field name="name"/>
                     <field name="used"/>
                     <field name="user_id"/>
@@ -21,7 +21,7 @@
             <field name="model">aas.mes.serialnumber</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form create="false" edit="false">
+                <form create="false" edit="false" labelprint="true">
                     <sheet>
                         <group>
                             <group>
