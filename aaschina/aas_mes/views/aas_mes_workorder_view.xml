@@ -30,6 +30,7 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
+                        <button name="action_confirm" type="object" string="确认工单" class="oe_highlight" states="draft"/>
                         <button name="action_producing" type="object" string="开始生产" class="oe_highlight"
                                 attrs="{'invisible':['|','|',('mesline_type','=','station'),('isproducing','=',True),('state','in',['draft','done'])]}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,producing,pause,done"/>

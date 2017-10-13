@@ -52,7 +52,7 @@ class AASMESSerialnumberController(http.Controller):
                 values['customer_code'] = workorder.product_id.customer_product_code
             else:
                 values['success'] = False
-                values['message'] = u'产品%s还未设置客户方的编码，请联系领班设置客户编码！'
+                values['message'] = u'产品%s还未设置客户方的编码，请联系领班设置客户编码！'% workorder.product_id.default_code
                 return values
         return values
 
@@ -89,9 +89,10 @@ class AASMESSerialnumberController(http.Controller):
         current_date = fields.Datetime.to_timezone_string(fields.Datetime.now(), 'Asia/Shanghai')[0:10]
         for index in range(0, serialcount):
             sequence += 1
+            sequencestr = str(10000+sequence)[1:]
             tserialnumber = request.env['aas.mes.serialnumber'].create({
                 'regular_code': regular_code, 'sequence': sequence,
-                'name': regular_code + str(sequence), 'action_date': current_date,
+                'name': regular_code + sequencestr, 'action_date': current_date,
                 'internal_product_code': values['product_code'],
                 'customer_product_code': values['customer_code']
             })

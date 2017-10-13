@@ -31,7 +31,7 @@ $(function() {
                     layer.msg(dresult.message, {icon: 5});
                     return ;
                 }
-                layer.prompt({title: '输入序列号数量，并确认', formType: 1}, function(text, index){
+                layer.prompt({title: '输入序列号数量，并确认', formType: 3}, function(text, index){
                     if(!isAboveZeroFloat(text)){
                         layer.msg('序列号的数量必须是一个大于零的整数！', {icon: 5});
                         return ;
@@ -45,20 +45,25 @@ $(function() {
                         type: 'post', timeout: 10000, dataType: 'json',
                         data: JSON.stringify({jsonrpc: "2.0", method: 'call', params: {'serialcount': serialcount}, id: tempid}),
                         success: function (data) {
+                            $('#serialnumberlist').html('');
+                            var dresult = data.result;
                             if(!dresult.success){
                                 layer.msg(dresult.message, {icon: 5});
                                 return ;
                             }
-                            var serialnumberlist = $('#serialnumberlist');
                             _.each(dresult.serialnumbers, function(serialnumber){
-                                var serialitem = $("<tr class='aas-serialnumber'></tr>").appendTo(serialnumberlist);
+                                var serialitem = $("<tr class='aas-serialnumber'></tr>");
                                 serialitem.attr({
                                     'serialid': serialnumber.serialid,
                                     'serialnumber': serialnumber.serialname,
                                     'productcode': serialnumber.product_code,
                                     'customercode': serialnumber.customer_code
                                 });
-                                serialitem.innerHTML = "<td>"+serialnumber.serialname+"</td><td>"+serialnumber.product_code+"</td><td>"+serialnumber.customer_code+"</td>";
+                                var serialcontent = "<td>"+serialnumber.serialname+"</td>";
+                                serialcontent += "<td>"+serialnumber.product_code+"</td>";
+                                serialcontent += "<td>"+serialnumber.customer_code+"</td>";
+                                serialitem.html(serialcontent);
+                                $('#serialnumberlist').append(serialitem);
                             });
                         },
                         error: function (xhr, type, errorThrown) {
@@ -102,15 +107,16 @@ $(function() {
             layer.msg('请先设置好标签打印机！', {icon: 5});
             return ;
         }
-        var serialnumbertrs = $('.aas-serialnumber');
+        var serialnumbertrs = $('tr.aas-serialnumber');
         if(serialnumbertrs==undefined || serialnumbertrs==null || serialnumbertrs.length <= 0){
             layer.msg('请确认，您还没有生成需要打印的标签！', {icon: 5});
             return ;
         }
         var printerid = parseInt(printerid);
         var serialids = [];
-        _.each(serialnumbertrs, function(serialnumber){
-            serialids.push(parseInt(serialnumber.attr('serialid')));
+        $.each(serialnumbertrs, function(index, serialnumber){
+            var serialid = parseInt($(serialnumber).attr('serialid'));
+            serialids.push(serialid);
         });
         var params = {'printerid': printerid, 'serialids': serialids};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
