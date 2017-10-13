@@ -29,5 +29,11 @@
             <field name="url">aasmes/attendance/scanner</field>
         </record>
 
+        <record id="aas_mes_serialnumber_creation" model="ir.actions.act_url">
+            <field name="target">self</field>
+            <field name="name">序列号</field>
+            <field name="url">aasmes/serialnumber</field>
+        </record>
+
     </data>
 </odoo>

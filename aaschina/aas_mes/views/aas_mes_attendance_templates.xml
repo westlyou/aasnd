@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <template id="aas_attendance_scanner" name="AAS MES Attendance Scanner Test">
+    <template id="aas_attendance_scanner" name="AAS MES Attendance Scanner">
         &lt;!DOCTYPE html&gt;
         <html>
             <head>

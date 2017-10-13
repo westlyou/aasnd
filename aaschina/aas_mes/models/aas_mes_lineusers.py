@@ -50,7 +50,7 @@ class AASMESLineusers(models.Model):
         if self.ischecker:
             uservals['action_id'] = self.env.ref('aas_mes.aas_mes_attendance_scanner').id
         if self.isserialnumber:
-            uservals['action_id'] = self.env.ref('aas_mes.aas_mes_serailnumber_creation').id
+            uservals['action_id'] = self.env.ref('aas_mes.aas_mes_serialnumber_creation').id
         if uservals and len(uservals) > 0:
             self.lineuser_id.write(uservals)
 
@@ -68,18 +68,18 @@ class AASMESLineusers(models.Model):
         tempuserlist = self.env['res.users']
         newcheckers, newserialnumbers = self.env['res.users'], self.env['res.users']
         for record in self:
-            if record.lineuser_id.has_group('aas_mes.group_aas_manufacture_user'):
+            if not record.lineuser_id.has_group('aas_mes.group_aas_manufacture_user'):
                 tempuserlist |= record.lineuser_id
             if record.ischecker:
                 newcheckers |= record.lineuser_id
             if record.isserialnumber:
                 newserialnumbers |= record.lineuser_id
         if tempuserlist and len(tempuserlist) > 0:
-            tempuserlist.write({'groups_id': [(4, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]})
+            tempuserlist.write({'groups_id': [(4, self.env.ref('aas_mes.group_aas_manufacture_user').id, False)]})
         if newcheckers and len(newcheckers) > 0:
             newcheckers.write({'action_id': self.env.ref('aas_mes.aas_mes_attendance_scanner').id})
         if newserialnumbers and len(newserialnumbers) > 0:
-            newcheckers.write({'action_id': self.env.ref('aas_mes.aas_mes_serailnumber_creation').id})
+            newcheckers.write({'action_id': self.env.ref('aas_mes.aas_mes_serialnumber_creation').id})
         return result
 
 

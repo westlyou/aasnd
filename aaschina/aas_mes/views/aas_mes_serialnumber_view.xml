@@ -11,7 +11,7 @@
                     <field name="name"/>
                     <field name="used"/>
                     <field name="user_id"/>
-                    <field name="create_time"/>
+                    <field name="action_date"/>
                 </tree>
             </field>
         </record>
@@ -32,7 +32,7 @@
                             <group>
                                 <field name="regular_code" readonly="1"/>
                                 <field name="sequence" readonly="1"/>
-                                <field name="create_time" readonly="1"/>
+                                <field name="action_date" readonly="1"/>
                             </group>
                         </group>
                     </sheet>

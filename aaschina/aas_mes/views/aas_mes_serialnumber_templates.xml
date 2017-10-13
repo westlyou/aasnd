@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="aas_serialnumber_creation" name="AAS MES Serialnumber Creation">
+        &lt;!DOCTYPE html&gt;
+        <html>
+            <head>
+                <meta charset="utf-8" />
+                <title>安费诺先进传感器</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                <meta name="apple-mobile-web-app-capable" content="yes"/>
+                <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/select2/select2.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/skins/skin-blue.min.css"/>
+                <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+                <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+                <!--[if lt IE 9]>
+                   <script src="/aas_base/static/libs/html5shiv.min.js"></script>
+                   <script src="/aas_base/static/libs/respond.min.js"></script>
+                <![endif]-->
+            </head>
+            <body class="hold-transition skin-blue fixed">
+                <div class="wrapper">
+                    <header class="main-header">
+                        <a href="#" class="logo">
+                            <span><b>安费诺先进传感器</b></span>
+                        </a>
+                        <nav class="navbar navbar-static-top">
+                            <div class="navbar-custom-menu">
+                                <ul class="nav navbar-nav">
+                                    <li id="action_addserial" class="messages-menu">
+                                        <a href="javascript:void(0);"> <span>新增序列号</span> </a>
+                                    </li>
+                                    <li class="dropdown messages-menu">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                            <i class="fa fa-user"></i> <span t-esc="checker"/>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li class="header">欢迎您，<t t-esc="checker"/></li>
+                                            <li>
+                                                <ul class="menu">
+                                                    <li>
+                                                        <a href="/web/session/logout">注销</a>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>
+                        </nav>
+                    </header>
+                    <aside class="main-sidebar">
+                        <section class="sidebar">
+                            <ul class="sidebar-menu">
+                                <li class="header" style="text-align:center;">
+                                    <span id="serial_mesline" style="font-size:22px; color:#FFFFFF;font-weight:bold;">
+                                        <t t-esc="mesline_name"/>
+                                    </span>
+                                </li>
+                                <li>
+                                    <a href="#" style="font-size:25px;font-weight:bold;">
+                                        <span>年份</span>
+                                        <span class="pull-right-container" style="top:40%;">
+                                            <span id="serial_year" class="label label-primary pull-right" t-esc="serial_year"/>
+                                        </span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" style="font-size:25px;font-weight:bold;">
+                                        <span>周数</span>
+                                        <span class="pull-right-container" style="top:40%;">
+                                            <span id="serial_week" class="label label-primary pull-right" t-esc="serial_week"/>
+                                        </span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" style="font-size:25px;font-weight:bold;">
+                                        <span>星期</span>
+                                        <span class="pull-right-container" style="top:40%;">
+                                            <span id="serial_weekday" class="label label-primary pull-right" t-esc="serial_weekday"/>
+                                        </span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" style="font-size:25px;font-weight:bold;">
+                                        <span>类别</span>
+                                        <span class="pull-right-container" style="top:40%;">
+                                            <span id="serial_type" class="label label-primary pull-right" t-esc="serial_type"/>
+                                        </span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" style="font-size:25px;font-weight:bold;">
+                                        <span>扩展</span>
+                                        <span class="pull-right-container" style="top:40%;">
+                                            <span id="serial_extend" class="label label-primary pull-right" t-esc="serial_extend"/>
+                                        </span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </section>
+                    </aside>
+                    <div class="content-wrapper">
+                        <section class="content-header">
+                            <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;">
+                                <span id="serial_message" t-esc="message"/>
+                            </div>
+                            <h1>
+                                客户编码：<span id="customer_code" style="color:red;" t-esc="customer_code"/>
+                            </h1>
+                        </section>
+                        <section class="content">
+                            <div class="box box-info">
+                                <div class="box-header with-border">
+                                    <h3 class="box-title">序列号列表</h3>
+                                    <div class="box-tools pull-right" style="width:300px;height:40px;">
+                                        <div class="form-group" >
+                                            <select id="printerlist" class="form-control select2" value="0" style="width:70%;"></select>
+                                        </div>
+                                        <a id="action_printing" href="javascript:void(0)" class="btn btn-sm btn-info btn-flat pull-right" style="margin-top:-47px;">打印标签</a>
+                                    </div>
+                                </div>
+                                <div class="box-body">
+                                    <div class="table-responsive">
+                                        <table class="table no-margin">
+                                            <thead>
+                                                <tr>
+                                                    <th>序列号</th>
+                                                    <th>内部产品编码</th>
+                                                    <th>客户产品编码</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="serialnumberlist"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="main-footer">
+                        <div class="container" style="text-align:center;">
+                            <span>
+                                Copyright © 安费诺先进传感器 &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <a href="http://www.miitbeian.gov.cn" target="_blank">苏ICP备16061622</a>
+                            </span>
+                        </div>
+                    </footer>
+                </div>
+                <script src="/aas_base/static/libs/jquery/jquery-2.2.4.min.js"></script>
+                <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
+                <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
+                <script src="/aas_base/static/libs/select2/select2.min.js"></script>
+                <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
+                <script src="/aas_base/static/libs/underscore/underscore-1.8.3.min.js"></script>
+                <script src="/aas_base/static/libs/layer/layer.js"></script>
+                <script src="/aas_mes/static/src/js/mes_serialnumber_creation.js"></script>
+            </body>
+        </html>
+    </template>
+
+</odoo>
