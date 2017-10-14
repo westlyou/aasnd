@@ -1566,8 +1566,11 @@ class Datetime(Field):
 
     @staticmethod
     def to_utc_string(value, timezone):
-        temptime = pytz.timezone(timezone).localize(value, is_dst=False)
-        utctime = temptime.astimezone(pytz.timezone('UTC'))
+        try:
+            temptime = pytz.timezone(timezone).localize(value, is_dst=False)
+            utctime = temptime.astimezone(pytz.timezone('UTC'))
+        except ValueError:
+            utctime = value.astimezone(pytz.timezone('UTC'))
         return Datetime.to_string(utctime)
 
     def convert_to_cache(self, value, record, validate=True):

@@ -81,32 +81,34 @@ class AASProductProduct(models.Model):
 class Location(models.Model):
     _inherit = 'stock.location'
 
-    usage = fields.Selection(selection_add=[('sundry', u'杂项')])
+
     mrblocation = fields.Boolean(string=u'MRB库位', default=False, copy=False)
     edgelocation = fields.Boolean(string=u'生产线边库', default=False, copy=False)
+    usage = fields.Selection(selection_add=[('sundry', u'杂项'), ('container', u'容器')])
+
 
     @api.one
-    @api.constrains('mrblocation', 'edgelocation', 'location_id')
-    def action_check_mrb_edge(self):
-        if not self.location_id:
-            return True
-        if self.location_id.edgelocation and not self.edgelocation:
-            raise ValidationError(u'父级库位是生产线边库，子库位也必须是生产线边库！')
-        if self.location_id.mrblocation and not self.mrblocation:
-            raise ValidationError(u'父级库位是MRB库位，子库位也必须是MRB库位！')
-
-
+    @api.constrains('location_id')
+    def action_check_location(self):
+        if self.location_id and self.location_id.iscontainer:
+            raise ValidationError(u'容器库位下不可以添加子库位！')
 
     @api.model
     def create(self, vals):
-        vals['barcode'] = 'AA'+vals.get('name')
+        if vals.get('name', False):
+            vals['barcode'] = 'AA'+vals.get('name')
+        if vals.get('location_id', False):
+            parentlocation = self.env['stock.location'].browse('location_id')
+            vals.update({'mrblocation': parentlocation.mrblocation, 'edgelocation': parentlocation.edgelocation})
         return super(Location, self).create(vals)
-
 
     @api.multi
     def write(self, vals):
-        if vals.get('name'):
+        if vals.get('name', False):
             vals['barcode'] = 'AA'+vals.get('name')
+        if vals.get('location_id', False):
+            parentlocation = self.env['stock.location'].browse('location_id')
+            vals.update({'mrblocation': parentlocation.mrblocation, 'edgelocation': parentlocation.edgelocation})
         return super(Location, self).write(vals)
 
 
@@ -131,6 +133,27 @@ class Location(models.Model):
         records = printer.action_correct_records(records)
         values['records'] = records
         return values
+
+
+# 容器
+class AASContainer(models.Model):
+    _name = 'aas.container'
+    _inherits = {'stock.location': 'stock_location_id'}
+    _description = 'AAS Container'
+
+
+    barcode = fields.Char(string=u'条码', copy=False, compute='_compute_barcode', store=True, index=True)
+    stock_location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', required=True, ondelete='cascade',
+                                        auto_join=True, index=True)
+
+    @api.depends('name')
+    def _compute_barcode(self):
+        for record in self:
+            if record.name:
+                record.barcode = 'AS'+record.name
+            else:
+                record.barcode = False
+
 
 
 class StockQuant(models.Model):

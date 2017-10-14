@@ -224,9 +224,11 @@ class AASMESWorkticket(models.Model):
                 'workcenter_id': tempworkcenter.id, 'workcenter_name': nextworkcenter.name
             })
         else:
-            self.workorder_id.write({'workcenter_id': False, 'workcenter_name': False, 'workcenter_finish': self.id})
+            self.workorder_id.write({
+                'workcenter_id': False, 'workcenter_name': False, 'workcenter_finish': self.id,
+                'product_lines': [(0, 0, {'product_id': self.product_id.id, 'product_qty': self.output_qty})]
+            })
             self.workorder_id.action_done()
-        self.workorder_id.write({'output_qty': self.output_qty})
 
 
     @api.one

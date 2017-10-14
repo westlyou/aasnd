@@ -48,8 +48,10 @@ class AASMESSerialnumberController(http.Controller):
             return values
         else:
             if workorder.product_id.customer_product_code:
-                values['product_code'] = workorder.product_id.default_code
-                values['customer_code'] = workorder.product_id.customer_product_code
+                values.update({
+                    'product_id': workorder.product_id.id, 'product_code': workorder.product_id.default_code,
+                    'customer_code': workorder.product_id.customer_product_code
+                })
             else:
                 values['success'] = False
                 values['message'] = u'产品%s还未设置客户方的编码，请联系领班设置客户编码！'% workorder.product_id.default_code
@@ -94,7 +96,8 @@ class AASMESSerialnumberController(http.Controller):
                 'regular_code': regular_code, 'sequence': sequence,
                 'name': regular_code + sequencestr, 'action_date': current_date,
                 'internal_product_code': values['product_code'],
-                'customer_product_code': values['customer_code']
+                'customer_product_code': values['customer_code'],
+                'product_id': values.get('product_id', False)
             })
             serialnumbers.append({
                 'serialid': tserialnumber.id, 'serialname': tserialnumber.name,

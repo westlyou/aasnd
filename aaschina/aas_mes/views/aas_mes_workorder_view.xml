@@ -105,6 +105,30 @@
                                     </form>
                                 </field>
                             </page>
+                            <page string="成品明细">
+                                <field name="product_lines" readonly="1">
+                                    <tree>
+                                        <field name="product_id"/>
+                                        <field name="product_qty"/>
+                                        <field name="serialnumber_id"/>
+                                        <field name="operator_id"/>
+                                        <field name="operation_time"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_qty"/>
+                                                <field name="serialnumber_id"/>
+                                            </group>
+                                            <group>
+                                                <field name="operator_id"/>
+                                                <field name="operation_time"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
                         </notebook>
                     </sheet>
                 </form>

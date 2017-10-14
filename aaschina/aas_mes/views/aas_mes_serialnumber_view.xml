@@ -81,7 +81,7 @@
         </record>
 
         <menuitem id="menu_aas_mes_serialnumber"  name="序列号" action="action_aas_mes_serialnumber"
-                  parent="menu_aas_mes_resources" sequence="8" groups="aas_mes.group_aas_manufacture_user"/>
+                  parent="menu_aas_mes_resources" sequence="9" groups="aas_mes.group_aas_manufacture_user"/>
 
     </data>
 </odoo>

@@ -56,6 +56,7 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
+                        <button name="action_refresh_actualtime" type="object" string="刷新时间" class="oe_highlight"/>
                         <button name="action_checkemployees" type="object" string="员工调整" class="oe_highlight"/>
                         <field name="state" widget="statusbar" statusbar_visible="working,break"/>
                     </header>
@@ -67,10 +68,12 @@
                             <group>
                                 <field name="mesline_id" required="1" options="{'no_create':true}"/>
                                 <field name="work_start" required="1" widget="float_time"/>
+                                <field name="actual_start" readonly="1"/>
                             </group>
                             <group>
                                 <field name="sequence" required="1"/>
                                 <field name="work_finish" required="1" widget="float_time"/>
+                                <field name="actual_finish" readonly="1"/>
                             </group>
                         </group>
                         <notebook>
@@ -600,7 +603,7 @@
         </record>
 
         <menuitem id="menu_aas_mes_work_attendance"  name="员工出勤" action="action_aas_mes_work_attendance"
-                          parent="menu_aas_mes_resources" sequence="9" groups="aas_mes.group_aas_manufacture_user,aas_mes.group_aas_manufacture_foreman"/>
+                          parent="menu_aas_mes_resources" sequence="10" groups="aas_mes.group_aas_manufacture_user,aas_mes.group_aas_manufacture_foreman"/>
 
 
         <!-- 向导 -->

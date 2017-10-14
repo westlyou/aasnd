@@ -31,7 +31,6 @@ class AASMESWorkorder(models.Model):
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', required=True, index=True)
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     input_qty = fields.Float(string=u'投入数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
-    output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
     aas_bom_id = fields.Many2one(comodel_name='aas.mes.bom', string=u'物料清单', ondelete='restrict', index=True)
     routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺路线', ondelete='restrict', index=True)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict', index=True)
@@ -53,6 +52,10 @@ class AASMESWorkorder(models.Model):
     workcenter_finish = fields.Many2one(comodel_name='aas.mes.workticket', string=u'结束工序', ondelete='restrict')
 
     workticket_lines = fields.One2many(comodel_name='aas.mes.workticket', inverse_name='workorder_id', string=u'工票明细')
+    product_lines = fields.One2many(comodel_name='aas.mes.workorder.product', inverse_name='workorder_id', string=u'成品明细')
+    output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_output_qty', store=True)
+
+
 
     isproducing = fields.Boolean(string=u'正在生产', default=False, copy=False, help=u'当前工单在相应的产线上正在生产')
 
@@ -75,6 +78,15 @@ class AASMESWorkorder(models.Model):
     def _compute_mainorder(self):
         for record in self:
             record.mainorder_name = record.mainorder_id.name
+
+    @api.depends('product_lines')
+    def _compute_output_qty(self):
+        for record in self:
+            tempqty = 0.0
+            if record.product_lines and len(record.product_lines) > 0:
+                tempqty = sum([pline.product_qty for pline in record.product_lines])
+            record.output_qty = tempqty
+
 
     @api.one
     @api.constrains('aas_bom_id', 'input_qty')
@@ -192,6 +204,24 @@ class AASMESWorkorder(models.Model):
             'context': self.env.context
         }
 
+# 工单产出
+class AASMESWorkorderProduct(models.Model):
+    _name = 'aas.mes.workorder.product'
+    _description = 'AAS MES Work Order Product'
+
+    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
+    product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
+    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号')
+    operator_id = fields.Many2one(comodel_name='res.users', string=u'操作员', default= lambda self:self.env.user)
+    operation_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
+
+    @api.model
+    def create(self, vals):
+        record = super(AASMESWorkorderProduct, self).create(vals)
+        if record.serialnumber_id:
+            record.serialnumber_id.write({'used': True})
+        return record
 
 
 ################################## 向导 #################################

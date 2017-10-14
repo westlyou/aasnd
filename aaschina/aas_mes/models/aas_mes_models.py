@@ -53,8 +53,6 @@ class AASMESLine(models.Model):
     location_material_list = fields.One2many(comodel_name='aas.mes.line.material.location', inverse_name='mesline_id', string=u'原料库位')
     schedule_lines = fields.One2many(comodel_name='aas.mes.schedule', inverse_name='mesline_id', string=u'班次清单')
 
-
-
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'产线名称不可以重复！')
     ]

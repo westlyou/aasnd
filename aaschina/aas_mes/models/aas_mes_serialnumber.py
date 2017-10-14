@@ -28,6 +28,7 @@ class AASMESSerialnumber(models.Model):
     action_date = fields.Char(string=u'生成日期', copy=False)
     create_time = fields.Datetime(string=u'创建时间', default=fields.Datetime.now, copy=False)
     user_id = fields.Many2one(comodel_name='res.users', string=u'创建人', ondelete='restrict', default=lambda self: self.env.user)
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     internal_product_code = fields.Char(string=u'产品编码', copy=False, help=u'在公司内部的产品编码')
     customer_product_code = fields.Char(string=u'客户编码', copy=False, help=u'在客户方的产品编码')
 
