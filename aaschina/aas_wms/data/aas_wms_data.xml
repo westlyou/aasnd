@@ -11,5 +11,12 @@
             <field name="company_id"></field>
         </record>
 
+        <record id="stock_location_container" model="stock.location">
+            <field name="name">Container</field>
+            <field name="location_id" ref="stock.stock_location_locations_virtual"/>
+            <field name="usage">view</field>
+            <field name="company_id"></field>
+        </record>
+
     </data>
 </odoo>

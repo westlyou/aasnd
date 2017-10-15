@@ -36,6 +36,8 @@
         'views/aas_mes_serialnumber_view.xml',
         'views/aas_mes_serialnumber_templates.xml',
 
+        'oracle/aas_ebs_mainorder_view.xml',
+
         'wechat/views/aas_wechat_mes_template.xml',
         'wechat/views/aas_wechat_mes_feedmaterial_template.xml',
         'wechat/views/aas_wechat_mes_workorder_template.xml'

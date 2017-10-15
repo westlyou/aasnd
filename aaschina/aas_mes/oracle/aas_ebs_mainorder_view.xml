@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_mes_mainorder_import" model="ir.ui.view">
+            <field name="name">aas.mes.mainorder.import.tree</field>
+            <field name="model">aas.mes.mainorder</field>
+            <field name="inherit_id" ref="aas_mes.view_tree_aas_mes_mainorder"/>
+            <field name="arch" type="xml">
+                <tree position="attributes">
+                    <attribute name="orderimport">true</attribute>
+                </tree>
+            </field>
+        </record>
+
+    </data>
+</odoo>
