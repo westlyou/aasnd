@@ -91,9 +91,9 @@ class AASMESWorkticket(models.Model):
 
 
     @api.one
-    def action_doing_start(self, input_qty):
+    def action_doing_start(self):
         workstation = self.workcenter_id.workstation_id
-        self.write({'time_start': fields.Datetime.now(), 'input_qty': input_qty, 'state': 'producing'})
+        self.write({'time_start': fields.Datetime.now(), 'state': 'producing'})
         tracevals = {'date_start': fields.Datetime.now()}
         if workstation.employee_lines and len(workstation.employee_lines) > 0:
             tracevals['employeelist'] = ','.join([temployee.name+'['+temployee.code+']' for temployee in workstation.employee_lines])
@@ -119,7 +119,7 @@ class AASMESWorkticket(models.Model):
             # 子工单状态更新，开始生产
             self.workorder_id.write(tempvals)
             # 主工单状态更新，开始生产
-            if self.mainorder_id and self.mainorder_id.state=='splited':
+            if self.mainorder_id and self.mainorder_id.state == 'splited':
                 self.mainorder_id.write(tempvals)
 
 
