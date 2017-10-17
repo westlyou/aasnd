@@ -63,6 +63,9 @@ class AASHREmployee(models.Model):
         help="Small-sized photo of the employee. It is automatically resized as a 64x64px image, with aspect ratio preserved. "
              "Use this field anywhere a small image is required.")
 
+    @api.multi
+    def name_get(self):
+        return [(record.id, '%s[%s]' % (record.name, record.code)) for record in self]
 
     @api.depends('state')
     def _compute_state_color(self):

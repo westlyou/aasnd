@@ -212,6 +212,7 @@ class AASMESWorkorderProduct(models.Model):
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号')
     operator_id = fields.Many2one(comodel_name='res.users', string=u'操作员', default= lambda self:self.env.user)
     operation_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)

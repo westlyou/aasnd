@@ -122,6 +122,10 @@ class AASMESWorkstation(models.Model):
     ]
 
     @api.multi
+    def name_get(self):
+        return [(record.id, '%s[%s]' % (record.name, record.code)) for record in self]
+
+    @api.multi
     @api.depends('employee_lines')
     def _compute_employeelist(self):
         for record in self:

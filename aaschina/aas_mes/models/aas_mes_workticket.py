@@ -154,6 +154,8 @@ class AASMESWorkticket(models.Model):
 
     @api.one
     def action_doing_finish(self):
+        if self.state == 'done':
+            raise UserError(u'工单已经报工，请不要重复操作！')
         badmode_qty = 0.0
         if self.badmode_lines and len(self.badmode_lines) > 0:
             badmode_qty = sum([bline.badmode_qty for bline in self.badmode_lines])
