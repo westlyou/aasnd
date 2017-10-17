@@ -115,7 +115,8 @@ class AASMESMainorder(models.Model):
         vals['barcode'] = 'AP'+vals['name']
         product = self.env['product.product'].browse(vals.get('product_id'))
         vals['product_uom'] = product.uom_id.id
-        aasbom = self.env['aas.mes.bom'].search([('product_id', '=', product.id)], order='create_time desc', limit=1)
+        bomdomain = [('product_id', '=', product.id), ('state', '=', 'normal')]
+        aasbom = self.env['aas.mes.bom'].search(bomdomain, order='create_time desc', limit=1)
         if aasbom:
             vals['aas_bom_id'] = aasbom.id
             if aasbom.routing_id:

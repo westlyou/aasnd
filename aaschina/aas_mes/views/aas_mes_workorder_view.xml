@@ -55,7 +55,7 @@
                                         attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
                                 <field name="mesline_type" readonly="1"/>
                                 <field name="aas_bom_id" options="{'no_create':true}"
-                                        attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
+                                        domain="[('state','=','normal')]" attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
                                 <field name="routing_id" readonly="1"/>
                                 <field name="produce_start" readonly="1"/>
                                 <field name="produce_finish" readonly="1"/>
