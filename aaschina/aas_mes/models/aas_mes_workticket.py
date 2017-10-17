@@ -59,10 +59,14 @@ class AASMESWorkticket(models.Model):
         for record in self:
             record.barcode = 'AR'+record.name
 
+
     @api.depends('input_qty', 'badmode_qty')
     def _compute_output_qty(self):
         for record in self:
-            record.output_qty = record.input_qty - record.badmode_qty
+            if record.state in ['draft', 'waiting']:
+                record.output_qty = 0.0
+            else:
+                record.output_qty = record.input_qty - record.badmode_qty
 
 
     @api.multi
