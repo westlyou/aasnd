@@ -81,7 +81,6 @@ class AASMESBOM(models.Model):
         if vals.get('product_id', False):
             product = self.env['product.product'].browse(vals.get('product_id'))
             vals['product_uom'] = product.uom_id.id
-        vals['state'] = 'normal'
         vals['version'] = self.action_checking_version()
 
     @api.multi
@@ -146,14 +145,14 @@ class AASMESBOMLine(models.Model):
 
     @api.model
     def create(self, vals):
-        if vals.get('product_id', False) and not vals.get('product_uom', False):
+        if vals.get('product_id', False):
             product = self.env['product.product'].browse(vals.get('product_id'))
             vals['product_uom'] = product.uom_id.id
         return super(AASMESBOMLine, self).create(vals)
 
     @api.multi
     def write(self, vals):
-        if vals.get('product_id', False) and not vals.get('product_uom', False):
+        if vals.get('product_id', False):
             product = self.env['product.product'].browse(vals.get('product_id'))
             vals['product_uom'] = product.uom_id.id
         return super(AASMESBOMLine, self).write(vals)
@@ -199,7 +198,7 @@ class AASMESBOMWorkcenter(models.Model):
 
     @api.one
     def action_before_create(self, vals):
-        if vals.get('product_id', False) and not vals.get('product_uom', False):
+        if vals.get('product_id', False):
             product = self.env['product.product'].browse(vals.get('product_id'))
             vals['product_uom'] = product.uom_id.id
 

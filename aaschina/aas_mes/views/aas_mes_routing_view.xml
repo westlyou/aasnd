@@ -25,6 +25,7 @@
                 <form>
                     <header>
                         <button name="action_change_routing" type="object" string="更新工序" states="normal" class="oe_highlight"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,normal,override"/>
                     </header>
                     <sheet>
                         <group>
@@ -42,7 +43,6 @@
                         <group>
                             <group>
                                 <field name="active" readonly="1"/>
-                                <field name="state" invisible="1"/>
                             </group>
                         </group>
                         <notebook>

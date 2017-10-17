@@ -123,12 +123,17 @@ class AASMESWorkorder(models.Model):
         if not vals.get('product_uom', False):
                 vals['product_uom'] = product.uom_id.id
         if not vals.get('aas_bom_id', False):
-            aasbom = self.env['aas.mes.bom'].search([('product_id', '=', self.product_id.id)], order='create_time desc', limit=1)
+            bomdomain = [('product_id', '=', self.product_id.id), ('state', '=', 'normal')]
+            aasbom = self.env['aas.mes.bom'].search(bomdomain, order='create_time desc', limit=1)
             if aasbom:
                 vals['aas_bom_id'] = aasbom.id
                 if aasbom.routing_id:
                     vals['routing_id'] = aasbom.routing_id.id
-        vals['output_qty'] = vals.get('input_qty', 0.0)
+        if not vals.get('routing_id', False):
+            if vals.get('aas_bom_id', False):
+                aasbom = self.env['aas.mes.bom'].browse(vals.get('aas_bom_id'))
+                if aasbom.routing_id:
+                    vals['routing_id'] = aasbom.routing_id.id
 
     @api.multi
     def write(self, vals):
