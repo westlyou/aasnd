@@ -252,7 +252,7 @@ mui.ready(function(){
             var badmode_lines = [];
             mui.each(badmodelist, function(index, templi){
                 var badmode_id = parseInt(templi.children[1].children[0].children[1].getAttribute('badmodeid'));
-                var badmode_qty = parseFloat(scrapli.children[1].children[1].children[1].children[0].value);
+                var badmode_qty = parseFloat(templi.children[1].children[1].children[1].children[0].value);
                 badmode_lines.push({'badmode_id': badmode_id, 'badmode_qty': badmode_qty});
             });
             params['badmode_lines'] = badmode_lines;
