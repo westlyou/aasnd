@@ -38,9 +38,7 @@ class AASWorkorderWechatController(http.Controller):
         if not workcenter:
             values.update({'success': False, 'message': u'工票异常，工单可能还未生成待处理工票！'})
             return values
-        values.update({'workticketid': workcenter.id, 'start': True})
-        if workcenter.state != 'waiting':
-            values['start'] = False
+        values.update({'workticketid': workcenter.id})
         return values
 
 

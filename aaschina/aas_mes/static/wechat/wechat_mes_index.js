@@ -49,11 +49,7 @@ mui.ready(function(){
                             mui.toast(dresult.message);
                             return ;
                         }
-                        if (dresult.start){
-                            mui.openWindow({'url': '/aaswechat/mes/workticket/start/'+dresult.workticketid, 'id': 'workticketstart'});
-                        }else{
-                            mui.openWindow({'url': '/aaswechat/mes/workticket/finish/'+dresult.workticketid, 'id': 'workticketfinish'});
-                        }
+                        mui.openWindow({'url': '/aaswechat/mes/workticket/start/'+dresult.workticketid, 'id': 'workticketstart'});
                     },
                     error:function(xhr,type,errorThrown){ console.log(type);}
                 });
