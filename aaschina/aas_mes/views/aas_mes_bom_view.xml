@@ -26,9 +26,9 @@
                 <form>
                     <header>
                         <button name="action_confirm" type="object" states='draft' string="确认BOM" class="oe_highlight"
-                                groups="group_aas_mes_technologist"/>
+                                groups="aas_mes.group_aas_mes_technologist"/>
                         <button name="action_change_bom" type="object" states='normal' string="变更清单" class="oe_highlight"
-                                groups="group_aas_mes_technologist"/>
+                                groups="aas_mes.group_aas_mes_technologist"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,normal,override"/>
                     </header>
                     <sheet>
