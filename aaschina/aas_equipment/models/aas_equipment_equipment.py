@@ -38,8 +38,8 @@ class AASEquipmentEquipment(models.Model):
     _description = 'AAS Equipment Equipment'
 
 
-    name = fields.Char(string=u'名称')
-    code = fields.Char(string=u'编码')
+    name = fields.Char(string=u'名称', index=True)
+    code = fields.Char(string=u'编码', index=True)
     barcode = fields.Char(string=u'条码', compute='_compute_barcode', store=True, index=True)
     active = fields.Boolean(string=u'是否有效', default=True)
     supplier = fields.Many2one(comodel_name='res.partner', string=u'供应商')
@@ -58,6 +58,10 @@ class AASEquipmentEquipment(models.Model):
     _sql_constraints = [
         ('uniq_code', 'unique (code)', u'设备编码已存在，请不要重复添加！')
     ]
+
+    @api.multi
+    def name_get(self):
+        return [(record.id, '%s[%s]' % (record.name, record.code)) for record in self]
 
     @api.model
     def create(self, vals):

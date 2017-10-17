@@ -21,9 +21,9 @@ class AASMESSerialnumberController(http.Controller):
 
     def checking_serialnumber_information(self):
         values = {
-            'success': True, 'message': '',
+            'success': True, 'message': '', 'serial_count': 0,
             'customer_code': '', 'mesline_name': '', 'product_code': '',
-            'serial_supplier': '2', 'serial_extend': '0', 'serial_type': '8'
+            'serial_supplier': '2', 'serial_extend': '0', 'serial_type': '8', 'lastserialnumber': ''
         }
         isocalendar = fields.Datetime.to_timezone_time(fields.Datetime.now(), 'Asia/Shanghai').isocalendar()
         values['serial_year'] = str(isocalendar[0])[2:]
@@ -56,6 +56,14 @@ class AASMESSerialnumberController(http.Controller):
                 values['success'] = False
                 values['message'] = u'产品%s还未设置客户方的编码，请联系领班设置客户编码！'% workorder.product_id.default_code
                 return values
+        regular_code = values['serial_supplier'] + values['serial_year'] + values['serial_week'] + values['serial_weekday']
+        regular_code += values['serial_type'] + values['serial_extend']
+        values['regular_code'] = regular_code
+        serialdomain = [('regular_code', '=', regular_code)]
+        maxserialnumber = request.env['aas.mes.serialnumber'].search(serialdomain, order='sequence desc', limit=1)
+        if maxserialnumber:
+            values['lastserialnumber'] = maxserialnumber.name
+        values['serial_count'] = request.env['aas.mes.serialnumber'].search_count(serialdomain)
         return values
 
     @http.route('/aasmes/serialnumber', type='http', auth="user")
@@ -76,8 +84,7 @@ class AASMESSerialnumberController(http.Controller):
         values = self.checking_serialnumber_information()
         if not values['success']:
             return values
-        regular_code = values['serial_supplier'] + values['serial_year'] + values['serial_week']
-        regular_code += values['serial_weekday'] + values['serial_type'] + values['serial_extend']
+        regular_code = values.get('regular_code')
         serialdomain = [('regular_code', '=', regular_code)]
         maxserialnumber = request.env['aas.mes.serialnumber'].search(serialdomain, order='sequence desc', limit=1)
         if maxserialnumber:
@@ -88,23 +95,32 @@ class AASMESSerialnumberController(http.Controller):
             values.update({'success': False, 'message': u'序列号已超出最大数9999，请确认调整后继续操作！'})
             return values
         serialnumbers = []
+        customercode = values['customer_code'].replace('-', '')
         current_date = fields.Datetime.to_timezone_string(fields.Datetime.now(), 'Asia/Shanghai')[0:10]
+        lastserialnumber = values['lastserialnumber']
         for index in range(0, serialcount):
             sequence += 1
             sequencestr = str(10000+sequence)[1:]
+            sequence_code = regular_code + sequencestr
+            temp_name = customercode + sequence_code
             tserialnumber = request.env['aas.mes.serialnumber'].create({
                 'regular_code': regular_code, 'sequence': sequence,
-                'name': regular_code + sequencestr, 'action_date': current_date,
-                'internal_product_code': values['product_code'],
-                'customer_product_code': values['customer_code'],
-                'product_id': values.get('product_id', False)
+                'sequence_code': sequence_code, 'name': temp_name,
+                'action_date': current_date, 'product_id': values.get('product_id', False),
+                'internal_product_code': values['product_code'], 'customer_product_code': values['customer_code']
             })
+
             serialnumbers.append({
-                'serialid': tserialnumber.id, 'serialname': tserialnumber.name,
+                'serialid': tserialnumber.id,
+                'serialname': tserialnumber.name,
+                'sequencecode': tserialnumber.sequence_code,
                 'product_code': tserialnumber.internal_product_code,
                 'customer_code': tserialnumber.customer_product_code
             })
+            lastserialnumber = tserialnumber.name
         values['serialnumbers'] = serialnumbers
+        values['lastserialnumber'] = lastserialnumber
+        values['serial_count'] = request.env['aas.mes.serialnumber'].search_count([('regular_code', '=', regular_code)])
         return values
 
 

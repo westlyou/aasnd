@@ -9,9 +9,14 @@
             <field name="arch" type="xml">
                 <tree create="false" edit="false" labelprint="true">
                     <field name="name"/>
+                    <field name="sequence_code"/>
+                    <field name="regular_code"/>
+                    <field name="sequence"/>
                     <field name="used"/>
                     <field name="user_id"/>
                     <field name="action_date"/>
+                    <field name="internal_product_code"/>
+
                 </tree>
             </field>
         </record>
@@ -27,12 +32,20 @@
                             <group>
                                 <field name="name" readonly="1"/>
                                 <field name="used" readonly="1"/>
+                                <field name="internal_product_code" readonly="1"/>
                                 <field name="user_id" readonly="1"/>
                             </group>
                             <group>
                                 <field name="regular_code" readonly="1"/>
                                 <field name="sequence" readonly="1"/>
+                                <field name="sequence_code" readonly="1"/>
+                                <field name="customer_product_code" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
                                 <field name="action_date" readonly="1"/>
+                                <field name="create_time" readonly="1"/>
                             </group>
                         </group>
                     </sheet>
@@ -50,7 +63,9 @@
                     <separator/>
                     <filter string="未使用" domain="[('used','=',False)]" />
                     <group expand="0" string="分组">
-                        <filter string="用户" context="{'group_by':'user_id'}"/>
+                        <filter string="创建人" context="{'group_by':'user_id'}"/>
+                        <filter string="序列规则" context="{'group_by':'regular_code'}"/>
+                        <filter string="客户编码" context="{'group_by':'customer_product_code'}"/>
                     </group>
                 </search>
             </field>

@@ -19,6 +19,7 @@ $(function() {
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {}, id: access_id}),
             success:function(data){
                 var dresult = data.result;
+                $('#serial_supplier').innerHTML = dresult.serial_supplier;
                 $('#serial_mesline').innerHTML = dresult.mesline_name;
                 $('#serial_year').innerHTML = dresult.serial_year;
                 $('#serial_week').innerHTML = dresult.serial_week;
@@ -26,7 +27,10 @@ $(function() {
                 $('#serial_type').innerHTML = dresult.serial_type;
                 $('#serial_extend').innerHTML = dresult.serial_extend;
                 $('#customer_code').innerHTML = dresult.customer_code;
+                $('#product_code').innerHTML = dresult.product_code;
                 $('#serial_message').innerHTML = dresult.message;
+                $('#serial_count').html(dresult.serial_count);
+                $('#lastserialnumber').html(dresult.lastserialnumber);
                 if(!dresult.success){
                     layer.msg(dresult.message, {icon: 5});
                     return ;
@@ -54,17 +58,18 @@ $(function() {
                             _.each(dresult.serialnumbers, function(serialnumber){
                                 var serialitem = $("<tr class='aas-serialnumber'></tr>");
                                 serialitem.attr({
-                                    'serialid': serialnumber.serialid,
-                                    'serialnumber': serialnumber.serialname,
-                                    'productcode': serialnumber.product_code,
-                                    'customercode': serialnumber.customer_code
+                                    'serialid': serialnumber.serialid
                                 });
                                 var serialcontent = "<td>"+serialnumber.serialname+"</td>";
+                                serialcontent += "<td>"+serialnumber.sequencecode+"</td>";
                                 serialcontent += "<td>"+serialnumber.product_code+"</td>";
                                 serialcontent += "<td>"+serialnumber.customer_code+"</td>";
                                 serialitem.html(serialcontent);
                                 $('#serialnumberlist').append(serialitem);
                             });
+                            $('#serial_count').html(dresult.serial_count);
+                            $('#lastserialnumber').html(dresult.lastserialnumber);
+
                         },
                         error: function (xhr, type, errorThrown) {
                             console.log(type);

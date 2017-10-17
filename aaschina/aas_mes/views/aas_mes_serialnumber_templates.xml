@@ -42,9 +42,8 @@
                                             <li class="header">欢迎您，<t t-esc="checker"/></li>
                                             <li>
                                                 <ul class="menu">
-                                                    <li>
-                                                        <a href="/web/session/logout">注销</a>
-                                                    </li>
+                                                    <li><a href="/aasmes/serialnumber">刷新产线</a></li>
+                                                    <li><a href="/web/session/logout">注销</a></li>
                                                 </ul>
                                             </li>
                                         </ul>
@@ -60,6 +59,14 @@
                                     <span id="serial_mesline" style="font-size:22px; color:#FFFFFF;font-weight:bold;">
                                         <t t-esc="mesline_name"/>
                                     </span>
+                                </li>
+                                <li>
+                                    <a href="#" style="font-size:25px;font-weight:bold;">
+                                        <span>工厂</span>
+                                        <span class="pull-right-container" style="top:40%;">
+                                            <span id="serial_supplier" class="label label-primary pull-right" t-esc="serial_supplier"/>
+                                        </span>
+                                    </a>
                                 </li>
                                 <li>
                                     <a href="#" style="font-size:25px;font-weight:bold;">
@@ -106,11 +113,24 @@
                     </aside>
                     <div class="content-wrapper">
                         <section class="content-header">
-                            <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;">
+                            <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;color:red;">
                                 <span id="serial_message" t-esc="message"/>
                             </div>
                             <h1>
-                                客户编码：<span id="customer_code" style="color:red;" t-esc="customer_code"/>
+                                <span>
+                                   产品料号：<span id="customer_code" style="color:red;" t-esc="customer_code"/>
+                                </span>
+                                <span class="pull-right">
+                                    AAS料号：<span id="product_code" style="color:red;" t-esc="product_code"/>
+                                </span>
+                            </h1>
+                            <h1 style="margin-top:5px;">
+                                <span>
+                                    最新序列号：<span id="lastserialnumber" style="color:red;" t-esc="lastserialnumber"/>
+                                </span>
+                                <span class="pull-right">
+                                    今天已打印数量：<span id="serial_count" style="color:red;margin-right:30px;" t-esc="serial_count"/>
+                                </span>
                             </h1>
                         </section>
                         <section class="content">
@@ -130,6 +150,7 @@
                                             <thead>
                                                 <tr>
                                                     <th>序列号</th>
+                                                    <th>序列编码</th>
                                                     <th>内部产品编码</th>
                                                     <th>客户产品编码</th>
                                                 </tr>

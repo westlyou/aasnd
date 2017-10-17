@@ -24,6 +24,7 @@ class AASMESSerialnumber(models.Model):
     name = fields.Char(string=u'名称', required=True, copy=False)
     regular_code = fields.Char(string=u'规则编码', copy=False)
     sequence = fields.Integer(string=u'规则序号', copy=False)
+    sequence_code = fields.Char(string=u'序列编码', copy=False)
     used = fields.Boolean(string=u'已使用', default=False, copy=False)
     action_date = fields.Char(string=u'生成日期', copy=False)
     create_time = fields.Datetime(string=u'创建时间', default=fields.Datetime.now, copy=False)
