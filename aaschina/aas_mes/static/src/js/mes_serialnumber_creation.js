@@ -57,9 +57,7 @@ $(function() {
                             }
                             _.each(dresult.serialnumbers, function(serialnumber){
                                 var serialitem = $("<tr class='aas-serialnumber'></tr>");
-                                serialitem.attr({
-                                    'serialid': serialnumber.serialid
-                                });
+                                serialitem.attr({'serialid': serialnumber.serialid});
                                 var serialcontent = "<td>"+serialnumber.serialname+"</td>";
                                 serialcontent += "<td>"+serialnumber.sequencecode+"</td>";
                                 serialcontent += "<td>"+serialnumber.product_code+"</td>";
@@ -69,7 +67,6 @@ $(function() {
                             });
                             $('#serial_count').html(dresult.serial_count);
                             $('#lastserialnumber').html(dresult.lastserialnumber);
-
                         },
                         error: function (xhr, type, errorThrown) {
                             console.log(type);
