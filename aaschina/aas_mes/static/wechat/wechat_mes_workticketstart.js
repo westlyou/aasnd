@@ -46,7 +46,7 @@ mui.ready(function(){
         var workticketid = parseInt(document.getElementById('workticket_start_pullrefresh').getAttribute('workticketid'));
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         var startmask = aas_start_loading();
-        mui.ajax('aaswechat/mes/workticket/startdone', {
+        mui.ajax('/aaswechat/mes/workticket/startdone', {
             data: JSON.stringify({jsonrpc: "2.0", method: 'call', params: {'workticketid': workticketid}, id: access_id}),
             dataType: 'json', type: 'post', timeout: 10000,
             headers: {'Content-Type': 'application/json'},
