@@ -90,6 +90,10 @@ class AASMESBOM(models.Model):
             vals['product_uom'] = product.uom_id.id
         return super(AASMESBOM, self).write(vals)
 
+    @api.one
+    def action_confirm(self):
+        self.write({'state': 'normal'})
+
 
     @api.multi
     def action_change_bom(self):

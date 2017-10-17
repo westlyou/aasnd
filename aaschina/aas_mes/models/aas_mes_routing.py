@@ -77,6 +77,10 @@ class AASMESRouting(models.Model):
             'context': self.env.context
         }
 
+    @api.one
+    def action_confirm(self):
+        self.write({'state': 'normal'})
+
 
 # 工艺工序
 class AASMESRoutingLine(models.Model):
