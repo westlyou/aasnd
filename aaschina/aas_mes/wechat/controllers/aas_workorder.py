@@ -136,8 +136,8 @@ class AASWorkorderWechatController(http.Controller):
         return values
 
 
-    @http.route('/aaswechat/mes/workticket/startdone', type='json', auth="user")
-    def aas_wechat_mes_workticket_startdone(self, workticketid, badmode_lines=[]):
+    @http.route('/aaswechat/mes/workticket/finishdone', type='json', auth="user")
+    def aas_wechat_mes_workticket_finishdone(self, workticketid, badmode_lines=[]):
         values = {'success': True, 'message': '', 'workticket_id': workticketid}
         workticket = request.env['aas.mes.workticket'].browse(workticketid)
         if not workticket:
