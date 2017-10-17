@@ -82,7 +82,7 @@ mui.ready(function(){
                 badmodespan.setAttribute('badmodeqty', badmode_qty);
                 badmodespan.innerHTML = badmode_qty;
             }
-            var badmodediv = li.children[1].children[0].children[0].children[1];
+            var badmodediv = li.children[1].children[0].children[1];
             var badmodeid = badmodediv.getAttribute('badmodeid');
             document.getElementById('badmode_lines').removeChild(li);
             if(badmodeid=='0'){
