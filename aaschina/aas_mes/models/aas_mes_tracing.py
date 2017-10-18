@@ -34,6 +34,8 @@ class AASMESTracing(models.Model):
     workstation_name = fields.Char(string=u'工位名称', index=True)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'生产线', ondelete='restrict', index=True)
     mesline_name = fields.Char(string=u'生产线名称', index=True)
+    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', ondelete='restrict')
+    schedule_name = fields.Char(string=u'班次名称', copy=False)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict', index=True)
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     product_code = fields.Char(string=u'产品编码', index=True)

@@ -17,6 +17,9 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+
+SERIALSTATES = [('draft', u'草稿'), ('normal', u'正常'), ('rework', u'返工'), ('shipped', u'已发货')]
+
 class AASMESSerialnumber(models.Model):
     _name = 'aas.mes.serialnumber'
     _description = 'AAS MES Serialnumber'
@@ -26,12 +29,15 @@ class AASMESSerialnumber(models.Model):
     sequence = fields.Integer(string=u'规则序号', copy=False)
     sequence_code = fields.Char(string=u'序列编码', copy=False)
     used = fields.Boolean(string=u'已使用', default=False, copy=False)
+    qualified = fields.Boolean(string=u'合格的', default=True, copy=False)
     action_date = fields.Char(string=u'生成日期', copy=False)
     create_time = fields.Datetime(string=u'创建时间', default=fields.Datetime.now, copy=False)
+    state = fields.Selection(selection=SERIALSTATES, string=u'状态', default='draft', copy=False)
     user_id = fields.Many2one(comodel_name='res.users', string=u'创建人', ondelete='restrict', default=lambda self: self.env.user)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     internal_product_code = fields.Char(string=u'产品编码', copy=False, help=u'在公司内部的产品编码')
     customer_product_code = fields.Char(string=u'客户编码', copy=False, help=u'在客户方的产品编码')
+    reworked = fields.Boolean(string=u'是否返工', default=False, copy=False)
 
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'序列号的名称不可以重复！')

@@ -16,7 +16,8 @@
                     <field name="user_id"/>
                     <field name="action_date"/>
                     <field name="internal_product_code"/>
-
+                    <field name="state"/>
+                    <field name="qualified"/>
                 </tree>
             </field>
         </record>
@@ -27,6 +28,9 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form create="false" edit="false" labelprint="true">
+                    <header>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,normal,rework,shipped"/>
+                    </header>
                     <sheet>
                         <group>
                             <group>
@@ -44,8 +48,10 @@
                         </group>
                         <group>
                             <group>
+                                <field name="qualified" readonly="1"/>
                                 <field name="action_date" readonly="1"/>
                                 <field name="create_time" readonly="1"/>
+                                <field name="reworked" readonly="1"/>
                             </group>
                         </group>
                     </sheet>

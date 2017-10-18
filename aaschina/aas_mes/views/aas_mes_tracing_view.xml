@@ -9,6 +9,7 @@
             <field name="arch" type="xml">
                 <tree create="false" edit="false" delete="false">
                     <field name="mesline_id"/>
+                    <field name="schedule_id"/>
                     <field name="mainorder_id"/>
                     <field name="workorder_id"/>
                     <field name="workcenter_id"/>
@@ -39,12 +40,13 @@
                                 <field name="product_id"/>
                                 <field name="workorder_id"/>
                                 <field name="mesline_id"/>
-                                <field name="date_start"/>
+                                <field name="schedule_id"/>
                             </group>
                             <group>
                                 <field name="product_uom"/>
                                 <field name="product_lot"/>
                                 <field name="date_code"/>
+                                <field name="date_start"/>
                                 <field name="date_finish"/>
                             </group>
                         </group>
