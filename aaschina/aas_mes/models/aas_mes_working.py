@@ -95,12 +95,6 @@ class AASMESSchedule(models.Model):
 
 
 
-
-
-
-
-
-
 class AASMESWorkstation(models.Model):
     _name = 'aas.mes.workstation'
     _description = 'AAS MES Workstation'
@@ -108,6 +102,7 @@ class AASMESWorkstation(models.Model):
     name = fields.Char(string=u'名称', required=True, copy=False)
     code = fields.Char(string=u'编码', required=True, copy=False)
     barcode = fields.Char(string=u'条码', compute='_compute_barcode', store=True, index=True)
+    sequence = fields.Integer(string=u'序号', default=1)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'生产线', ondelete='restrict')
     active = fields.Boolean(string=u'是否有效', default=True, copy=False)
     station_type = fields.Selection(selection=[('scanner', u'扫描工位'), ('controller', u'工控工位')], string=u'工位类型', default='scanner', copy=False)
@@ -118,7 +113,8 @@ class AASMESWorkstation(models.Model):
     equipmentlist = fields.Char(string=u'设备清单', compute='_compute_equipmentlist', store=True)
 
     _sql_constraints = [
-        ('uniq_code', 'unique (code)', u'工位编码不可以重复！')
+        ('uniq_code', 'unique (code)', u'工位编码不可以重复！'),
+        ('uniq_sequence', 'unique (mesline_id, sequence)', u'同一产线的工位序号不可以重复！')
     ]
 
     @api.multi
