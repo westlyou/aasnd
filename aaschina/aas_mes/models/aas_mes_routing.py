@@ -49,19 +49,27 @@ class AASMESRouting(models.Model):
     @api.model
     def create(self, vals):
         vals['version'] = self.action_checking_version()
-        vals['state'] = 'normal'
         return super(AASMESRouting, self).create(vals)
+
+    @api.one
+    def action_confirm(self):
+        self.write({'state': 'normal'})
 
     @api.multi
     def action_change_routing(self):
         self.ensure_one()
+        wizard_lines = []
+        for rline in self.routing_lines:
+            rlinevals = {
+                'name': rline.name, 'sequence': rline.sequence, 'note': rline.note,
+                'workstation_id': rline.workstation_id.id, 'mesline_id': rline.mesline_id.id
+            }
+            rlinevals['badmode_lines'] = [(0, 0, {'badmode_id': bline.badmode_id.id}) for bline in rline.badmode_lines]
+            wizard_lines.append(rlinevals)
         wizard = self.env['aas.mes.routing.wizard'].create({
             'routing_id': self.id, 'name': self.name, 'note': self.note,
             'mesline_id': False if not self.mesline_id else self.mesline_id.id,
-            'wizard_lines': [(0, 0, {
-                'name': rline.name, 'sequence': rline.sequence, 'note': rline.note,
-                'workstation_id': False if not rline.workstation_id else rline.workstation_id.id
-            }) for rline in self.routing_lines]
+            'wizard_lines': [(0, 0, wline) for wline in wizard_lines]
         })
         view_form = self.env.ref('aas_mes.view_form_aas_mes_routing_wizard')
         return {
@@ -76,10 +84,6 @@ class AASMESRouting(models.Model):
             'res_id': wizard.id,
             'context': self.env.context
         }
-
-    @api.one
-    def action_confirm(self):
-        self.write({'state': 'normal'})
 
 
 # 工艺工序
@@ -159,13 +163,18 @@ class AASMESRoutingWizard(models.TransientModel):
         self.ensure_one()
         if not self.wizard_lines or len(self.wizard_lines) <= 0:
             raise UserError(u'请先添加工艺工序！')
+        routing_lines = []
+        for wline in self.wizard_lines:
+            rlinevals = {
+                'name': wline.name, 'sequence': wline.sequence, 'note': wline.note,
+                'workstation_id': wline.workstation_id.id
+            }
+            if wline.badmode_lines and len(wline.badmode_lines) > 0:
+                rlinevals['badmode_lines'] = [(0, 0, {'badmode_id': bline.badmode_id.id}) for bline in wline.badmode_lines]
+            routing_lines.append((0, 0, rlinevals))
         routing = self.env['aas.mes.routing'].create({
             'name': self.name, 'note': self.note, 'origin_id': self.routing_id.id,
-            'mesline_id': False if not self.mesline_id else self.mesline_id.id,
-            'routing_lines': [(0, 0, {
-                'name': wline.name, 'sequence': wline.sequence, 'note': wline.note,
-                'workstation_id': False if not wline.workstation_id else wline.workstation_id.id
-            }) for wline in self.wizard_lines]
+            'mesline_id': self.mesline_id.id, 'routing_lines': routing_lines, 'state': 'normal'
         })
         self.routing_id.write({'active': False, 'state': 'override'})
         view_form = self.env.ref('aas_mes.view_form_aas_mes_routing')
@@ -192,4 +201,14 @@ class AASMESRoutingLineWizard(models.TransientModel):
     name = fields.Char(string=u'名称')
     sequence = fields.Integer(string=u'序号')
     note = fields.Text(string=u'描述')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
+    badmode_lines = fields.One2many(comodel_name='aas.mes.routing.line.badmode.wizard', inverse_name='rline_id', string=u'不良模式')
+
+
+class AASMESRoutingLineBadmodeWizard(models.TransientModel):
+    _name = 'aas.mes.routing.line.badmode.wizard'
+    _description = 'AAS MES Routing Line Badmode Wizard'
+
+    rline_id = fields.Many2one(comodel_name='aas.mes.routing.line.wizard', string=u'工序', ondelete='cascade')
+    badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')

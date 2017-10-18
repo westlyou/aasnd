@@ -198,18 +198,42 @@
                     </group>
                     <group>
                         <group> <field name="name" required="1"/> </group>
-                        <group> <field name="mesline_id" options="{'no_create':true}"/> </group>
+                        <group> <field name="mesline_id" options="{'no_create':true}" required="1"/> </group>
                     </group>
                     <notebook>
                         <page string="工艺工序" name="wizard_lines">
                             <field name="wizard_lines">
-                                <tree editable="bottom">
+                                <tree>
                                     <field name="name" required="1"/>
-                                    <field name="sequence"/>
+                                    <field name="sequence" required="1"/>
                                     <field name="note"/>
-                                    <field name="workstation_id" options="{'no_create':true}"
+                                    <field name="workstation_id" options="{'no_create':true}" required="1"
                                                 domain="[('mesline_id','=',parent.mesline_id)]"/>
                                 </tree>
+                                <form>
+                                    <group>
+                                        <group>
+                                            <field name="name" required="1"/>
+                                            <field name="sequence" required="1"/>
+                                        </group>
+                                        <group>
+                                            <field name="workstation_id" options="{'no_create':true}" required="1"
+                                                domain="[('mesline_id','=',parent.mesline_id)]"/>
+                                            <field name="note"/>
+                                            <field name="mesline_id" invisible="1"/>
+                                        </group>
+                                    </group>
+                                    <notebook>
+                                        <page string="不良模式">
+                                            <field name="badmode_lines">
+                                                <tree editable="bottom">
+                                                    <field name="badmode_id" required="1" options="{'no_create':true}"
+                                                            domain="[('mesline_id','=',parent.mesline_id)]"/>
+                                                </tree>
+                                            </field>
+                                        </page>
+                                    </notebook>
+                                </form>
                             </field>
                         </page>
                     </notebook>
