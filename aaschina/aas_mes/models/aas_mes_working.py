@@ -251,7 +251,7 @@ class AASMESWorkAttendance(models.Model):
         :param equipment_code:
         :return:
         """
-        result = {'success': True, 'message': ''}
+        result = {'success': True, 'message': '', 'action': 'working'}
         if not employee_code:
             result.update({'success': False, 'message': u'您确认已经扫描了员工卡了吗？'})
             return result
@@ -262,12 +262,13 @@ class AASMESWorkAttendance(models.Model):
         if not employee:
             result.update({'success': False, 'message': u'请确认是否有此员工存在，或许当前员已被删除，请仔细检查！'})
             return result
+        result.update({'employee_name': employee.name, 'employee_code': employee.code})
         attendance_domain = [('employee_id', '=', employee.id), ('attend_done', '=', False)]
         attendance = self.env['aas.mes.work.attendance'].search(attendance_domain, limit=1)
         if attendance:
             message = u"%s,您已经离开工位%s"% (attendance.employee_name, attendance.workstation_name)
             attendance.action_done()
-            result.update({'message': message})
+            result.update({'message': message, 'action': 'leave'})
             return result
         workstation = self.env['aas.mes.workstation'].search([('code', '=', workstation_code)], limit=1)
         if not workstation:
