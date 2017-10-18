@@ -247,22 +247,22 @@ class AASMESWorkAttendance(models.Model):
 
 
     @api.model
-    def action_workstation_scanning(self, workstation_code, employee_barcode, equipment_barcode=None):
+    def action_workstation_scanning(self, workstation_code, employee_code, equipment_code=None):
         """
         工控工位扫描员工卡
         :param workstation_code:
-        :param employee_barcode:
-        :param equipment_barcode:
+        :param employee_code:
+        :param equipment_code:
         :return:
         """
         result = {'success': True, 'message': ''}
-        if not employee_barcode:
+        if not employee_code:
             result.update({'success': False, 'message': u'您确认已经扫描了员工卡了吗？'})
             return result
         if not workstation_code:
             result.update({'success': False, 'message': u'您确认已经配置好工位的编码了吗？'})
             return result
-        employee = self.env['aas.hr.employee'].search([('barcode', '=', employee_barcode)], limit=1)
+        employee = self.env['aas.hr.employee'].search([('code', '=', employee_code)], limit=1)
         if not employee:
             result.update({'success': False, 'message': u'请确认是否有此员工存在，或许当前员已被删除，请仔细检查！'})
             return result
@@ -278,8 +278,8 @@ class AASMESWorkAttendance(models.Model):
             result.update({'success': False, 'message': u'库位异常可能已删除，请仔细检查库位信息！'})
             return result
         attendancevals = {'employee_id': employee.id, 'workstation_id': workstation.id}
-        if equipment_barcode:
-            equipment = self.env['aas.equipment.equipment'].search([('barcode', '=', equipment_barcode)], limit=1)
+        if equipment_code:
+            equipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)
             if not equipment:
                 result.update({'success': False, 'message': u'设备异常，请仔细检查系统是否存在此设备！'})
                 return result
