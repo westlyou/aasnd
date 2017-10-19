@@ -66,3 +66,14 @@ class AASMESSerialnumber(models.Model):
         records = printer.action_correct_records(records)
         values['records'] = records
         return values
+
+    @api.model
+    def create(self, vals):
+        record = super(AASMESSerialnumber, self).create(vals)
+        record.action_after_create()
+        return record
+
+
+    @api.one
+    def action_after_create(self):
+        self.env['aas.mes.operation'].create({'serialnumber_id': self.id})
