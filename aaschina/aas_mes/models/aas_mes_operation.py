@@ -24,14 +24,15 @@ class AASMESOperation(models.Model):
     _rec_name = 'serialnumber_id'
 
     serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', required=True, ondelete='restrict')
+
     embed_piece = fields.Boolean(string=u'置入连接片', default=False, copy=False)
-    embed_piece_count = fields.Integer(string=u'置入连接片次数', default=0, copy=False)
+    embed_piece_pass = fields.Boolean(string=u'置入连接片通过', default=False, copy=False)
     function_test = fields.Boolean(string=u'功能测试', default=False, copy=False)
-    function_test_count = fields.Integer(string=u'功能测试次数', default=0, copy=False)
+    function_test_pass = fields.Boolean(string=u'功能测试通过', default=False, copy=False)
     final_quality_check = fields.Boolean(string='FQC', default=False, copy=False)
-    fqccheck_count = fields.Integer(string=u'FQC操作次数', default=0, copy=False)
+    fqccheck_pass = fields.Boolean(string=u'FQC操作通过', default=False, copy=False)
     gp12_check = fields.Boolean(string='GP12', default=False, copy=False)
-    gp12_check_count = fields.Integer(string=u'GP12操作次数', default=0, copy=False)
+    gp12_check_pass = fields.Boolean(string=u'GP12操作通过', default=False, copy=False)
 
     commit_badness = fields.Boolean(string=u'上报不良', default=False, copy=False)
     commit_badness_count = fields.Integer(string=u'上报不良次数', default=0, copy=False)
@@ -40,14 +41,14 @@ class AASMESOperation(models.Model):
     ipqc_check = fields.Boolean(string='IPQC', default=False, copy=False)
     ipqc_check_count = fields.Integer(string=u'IPQC测试次数', default=0, copy=False)
 
-    record_lines = fields.One2many(comodel_name='aas.mes.operation.record', inverse_name='operation_id', string=u'操作记录')
 
-# 生产操作记录
-class AASMESOperationRecord(models.Model):
-    _name = 'aas.mes.operation.record'
-    _description = 'AAS MES Operation Record'
+# 置入连接片记录
+class AASMESOperationEmbedpiece(models.Model):
+    _name = 'aas.mes.operation.embedpiece'
+    _description = 'AAS MES Operation Embed Piece'
 
     operation_id = fields.Many2one(comodel_name='aas.mes.operation', string=u'操作记录', ondelete='cascade')
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
     operate_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
     operator_id = fields.Many2one(comodel_name='res.users', string=u'操作用户', ondelete='restrict', default=lambda self: self.env.user)
+    operation_pass = fields.Boolean(string=u'操作通过', default=True, copy=False)
