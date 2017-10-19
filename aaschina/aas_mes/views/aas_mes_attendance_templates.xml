@@ -71,7 +71,7 @@
                     <div class="content-wrapper">
                         <section class="content-header">
                             <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;"> <span t-esc="message"/> </div>
-                            <h1>当前工位：<span id="cstation" stationid="0" style="color:red;"></span> </h1>
+                            <h1>当前工位：<span id="cstation" t-att-stationid="workstation_id" style="color:red;"> <t t-esc="workstation_name"/> </span> </h1>
                             <h1>当前员工：<span id="cemployee" employeeid="0" style="color:red;"></span> </h1>
                         </section>
                         <section class="content">
