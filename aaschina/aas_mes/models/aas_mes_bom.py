@@ -55,6 +55,11 @@ class AASMESBOM(models.Model):
         if productcount > 1:
             raise ValidationError(u'同一产品只能有一个有效的物料清单！')
 
+    @api.onchange('routing_id')
+    def action_change_routing(self):
+        self.workcenter_lines = False
+        self.bom_lines = False
+
     @api.model
     def action_checking_version(self):
         tz_name = self.env.user.tz or self.env.context.get('tz') or 'Asia/Shanghai'
@@ -104,7 +109,10 @@ class AASMESBOM(models.Model):
             'mesline_id': False if not self.mesline_id else self.mesline_id.id,
             'routing_id': False if not self.routing_id else self.routing_id.id,
             'wizard_lines': [(0, 0, {
-                'product_id': wline.product_id.id, 'product_uom': wline.product_uom.id, 'product_qty': wline.product_qty,
+                'product_id': wline.product_id.id,
+                'product_uom': wline.product_uom.id,
+                'product_qty': wline.product_qty,
+                'routing_id': False if not wline.routing_id else wline.routing_id.id,
                 'workcenter_id': False if not wline.workcenter_id else wline.workcenter_id.id
             }) for wline in self.workcenter_lines]
         })
@@ -170,6 +178,7 @@ class AASMESBOMWorkcenter(models.Model):
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', required=True, ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
+    routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺', ondelete='restrict')
     workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工艺工序', ondelete='restrict')
 
     _sql_constraints = [
@@ -183,6 +192,8 @@ class AASMESBOMWorkcenter(models.Model):
             raise ValidationError(u'数量必须是一个正数！')
         if self.workcenter_id and self.workcenter_id.routing_id.id != self.bom_id.routing_id.id:
             raise ValidationError(u'请检查工序%s与工艺%s不匹配！', (self.workcenter_id.name, self.bom_id.routing_id.name))
+        if self.bom_id.routing_id and not self.workcenter_id:
+            raise ValidationError(u'当前物料清单已设置了工艺，请设置好工艺工序！')
 
 
 
@@ -274,6 +285,9 @@ class AASMESBOMWizard(models.TransientModel):
         if not self.product_qty or float_compare(self.product_qty, 0.0, precision_rounding=0.000001) <= 0.0:
             raise ValidationError(u'数量必须是一个正数！')
 
+    @api.onchange('routing_id')
+    def action_change_routing(self):
+        self.wizard_lines = False
 
     @api.model
     def create(self, vals):
@@ -294,14 +308,16 @@ class AASMESBOMWizard(models.TransientModel):
         self.ensure_one()
         if not self.wizard_lines or len(self.wizard_lines) <= 0:
             raise UserError(u'请先添加明细清单！')
+        tempstate = self.bom_id.state
         self.bom_id.write({'state': 'override', 'active': False})
         tempvals = {
             'product_id': self.product_id.id, 'product_uom': self.product_uom.id,
             'mesline_id': False if not self.mesline_id else self.mesline_id.id,
             'routing_id': False if not self.routing_id else self.routing_id.id,
-            'origin_id': self.bom_id.id, 'product_qty': self.product_qty,
+            'origin_id': self.bom_id.id, 'product_qty': self.product_qty, 'state': tempstate,
             'workcenter_lines': [(0, 0, {
                 'product_id': wline.product_id.id, 'product_uom': wline.product_uom.id, 'product_qty': wline.product_qty,
+                'routing_id': False if not self.routing_id else self.routing_id.id,
                 'workcenter_id': False if not wline.workcenter_id else wline.workcenter_id.id
             }) for wline in self.wizard_lines]
         }
@@ -330,6 +346,7 @@ class AASMESBOMWorkcenterWizard(models.TransientModel):
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', required=True, ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
+    routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺', ondelete='restrict')
     workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工艺工序', ondelete='restrict')
 
     @api.onchange('product_id')
