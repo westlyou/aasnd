@@ -151,6 +151,22 @@ class AASMESWorkstation(models.Model):
             for attendance in attendancelist:
                 attendance.action_done()
 
+    @api.model
+    def create(self, vals):
+        record = super(AASMESWorkstation, self).create(vals)
+        record.action_after_create()
+        return record
+
+    @api.one
+    def action_after_create(self):
+        if self.mesline_id:
+            workstations = self.env['aas.mes.line'].search([('mesline_id', '=', self.mesline_id.id)])
+            if workstations and len(workstations)==1:
+                self.mesline_id.write({'workstation_id': workstations[0].id})
+            elif self.mesline_id.workstation_id:
+                self.mesline_id.write({'workstation_id': False})
+
+
 
 
 class AASHREmployee(models.Model):

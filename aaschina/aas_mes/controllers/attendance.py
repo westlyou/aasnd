@@ -22,12 +22,18 @@ class AASMESAttendanceController(http.Controller):
         login = request.env.user
         values = {'success': True, 'message': u'上岗需要先选择工位，再扫描员工卡；如果是离岗直接扫描员工卡即可！', 'workstations': []}
         values['checker'] = login.name
-        checkdomain = [('lineuser_id', '=', login.id), ('ischecker', '=', True)]
+        checkdomain = [('lineuser_id', '=', login.id)]
         lineuser = request.env['aas.mes.lineusers'].search(checkdomain, limit=1)
         if not lineuser:
             values.update({'success': False, 'message': u'当前登录用户可能不是考勤员，请仔细检查！'})
         mesline = lineuser.mesline_id
         values['mesline_name'] = mesline.name
+        values.update({
+            'mesline_name': mesline.name,
+            'workstation_id': '0', 'workstation_name': ''
+        })
+        if mesline.workstation_id:
+            values.update({'workstation_id': mesline.workstation_id.id, 'workstation_name': mesline.workstation_id.name})
         workstations = request.env['aas.mes.workstation'].search([('mesline_id', '=', mesline.id)])
         if workstations and len(workstations) > 0:
             stationlist = []
@@ -77,11 +83,12 @@ class AASMESAttendanceController(http.Controller):
     @http.route('/aasmes/attendance/refreshstations', type='json', auth="user")
     def aasmes_attendance_refreshstations(self):
         values = {'success': True, 'message': '', 'workstations': []}
-        checker = request.env['aas.mes.attendance.checker'].search([('checker_id', '=', request.env.user.id)], limit=1)
-        if not checker:
+        checkdomain = [('lineuser_id', '=', request.env.user.id)]
+        lineuser = request.env['aas.mes.lineusers'].search(checkdomain, limit=1)
+        if not lineuser:
             values.update({'success': False, 'message': u'请确认，当前用户可能已经不是生产考勤员了！'})
             return values
-        workstations = request.env['aas.mes.workstation'].search([('mesline_id', '=', checker.mesline_id.id)])
+        workstations = request.env['aas.mes.workstation'].search([('mesline_id', '=', lineuser.mesline_id.id)])
         if workstations and len(workstations) > 0:
             stationlist = []
             for station in workstations:
