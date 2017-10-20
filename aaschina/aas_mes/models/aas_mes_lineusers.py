@@ -17,6 +17,9 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+ROLELIST = [('gp12checker', u'GP12'), ('checker', u'考勤员'), ('serialnumber', u'序列号'), ('cutline', u'切线员'), ('fqcchecker', u'最终检查')]
+
+
 # 产线关联账号
 class AASMESLineusers(models.Model):
     _name = 'aas.mes.lineusers'
@@ -25,15 +28,14 @@ class AASMESLineusers(models.Model):
 
     lineuser_id = fields.Many2one(comodel_name='res.users', string=u'用户', ondelete='restrict')
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
     isfeeder = fields.Boolean(string=u'上料员', default=False, copy=False)
-    ischecker = fields.Boolean(string=u'考勤员', default=False, copy=False)
-    isserialnumber = fields.Boolean(string=u'序列号', default=False, copy=False)
-
-
+    mesrole = fields.Selection(selection=ROLELIST, string=u'角色', copy=False)
 
     _sql_constraints = [
         ('uniq_lineuser', 'unique (lineuser_id)', u'请不要重复添加同一个用户！')
     ]
+
 
     @api.model
     def create(self, vals):
@@ -44,13 +46,15 @@ class AASMESLineusers(models.Model):
     @api.one
     def action_after_create(self):
         uservals = {}
-        if self.ischecker or self.isfeeder or self.isserialnumber:
-            if not self.lineuser_id.has_group('aas_mes.group_aas_manufacture_user'):
-                uservals['groups_id'] = [(4, self.env.ref('aas_mes.group_aas_manufacture_user').id, False)]
-        if self.ischecker:
-            uservals['action_id'] = self.env.ref('aas_mes.aas_mes_attendance_scanner').id
-        if self.isserialnumber:
-            uservals['action_id'] = self.env.ref('aas_mes.aas_mes_serialnumber_creation').id
+        if not self.lineuser_id.has_group('aas_mes.group_aas_manufacture_user'):
+            uservals['groups_id'] = [(4, self.env.ref('aas_mes.group_aas_manufacture_user').id, False)]
+        if self.mesrole:
+            if self.mesrole == 'checker':
+                uservals['action_id'] = self.env.ref('aas_mes.aas_mes_attendance_scanner').id
+            if self.mesrole == 'serialnumber':
+                uservals['action_id'] = self.env.ref('aas_mes.aas_mes_serialnumber_creation').id
+            if self.mesrole == 'gp12checker':
+                uservals['action_id'] = self.env.ref('aas_mes.aas_mes_gp12_checking').id
         if uservals and len(uservals) > 0:
             self.lineuser_id.write(uservals)
 
@@ -60,26 +64,24 @@ class AASMESLineusers(models.Model):
     def write(self, vals):
         userlist = self.env['res.users']
         for record in self:
-            if record.ischecker or record.isserialnumber:
-                userlist |= record.lineuser_id
+            userlist |= record.lineuser_id
         result = super(AASMESLineusers, self).write(vals)
-        if userlist and len(userlist) > 0:
-            userlist.write({'action_id': False})
         tempuserlist = self.env['res.users']
-        newcheckers, newserialnumbers = self.env['res.users'], self.env['res.users']
         for record in self:
             if not record.lineuser_id.has_group('aas_mes.group_aas_manufacture_user'):
                 tempuserlist |= record.lineuser_id
-            if record.ischecker:
-                newcheckers |= record.lineuser_id
-            if record.isserialnumber:
-                newserialnumbers |= record.lineuser_id
         if tempuserlist and len(tempuserlist) > 0:
             tempuserlist.write({'groups_id': [(4, self.env.ref('aas_mes.group_aas_manufacture_user').id, False)]})
-        if newcheckers and len(newcheckers) > 0:
-            newcheckers.write({'action_id': self.env.ref('aas_mes.aas_mes_attendance_scanner').id})
-        if newserialnumbers and len(newserialnumbers) > 0:
-            newcheckers.write({'action_id': self.env.ref('aas_mes.aas_mes_serialnumber_creation').id})
+        uservals = {'action_id': False}
+        role = vals.get('mesrole', False)
+        if role:
+            if role == 'checker':
+                uservals['action_id'] = self.env.ref('aas_mes.aas_mes_attendance_scanner').id
+            if role == 'serialnumber':
+                uservals['action_id'] = self.env.ref('aas_mes.aas_mes_serialnumber_creation').id
+            if role == 'gp12checker':
+                uservals['action_id'] = self.env.ref('aas_mes.aas_mes_gp12_checking').id
+        userlist.write(uservals)
         return result
 
 

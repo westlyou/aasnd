@@ -10,9 +10,9 @@
                 <tree>
                     <field name="mesline_id"/>
                     <field name="lineuser_id"/>
-                    <field name="ischecker"/>
+                    <field name="workstation_id"/>
                     <field name="isfeeder"/>
-                    <field name="isserialnumber"/>
+                    <field name="mesrole"/>
                 </tree>
             </field>
         </record>
@@ -26,14 +26,15 @@
                     <sheet>
                         <group>
                             <group>
-                                <field name="mesline_id" options="{'no_create':true}" required="1"/>
                                 <field name="lineuser_id" options="{'no_create':true}" required="1"/>
+                                <field name="mesline_id" options="{'no_create':true}" required="1"/>
+                                <field name="workstation_id" options="{'no_create':true}"
+                                       domain="[('mesline_id','=',mesline_id)]"/>
                             </group>
-                            <group>
-                                <field name="isfeeder"/>
-                                <field name="ischecker"/>
-                                <field name="isserialnumber"/>
-                            </group>
+                        </group>
+                        <group>
+                            <group> <field name="mesrole"/> </group>
+                            <group> <field name="isfeeder"/> </group>
                         </group>
                     </sheet>
                 </form>
@@ -47,14 +48,19 @@
                 <search>
                     <field name="mesline_id" string="产线" filter_domain="[('mesline_id','ilike',self)]"/>
                     <field name="lineuser_id" string="用户" filter_domain="[('lineuser_id','ilike',self)]"/>
+                    <field name="workstation_id" string="工位" filter_domain="[('workstation_id','ilike',self)]"/>
                     <separator/>
                     <filter string="上料员" domain="[('isfeeder','=',True)]" />
-                    <filter string="考勤员" domain="[('ischecker','=',True)]" />
-                    <filter string="序列号" domain="[('isserialnumber','=',True)]" />
+                    <filter string="考勤员" domain="[('mesrole','=','checker')]" />
+                    <filter string="序列号" domain="[('mesrole','=','serialnumber')]"/>
+                    <filter string="切线员" domain="[('mesrole','=','cutline')]"/>
+                    <filter string="GP12" domain="[('mesrole','=','gp12checker')]"/>
+                    <filter string="最终检查" domain="[('mesrole','=','fqcchecker')]"/>
                     <separator/>
                     <group expand="0" string="分组">
                         <filter string="产线" context="{'group_by':'mesline_id'}"/>
                         <filter string="用户" context="{'group_by':'lineuser_id'}"/>
+                        <filter string="角色" context="{'group_by':'mesrole'}"/>
                     </group>
                 </search>
             </field>

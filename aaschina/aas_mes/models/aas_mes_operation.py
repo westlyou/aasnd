@@ -24,15 +24,17 @@ class AASMESOperation(models.Model):
     _rec_name = 'serialnumber_id'
 
     serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', required=True, ondelete='restrict', index=True)
-
+    serialnumber_name = fields.Char(string=u'序列名称', copy=False)
+    barcode_create = fields.Boolean(string=u'生成条码', default=False, copy=False)
+    barcode_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'生成条码记录')
     embed_piece = fields.Boolean(string=u'置入连接片', default=False, copy=False)
-    embed_piece_count = fields.Boolean(string=u'置入连接片次数', default=0, copy=False)
-    function_test = fields.Boolean(string=u'功能测试', default=False, copy=False)
-    function_test_count = fields.Integer(string=u'功能测试次数', default=0, copy=False)
-    final_quality_check = fields.Boolean(string='FQC', default=False, copy=False)
-    fqccheck_count = fields.Boolean(string=u'FQC操作次数', default=0, copy=False)
+    embed_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'置入连接片记录')
+    function_test = fields.Boolean(string=u'隔离板测试', default=False, copy=False)
+    functiontest_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'隔离板测试记录')
+    final_quality_check = fields.Boolean(string='最终检查', default=False, copy=False)
+    fqccheckt_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'最终检查记录')
     gp12_check = fields.Boolean(string='GP12', default=False, copy=False)
-    gp12_check_count = fields.Integer(string=u'GP12操作次数', default=0, copy=False)
+    gp12_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'GP12确认记录')
 
     commit_badness = fields.Boolean(string=u'上报不良', default=False, copy=False)
     commit_badness_count = fields.Integer(string=u'上报不良次数', default=0, copy=False)
@@ -42,117 +44,91 @@ class AASMESOperation(models.Model):
     ipqc_check_count = fields.Integer(string=u'IPQC测试次数', default=0, copy=False)
 
 
-# 置入连接片记录
-class AASMESOperationEmbedpiece(models.Model):
-    _name = 'aas.mes.operation.embedpiece'
-    _description = 'AAS MES Operation Embed Piece'
-    _rec_name = 'serialnumber_id'
+    @api.model
+    def create(self, vals):
+        if vals.get('serialnumber_id', False) and (not vals.get('serialnumber_name', False)):
+            serialnumber = self.env['aas.mes.serialnumber'].browse(vals.get('serialnumber_id'))
+            vals['serialnumber_name'] = serialnumber.name
+        return super(AASMESOperation, self).create(vals)
+
+
+
+OPERATELIST = [('newbarcode', u'生成条码'), ('embedpiece', u'置入连接片'), ('functiontest', u'隔离板测试'),
+               ('fqc', u'最终检查'), ('gp12', u'GP12检测'), ('ipqc', u'IPQC确认')]
+OPERATEDICT = {'newbarcode': u'生成条码', 'embedpiece': u'置入连接片', 'functiontest': u'隔离板测试',
+               'fqc': u'最终检查', 'gp12': u'GP12检测', 'ipqc': u'IPQC确认'}
+
+# 生产操作记录
+class AASMESOperationRecord(models.Model):
+    _name = 'aas.mes.operation.record'
+    _description = 'AAS MES Operation Record'
 
     operation_id = fields.Many2one(comodel_name='aas.mes.operation', string=u'操作记录', ondelete='cascade')
-    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', ondelete='restrict')
-    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
     operate_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
     operator_id = fields.Many2one(comodel_name='res.users', string=u'操作用户', ondelete='restrict', default=lambda self: self.env.user)
     operation_pass = fields.Boolean(string=u'操作通过', default=True, copy=False)
+    operate_result = fields.Char(string=u'操作结果', copy=False)
+    equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'操作设备', ondelete='restrict')
+    operate_type = fields.Selection(selection=OPERATELIST, string=u'操作类型', copy=False)
+    operate_name = fields.Char(string=u'操作名称', copy=False)
 
     @api.model
     def create(self, vals):
-        record = super(AASMESOperationEmbedpiece, self).create(vals)
-        record.operation_id.write({'embed_piece_count': record.operation_id.embed_piece_count + 1})
+        if vals.get('operate_type', False):
+            vals['operate_name'] = OPERATEDICT.get(vals.get('operate_type'), False)
+        record = super(AASMESOperationRecord, self).create(vals)
         return record
 
+    @api.one
+    def action_after_create(self):
+        if self.operate_type == 'newbarcode':
+            self.operator_id.write({'barcode_create': True, 'barcode_record_id': self.id})
+        elif self.operate_type == 'embedpiece':
+            self.operator_id.write({'embed_piece': True, 'embed_record_id': self.id})
+        elif self.operate_type == 'functiontest':
+            self.operator_id.write({'function_test': True, 'functiontest_record_id': self.id})
+        elif self.operate_type == 'fqc':
+            self.operator_id.write({'final_quality_check': True, 'fqccheckt_record_id': self.id})
+        elif self.operate_type == 'gp12':
+            self.operator_id.write({'gp12_check': True, 'gp12_record_id': self.id})
 
-# 功能测试记录
-class AASMESOperationFunctiontest(models.Model):
-    _name = 'aas.mes.operation.functiontest'
-    _description = 'AAS MES Operation Function Test'
-    _rec_name = 'serialnumber_id'
 
-    operation_id = fields.Many2one(comodel_name='aas.mes.operation', string=u'操作记录', ondelete='cascade')
-    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', ondelete='restrict')
-    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
-    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
-    operate_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
-    operator_id = fields.Many2one(comodel_name='res.users', string=u'操作用户', ondelete='restrict', default=lambda self: self.env.user)
-    operation_pass = fields.Boolean(string=u'操作通过', default=True, copy=False)
 
-    @api.model
-    def create(self, vals):
-        record = super(AASMESOperationFunctiontest, self).create(vals)
-        record.operation_id.write({'function_test_count': record.operation_id.function_test_count + 1})
-        return record
 
     @api.model
-    def action_done_functiontest(self, serialnumber, workstation_code, operation_pass, employee_code=None):
+    def action_functiontest(self, serialnumber, employee_code, equipment_code, operation_pass=False, operate_result=False):
+        """
+        添加功能测试记录
+        :param serialnumber:
+        :param employee_code:
+        :param equipment_code:
+        :param operation_pass:
+        :param operate_result:
+        :return:
+        """
         result = {'success': True, 'message': ''}
-        tserialnumber = self.env['aas.mes.serialnumber'].search([('name', '=', serialnumber)], limit=1)
-        if not tserialnumber:
-            result.update({'success': False, 'message': u'序列号%s未搜索到,请仔细检查！'% serialnumber})
+        toperation = self.env['aas.mes.operation'].search([('serialnumber_name', '=', serialnumber)], limit=1)
+        functiontestvals = {'operation_id': toperation.id, 'operate_type': 'functiontest'}
+        employee = self.env['aas.hr.employee'].search([('code', '=', employee_code)], limit=1)
+        if not employee:
+            result.update({'success': False, 'message': u'当前员工为搜索到，请仔细检查系统中是否存在此员工！'})
             return result
-        functiontestvals = {'serialnumber_id': tserialnumber.id, 'operation_pass': operation_pass}
-        workstation = self.env['aas.mes.workstation'].search([('code', '=', workstation_code)], limit=1)
-        if not workstation:
-            result.update({'success': False, 'message': u'工位异常，请仔细检查是否已经被删除！'})
+        functiontestvals['employee_id'] = employee.id
+        equipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)
+        if not equipment:
+            result.update({'success': False, 'message': u'设备不存在或已经被删除，请仔细检查！'})
             return result
-        functiontestvals['workstation_id'] = workstation.id
-        if not employee_code and (not workstation.employee_lines or len(workstation.employee_lines) <= 0):
-            result.update({'success': False, 'message': u'当前工位没有员工在岗，请先员工上岗再进行操作！'})
-            return result
-        if employee_code:
-            temployee = self.env['aas.hr.employee'].search([('code', '=', employee_code)], limit=1)
-            if not temployee:
-                result.update({'success': False, 'message': u'员工异常未搜索到当前员工！'})
-                return result
-            functiontestvals['employee_id'] = temployee.id
-        elif workstation.employee_lines and len(workstation.employee_lines) > 0:
-            functiontestvals['employee_id'] = workstation.employee_lines[0].id
-        operation = self.env['aas.mes.operation'].search([('serialnumber_id', '=', tserialnumber.id)], limit=1)
-        if not operation:
-           operation = self.env['aas.mes.operation'].create({'serialnumber_id': tserialnumber.id})
-        functiontestvals['operation_id'] = operation.id
-        self.env['aas.mes.operation.functiontest'].create(functiontestvals)
+        functiontestvals['equipment_id'] = equipment.id
+        functiontestvals.update({
+            'operation_pass': operation_pass, 'operate_result': operate_result
+        })
+        self.env['aas.mes.operation.record'].create(functiontestvals)
         return result
 
 
 
-# FQC测试记录
-class AASMESOperationFinalqualitycheck(models.Model):
-    _name = 'aas.mes.operation.finalqualitycheck'
-    _description = 'AAS MES Operation Final Quality Check'
-    _rec_name = 'serialnumber_id'
-
-    operation_id = fields.Many2one(comodel_name='aas.mes.operation', string=u'操作记录', ondelete='cascade')
-    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', ondelete='restrict')
-    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
-    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
-    operate_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
-    operator_id = fields.Many2one(comodel_name='res.users', string=u'操作用户', ondelete='restrict', default=lambda self: self.env.user)
-    operation_pass = fields.Boolean(string=u'操作通过', default=True, copy=False)
-
-    @api.model
-    def create(self, vals):
-        record = super(AASMESOperationFinalqualitycheck, self).create(vals)
-        record.operation_id.write({'fqccheck_count': record.operation_id.fqccheck_count + 1})
-        return record
 
 
-# GP12操作记录
-class AASMESOperationGP12check(models.Model):
-    _name = 'aas.mes.operation.gp12check'
-    _description = 'AAS MES Operation GP12Check'
-    _rec_name = 'serialnumber_id'
 
-    operation_id = fields.Many2one(comodel_name='aas.mes.operation', string=u'操作记录', ondelete='cascade')
-    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', ondelete='restrict')
-    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
-    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
-    operate_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
-    operator_id = fields.Many2one(comodel_name='res.users', string=u'操作用户', ondelete='restrict', default=lambda self: self.env.user)
-    operation_pass = fields.Boolean(string=u'操作通过', default=True, copy=False)
 
-    @api.model
-    def create(self, vals):
-        record = super(AASMESOperationGP12check, self).create(vals)
-        record.operation_id.write({'gp12_check_count': record.operation_id.gp12_check_count + 1})
-        return record

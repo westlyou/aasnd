@@ -38,6 +38,8 @@ class AASMESSerialnumber(models.Model):
     internal_product_code = fields.Char(string=u'产品编码', copy=False, help=u'在公司内部的产品编码')
     customer_product_code = fields.Char(string=u'客户编码', copy=False, help=u'在客户方的产品编码')
     reworked = fields.Boolean(string=u'是否返工', default=False, copy=False)
+    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
+    equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'操作设备', ondelete='restrict')
 
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'序列号的名称不可以重复！')
@@ -76,4 +78,9 @@ class AASMESSerialnumber(models.Model):
 
     @api.one
     def action_after_create(self):
-        self.env['aas.mes.operation'].create({'serialnumber_id': self.id})
+        operation = self.env['aas.mes.operation'].create({'serialnumber_id': self.id, 'serialnumber_name': self.name})
+        barcoderecord = self.env['aas.mes.operation.record'].create({
+            'operation_id': operation.id, 'operator_id': self.user_id.id,
+            'operate_type': 'newbarcode', 'employee_id': self.employee_id.id, 'equipment_id': self.equipment_id.id
+        })
+        operation.write({'barcode_create': True, 'barcode_record_id': barcoderecord.id})

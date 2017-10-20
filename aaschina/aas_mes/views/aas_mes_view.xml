@@ -35,5 +35,11 @@
             <field name="url">aasmes/serialnumber</field>
         </record>
 
+        <record id="aas_mes_gp12_checking" model="ir.actions.act_url">
+            <field name="target">self</field>
+            <field name="name">GP12</field>
+            <field name="url">aasmes/gp12/checking</field>
+        </record>
+
     </data>
 </odoo>

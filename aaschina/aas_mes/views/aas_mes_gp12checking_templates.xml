@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="aas_gp12_checking" name="AAS MES GP12 Checking">
+        &lt;!DOCTYPE html&gt;
+        <html>
+            <head>
+                <meta charset="utf-8" />
+                <title>安费诺先进传感器</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                <meta name="apple-mobile-web-app-capable" content="yes"/>
+                <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/select2/select2.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/skins/skin-blue.min.css"/>
+                <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+                <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+                <!--[if lt IE 9]>
+                   <script src="/aas_base/static/libs/html5shiv.min.js"></script>
+                   <script src="/aas_base/static/libs/respond.min.js"></script>
+                <![endif]-->
+            </head>
+            <body class="hold-transition skin-blue fixed">
+                <div class="wrapper">
+                    <header class="main-header">
+                        <a href="#" class="logo">
+                            <span><b>安费诺先进传感器</b></span>
+                        </a>
+                        <nav class="navbar navbar-static-top">
+                            <div class="navbar-custom-menu">
+                                <ul class="nav navbar-nav">
+                                    <li id="action_addserial" class="messages-menu">
+                                        <a href="/aasmes/grp12/commitbadness"> <span>上报不良</span> </a>
+                                    </li>
+                                    <li class="dropdown messages-menu">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                            <i class="fa fa-user"></i> <span t-esc="checker"/>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li class="header">欢迎您，<t t-esc="checker"/></li>
+                                            <li>
+                                                <ul class="menu">
+                                                    <li><a href="/web/session/logout">注销</a></li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>
+                        </nav>
+                    </header>
+                    <aside class="main-sidebar">
+                        <section class="sidebar">
+                            <ul id="menulist" class="sidebar-menu">
+                                <li class="header">
+                                    <span style="font-size:22px; color:#FFFFFF;font-weight:bold;">
+                                        员工列表
+                                    </span>
+                                </li>
+                                <t t-foreach="employeelist" t-as="emp">
+                                    <li t-attf-id="employee_{{emp['employee_id']}}" class="aas-employee" t-att-employeeid="emp['employee_id']">
+                                        <a href="javascript:void(0);" style="font-size:25px;font-weight:bold;">
+                                            <span t-esc="emp['employee_name']"/>
+                                        </a>
+                                    </li>
+                                </t>
+                            </ul>
+                        </section>
+                    </aside>
+                    <div class="content-wrapper">
+                        <section class="content-header">
+                            <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;">
+                                <span id="check_result" style="font-size:40px;margin-right:10px;" t-esc="checkresult"/>
+                                <span id="checking_message" style="color:red;" t-esc="message"/>
+                            </div>
+                            <h1>
+                                <span>
+                                    操作员工：<span id="current_employee" employeeid="0"></span>
+                                </span>
+                            </h1>
+                            <h1>
+                                <span>
+                                    当前的SN：<span id="current_serialnumber"></span>
+                                </span>
+                                <span class="pull-right">
+                                    第一个PN：<span id="customer_code" customercode=""></span>
+                                </span>
+                            </h1>
+                        </section>
+                        <section class="content">
+                            <div class="row">
+                                <section class="col-lg-4 col-sm-12">
+                                    <div class="box box-primary">
+                                        <div class="box-header">
+                                            <i class="fa fa-list"></i>
+                                            <h3 class="box-title">
+                                                合格SN：<span id="pass_count" scount="0"></span>
+                                            </h3>
+                                        </div>
+                                        <div class="box-body">
+                                            <div class="table-responsive">
+                                                <table id="pass_list" class="table no-margin">
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section class="col-md-8 col-sm-12">
+                                    <div class="box box-primary">
+                                        <div class="box-header">
+                                            <i class="fa fa-list"></i>
+                                            <h3 class="box-title">Test记录</h3>
+                                        </div>
+                                        <div class="box-body">
+                                            <div class="table-responsive">
+                                                <table class="table no-margin">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>No</th>
+                                                            <th>测试时间</th>
+                                                            <th>测试结果</th>
+                                                            <th>测试人员</th>
+                                                            <th>测试设备</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="functiontest_list"></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="box box-primary">
+                                        <div class="box-header">
+                                            <i class="fa fa-list"></i>
+                                            <h3 class="box-title">Rework记录</h3>
+                                        </div>
+                                        <div class="box-body">
+                                            <div class="table-responsive">
+                                                <table class="table no-margin">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>No</th>
+                                                            <th>SN</th>
+                                                            <th>不良日期</th>
+                                                            <th>料号</th>
+                                                            <th>工序</th>
+                                                            <th>不良模式</th>
+                                                            <th>作业员</th>
+                                                            <th>维修状态</th>
+                                                            <th>维修结果</th>
+                                                            <th>维修时间</th>
+                                                            <th>维修人员</th>
+                                                            <th>IPQC</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="rework_list"></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="box box-danger">
+                                        <div class="box-header">
+                                            <i class="fa fa-list"></i>
+                                            <h3 class="box-title">不合格SN</h3>
+                                        </div>
+                                        <div class="box-body">
+                                            <div class="table-responsive">
+                                                <table id="fail_list" class="table no-margin">
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="main-footer">
+                        <div class="container" style="text-align:center;">
+                            <span>
+                                Copyright © 安费诺先进传感器 &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <a href="http://www.miitbeian.gov.cn" target="_blank">苏ICP备16061622</a>
+                            </span>
+                        </div>
+                    </footer>
+                </div>
+                <script src="/aas_base/static/libs/jquery/jquery-2.2.4.min.js"></script>
+                <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
+                <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
+                <script src="/aas_base/static/libs/select2/select2.min.js"></script>
+                <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
+                <script src="/aas_base/static/libs/underscore/underscore-1.8.3.min.js"></script>
+                <script src="/aas_base/static/libs/layer/layer.js"></script>
+                <script src="/aas_base/static/libs/vscanner.js"></script>
+                <script src="/aas_mes/static/src/js/mes_gp12_checking.js"></script>
+            </body>
+        </html>
+    </template>
+
+</odoo>
