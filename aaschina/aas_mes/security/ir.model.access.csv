@@ -77,3 +77,6 @@ access_aas_mes_serialnumber_manufacture_user,aas.mes.serialnumber manufacture_us
 
 access_aas_ebs_production_manufacture_user,aas.ebs.production manufacture_user,model_aas_ebs_production,group_aas_manufacture_user,1,1,0,0
 access_aas_ebs_production_manufacture_manager,aas.ebs.production manufacture_manager,model_aas_ebs_production,group_aas_manufacture_manager,1,1,0,0
+
+access_aas_mes_operation_manufacture_user,aas.mes.operation manufacture_user,model_aas_mes_operation,group_aas_manufacture_user,1,1,1,0
+access_aas_mes_operation_record_manufacture_user,aas.mes.operation.record manufacture_user,model_aas_mes_operation_record,group_aas_manufacture_user,1,1,1,0
