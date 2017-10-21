@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_quality_frozen" model="ir.ui.view">
+            <field name="name">aas.quality.frozen.tree</field>
+            <field name="model">aas.quality.frozen</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="product_id"/>
+                    <field name="product_lot"/>
+                    <field name="operator_id"/>
+                    <field name="frozen_time"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_quality_frozen" model="ir.ui.view">
+            <field name="name">aas.quality.frozen.form</field>
+            <field name="model">aas.quality.frozen</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_done" type="object" string="冻结产品" states="draft" class="oe_highlight"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="product_id" options="{'no_create':true,'no_open':true}" required="1"
+                                        attrs="{'readonly':[('state','=','done')]}"/>
+                                <field name="operator_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="product_lot" options="{'no_create':true,'no_open':true}" required="1"
+                                        domain="[('product_id','=',product_id)]" attrs="{'readonly':[('state','=','done')]}"/>
+                                <field name="frozen_time" readonly="1"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_quality_frozen" model="ir.ui.view">
+            <field name="name">aas.quality.frozen.search</field>
+            <field name="model">aas.quality.frozen</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="product_lot" string="批次" filter_domain="[('product_lot','ilike',self)]"/>
+                    <field name="operator_id" string="操作员" filter_domain="[('operator_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="批次" context="{'group_by':'product_lot'}"/>
+                        <filter string="操作员" context="{'group_by':'operator_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_quality_frozen" model="ir.actions.act_window">
+            <field name="name">产品冻结</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.quality.frozen</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_quality_frozen"/>
+            <field name="search_view_id" ref="view_search_aas_quality_frozen"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加产品冻结</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_quality_frozen" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_quality_frozen"/>
+            <field name="act_window_id" ref="action_aas_quality_frozen"/>
+        </record>
+
+        <record id="act_view_form_aas_quality_frozen" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_quality_frozen"/>
+            <field name="act_window_id" ref="action_aas_quality_frozen"/>
+        </record>
+
+        <menuitem id="menu_aas_quality_frozen"  name="产品冻结" action="action_aas_quality_frozen"
+                          parent="menu_aas_product_label" sequence="2" groups="group_aas_quality_user,group_aas_quality_manager"/>
+
+
+        <record id="view_tree_aas_quality_thaw" model="ir.ui.view">
+            <field name="name">aas.quality.thaw.tree</field>
+            <field name="model">aas.quality.thaw</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="product_id"/>
+                    <field name="product_lot"/>
+                    <field name="operator_id"/>
+                    <field name="thaw_time"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_quality_thaw" model="ir.ui.view">
+            <field name="name">aas.quality.thaw.form</field>
+            <field name="model">aas.quality.thaw</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_done" type="object" string="解冻产品" states="draft" class="oe_highlight"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="product_id" options="{'no_create':true,'no_open':true}" required="1"
+                                        attrs="{'readonly':[('state','=','done')]}"/>
+                                <field name="operator_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="product_lot" options="{'no_create':true,'no_open':true}" required="1"
+                                        domain="[('product_id','=',product_id)]" attrs="{'readonly':[('state','=','done')]}"/>
+                                <field name="thaw_time" readonly="1"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_quality_thaw" model="ir.ui.view">
+            <field name="name">aas.quality.thaw.search</field>
+            <field name="model">aas.quality.thaw</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="product_lot" string="批次" filter_domain="[('product_lot','ilike',self)]"/>
+                    <field name="operator_id" string="操作员" filter_domain="[('operator_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="批次" context="{'group_by':'product_lot'}"/>
+                        <filter string="操作员" context="{'group_by':'operator_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_quality_thaw" model="ir.actions.act_window">
+            <field name="name">产品冻结</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.quality.thaw</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_quality_thaw"/>
+            <field name="search_view_id" ref="view_search_aas_quality_thaw"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加产品冻结</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_quality_thaw" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_quality_thaw"/>
+            <field name="act_window_id" ref="action_aas_quality_thaw"/>
+        </record>
+
+        <record id="act_view_form_aas_quality_thaw" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_quality_thaw"/>
+            <field name="act_window_id" ref="action_aas_quality_thaw"/>
+        </record>
+
+        <menuitem id="menu_aas_quality_thaw"  name="产品解冻" action="action_aas_quality_thaw"
+                          parent="menu_aas_product_label" sequence="3" groups="group_aas_quality_user,group_aas_quality_manager"/>
+
+    </data>
+</odoo>

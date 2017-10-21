@@ -21,7 +21,8 @@
         'wizard/aas_quality_order_wizard_view.xml',
         'views/aas_wms_models_view.xml',
         'wizard/aas_wms_models_wizard_view.xml',
-        'views/aas_product_label_view.xml'
+        'views/aas_product_label_view.xml',
+        'views/aas_quality_frozen_view.xml'
     ],
     'qweb':[],
     'installable': True,
