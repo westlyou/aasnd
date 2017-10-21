@@ -229,6 +229,41 @@ class AASMESWorkorderProduct(models.Model):
             record.serialnumber_id.write({'used': True})
         return record
 
+    @api.one
+    def action_after_create(self):
+        if self.serialnumber_id and not self.serialnumber_id.used:
+            self.serialnumber_id.write({'used': True})
+        self.action_consume()
+
+    @api.one
+    def action_consume(self):
+        # 流水线消耗
+        if self.workorder_id.mesline_type == 'flowing':
+            pass
+
+
+
+
+class AASMESWorkorderConsume(models.Model):
+    _name = 'aas.mes.workorder.consume'
+    _description = 'AAS MES Work Order Consume'
+
+    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='cascade')
+    workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='restrict')
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'成品', ondelete='restrict')
+    material_id = fields.Many2one(comodel_name='product.product', string=u'原料', ondelete='restrict')
+    consumer_unit = fields.Float(string=u'单位消耗', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    input_qty = fields.Float(string=u'投入数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    consume_qty = fields.Float(string=u'已消耗量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    leave_qty = fields.Float(string=u'剩余数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_leave_qty', store=True)
+
+    @api.depends('input_qty', 'consume_qty')
+    def _compute_leave_qty(self):
+        for record in self:
+            record.leave_qty = record.input_qty - record.consume_qty
+
+
 
 ################################## 向导 #################################
 

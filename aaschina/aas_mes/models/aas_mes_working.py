@@ -302,66 +302,6 @@ class AASMESWorkAttendance(models.Model):
         return result
 
 
-# 生产考勤员
-class AASMESAttendanceChecker(models.Model):
-    _name = 'aas.mes.attendance.checker'
-    _description = 'AAS MES Attendance Checker'
-    _rec_name = 'checker_id'
-    
-    checker_id = fields.Many2one(comodel_name='res.users', string=u'考勤员', ondelete='restrict')
-    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'生产线', ondelete='restrict')
-
-    _sql_constraints = [
-        ('uniq_checker', 'unique (checker_id)', u'请不要重复添加同一个考勤员！')
-    ]
-
-    @api.model
-    def create(self, vals):
-        record = super(AASMESAttendanceChecker, self).create(vals)
-        record.action_after_create()
-        return record
-
-    @api.one
-    def action_after_create(self):
-        self.checker_id.write({
-            'action_id': self.env.ref('aas_mes.aas_mes_attendance_scanner').id,
-            'groups_id': [(4, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]
-        })
-
-    @api.multi
-    def write(self, vals):
-        oldcheckers, currentcheckerid = self.env['res.users'], False
-        if vals.get('checker_id'):
-            currentcheckerid = vals.get('checker_id', False)
-            for record in self:
-                oldcheckers |= record.checker_id
-        result = super(AASMESAttendanceChecker, self).write(vals)
-        if oldcheckers and len(oldcheckers) > 0:
-            oldcheckers.write({
-                'action_id': False,
-                'groups_id': [(3, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]
-            })
-        if currentcheckerid:
-            currentchecker = self.env['res.users'].browse(currentcheckerid)
-            currentchecker.write({
-                'action_id': self.env.ref('aas_mes.aas_mes_attendance_scanner').id,
-                'groups_id': [(4, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]
-            })
-        return result
-
-    @api.multi
-    def unlink(self):
-        users = self.env['res.users']
-        for record in self:
-            users |= record.checker_id
-        result = super(AASMESAttendanceChecker, self).unlink()
-        users.write({
-            'action_id': False,
-            'groups_id': [(3, self.env.ref('aas_mes.group_aas_attendance_checker').id, False)]
-        })
-        return result
-
-
 
 #######################向导#################################
 

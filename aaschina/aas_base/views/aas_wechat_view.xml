@@ -14,7 +14,7 @@
                             <group> <field name="app_code"/> </group>
                         </group>
                         <group>
-                            <group>
+                            <group colspan="4">
                                 <field name="corp_id"/>
                                 <field name="role_secret"/>
                                 <field name="home_url"/>

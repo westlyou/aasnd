@@ -24,12 +24,14 @@ class AASMESBadmode(models.Model):
     _description = 'AAS MES Bad Mode'
 
     name = fields.Char(string=u'名称', required=True, copy=False)
+    code = fields.Char(string=u'编码', copy=False)
     note = fields.Text(string=u'描述')
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     mesline_name = fields.Char(string=u'产线名称', compute="_compute_mesline_name", store=True)
 
     _sql_constraints = [
-        ('uniq_name', 'unique (mesline_id, name)', u'同一产线的不良模式名称不能重复！！')
+        ('uniq_name', 'unique (mesline_id, name)', u'同一产线的不良模式名称不能重复！'),
+        ('uniq_code', 'unique (code)', u'不良模式的编码不可以重复！')
     ]
 
     @api.depends('mesline_id')

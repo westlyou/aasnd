@@ -47,3 +47,4 @@ import aas_mes_feedmaterial
 import aas_mes_stockadjust
 import aas_mes_lineusers
 import aas_mes_serialnumber
+import aas_mes_operation
