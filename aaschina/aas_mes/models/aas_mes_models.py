@@ -52,6 +52,7 @@ class AASMESLine(models.Model):
     location_production_id = fields.Many2one(comodel_name='stock.location', string=u'成品库位', ondelete='restrict')
     location_material_list = fields.One2many(comodel_name='aas.mes.line.material.location', inverse_name='mesline_id', string=u'原料库位')
     schedule_lines = fields.One2many(comodel_name='aas.mes.schedule', inverse_name='mesline_id', string=u'班次清单')
+    workstation_lines = fields.One2many(comodel_name='aas.mes.line.workstation', inverse_name='mesline_id', string=u'工位清单')
 
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'默认工位')
 
@@ -138,7 +139,7 @@ class AASMESLine(models.Model):
 
 
 
-
+#产线原料库位
 class AASMESLineMaterialLocation(models.Model):
     _name = 'aas.mes.line.material.location'
     _description = 'AAS MES Line Material Location'
@@ -151,6 +152,58 @@ class AASMESLineMaterialLocation(models.Model):
     _sql_constraints = [
         ('uniq_location', 'unique (mesline_id, location_id)', u'同一产线的原料库位请不要重复！')
     ]
+
+
+# 产线库位
+class AASMESLineWorkstation(models.Model):
+    _name = 'aas.mes.line.workstation'
+    _description = 'AAS MES Line Workstation'
+    _order = 'mesline_id,sequence'
+
+    name = fields.Char(string=u'名称', compute='_compute_name', store=True)
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='cascade')
+    sequence = fields.Integer(string=u'序号')
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
+
+    _sql_constraints = [
+        ('uniq_sequence', 'unique (mesline_id, sequence)', u'同一产线序号不能重复！'),
+        ('uniq_workstation', 'unique (mesline_id, workstation_id)', u'同一产线库位不能重复！')
+    ]
+
+    @api.depends('mesline_id', 'workstation_id')
+    def _compute_name(self):
+        for record in self:
+            if record.mesline_id and record.workstation_id:
+                record.name = record.workstation_id.name + '[' + record.mesline_id.name + ']'
+            else:
+                record.name = False
+
+
+# 员工产线调整记录
+class AASMESLineEmployee(models.Model):
+    _name = 'aas.mes.line.employee'
+    _description = 'AAS MES Line Employee'
+    _order = 'id desc'
+
+    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
+    action_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
+    action_user = fields.Many2one(comodel_name='res.users', string=u'操作人', ondelete='restrict', default=lambda self: self.env.user)
+
+    @api.model
+    def create(self, vals):
+        record = super(AASMESLineEmployee, self).create(vals)
+        record.action_after_create()
+        return record
+
+    @api.one
+    def action_after_create(self):
+        empvals = {}
+        if self.mesline_id:
+            empvals['mesline_id'] = self.mesline_id.id
+        if empvals and len(empvals) > 0:
+            self.employee_id.write(empvals)
+
 
 
 class AASHREmployee(models.Model):
@@ -180,35 +233,6 @@ class AASHREmployee(models.Model):
             'res_id': wizard.id,
             'context': self.env.context
         }
-
-
-
-
-
-# 员工产线调整记录
-class AASMESLineEmployee(models.Model):
-    _name = 'aas.mes.line.employee'
-    _description = 'AAS MES Line Employee'
-    _order = 'id desc'
-
-    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict')
-    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
-    action_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
-    action_user = fields.Many2one(comodel_name='res.users', string=u'操作人', ondelete='restrict', default=lambda self: self.env.user)
-
-    @api.model
-    def create(self, vals):
-        record = super(AASMESLineEmployee, self).create(vals)
-        record.action_after_create()
-        return record
-
-    @api.one
-    def action_after_create(self):
-        empvals = {}
-        if self.mesline_id:
-            empvals['mesline_id'] = self.mesline_id.id
-        if empvals and len(empvals) > 0:
-            self.employee_id.write(empvals)
 
 
 

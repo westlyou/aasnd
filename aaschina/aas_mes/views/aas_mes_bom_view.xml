@@ -43,10 +43,8 @@
                                 <field name="active" readonly="1"/>
                             </group>
                             <group>
-                                <field name="mesline_id" options="{'no_create':true}" required="1"
-                                        attrs="{'readonly':[('state','!=','draft')]}"/>
-                                <field name="routing_id" options="{'no_create':true}"
-                                        domain="[('mesline_id','=',mesline_id)]" attrs="{'readonly':[('state','!=','draft')]}"/>
+                                <field name="mesline_id" options="{'no_create':true}" attrs="{'readonly':[('state','!=','draft')]}"/>
+                                <field name="routing_id" options="{'no_create':true}" attrs="{'readonly':[('state','!=','draft')]}"/>
                                 <field name="origin_id" readonly="1"/>
                                 <field name="create_time" readonly="1"/>
                                 <field name="version" readonly="1"/>

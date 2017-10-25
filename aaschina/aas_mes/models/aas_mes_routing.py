@@ -174,7 +174,8 @@ class AASMESRoutingWizard(models.TransientModel):
             routing_lines.append((0, 0, rlinevals))
         routing = self.env['aas.mes.routing'].create({
             'name': self.name, 'note': self.note, 'origin_id': self.routing_id.id,
-            'mesline_id': self.mesline_id.id, 'routing_lines': routing_lines, 'state': 'normal'
+            'routing_lines': routing_lines, 'state': 'normal',
+            'mesline_id': False if not self.mesline_id else self.mesline_id.id
         })
         self.routing_id.write({'active': False, 'state': 'override'})
         view_form = self.env.ref('aas_mes.view_form_aas_mes_routing')

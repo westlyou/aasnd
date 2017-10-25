@@ -38,7 +38,7 @@
                                 <field name="origin_id" readonly="1" attrs="{'invisible':[('origin_id','=',False)]}"/>
                             </group>
                             <group>
-                                <field name="mesline_id" required="1" options="{'no_create':true}" attrs="{'readonly':[('active','=',False)]}"/>
+                                <field name="mesline_id" options="{'no_create':true}" attrs="{'readonly':[('active','=',False)]}"/>
                                 <field name="create_time" readonly="1"/>
                                 <field name="version" readonly="1"/>
                             </group>
@@ -55,28 +55,27 @@
                                         <field name="mesline_id" invisible="1"/>
                                         <field name="name" required="1"/>
                                         <field name="sequence" required="1"/>
-                                        <field name="workstation_id" options="{'no_create':true}"
-                                                required="1" domain="[('mesline_id','=',mesline_id)]"/>
+                                        <field name="workstation_id" options="{'no_create':true}" required="1"/>
                                         <field name="note"/>
                                     </tree>
                                     <form>
                                         <group>
+                                            <group> <field name="name" required="1"/> </group>
+                                        </group>
+                                        <group>
                                             <group>
-                                                <field name="name" required="1"/>
                                                 <field name="sequence" required="1"/>
                                             </group>
                                             <group>
                                                 <field name="mesline_id" invisible="1"/>
-                                                <field name="workstation_id" options="{'no_create':true}"
-                                                    required="1" domain="[('mesline_id','=',mesline_id)]"/>
+                                                <field name="workstation_id" options="{'no_create':true}" required="1"/>
                                             </group>
                                         </group>
                                         <notebook>
                                             <page string="不良模式">
                                                 <field name="badmode_lines">
                                                     <tree editable="bottom">
-                                                        <field name="badmode_id" required="1" options="{'no_create':true}"
-                                                               domain="[('mesline_id','=',parent.mesline_id)]"/>
+                                                        <field name="badmode_id" required="1" options="{'no_create':true}"/>
                                                     </tree>
                                                 </field>
                                             </page>
@@ -207,8 +206,7 @@
                                     <field name="name" required="1"/>
                                     <field name="sequence" required="1"/>
                                     <field name="note"/>
-                                    <field name="workstation_id" options="{'no_create':true}" required="1"
-                                                domain="[('mesline_id','=',parent.mesline_id)]"/>
+                                    <field name="workstation_id" options="{'no_create':true}" required="1"/>
                                 </tree>
                                 <form>
                                     <group>
@@ -217,8 +215,7 @@
                                             <field name="sequence" required="1"/>
                                         </group>
                                         <group>
-                                            <field name="workstation_id" options="{'no_create':true}" required="1"
-                                                domain="[('mesline_id','=',parent.mesline_id)]"/>
+                                            <field name="workstation_id" options="{'no_create':true}" required="1"/>
                                             <field name="note"/>
                                             <field name="mesline_id" invisible="1"/>
                                         </group>
@@ -227,8 +224,7 @@
                                         <page string="不良模式">
                                             <field name="badmode_lines">
                                                 <tree editable="bottom">
-                                                    <field name="badmode_id" required="1" options="{'no_create':true}"
-                                                            domain="[('mesline_id','=',parent.mesline_id)]"/>
+                                                    <field name="badmode_id" required="1" options="{'no_create':true}"/>
                                                 </tree>
                                             </field>
                                         </page>

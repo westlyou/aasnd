@@ -102,42 +102,20 @@ class AASMESWorkstation(models.Model):
     name = fields.Char(string=u'名称', required=True, copy=False)
     code = fields.Char(string=u'编码', required=True, copy=False)
     barcode = fields.Char(string=u'条码', compute='_compute_barcode', store=True, index=True)
-    sequence = fields.Integer(string=u'序号', default=1)
-    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'生产线', ondelete='restrict')
     active = fields.Boolean(string=u'是否有效', default=True, copy=False)
     station_type = fields.Selection(selection=[('scanner', u'扫描工位'), ('controller', u'工控工位')], string=u'工位类型', default='scanner', copy=False)
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
-    employee_lines = fields.One2many(comodel_name='aas.hr.employee', inverse_name='workstation_id', string=u'员工明细')
-    employeelist = fields.Char(string=u'员工清单', compute='_compute_employeelist', store=True)
-    equipment_lines = fields.One2many(comodel_name='aas.equipment.equipment', inverse_name='workstation_id', string=u'设备明细')
-    equipmentlist = fields.Char(string=u'设备清单', compute='_compute_equipmentlist', store=True)
+
+    employee_lines = fields.One2many(comodel_name='aas.mes.workstation.employee', inverse_name='workstation_id', string=u'员工清单')
+    equipment_lines = fields.One2many(comodel_name='aas.mes.workstation.equipment', inverse_name='workstation_id', string=u'设备清单')
 
     _sql_constraints = [
-        ('uniq_code', 'unique (code)', u'工位编码不可以重复！'),
-        ('uniq_sequence', 'unique (mesline_id, sequence)', u'同一产线的工位序号不可以重复！')
+        ('uniq_code', 'unique (code)', u'工位编码不可以重复！')
     ]
 
     @api.multi
     def name_get(self):
         return [(record.id, '%s[%s]' % (record.name, record.code)) for record in self]
-
-    @api.multi
-    @api.depends('employee_lines')
-    def _compute_employeelist(self):
-        for record in self:
-            if not record.employee_lines or len(record.employee_lines) <= 0:
-                record.employeelist = False
-            else:
-                record.employeelist = ','.join([empline.name for empline in record.employee_lines])
-
-    @api.multi
-    @api.depends('equipment_lines')
-    def _compute_equipmentlist(self):
-        for record in self:
-            if not record.equipment_lines or len(record.equipment_lines) <= 0:
-                record.equipmentlist = False
-            else:
-                record.equipmentlist = ','.join([equline.code for equline in record.equipment_lines])
 
     @api.depends('code')
     def _compute_barcode(self):
@@ -154,17 +132,36 @@ class AASMESWorkstation(models.Model):
     @api.model
     def create(self, vals):
         record = super(AASMESWorkstation, self).create(vals)
-        record.action_after_create()
         return record
 
-    @api.one
-    def action_after_create(self):
-        if self.mesline_id:
-            workstations = self.env['aas.mes.line'].search([('mesline_id', '=', self.mesline_id.id)])
-            if workstations and len(workstations)==1:
-                self.mesline_id.write({'workstation_id': workstations[0].id})
-            elif self.mesline_id.workstation_id:
-                self.mesline_id.write({'workstation_id': False})
+
+class AASMESWorkstationEmployee(models.Model):
+    _name = 'aas.mes.workstation.employee'
+    _description = 'AAS MES Workstation Employee'
+
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'库位', required=True, ondelete='cascade')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', required=True, ondelete='cascade')
+    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict')
+    action_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
+
+    _sql_constraints = [
+        ('uniq_employee', 'unique (workstation_id, mesline_id, employee_id)', u'请不要重复添加员工！')
+    ]
+
+
+
+class AASMESWorkstationEquipment(models.Model):
+    _name = 'aas.mes.workstation.equipment'
+    _description = 'AAS MES Workstation Equipment'
+
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'库位', required=True, ondelete='cascade')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', required=True, ondelete='cascade')
+    equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', ondelete='restrict')
+    action_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
+
+    _sql_constraints = [
+        ('uniq_equipment', 'unique (workstation_id, mesline_id, equipment_id)', u'请不要重复添加同一个设备！')
+    ]
 
 
 
@@ -180,6 +177,32 @@ class AASEquipmentEquipment(models.Model):
 
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
+
+
+    @api.multi
+    def action_mesline_workstation(self):
+        """
+        向导，触发此方法弹出向导并进行业务处理
+        :return:
+        """
+        self.ensure_one()
+        wizard = self.env['aas.mes.equipment.workstation.wizard'].create({
+            'equipment_id': self.id
+        })
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_equipment_workstation_wizard')
+        return {
+            'name': u"产线工位",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.mes.equipment.workstation.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
 
 
 class AASMESWorkAttendance(models.Model):
@@ -359,3 +382,21 @@ class AASMESScheduleEmployeeLineWizard(models.TransientModel):
             employee = self.env['aas.hr.employee'].browse(vals.get('employee_id'))
             vals['employee_code'] = employee.code
         return super(AASMESScheduleEmployeeLineWizard, self).write(vals)
+
+
+# 设备产线和工位设置
+class AASMESEquipmentWorkstationWizard(models.TransientModel):
+    _name = 'aas.mes.equipment.workstation.wizard'
+    _description = 'AAS MES Equipment Workstation Wizard'
+
+    equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', ondelete='cascade')
+    mesline_workstation = fields.Many2one(comodel_name='aas.mes.line.workstation', string=u'产线工位', ondelete='cascade')
+
+    @api.one
+    def action_done(self):
+        if not self.mesline_workstation:
+            raise UserError(u'请先设置好产线工位！')
+        self.equipment_id.write({
+            'mesline_id': self.mesline_workstation.mesline_id.id,
+            'workstation_id': self.mesline_workstation.workstation_id.id
+        })

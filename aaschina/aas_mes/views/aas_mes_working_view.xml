@@ -152,39 +152,6 @@
         <menuitem id="menu_aas_mes_schedule"  name="班次" action="action_aas_mes_schedule"
                           parent="menu_aas_mes_resources" sequence="6" groups="group_aas_manufacture_foreman"/>
 
-        <record id="view_kanban_aas_mes_workstation" model="ir.ui.view">
-            <field name="name">aas.mes.workstation.kanban</field>
-            <field name="model">aas.mes.workstation</field>
-            <field name="arch" type="xml">
-                <kanban default_group_by="mesline_id" default_order="sequence" edit="false" delete="false"
-                        group_create="false" group_edit="false" group_delete="false">
-                    <field name="name"/>
-                    <field name="code"/>
-                    <field name="mesline_id"/>
-                    <field name="sequence"/>
-                    <field name="station_type"/>
-                    <field name="employeelist"/>
-                    <field name="equipmentlist"/>
-                    <templates>
-                        <t t-name="kanban-box">
-                            <div class="oe_kanban_vignette oe_kanban_global_click">
-                                <div class="oe_kanban_details">
-                                    <h4> <a type="open" style="font-size:20px;"><field name="name"/></a> </h4>
-                                    <ul>
-                                        <li>序号：<field name="sequence"/></li>
-                                        <li>编码：<field name="code"/></li>
-                                        <li>类型：<field name="station_type"/></li>
-                                        <li>员工: <field name="employeelist"/></li>
-                                        <li>设备: <field name="equipmentlist"/></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </t>
-                    </templates>
-                </kanban>
-            </field>
-        </record>
-
         <record id="view_tree_aas_mes_workstation" model="ir.ui.view">
             <field name="name">aas.mes.workstation.tree</field>
             <field name="model">aas.mes.workstation</field>
@@ -193,8 +160,6 @@
                 <tree>
                     <field name="name"/>
                     <field name="code"/>
-                    <field name="mesline_id"/>
-                    <field name="sequence"/>
                     <field name="station_type"/>
                 </tree>
             </field>
@@ -211,45 +176,51 @@
                     </header>
                     <sheet>
                         <group>
-                            <group>
+                            <group colspan="4">
                                 <field name="name" required="1"/>
                             </group>
                         </group>
                         <group>
                             <group>
                                 <field name="code" required="1"/>
-                                <field name="station_type" required="1"/>
                             </group>
                             <group>
-                                <field name="mesline_id" options="{'no_create':true}" required="1"/>
-                                <field name="sequence" required="1"/>
+                                <field name="station_type" required="1"/>
                             </group>
                         </group>
                         <notebook>
                             <page string="员工清单">
                                 <field name="employee_lines" readonly="1">
-                                    <tree>
-                                        <field name="name"/>
-                                        <field name="code"/>
+                                    <tree editable="bottom">
+                                        <field name="mesline_id"/>
+                                        <field name="employee_id"/>
+                                        <field name="action_time"/>
                                     </tree>
                                     <form>
                                         <group>
-                                            <group><field name="name"/></group>
-                                            <group><field name="code"/></group>
+                                            <group>
+                                                <field name="mesline_id"/>
+                                                <field name="employee_id"/>
+                                                <field name="action_time"/>
+                                            </group>
                                         </group>
                                     </form>
                                 </field>
                             </page>
-                            <page string="设备明细">
+                            <page string="设备清单">
                                 <field name="equipment_lines" readonly="1">
-                                    <tree>
-                                        <field name="name"/>
-                                        <field name="code"/>
+                                    <tree editable="bottom">
+                                        <field name="mesline_id"/>
+                                        <field name="equipment_id"/>
+                                        <field name="action_time"/>
                                     </tree>
                                     <form>
                                         <group>
-                                            <group><field name="name"/></group>
-                                            <group><field name="code"/></group>
+                                            <group>
+                                                <field name="mesline_id"/>
+                                                <field name="equipment_id"/>
+                                                <field name="action_time"/>
+                                            </group>
                                         </group>
                                     </form>
                                 </field>
@@ -267,15 +238,9 @@
                 <search>
                     <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
                     <field name="code" string="编码" filter_domain="[('code','ilike',self)]"/>
-                    <field name="mesline_id" string="生产线" filter_domain="[('mesline_id','ilike',self)]"/>
-                    <field name="sequence" string="工位序号" filter_domain="[('sequence','=',self)]"/>
                     <separator/>
                     <filter string="扫描工位" domain="[('station_type','=','scanner')]"/>
                     <filter string="工控工位" domain="[('station_type','=','controller')]"/>
-                    <separator/>
-                    <group expand="0" string="分组">
-                        <filter string="生产线" context="{'group_by':'mesline_id'}"/>
-                    </group>
                 </search>
             </field>
         </record>
@@ -286,29 +251,22 @@
             <field name="res_model">aas.mes.workstation</field>
             <field name="limit">50</field>
             <field name="view_mode">kanban,form,tree</field>
-            <field name="view_id" ref="view_kanban_aas_mes_workstation"/>
+            <field name="view_id" ref="view_tree_aas_mes_workstation"/>
             <field name="search_view_id" ref="view_search_aas_mes_workstation"/>
             <field name="help" type="html">
                 <p class="oe_view_nocontent_create"> 单击添加生产工位</p>
             </field>
         </record>
 
-        <record id="act_view_kanban_aas_mes_workstation" model="ir.actions.act_window.view">
-            <field name="sequence" eval="1"/>
-            <field name="view_mode">kanban</field>
-            <field name="view_id" ref="view_kanban_aas_mes_workstation"/>
-            <field name="act_window_id" ref="action_aas_mes_workstation"/>
-        </record>
-
         <record id="act_view_tree_aas_mes_workstation" model="ir.actions.act_window.view">
-            <field name="sequence" eval="2"/>
+            <field name="sequence" eval="1"/>
             <field name="view_mode">tree</field>
             <field name="view_id" ref="view_tree_aas_mes_workstation"/>
             <field name="act_window_id" ref="action_aas_mes_workstation"/>
         </record>
 
         <record id="act_view_form_aas_mes_workstation" model="ir.actions.act_window.view">
-            <field name="sequence" eval="3"/>
+            <field name="sequence" eval="2"/>
             <field name="view_mode">form</field>
             <field name="view_id" ref="view_form_aas_mes_workstation"/>
             <field name="act_window_id" ref="action_aas_mes_workstation"/>
@@ -365,11 +323,14 @@
             <field name="model">aas.equipment.equipment</field>
             <field name="inherit_id" ref="aas_equipment.view_form_aas_equipment_equipment"/>
             <field name="arch" type="xml">
+                <field name="state" position="before">
+                    <button name="action_mesline_workstation" type="object" string="产线工位" class="oe_highlight"/>
+                </field>
                 <field name="purchase_date" position="after">
-                    <field name="mesline_id" options="{'no_create':true}"/>
+                    <field name="mesline_id" options="{'no_create':true}" readonly="1"/>
                 </field>
                 <field name="supplier" position="after">
-                    <field name="workstation_id" options="{'no_create':true}" domain="[('mesline_id','=',mesline_id)]"/>
+                    <field name="workstation_id" options="{'no_create':true}" readonly="1"/>
                 </field>
             </field>
         </record>
@@ -578,6 +539,27 @@
                             </field>
                         </page>
                     </notebook>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_equipment_workstation_wizard" model="ir.ui.view">
+            <field name="name">aas.mes.equipment.workstation.wizard</field>
+            <field name="model">aas.mes.equipment.workstation.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="equipment_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="mesline_workstation" required="1" options="{'no_create':true}"/>
+                        </group>
+                    </group>
                     <footer>
                         <button name="action_done" string="确认" type="object" class="btn-primary"/>
                         <button string="取消" class="btn-default" special="cancel"/>

@@ -169,6 +169,24 @@
                                     </form>
                                 </field>
                             </page>
+                            <page string="工位清单">
+                                <field name="workstation_lines">
+                                    <tree editable="bottom">
+                                        <field name="sequence" required="1"/>
+                                        <field name="workstation_id" required="1" options="{'no_create':true}"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="sequence" required="1"/>
+                                            </group>
+                                            <group>
+                                                <field name="workstation_id" required="1" options="{'no_create':true}"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
                             <page string="员工清单">
                                 <field name="employees" readonly="1">
                                     <tree>
