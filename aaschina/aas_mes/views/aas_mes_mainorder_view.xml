@@ -59,8 +59,8 @@
                             <group>
                                 <field name="mesline_id" required="1" options="{'no_create':true}"
                                        attrs="{'readonly':[('state','!=','draft')]}"/>
-                                <field name="aas_bom_id" options="{'no_create':true}"
-                                       domain="[('state','=','normal')]" attrs="{'readonly':[('state','!=','draft')]}"/>
+                                <field name="aas_bom_id" options="{'no_create':true}" attrs="{'readonly':[('state','!=','draft')]}"
+                                       domain="[('state','=','normal'),('product_id','=',product_id)]"/>
                                 <field name="routing_id" readonly="1"/>
                                 <field name="creator_id" readonly="1"/>
                                 <field name="produce_start" readonly="1"/>

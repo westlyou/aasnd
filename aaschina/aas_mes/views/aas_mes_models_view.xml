@@ -577,7 +577,7 @@
             <field name="model">aas.container</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree labelprint="true">
                     <field name="name"/>
                     <field name="location_id"/>
                 </tree>
@@ -589,7 +589,7 @@
             <field name="model">aas.container</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form>
+                <form labelprint="true">
                     <sheet>
                         <group>
                             <group>

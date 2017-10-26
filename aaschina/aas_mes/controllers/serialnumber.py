@@ -32,13 +32,9 @@ class AASMESSerialnumberController(http.Controller):
         login = request.env.user
         values['checker'] = login.name
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', login.id)], limit=1)
-        if not lineuser:
+        if not lineuser or lineuser.mesrole != 'serialnumber':
             values['success'] = False
             values['message'] = u'当前登录用户并非序列号创建用户；如果确实需要创建序列号，请联系领班为其配置权限！'
-            return values
-        if not lineuser.isserialnumber:
-            values['success'] = False
-            values['message'] = u'当前登录用户虽与产线绑定，但并未分配创建序列号权限；如果确实需要创建序列号，请联系领班为其配置权限！'
             return values
         values['mesline_name'] = lineuser.mesline_id.name
         workorder = lineuser.mesline_id.workorder_id

@@ -54,8 +54,8 @@
                                 <field name="mesline_id" options="{'no_create':true}" required="1"
                                         attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
                                 <field name="mesline_type" readonly="1"/>
-                                <field name="aas_bom_id" options="{'no_create':true}"
-                                        domain="[('state','=','normal')]" attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
+                                <field name="aas_bom_id" options="{'no_create':true}" attrs="{'readonly':[('state','not in',['draft','confirm'])]}"
+                                        domain="[('state','=','normal'),('product_id','=',product_id)]"/>
                                 <field name="routing_id" readonly="1"/>
                                 <field name="produce_start" readonly="1"/>
                                 <field name="produce_finish" readonly="1"/>
@@ -75,6 +75,32 @@
                             </group>
                         </group>
                         <notebook>
+                            <page string="成品产出">
+                                <field name="product_lines" readonly="1">
+                                    <tree>
+                                        <field name="product_id"/>
+                                        <field name="product_qty"/>
+                                        <field name="serialnumber_id"/>
+                                        <field name="product_lot"/>
+                                        <field name="operator_id"/>
+                                        <field name="operation_time"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_qty"/>
+                                                <field name="product_lot"/>
+                                            </group>
+                                            <group>
+                                                <field name="serialnumber_id"/>
+                                                <field name="operator_id"/>
+                                                <field name="operation_time"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
                             <page string="工票明细" attrs="{'invisible':[('mesline_type','=','flowing')]}">
                                 <field name="workticket_lines" readonly="1">
                                     <tree>
@@ -100,32 +126,6 @@
                                                 <field name="time_start"/>
                                                 <field name="time_finish"/>
                                                 <field name="badmode_qty"/>
-                                            </group>
-                                        </group>
-                                    </form>
-                                </field>
-                            </page>
-                            <page string="成品明细">
-                                <field name="product_lines" readonly="1">
-                                    <tree>
-                                        <field name="product_id"/>
-                                        <field name="product_qty"/>
-                                        <field name="serialnumber_id"/>
-                                        <field name="product_lot"/>
-                                        <field name="operator_id"/>
-                                        <field name="operation_time"/>
-                                    </tree>
-                                    <form>
-                                        <group>
-                                            <group>
-                                                <field name="product_id"/>
-                                                <field name="product_qty"/>
-                                                <field name="product_lot"/>
-                                            </group>
-                                            <group>
-                                                <field name="serialnumber_id"/>
-                                                <field name="operator_id"/>
-                                                <field name="operation_time"/>
                                             </group>
                                         </group>
                                     </form>
