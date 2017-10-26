@@ -63,7 +63,13 @@ class AASMESAttendanceController(http.Controller):
         if not employee:
             values.update({'success': False, 'message': u'无效条码，请确认扫描的是否是员工卡！'})
             return values
-        mesattendance = request.env['aas.mes.work.attendance'].search([('employee_id', '=', employee.id), ('attend_done', '=', False)], limit=1)
+        lineusersdomain = [('lineuser_id', '=', request.env.user.id)]
+        lineuser = request.env['aas.mes.lineusers'].search(lineusersdomain, limit=1)
+        if not lineuser or lineuser.mesrole != 'checker':
+            values.update({'success': False, 'message': u'当前登录用户可能不是考勤员，请仔细检查！'})
+        mesline = lineuser.mesline_id
+        searchdomain = [('employee_id', '=', employee.id), ('attend_done', '=', False), ('mesline_id', '=', mesline.id)]
+        mesattendance = request.env['aas.mes.work.attendance'].search(searchdomain, limit=1)
         if mesattendance:
             mesattendance.action_done()
             values.update({'success': True, 'message': u'亲，您已离岗了哦！'})
@@ -79,7 +85,17 @@ class AASMESAttendanceController(http.Controller):
         if not stationid or not employeeid:
             values.update({'success': False, 'message': u'请确认已选择了工位并扫描了员工卡！'})
             return values
-        request.env['aas.mes.work.attendance'].create({'employee_id': employeeid, 'workstation_id': stationid})
+        lineusersdomain = [('lineuser_id', '=', request.env.user.id)]
+        lineuser = request.env['aas.mes.lineusers'].search(lineusersdomain, limit=1)
+        if not lineuser or lineuser.mesrole != 'checker':
+            values.update({'success': False, 'message': u'当前登录用户可能不是考勤员，请仔细检查！'})
+        mesline = lineuser.mesline_id
+        searchdomain = [('employee_id', '=', employeeid), ('attend_done', '=', False), ('mesline_id', '=', mesline.id)]
+        mesattendance = request.env['aas.mes.work.attendance'].search(searchdomain, limit=1)
+        if not mesattendance or mesattendance.workstation_id.id != stationid:
+            request.env['aas.mes.work.attendance'].create({
+                'employee_id': employeeid, 'workstation_id': stationid, 'mesline_id': mesline.id
+            })
         values['message'] = u'亲，您已上岗！努力工作吧，加油！'
         return values
 

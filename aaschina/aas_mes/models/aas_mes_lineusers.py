@@ -36,6 +36,16 @@ class AASMESLineusers(models.Model):
         ('uniq_lineuser', 'unique (lineuser_id)', u'请不要重复添加同一个用户！')
     ]
 
+    @api.one
+    @api.constrains('workstation_id')
+    def action_check_workstation(self):
+        if self.workstation_id:
+            tempdomain = [('mesline_id', '=', self.mesline_id.id), ('workstation_id', '=', self.workstation_id.id)]
+            if self.env['aas.mes.line.workstation'].search_count(tempdomain) <= 0:
+                raise ValidationError(u'请仔细检查，工位和当前产线可能并不匹配！')
+
+
+
 
     @api.model
     def create(self, vals):
