@@ -243,7 +243,7 @@ class AASHREmployee(models.Model):
 
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线')
     schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次')
-    # workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
     meslines = fields.One2many(comodel_name='aas.mes.line.employee', inverse_name='employee_id', string=u'产线调整记录')
 
     @api.multi
