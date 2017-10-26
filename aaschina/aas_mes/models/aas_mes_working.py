@@ -129,11 +129,6 @@ class AASMESWorkstation(models.Model):
             for attendance in attendancelist:
                 attendance.action_done()
 
-    @api.model
-    def create(self, vals):
-        record = super(AASMESWorkstation, self).create(vals)
-        return record
-
 
 class AASMESWorkstationEmployee(models.Model):
     _name = 'aas.mes.workstation.employee'
@@ -162,15 +157,6 @@ class AASMESWorkstationEquipment(models.Model):
     _sql_constraints = [
         ('uniq_equipment', 'unique (workstation_id, mesline_id, equipment_id)', u'请不要重复添加同一个设备！')
     ]
-
-
-
-
-class AASHREmployee(models.Model):
-    _inherit = 'aas.hr.employee'
-
-    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', ondelete='restrict')
-    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
 
 class AASEquipmentEquipment(models.Model):
     _inherit = 'aas.equipment.equipment'
@@ -219,6 +205,7 @@ class AASMESWorkAttendance(models.Model):
     equipment_code = fields.Char(string=u'设备编码', copy=False)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict', index=True)
     mesline_name = fields.Char(string=u'产线名称', copy=False)
+    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', ondelete='restrict')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict', index=True)
     workstation_name = fields.Char(string=u'工位名称', copy=False)
     attend_date = fields.Date(string=u'日期', compute='_compute_attend_date', store=True)
@@ -263,26 +250,27 @@ class AASMESWorkAttendance(models.Model):
             attendvals.update({'equipment_name': self.equipment_id.name, 'equipment_code': self.equipment_id.code})
         if self.mesline_id:
             attendvals['mesline_name'] = self.mesline_id.name
-            empvals['mesline_id'] = self.mesline_id.id
+            if self.mesline_id.schedule_id:
+                attendvals['schedule_id'] = self.mesline_id.schedule_id.id
         if self.workstation_id:
-            empvals['workstation_id'] = self.workstation_id.id
             attendvals['workstation_name'] = self.workstation_id.name
-            if not self.mesline_id and self.workstation_id.mesline_id:
-                empvals['mesline_id'] = self.workstation_id.mesline_id.id
-                attendvals.update({'mesline_id': self.workstation_id.mesline_id.id, 'mesline_name': self.workstation_id.mesline_id.name})
         if attendvals and len(attendvals) > 0:
             self.write(attendvals)
-        if self.employee_id and empvals and len(empvals) > 0:
-            self.employee_id.write(empvals)
+        self.employee_id.write({'state': 'working'})
+        self.env['aas.mes.workstation.employee'].create({
+            'workstation_id': self.workstation_id.id, 'mesline_id': self.mesline_id.id, 'employee_id': self.employee_id.id
+        })
 
     @api.one
     def action_done(self):
         self.write({'attendance_finish': fields.Datetime.now(), 'attend_done': True})
-        self.employee_id.write({'workstation_id': False, 'state': 'leave'})
+        attendancecount = self.env['aas.mes.work.attendance'].search_count([('employee_id', '=', self.employee_id.id), ('attend_done', '=', False)])
+        if attendancecount <= 0:
+            self.employee_id.write({'state': 'leave'})
 
 
     @api.model
-    def action_workstation_scanning(self, workstation_code, employee_code, equipment_code=None):
+    def action_workstation_scanning(self, workstation_code, employee_code, equipment_code):
         """
         工控工位扫描员工卡
         :param workstation_code:
@@ -319,7 +307,15 @@ class AASMESWorkAttendance(models.Model):
             if not equipment:
                 result.update({'success': False, 'message': u'设备异常，请仔细检查系统是否存在此设备！'})
                 return result
-            attendancevals['equipment_id'] = equipment.id
+            if not equipment.mesline_id or not equipment.workstation_id:
+                result.update({'success': False, 'message': u'设备还没有设置产线工位！'})
+                return result
+            if equipment.workstation_id.id != workstation.id:
+                result.update({'success': False, 'message': u'设备和工位不匹配，请仔细检查！'})
+                return result
+            attendancevals.update({
+                'equipment_id': equipment.id, 'mesline_id': equipment.mesline_id.id
+            })
         self.env['aas.mes.work.attendance'].create(attendancevals)
         result['message'] = u"%s,您已经在工位%s上上岗了，加油工作吧！"% (employee.name, workstation.name)
         return result

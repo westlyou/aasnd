@@ -382,31 +382,6 @@
         </record>
 
 
-
-        <record id="view_tree_aas_hr_employee_mes_workstation" model="ir.ui.view">
-            <field name="name">aas.hr.employee.mes.workstation.tree</field>
-            <field name="model">aas.hr.employee</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="aas_mes.view_tree_aas_hr_employee_mes"/>
-            <field name="arch" type="xml">
-                <field name="mesline_id" position="after">
-                    <field name="workstation_id"/>
-                </field>
-            </field>
-        </record>
-
-        <record id="view_form_aas_hr_employee_mes_workstation" model="ir.ui.view">
-            <field name="name">aas.hr.employee.mes.workstation.form</field>
-            <field name="model">aas.hr.employee</field>
-            <field name="inherit_id" ref="aas_mes.view_form_aas_hr_employee_mes"/>
-            <field name="arch" type="xml">
-                <field name="mesline_id" position="after">
-                    <field name="workstation_id" options="{'no_create':true}"/>
-                </field>
-            </field>
-        </record>
-
-
         <record id="view_tree_aas_mes_work_attendance" model="ir.ui.view">
             <field name="name">aas.mes.work.attendance.tree</field>
             <field name="model">aas.mes.work.attendance</field>
@@ -416,6 +391,7 @@
                     <field name="attend_date"/>
                     <field name="employee_id"/>
                     <field name="mesline_id"/>
+                    <field name="schedule_id"/>
                     <field name="workstation_id"/>
                     <field name="equipment_id"/>
                     <field name="attendance_start"/>
@@ -434,17 +410,22 @@
                     <sheet>
                         <group>
                             <group>
+                                <field name="employee_id" options="{'no_create':true}"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
                                 <field name="mesline_id" options="{'no_create':true}"/>
-                                <field name="workstation_id" options="{'no_create':true}" domain="[('mesline_id','=',mesline_id)]"/>
+                                <field name="workstation_id" options="{'no_create':true}"/>
                             </group>
                             <group>
-                                <field name="employee_id" options="{'no_create':true}"/>
+                                <field name="schedule_id" options="{'no_create':true}" domain="[('mesline_id','=',mesline_id)]"/>
                                 <field name="equipment_id" options="{'no_create':true}"/>
                             </group>
                         </group>
                         <group>
                             <group>
-                                <field name="attend_date"/>
+                                <field name="attend_date" readonly="1"/>
                                 <field name="attendance_start"/>
                                 <field name="attendance_finish"/>
                                 <field name="attendance_hours" widget="float_time" readonly="1"/>
@@ -461,6 +442,7 @@
             <field name="arch" type="xml">
                 <search>
                     <field name="mesline_name" string="产线名称" filter_domain="[('mesline_name','ilike',self)]"/>
+                    <field name="schedule_id" string="班次名称" filter_domain="[('schedule_id','ilike',self)]"/>
                     <field name="employee_name" string="员工名称" filter_domain="[('employee_name','ilike',self)]"/>
                     <field name="employee_code" string="员工工号" filter_domain="[('employee_code','ilike',self)]"/>
                     <field name="equipment_name" string="设备名称" filter_domain="[('equipment_name','ilike',self)]"/>
@@ -469,6 +451,7 @@
                     <separator/>
                     <group expand="0" string="分组">
                         <filter string="产线" context="{'group_by':'mesline_id'}"/>
+                        <filter string="班次" context="{'group_by':'schedule_id'}"/>
                         <filter string="工位" context="{'group_by':'workstation_id'}"/>
                         <filter string="员工" context="{'group_by':'employee_id'}"/>
                         <filter string="设备" context="{'group_by':'equipment_id'}"/>

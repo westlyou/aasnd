@@ -178,6 +178,38 @@ class AASMESLineWorkstation(models.Model):
             else:
                 record.name = False
 
+    @api.model
+    def create(self, vals):
+        record = super(AASMESLineWorkstation, self).create(vals)
+        record.action_after_create()
+        return record
+
+    @api.one
+    def action_after_create(self):
+        stationcount = self.env['aas.mes.line.workstation'].search_count([('mesline_id', '=', self.mesline_id.id)])
+        if stationcount == 1:
+            self.mesline_id.write({'workstation_id': self.workstation_id.id})
+        else:
+            self.mesline_id.write({'workstation_id': False})
+
+    @api.multi
+    def unlink(self):
+        meslineids, meslines = [], []
+        for record in self:
+            mesline_id = record.mesline_id.id
+            if mesline_id not in meslineids:
+                meslineids.append(mesline_id)
+                meslines.append(record.mesline_id)
+        result = super(AASMESLineWorkstation, self).unlink()
+        for mesline in meslines:
+            if mesline.workstation_lines and len(mesline.workstation_lines) == 1:
+                workstation = mesline.workstation_lines[0].workstation_id
+                mesline.write({'workstation_id': workstation.id})
+            else:
+                mesline.write({'workstation_id': False})
+        return result
+
+
 
 # 员工产线调整记录
 class AASMESLineEmployee(models.Model):
@@ -210,6 +242,8 @@ class AASHREmployee(models.Model):
     _inherit = 'aas.hr.employee'
 
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线')
+    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次')
+    # workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
     meslines = fields.One2many(comodel_name='aas.mes.line.employee', inverse_name='employee_id', string=u'产线调整记录')
 
     @api.multi
