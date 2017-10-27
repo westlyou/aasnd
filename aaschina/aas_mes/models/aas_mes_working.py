@@ -282,6 +282,11 @@ class AASMESWorkAttendance(models.Model):
     @api.one
     def action_done(self):
         self.write({'attendance_finish': fields.Datetime.now(), 'attend_done': True})
+        employeedomain = [('workstation_id', '=', self.workstation_id.id), ('employee_id', '=', self.employee_id.id)]
+        employeedomain.append(('mesline_id', '=', self.mesline_id.id))
+        workstation_employees = self.env['aas.mes.workstation.employee'].search(employeedomain)
+        if workstation_employees and len(workstation_employees) > 0:
+            workstation_employees.unlink()
         attendancecount = self.env['aas.mes.work.attendance'].search_count([('employee_id', '=', self.employee_id.id), ('attend_done', '=', False)])
         if attendancecount <= 0:
             self.employee_id.write({'state': 'leave'})

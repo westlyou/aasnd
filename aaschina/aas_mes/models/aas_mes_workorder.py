@@ -50,14 +50,16 @@ class AASMESWorkorder(models.Model):
     workcenter_name = fields.Char(string=u'当前工序名称', copy=False)
     workcenter_start = fields.Many2one(comodel_name='aas.mes.workticket', string=u'开始工序', ondelete='restrict')
     workcenter_finish = fields.Many2one(comodel_name='aas.mes.workticket', string=u'结束工序', ondelete='restrict')
+    isproducing = fields.Boolean(string=u'正在生产', default=False, copy=False, help=u'当前工单在相应的产线上正在生产')
+    output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_output_qty', store=True)
 
     workticket_lines = fields.One2many(comodel_name='aas.mes.workticket', inverse_name='workorder_id', string=u'工票明细')
     product_lines = fields.One2many(comodel_name='aas.mes.workorder.product', inverse_name='workorder_id', string=u'成品明细')
-    output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_output_qty', store=True)
+    consume_lines = fields.One2many(comodel_name='aas.mes.workorder.consume', inverse_name='workorder_id', string=u'消耗明细')
+    serialnumber_lines = fields.One2many(comodel_name='aas.mes.serialnumber', inverse_name='workorder_id', string=u'序列明细')
 
 
 
-    isproducing = fields.Boolean(string=u'正在生产', default=False, copy=False, help=u'当前工单在相应的产线上正在生产')
 
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'子工单名称不可以重复！')
@@ -214,11 +216,18 @@ class AASMESWorkorderProduct(models.Model):
     _name = 'aas.mes.workorder.product'
     _description = 'AAS MES Work Order Product'
 
+    @api.model
+    def get_output_date(self):
+        return fields.Datetime.to_timezone_string(fields.Datetime.now(), 'Asia/Shanghai')[0:10]
+
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     product_qty = fields.Float(string=u'已产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     waiting_qty = fields.Float(string=u'待消耗数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    output_date = fields.Char(string=u'产出日期', copy=False, default=get_output_date)
+
+
 
 
     @api.one
@@ -226,16 +235,6 @@ class AASMESWorkorderProduct(models.Model):
         # 流水线消耗
         if self.workorder_id.mesline_type == 'flowing':
             pass
-
-class AASMEWorkorderSerialnumber(models.Model):
-    _name = 'aas.mes.workorder.serialnumber'
-    _description = 'AAS MES Work Order Serialnumber'
-
-    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='cascade')
-    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号')
-    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
-    operator_id = fields.Many2one(comodel_name='res.users', string=u'操作员', default= lambda self:self.env.user)
-    operation_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
 
 
 class AASMESWorkorderConsume(models.Model):

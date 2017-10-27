@@ -55,6 +55,9 @@
                                 <field name="operation_time" readonly="1"/>
                                 <field name="qualified" readonly="1"/>
                                 <field name="reworked" readonly="1"/>
+                                <field name="workorder_id" readonly="1"/>
+                                <field name="output_id" readonly="1"/>
+                                <field name="output_time" readonly="1"/>
                             </group>
                         </group>
                     </sheet>
@@ -68,13 +71,19 @@
             <field name="arch" type="xml">
                 <search>
                     <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="product_lot" string="批次" filter_domain="[('product_lot','ilike',self)]"/>
                     <field name="operator_id" string="操作人" filter_domain="[('user_id','ilike',self)]"/>
+                    <field name="internal_product_code" string="内部料号" filter_domain="[('internal_product_code','ilike',self)]"/>
+                    <field name="customer_product_code" string="客户料号" filter_domain="[('customer_product_code','ilike',self)]"/>
                     <separator/>
                     <filter string="未使用" domain="[('used','=',False)]" />
+                    <filter string="不合格" domain="[('qualified','=',False)]" />
+                    <filter string="返工品" domain="[('reworked','=',True)]" />
                     <group expand="0" string="分组">
                         <filter string="操作人" context="{'group_by':'operator_id'}"/>
                         <filter string="序列规则" context="{'group_by':'regular_code'}"/>
-                        <filter string="客户编码" context="{'group_by':'customer_product_code'}"/>
+                        <filter string="内部料号" context="{'group_by':'internal_product_code'}"/>
+                        <filter string="客户料号" context="{'group_by':'customer_product_code'}"/>
                     </group>
                 </search>
             </field>
