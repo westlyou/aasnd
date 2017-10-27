@@ -30,11 +30,12 @@ class AASMESSerialnumber(models.Model):
     sequence_code = fields.Char(string=u'序列编码', copy=False)
     used = fields.Boolean(string=u'已使用', default=False, copy=False)
     qualified = fields.Boolean(string=u'合格的', default=True, copy=False)
-    action_date = fields.Char(string=u'生成日期', copy=False)
-    create_time = fields.Datetime(string=u'创建时间', default=fields.Datetime.now, copy=False)
+    operation_date = fields.Char(string=u'生成日期', copy=False)
+    operation_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
     state = fields.Selection(selection=SERIALSTATES, string=u'状态', default='draft', copy=False)
-    user_id = fields.Many2one(comodel_name='res.users', string=u'创建人', ondelete='restrict', default=lambda self: self.env.user)
+    operator_id = fields.Many2one(comodel_name='res.users', string=u'操作人', ondelete='restrict', default=lambda self: self.env.user)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     internal_product_code = fields.Char(string=u'产品编码', copy=False, help=u'在公司内部的产品编码')
     customer_product_code = fields.Char(string=u'客户编码', copy=False, help=u'在客户方的产品编码')
     reworked = fields.Boolean(string=u'是否返工', default=False, copy=False)
@@ -71,6 +72,7 @@ class AASMESSerialnumber(models.Model):
 
     @api.model
     def create(self, vals):
+        vals['operation_date'] = fields.Datetime.to_timezone_string(fields.Datetime.now(), 'Asia/Shanghai')[0:10]
         record = super(AASMESSerialnumber, self).create(vals)
         record.action_after_create()
         return record

@@ -222,19 +222,6 @@ class AASMESLineEmployee(models.Model):
     action_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
     action_user = fields.Many2one(comodel_name='res.users', string=u'操作人', ondelete='restrict', default=lambda self: self.env.user)
 
-    @api.model
-    def create(self, vals):
-        record = super(AASMESLineEmployee, self).create(vals)
-        record.action_after_create()
-        return record
-
-    @api.one
-    def action_after_create(self):
-        empvals = {}
-        if self.mesline_id:
-            empvals['mesline_id'] = self.mesline_id.id
-        if empvals and len(empvals) > 0:
-            self.employee_id.write(empvals)
 
 
 

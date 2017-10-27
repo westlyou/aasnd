@@ -79,23 +79,19 @@
                                 <field name="product_lines" readonly="1">
                                     <tree>
                                         <field name="product_id"/>
-                                        <field name="product_qty"/>
-                                        <field name="serialnumber_id"/>
                                         <field name="product_lot"/>
-                                        <field name="operator_id"/>
-                                        <field name="operation_time"/>
+                                        <field name="product_qty"/>
+                                        <field name="waiting_qty"/>
                                     </tree>
                                     <form>
                                         <group>
                                             <group>
                                                 <field name="product_id"/>
-                                                <field name="product_qty"/>
                                                 <field name="product_lot"/>
                                             </group>
                                             <group>
-                                                <field name="serialnumber_id"/>
-                                                <field name="operator_id"/>
-                                                <field name="operation_time"/>
+                                                <field name="product_qty"/>
+                                                <field name="waiting_qty"/>
                                             </group>
                                         </group>
                                     </form>
