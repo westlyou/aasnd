@@ -208,7 +208,7 @@ class AASMESWorkAttendance(models.Model):
     schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', ondelete='restrict')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict', index=True)
     workstation_name = fields.Char(string=u'工位名称', copy=False)
-    attend_date = fields.Date(string=u'日期', compute='_compute_attend_date', store=True)
+    attendance_date = fields.Char(string=u'日期', compute='_compute_attendance_date', store=True)
     attendance_start = fields.Datetime(string=u'上岗时间', default=fields.Datetime.now, copy=False)
     attendance_finish = fields.Datetime(string=u'离岗时间', copy=False)
     attendance_hours = fields.Float(string=u'工时', compute='_compute_attendance_hours', store=True)
@@ -224,13 +224,11 @@ class AASMESWorkAttendance(models.Model):
 
 
     @api.depends('attendance_start')
-    def _compute_attend_date(self):
+    def _compute_attendance_date(self):
         for record in self:
             if record.attendance_start:
-                utctime = fields.Datetime.from_string(record.attendance_start)
                 tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
-                temptime = pytz.timezone('UTC').localize(utctime, is_dst=False)
-                record.attend_date = fields.Date.to_string(temptime.astimezone(pytz.timezone(tz_name)))
+                record.attendance_date = fields.Datetime.to_timezone_string(record.attendance_start, tz_name)[0:10]
             else:
                 record.attend_date = False
 
@@ -249,6 +247,39 @@ class AASMESWorkAttendance(models.Model):
 
 
 
+    @api.model
+    def get_tracing_employees(self, mesline_id, schedule_id, workstation_id, attendance_date):
+        """
+        获取相应日期的产线班次上指定工位的员工信息
+        :param mesline_id:
+        :param schedule_id:
+        :param workstation_id:
+        :param attendance_date:
+        :return:
+        """
+        tracingdomain, employeelist = [], ''
+        if mesline_id:
+            tracingdomain.append(('mesline_id', '=', mesline_id))
+        if schedule_id:
+            tracingdomain.append(('schedule_id', '=', schedule_id))
+        if workstation_id:
+            tracingdomain.append(('workstation_id', '=', workstation_id))
+        if attendance_date:
+            tracingdomain.append(('attendance_date', '=', attendance_date))
+        if not tracingdomain or len(attendance_date) <= 0:
+            return employeelist
+        attendances = self.env['aas.mes.work.attendance'].search(tracingdomain)
+        if attendances and len(tracingdomain) > 0:
+            employeeids, employees = [], []
+            for attendance in attendances:
+                if attendance.employee_id.id not in employeeids:
+                    employeeids.append(attendance.employee_id.id)
+                    employees.append(attendance.employee_name+'['+attendance.employee_code+']')
+            employeelist = ','.join(employees)
+        return employeelist
+
+
+
 
 
     @api.model
@@ -259,9 +290,8 @@ class AASMESWorkAttendance(models.Model):
 
     @api.one
     def action_after_create(self):
-        attendvals, empvals = {}, {'state': 'working'}
-        if self.employee_id:
-            attendvals.update({'employee_name': self.employee_id.name, 'employee_code': self.employee_id.code})
+        empvals, employee = {'state': 'working'}, self.employee_id
+        attendvals = {'employee_name': employee.name, 'employee_code': employee.code}
         if self.equipment_id:
             attendvals.update({'equipment_name': self.equipment_id.name, 'equipment_code': self.equipment_id.code})
         if self.mesline_id:
@@ -274,10 +304,12 @@ class AASMESWorkAttendance(models.Model):
             attendvals['workstation_name'] = self.workstation_id.name
         if attendvals and len(attendvals) > 0:
             self.write(attendvals)
-        self.employee_id.write({'state': 'working'})
+        employee.write(empvals)
         self.env['aas.mes.workstation.employee'].create({
             'workstation_id': self.workstation_id.id, 'mesline_id': self.mesline_id.id, 'employee_id': self.employee_id.id
         })
+        if not employee.mesline_id or employee.mesline_id.id != self.mesline_id.id:
+            self.env['aas.mes.line.employee'].create({'employee_id': employee.id, 'mesline_id': self.mesline_id.id})
 
     @api.one
     def action_done(self):

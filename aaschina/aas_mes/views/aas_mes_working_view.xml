@@ -388,7 +388,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree>
-                    <field name="attend_date"/>
+                    <field name="attendance_date"/>
                     <field name="employee_id"/>
                     <field name="mesline_id"/>
                     <field name="schedule_id"/>
@@ -425,7 +425,7 @@
                         </group>
                         <group>
                             <group>
-                                <field name="attend_date" readonly="1"/>
+                                <field name="attendance_date" readonly="1"/>
                                 <field name="attendance_start"/>
                                 <field name="attendance_finish"/>
                                 <field name="attendance_hours" widget="float_time" readonly="1"/>
@@ -455,7 +455,7 @@
                         <filter string="工位" context="{'group_by':'workstation_id'}"/>
                         <filter string="员工" context="{'group_by':'employee_id'}"/>
                         <filter string="设备" context="{'group_by':'equipment_id'}"/>
-                        <filter string="日期" context="{'group_by':'attend_date'}"/>
+                        <filter string="日期" context="{'group_by':'attendance_date'}"/>
                     </group>
                 </search>
             </field>

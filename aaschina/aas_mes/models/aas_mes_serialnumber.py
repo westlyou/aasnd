@@ -42,9 +42,10 @@ class AASMESSerialnumber(models.Model):
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'操作设备', ondelete='restrict')
 
-    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'产出工单', ondelete='restrict')
-    output_id = fields.Many2one(comodel_name='res.users', string=u'产出用户', ondelete='restrict')
     output_time = fields.Datetime(string=u'产出时间', copy=False)
+    outputuser_id = fields.Many2one(comodel_name='res.users', string=u'产出用户', ondelete='restrict')
+    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'产出工单', ondelete='restrict')
+    outputrecord_id = fields.Many2one(comodel_name='aas.mes.workorder.product', string=u'产出记录', ondelete='restrict')
 
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'序列号的名称不可以重复！')

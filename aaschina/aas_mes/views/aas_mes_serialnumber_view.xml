@@ -56,7 +56,8 @@
                                 <field name="qualified" readonly="1"/>
                                 <field name="reworked" readonly="1"/>
                                 <field name="workorder_id" readonly="1"/>
-                                <field name="output_id" readonly="1"/>
+                                <field name="outputrecord_id" readonly="1"/>
+                                <field name="outputuser_id" readonly="1"/>
                                 <field name="output_time" readonly="1"/>
                             </group>
                         </group>
