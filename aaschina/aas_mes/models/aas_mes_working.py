@@ -230,7 +230,7 @@ class AASMESWorkAttendance(models.Model):
                 tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
                 record.attendance_date = fields.Datetime.to_timezone_string(record.attendance_start, tz_name)[0:10]
             else:
-                record.attend_date = False
+                record.attendance_date = False
 
 
     @api.constrains('mesline_id', 'employee_id')
@@ -248,16 +248,16 @@ class AASMESWorkAttendance(models.Model):
 
 
     @api.model
-    def get_tracing_employees(self, mesline_id, schedule_id, workstation_id, attendance_date):
+    def action_trace_employees_equipments(self, mesline_id, schedule_id, workstation_id, attendance_date):
         """
-        获取相应日期的产线班次上指定工位的员工信息
+        获取相应日期的产线班次上指定工位的员工和设备信息
         :param mesline_id:
         :param schedule_id:
         :param workstation_id:
         :param attendance_date:
         :return:
         """
-        tracingdomain, employeelist = [], ''
+        tracingdomain, tracevals = [], {'employeelist': '', 'equipmentlist': ''}
         if mesline_id:
             tracingdomain.append(('mesline_id', '=', mesline_id))
         if schedule_id:
@@ -267,16 +267,23 @@ class AASMESWorkAttendance(models.Model):
         if attendance_date:
             tracingdomain.append(('attendance_date', '=', attendance_date))
         if not tracingdomain or len(attendance_date) <= 0:
-            return employeelist
+            return tracevals
         attendances = self.env['aas.mes.work.attendance'].search(tracingdomain)
         if attendances and len(tracingdomain) > 0:
-            employeeids, employees = [], []
+            employeeids, employees, equipmentids, equipments = [], [], [], []
             for attendance in attendances:
-                if attendance.employee_id.id not in employeeids:
-                    employeeids.append(attendance.employee_id.id)
+                temployee, tequipment = attendance.employee_id, attendance.equipment_id
+                if temployee and temployee.id not in employeeids:
+                    employeeids.append(temployee.id)
                     employees.append(attendance.employee_name+'['+attendance.employee_code+']')
-            employeelist = ','.join(employees)
-        return employeelist
+                if tequipment and tequipment.id not in equipmentids:
+                    equipmentids.append(tequipment.id)
+                    equipments.append(attendance.equipment_name+'['+attendance.equipment_code+']')
+            if employees and len(employees) > 0:
+                tracevals['employeelist'] = ','.join(employees)
+            if equipments and len(equipments) > 0:
+                tracevals['equipmentlist'] = ','.join(equipments)
+        return tracevals
 
 
 

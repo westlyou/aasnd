@@ -49,6 +49,32 @@ class AASMESTracing(models.Model):
     employeelist = fields.Text(string=u'员工信息')
     serialnumbers = fields.Text(string=u'序列号信息')
 
+    @api.model
+    def create(self, vals):
+        record = super(AASMESTracing, self).create(vals)
+        record.action_after_create()
+        return record
+
+    @api.one
+    def action_after_create(self):
+        vals = {}
+        if self.mainorder_id:
+            vals['mainorder_name'] = self.mainorder_id.name
+        if self.workorder_id:
+            vals['workorder_name'] = self.workorder_id.name
+        if self.workcenter_id:
+            vals['workcenter_name'] = self.workcenter_id.name
+        if self.workstation_id:
+            vals['workstation_name'] = self.workstation_id.name
+        if self.mesline_id:
+            vals['mesline_name'] = self.mesline_id.name
+        if self.product_id:
+            vals.update({'product_uom': self.product_id.uom_id.id, 'product_code': self.product_id.default_code})
+        if self.product_lot:
+            vals['product_lot_name'] = self.product_lot.name
+        if vals and len(vals) > 0:
+            self.write(vals)
+
 
  # 追溯消耗明细
 class StockMove(models.Model):

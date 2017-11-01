@@ -46,6 +46,7 @@ class AASMESSerialnumber(models.Model):
     outputuser_id = fields.Many2one(comodel_name='res.users', string=u'产出用户', ondelete='restrict')
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'产出工单', ondelete='restrict')
     outputrecord_id = fields.Many2one(comodel_name='aas.mes.workorder.product', string=u'产出记录', ondelete='restrict')
+    traced = fields.Boolean(string=u'已被追溯关联', default=False, copy=False)
 
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'序列号的名称不可以重复！')
