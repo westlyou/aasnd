@@ -68,6 +68,8 @@ class AASMESTracing(models.Model):
             vals['workstation_name'] = self.workstation_id.name
         if self.mesline_id:
             vals['mesline_name'] = self.mesline_id.name
+        if self.schedule_id:
+            vals['schedule_name'] = self.schedule_id.name
         if self.product_id:
             vals.update({'product_uom': self.product_id.uom_id.id, 'product_code': self.product_id.default_code})
         if self.product_lot:

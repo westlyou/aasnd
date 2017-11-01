@@ -130,6 +130,60 @@ class AASMESWorkstation(models.Model):
                 attendance.action_done()
 
 
+    @api.model
+    def action_list_employees(self, mesline_id, workstation_id):
+        """
+        获取指定产线工位上的员工清单
+        :param mesline_id:
+        :param workstation_id:
+        :return:
+        """
+        employeelist = self.env['aas.mes.workstation.employee'].search([('mesline_id', '=', mesline_id), ('workstation_id', '=', workstation_id)])
+        if not employeelist or len(employeelist) <= 0:
+            employeelist = []
+        return employeelist
+
+    @api.model
+    def action_get_employeestr(self, mesline_id, workstation_id):
+        stationemployees = self.action_list_employees(mesline_id, workstation_id)
+        if not stationemployees or len(stationemployees) <= 0:
+            return False
+        employeeids, employeelist = [], []
+        for semployee in stationemployees:
+            employee = semployee.employee_id
+            if employee.id not in employeeids:
+                employeeids.append(employee.id)
+                employeelist.append(employee.name+'['+employee.code+']')
+        return ','.join(employeelist)
+
+    @api.model
+    def action_list_equipments(self, mesline_id, workstation_id):
+        """
+        获取指定产线工位上的设备清单
+        :param mesline_id:
+        :param workstation_id:
+        :return:
+        """
+        equipmentlist = self.env['aas.mes.workstation.equipment'].search([('mesline_id', '=', mesline_id), ('workstation_id', '=', workstation_id)])
+        if not equipmentlist or len(equipmentlist) <= 0:
+            equipmentlist = []
+        return equipmentlist
+
+    @api.model
+    def action_get_equipmentstr(self, mesline_id, workstation_id):
+        stationequipments = self.action_list_equipments(mesline_id, workstation_id)
+        if not stationequipments or len(stationequipments) <= 0:
+            return False
+        equipmentids, equipmentlist = [], []
+        for sequipment in stationequipments:
+            equipment = sequipment.equipment_id
+            if equipment.id not in equipmentids:
+                equipmentids.append(equipment.id)
+                equipmentlist.append(equipment.name+'['+equipment.code+']')
+        return ','.join(equipmentlist)
+
+
+
 class AASMESWorkstationEmployee(models.Model):
     _name = 'aas.mes.workstation.employee'
     _description = 'AAS MES Workstation Employee'

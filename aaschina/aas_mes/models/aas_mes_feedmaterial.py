@@ -51,7 +51,8 @@ class AASMESFeedmaterial(models.Model):
         quants = self.env['stock.quant'].search(domain)
         if quants and len(quants) > 0:
             material_qty = sum([quant.qty for quant in quants])
-        record.write({'material_qty': material_qty})
+        if float_compare(record.material_qty, material_qty, precision_rounding=0.000001) != 0.0:
+            record.write({'material_qty': material_qty})
         return material_qty
 
 
