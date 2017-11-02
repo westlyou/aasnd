@@ -13,6 +13,7 @@
     'website': 'http://www.zhiq.info',
     'depends': ['aas_wms', 'aas_equipment', 'aas_hr'],
     'data': [
+        'data/aas_mes_sequence.xml',
         'security/aas_mes_security.xml',
         'security/ir.model.access.csv',
         'views/aas_mes_view.xml',
@@ -28,6 +29,7 @@
         'views/aas_mes_bom_view.xml',
         'views/aas_mes_mainorder_view.xml',
         'views/aas_mes_workorder_view.xml',
+        'views/aas_mes_wires_view.xml',
         'views/aas_mes_workticket_view.xml',
         'views/aas_mes_tracing_view.xml',
         'views/aas_mes_feedmaterial_view.xml',

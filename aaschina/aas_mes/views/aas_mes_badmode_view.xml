@@ -80,7 +80,7 @@
         </record>
 
         <menuitem id="menu_aas_mes_badmode"  name="不良模式" action="action_aas_mes_badmode"
-                          parent="menu_aas_mes_settings" sequence="3" groups="group_aas_mes_technologist"/>
+                          parent="menu_aas_mes_settings" sequence="4" groups="group_aas_mes_technologist"/>
 
     </data>
 </odoo>

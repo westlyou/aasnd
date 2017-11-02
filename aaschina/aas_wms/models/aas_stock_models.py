@@ -147,7 +147,7 @@ class AASContainer(models.Model):
     @api.model
     def create(self, vals):
         if vals.get('name', False):
-            vals['barcode'] = 'AS'+vals['name']
+            vals['barcode'] = 'AT'+vals['name']
         record = super(AASContainer, self).create(vals)
         locationvals = {'container_id': record.id}
         if vals.get('location_id', False):
@@ -158,7 +158,7 @@ class AASContainer(models.Model):
     @api.multi
     def write(self, vals):
         if vals.get('name', False):
-            vals['barcode'] = 'AS'+vals['name']
+            vals['barcode'] = 'AT'+vals['name']
         locationlist = self.env['stock.location']
         if vals.get('location_id', False):
             for record in self:

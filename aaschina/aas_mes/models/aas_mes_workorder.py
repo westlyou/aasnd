@@ -42,6 +42,7 @@ class AASMESWorkorder(models.Model):
     produce_finish = fields.Datetime(string=u'结束生产', copy=False)
     date_code = fields.Char(string='DateCode')
     mainorder_id = fields.Many2one(comodel_name='aas.mes.mainorder', string=u'主工单', ondelete='cascade', index=True)
+    wireorder_id = fields.Many2one(comodel_name='aas.mes.wireorder', string=u'线材工单', ondelete='cascade', index=True)
     mesline_type = fields.Selection(selection=MESLINETYPE, string=u'产线类型', compute='_compute_mesline', store=True)
     mesline_name = fields.Char(string=u'名称', compute='_compute_mesline', store=True)
     mainorder_name = fields.Char(string=u'主工单', compute='_compute_mainorder', store=True)
