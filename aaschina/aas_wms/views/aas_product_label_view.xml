@@ -84,7 +84,7 @@
                             </group>
                         </group>
                         <group>
-                            <group>
+                            <group colspan="4">
                                 <field name="date_code"/>
                                 <field name="origin_order"/>
                                 <field name="customer_code"/>

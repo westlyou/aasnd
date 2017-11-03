@@ -15,7 +15,9 @@ from odoo.exceptions import UserError, ValidationError
 
 from . import MESLINETYPE
 
+import math
 import logging
+from datetime import timedelta
 
 _logger = logging.getLogger(__name__)
 
@@ -44,8 +46,6 @@ class AASMESLine(models.Model):
     name = fields.Char(string=u'名称')
     line_type = fields.Selection(selection=MESLINETYPE, string=u'生产类型', default='station', copy=False)
     schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'当前班次')
-    isautoswitch = fields.Boolean(string=u'自动切换', default=False, copy=False, help=u'自动切换产线班次')
-    refresh_time = fields.Datetime(string=u'刷新时间', copy=False, help=u'自动刷新班次上的实际开始和结束时间的时间点')
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'当前工单')
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
     employees = fields.One2many(comodel_name='aas.hr.employee', inverse_name='mesline_id', string=u'员工清单')
@@ -54,44 +54,22 @@ class AASMESLine(models.Model):
     schedule_lines = fields.One2many(comodel_name='aas.mes.schedule', inverse_name='mesline_id', string=u'班次清单')
     workstation_lines = fields.One2many(comodel_name='aas.mes.line.workstation', inverse_name='mesline_id', string=u'工位清单')
 
+    workdate = fields.Char(string=u'工作日期', copy=False)
+    workday_start = fields.Datetime(string=u'当天开工时间', copy=False)
+    workday_finish = fields.Datetime(string=u'当天完工时间', copy=False)
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'默认工位')
 
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'产线名称不可以重复！')
     ]
 
-    @api.multi
-    def action_allocate_employee(self):
-        """
-        直接对班次分配员工
-        :return:
-        """
-        self.ensure_one()
-        wizard = self.env['aas.mes.line.allocate.wizard'].create({'mesline_id': self.id})
-        view_form = self.env.ref('aas_mes.view_form_aas_mes_line_allocate_wizard')
-        return {
-            'name': u"员工分配",
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'aas.mes.line.allocate.wizard',
-            'views': [(view_form.id, 'form')],
-            'view_id': view_form.id,
-            'target': 'new',
-            'res_id': wizard.id,
-            'context': self.env.context
-        }
-
-    @api.one
-    def action_refresh_schedule_times(self):
-        if self.schedule_lines and len(self.schedule_lines) > 0:
-            if not self.refresh_time:
-                self.schedule_lines.action_refresh_actualtime()
-            else:
-                currentdate = fields.Datetime.to_timezone_string(fields.Datetime.now(), 'Asia/Shanghai')[0:10]
-                refreshdate = fields.Datetime.to_timezone_string(self.refresh_time, 'Asia/Shanghai')[0:10]
-                if currentdate != refreshdate:
-                    self.schedule_lines.action_refresh_actualtime()
+    @api.model
+    def create(self, vals):
+        if not vals.get('location_material_list', False):
+            raise UserError(u'当前产线还未设置原料库位，请先设置原料库位信息！')
+        if not vals.get('schedule_lines', False):
+            raise UserError(u'当前产线还未设置班次信息，请先设置班次信息！')
+        return super(AASMESLine, self).create(vals)
 
     @api.model
     def action_switch_schedule(self):
@@ -99,21 +77,59 @@ class AASMESLine(models.Model):
         切换产线班次
         :return:
         """
-        meslines = self.env['aas.mes.line'].search([('isautoswitch', '=', True)])
+        meslines = self.env['aas.mes.line'].search([])
         if not meslines or len(meslines) <= 0:
-            return False
-        currenttime = fields.Datetime.now()
+            return True
         for mesline in meslines:
-            mesline.action_refresh_schedule_times()
-            searchdomain = [('mesline_id', '=', mesline.id)]
-            searchdomain.extend([('actual_start', '<=', currenttime), ('actual_finish', '>=', currenttime)])
-            schedule = self.env['aas.mes.schedule'].search(searchdomain, limit=1)
-            if not schedule:
-                continue
-            if not mesline.schedule_id or mesline.schedule_id.id != schedule.id:
-                mesline.write({'schedule_id': schedule.id, 'workorder_id': False})
-                self.action_clear_feeding(mesline.id)
-                self.action_clear_employees(mesline.id)
+            mesline.action_refresh()
+
+
+    @api.one
+    def action_refresh_schedule(self):
+        if not self.schedule_lines or len(self.schedule_lines) <= 0:
+            return
+        refresh_flag, current_time = False, fields.Datetime.now()
+        if not self.workdate:
+            refresh_flag = True
+        if not self.workday_finish:
+            refresh_flag = True
+        elif self.workday_finish < current_time:
+            refresh_flag = True
+        if not refresh_flag:
+            return
+        workday_start, workday_finish = False, False
+        currenttime = fields.Datetime.to_timezone_time(current_time, 'Asia/Shanghai')
+        workdate = fields.Datetime.to_timezone_string(current_time, 'Asia/Shanghai')[0:10]
+        for schedule in self.schedule_lines:
+            start_hour = int(math.floor(schedule.work_start))
+            start_minutes = int(math.floor((schedule.work_start - start_hour) * 60))
+            starttime = currenttime.replace(hour=start_hour, minute=start_minutes)
+            finish_hour = int(math.floor(schedule.work_finish))
+            finish_minutes = int(math.floor((schedule.work_finish - finish_hour) * 60))
+            if schedule.work_finish >= schedule.work_start:
+                finishtime = currenttime.replace(hour=finish_hour, minute=finish_minutes)
+            else:
+                temptime = currenttime + timedelta(days=1)
+                finishtime = temptime.replace(hour=finish_hour, minute=finish_minutes)
+            actual_start = fields.Datetime.to_utc_string(starttime, 'Asia/Shanghai')
+            actual_finish = fields.Datetime.to_utc_string(finishtime, 'Asia/Shanghai')
+            schedule.write({'actual_start': actual_start, 'actual_finish': actual_finish})
+            if not workday_start or workday_start > actual_start:
+                workday_start = actual_start
+            if not workday_finish or workday_finish < actual_finish:
+                workday_finish = actual_finish
+        self.write({'workdate': workdate, 'workday_start': workday_start, 'workday_finish': workday_finish})
+
+
+    @api.one
+    def action_refresh(self):
+        self.action_refresh_schedule()
+        currenttime = fields.Datetime.now()
+        searchdomain = [('actual_start', '<=', currenttime), ('actual_finish', '>=', currenttime)]
+        searchdomain.append(('mesline_id', '=', self.id))
+        schedule = self.env['aas.mes.schedule'].search(searchdomain, limit=1)
+        if not schedule or not self.schedule_id or schedule.id != self.schedule_id:
+            self.write({'workorder_id': False, 'schedule_id': False if not schedule else schedule.id})
 
 
     @api.model
@@ -124,16 +140,25 @@ class AASMESLine(models.Model):
         :return:
         """
         feedmateriallist = self.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline_id)])
-        if feedmateriallist and len(feedmateriallist) > 0:
-            feedmateriallist.unlink()
+        if not feedmateriallist or len(feedmateriallist) <= 0:
+            return True
+        feedmateriallist.unlink()
+        return True
 
 
     @api.model
     def action_clear_employees(self, mesline_id):
+        """
+        清空当前产线上的员工，并更新上岗记录信息
+        :param mesline_id:
+        :return:
+        """
         attendancelist = self.env['aas.mes.work.attendance'].search([('mesline_id', '=', mesline_id), ('attend_done', '=', False)])
-        if attendancelist and len(attendancelist) > 0:
-            for attendance in attendancelist:
-                attendance.action_done()
+        if not attendancelist or len(attendancelist) <= 0:
+            return True
+        for attendance in attendancelist:
+            attendance.action_done()
+        return True
 
 
 

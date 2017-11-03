@@ -9,14 +9,10 @@
 
 from odoo import api, fields, models, _
 from odoo.addons import decimal_precision as dp
-from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.tools.float_utils import float_compare, float_is_zero
 from odoo.exceptions import UserError, ValidationError
 
-import math
-import pytz
 import logging
-from datetime import timedelta
 
 _logger = logging.getLogger(__name__)
 
@@ -44,12 +40,31 @@ class AASMESSchedule(models.Model):
     ]
 
     @api.one
-    @api.constrains('work_start', 'work_finish')
-    def action_check_constrains(self):
+    @api.constrains('work_start', 'work_finish', 'sequence')
+    def action_check_schedule(self):
         if float_compare(self.work_start, 0.0, precision_rounding=0.0001) < 0.0 or float_compare(self.work_start, 24.0, precision_rounding=0.0001) >= 0.0:
             raise ValidationError(u'班次开始时间只能在24小时以内！')
         if float_compare(self.work_finish, 0.0, precision_rounding=0.0001) < 0.0 or float_compare(self.work_finish, 24.0, precision_rounding=0.0001) >= 0.0:
             raise ValidationError(u'班次结束时间只能在24小时以内！')
+        if float_compare(self.work_start, self.work_finish, precision_rounding=0.000001) == 0.0:
+            raise ValidationError(u'无效设置，开始时间和结束时间不可以相同！')
+        if float_compare(self.work_start, self.work_finish, precision_rounding=0.000001) > 0:
+            scheduledomain = [('mesline_id', '=', self.mesline_id.id), ('sequence', '>', self.sequence)]
+            schedulecount = self.env['aas.mes.schedule'].search_count(scheduledomain)
+            if schedulecount > 0:
+                raise ValidationError(u'无效设置，同一个产线只有最后一个班次的时间区间可以跨天！')
+        prevdomain = [('mesline_id', '=', self.mesline_id.id), ('sequence', '<', self.sequence)]
+        prevschedule = self.env['aas.mes.schedule'].search(prevdomain, order='sequence desc', limit=1)
+        if prevschedule and float_compare(prevschedule.work_finish, self.work_start, precision_rounding=0.000001) > 0.0:
+            raise ValidationError(u'无效设置，当前班次的开始时间不能小于上一个班次的结束时间！')
+        nextdomain = [('mesline_id', '=', self.mesline_id.id), ('sequence', '>', self.sequence)]
+        nextschedule = self.env['aas.mes.schedule'].search(nextdomain, order='sequence', limit=1)
+        if nextschedule and float_compare(self.work_finish, nextschedule.work_start, precision_rounding=0.000001) > 0.0:
+            raise ValidationError(u'无效设置，当前班次的结束时间不能大于下一个班次的开始时间！')
+
+
+
+
 
 
     @api.multi
@@ -72,25 +87,6 @@ class AASMESSchedule(models.Model):
             'res_id': wizard.id,
             'context': self.env.context
         }
-
-    @api.multi
-    def action_refresh_actualtime(self):
-        currenttime = fields.Datetime.to_timezone_time(fields.Datetime.now(), 'Asia/Shanghai')
-        for record in self:
-            start_hour = int(math.floor(record.work_start))
-            start_minutes = int(math.floor((record.work_start - start_hour) * 60))
-            starttime = currenttime.replace(hour=start_hour, minute=start_minutes)
-            finish_hour = int(math.floor(record.work_finish))
-            finish_minutes = int(math.floor((record.work_finish - finish_hour) * 60))
-            if record.work_finish >= record.work_start:
-                finishtime = currenttime.replace(hour=finish_hour, minute=finish_minutes)
-            else:
-                temptime = currenttime + timedelta(days=1)
-                finishtime = temptime.replace(hour=finish_hour, minute=finish_minutes)
-            record.write({
-                'actual_start': fields.Datetime.to_utc_string(starttime, 'Asia/Shanghai'),
-                'actual_finish': fields.Datetime.to_utc_string(finishtime, 'Asia/Shanghai')
-            })
 
 
 
@@ -262,7 +258,7 @@ class AASMESWorkAttendance(models.Model):
     schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', ondelete='restrict')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict', index=True)
     workstation_name = fields.Char(string=u'工位名称', copy=False)
-    attendance_date = fields.Char(string=u'日期', compute='_compute_attendance_date', store=True)
+    attendance_date = fields.Char(string=u'在岗日期', compute='_compute_attendance_date', store=True)
     attendance_start = fields.Datetime(string=u'上岗时间', default=fields.Datetime.now, copy=False)
     attendance_finish = fields.Datetime(string=u'离岗时间', copy=False)
     attendance_hours = fields.Float(string=u'工时', compute='_compute_attendance_hours', store=True)
