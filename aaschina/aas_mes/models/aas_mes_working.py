@@ -63,10 +63,6 @@ class AASMESSchedule(models.Model):
             raise ValidationError(u'无效设置，当前班次的结束时间不能大于下一个班次的开始时间！')
 
 
-
-
-
-
     @api.multi
     def action_checkemployees(self):
         self.ensure_one()
@@ -379,7 +375,6 @@ class AASMESWorkAttendance(models.Model):
         attendancecount = self.env['aas.mes.work.attendance'].search_count([('employee_id', '=', self.employee_id.id), ('attend_done', '=', False)])
         if attendancecount <= 0:
             self.employee_id.write({'state': 'leave'})
-
 
     @api.model
     def action_workstation_scanning(self, workstation_code, employee_code, equipment_code):

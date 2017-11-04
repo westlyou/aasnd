@@ -41,5 +41,11 @@
             <field name="url">aasmes/gp12/checking</field>
         </record>
 
+        <record id="aas_mes_wirecutting" model="ir.actions.act_url">
+            <field name="target">self</field>
+            <field name="name">WireCutting</field>
+            <field name="url">aasmes/wirecutting</field>
+        </record>
+
     </data>
 </odoo>

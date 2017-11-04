@@ -294,9 +294,15 @@ class AASMESWorkorder(models.Model):
             tempbomlines = self.env['aas.mes.bom.line'].search([('bom_id', '=', workorder.aas_bom_id.id), ('product_id', '=', product_id)])
             if not tempbomlines or len(tempbomlines) <= 0:
                 raise UserError(u'成品产出异常，可能不是当前工单产物！')
-        output_date = self.env['aas.mes.workorder.product'].get_output_date()
-        # todo 成品批次生成算法
-        product_lot = False
+        if not workorder.mesline_id.workdate:
+            workorder.mesline_id.action_refresh_schedule()
+        output_date = workorder.mesline_id.workdate
+        lot_name = output_date.replace('-', '')
+        # 成品批次
+        if serialnumber:
+            product_lot = False
+        else:
+            product_lot = self.env['stock.production.lot'].action_checkout_lot(product_id, lot_name).id
         outputdomain = [('workorder_id', '=', workorder_id), ('output_date', '=', output_date)]
         outputdomain.extend([('product_id', '=', product_id), ('product_lot', '=', product_lot)])
         outputdomain.append(('mesline_id', '=', workorder.mesline_id.id))
@@ -343,10 +349,6 @@ class AASMESWorkorderProduct(models.Model):
     _description = 'AAS MES Work Order Product'
     _rec_name = 'product_id'
 
-    @api.model
-    def get_output_date(self):
-        return fields.Datetime.to_timezone_string(fields.Datetime.now(), 'Asia/Shanghai')[0:10]
-
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='cascade', index=True)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict', index=True)
     schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', ondelete='restrict', index=True)
@@ -354,7 +356,7 @@ class AASMESWorkorderProduct(models.Model):
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict', index=True)
     product_qty = fields.Float(string=u'已产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     waiting_qty = fields.Float(string=u'待消耗数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    output_date = fields.Char(string=u'产出日期', copy=False, default=get_output_date)
+    output_date = fields.Char(string=u'产出日期', copy=False)
 
 
     @api.multi

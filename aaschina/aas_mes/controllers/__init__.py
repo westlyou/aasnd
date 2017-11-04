@@ -11,3 +11,4 @@ import aasmes
 import attendance
 import serialnumber
 import gp12checking
+import wirecutting

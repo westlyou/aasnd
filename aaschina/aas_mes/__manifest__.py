@@ -38,6 +38,7 @@
         'views/aas_mes_serialnumber_view.xml',
         'views/aas_mes_serialnumber_templates.xml',
         'views/aas_mes_gp12checking_templates.xml',
+        'views/aas_mes_wirecutting_templates.xml',
 
         'oracle/aas_ebs_mainorder_view.xml',
 

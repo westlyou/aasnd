@@ -133,6 +133,24 @@ class Location(models.Model):
         values['records'] = records
         return values
 
+class ProductionLot(models.Model):
+    _inherit = 'stock.production.lot'
+
+    @api.model
+    def action_checkout_lot(self, product_id, lot_name):
+        """
+        获取批次信息；如果系统中不存在则立即新建一个
+        :param product_id:
+        :param lot_name:
+        :return:
+        """
+        stocklot = self.env['stock.production.lot'].search([('product_id', '=', product_id), ('name', '=', lot_name)], limit=1)
+        if not stocklot:
+            stocklot = self.env['stock.production.lot'].create({
+                'name': lot_name, 'product_id': product_id, 'create_date': fields.Datetime.now()
+            })
+        return stocklot
+
 
 class AASContainer(models.Model):
     _name = 'aas.container'

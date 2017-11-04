@@ -71,6 +71,7 @@ class AASMESLine(models.Model):
             raise UserError(u'当前产线还未设置班次信息，请先设置班次信息！')
         return super(AASMESLine, self).create(vals)
 
+
     @api.model
     def action_switch_schedule(self):
         """

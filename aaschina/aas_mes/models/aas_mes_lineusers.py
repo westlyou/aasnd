@@ -17,7 +17,10 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-ROLELIST = [('gp12checker', u'GP12'), ('checker', u'考勤员'), ('serialnumber', u'序列号'), ('cutline', u'切线员'), ('fqcchecker', u'最终检查')]
+ROLELIST = [
+    ('gp12checker', u'GP12'), ('checker', u'考勤员'), ('serialnumber', u'序列号'),
+    ('cutline', u'切线员'), ('wirecutter', u'切线员'), ('fqcchecker', u'最终检查')
+]
 
 
 # 产线关联账号
@@ -37,12 +40,13 @@ class AASMESLineusers(models.Model):
     ]
 
     @api.one
-    @api.constrains('workstation_id')
+    @api.constrains('workstation_id', 'mesline_id')
     def action_check_workstation(self):
-        if self.workstation_id:
-            tempdomain = [('mesline_id', '=', self.mesline_id.id), ('workstation_id', '=', self.workstation_id.id)]
-            if self.env['aas.mes.line.workstation'].search_count(tempdomain) <= 0:
-                raise ValidationError(u'请仔细检查，工位和当前产线可能并不匹配！')
+        if not self.workstation_id:
+            return True
+        tempdomain = [('mesline_id', '=', self.mesline_id.id), ('workstation_id', '=', self.workstation_id.id)]
+        if self.env['aas.mes.line.workstation'].search_count(tempdomain) <= 0:
+            raise ValidationError(u'请仔细检查，工位和当前产线可能并不匹配！')
 
 
 
@@ -65,6 +69,8 @@ class AASMESLineusers(models.Model):
                 uservals['action_id'] = self.env.ref('aas_mes.aas_mes_serialnumber_creation').id
             if self.mesrole == 'gp12checker':
                 uservals['action_id'] = self.env.ref('aas_mes.aas_mes_gp12_checking').id
+            if self.mesrole == 'wirecutter':
+                uservals['action_id'] = self.env.ref('aas_mes.aas_mes_wirecutting').id
         if uservals and len(uservals) > 0:
             self.lineuser_id.write(uservals)
 
@@ -91,6 +97,8 @@ class AASMESLineusers(models.Model):
                 uservals['action_id'] = self.env.ref('aas_mes.aas_mes_serialnumber_creation').id
             if role == 'gp12checker':
                 uservals['action_id'] = self.env.ref('aas_mes.aas_mes_gp12_checking').id
+            if role == 'wirecutter':
+                uservals['action_id'] = self.env.ref('aas_mes.aas_mes_wirecutting').id
         userlist.write(uservals)
         return result
 
