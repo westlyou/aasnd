@@ -32,7 +32,7 @@ class AASMESOperation(models.Model):
     function_test = fields.Boolean(string=u'隔离板测试', default=False, copy=False)
     functiontest_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'隔离板测试记录')
     final_quality_check = fields.Boolean(string='最终检查', default=False, copy=False)
-    fqccheckt_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'最终检查记录')
+    fqccheck_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'最终检查记录')
     gp12_check = fields.Boolean(string='GP12', default=False, copy=False)
     gp12_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'GP12确认记录')
 

@@ -71,6 +71,8 @@ class AASMESLineusers(models.Model):
                 uservals['action_id'] = self.env.ref('aas_mes.aas_mes_gp12_checking').id
             if self.mesrole == 'wirecutter':
                 uservals['action_id'] = self.env.ref('aas_mes.aas_mes_wirecutting').id
+            if self.mesrole == 'fqcchecker':
+                uservals['action_id'] = self.env.ref('aas_mes.aas_mes_finalchecking').id
         if uservals and len(uservals) > 0:
             self.lineuser_id.write(uservals)
 
@@ -99,6 +101,8 @@ class AASMESLineusers(models.Model):
                 uservals['action_id'] = self.env.ref('aas_mes.aas_mes_gp12_checking').id
             if role == 'wirecutter':
                 uservals['action_id'] = self.env.ref('aas_mes.aas_mes_wirecutting').id
+            if role == 'fqcchecker':
+                uservals['action_id'] = self.env.ref('aas_mes.aas_mes_finalchecking').id
         userlist.write(uservals)
         return result
 

@@ -12,3 +12,4 @@ import attendance
 import serialnumber
 import gp12checking
 import wirecutting
+import finalchecking

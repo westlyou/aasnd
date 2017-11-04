@@ -47,5 +47,11 @@
             <field name="url">aasmes/wirecutting</field>
         </record>
 
+        <record id="aas_mes_finalchecking" model="ir.actions.act_url">
+            <field name="target">self</field>
+            <field name="name">终检</field>
+            <field name="url">aasmes/finalchecking</field>
+        </record>
+
     </data>
 </odoo>

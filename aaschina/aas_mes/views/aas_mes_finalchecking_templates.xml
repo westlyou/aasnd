@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <template id="aas_wirecutting" name="AAS MES Wire Cutting">
+    <template id="aas_finalchecking" name="AAS MES Final Checking">
         &lt;!DOCTYPE html&gt;
         <html>
             <head>
@@ -56,17 +56,16 @@
 
                     <div class="content-wrapper">
                         <section class="content-header">
-                            <h1> 线材工单 </h1>
+                            <h1> 最终检查 </h1>
                             <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;color:red;">
-                                <span t-esc="message"/>
+                                <span id="checkwarning" t-esc="message"/>
                             </div>
                         </section>
                         <section class="content">
                             <div class="row">
                                 <div class="col-md-3">
-                                    <a id="wire_refresh" href="javascript:void(0);" class="btn btn-primary btn-block margin-bottom">刷新</a>
-                                    <a id="wire_output" href="javascript:void(0);" class="btn btn-primary btn-block margin-bottom"
-                                       wireorderid="0" workorderid="0">产出</a>
+                                    <a id="action_confirm" href="javascript:void(0);" class="btn btn-primary btn-block margin-bottom"
+                                       checkval="forbidden" operationid="0">确认</a>
                                     <div class="box box-solid">
                                         <div class="box-header with-border">
                                             <h3 class="box-title">基础信息</h3>
@@ -75,9 +74,9 @@
                                             <ul class="nav nav-pills nav-stacked">
                                                 <li> <a href="javascript:void(0);">产线 <span class="pull-right" t-esc="mesline_name"/></a> </li>
                                                 <li> <a href="javascript:void(0);">工位 <span class="pull-right" t-esc="workstation_name"/></a> </li>
-                                                <li> <a href="javascript:void(0);">工单 <span id="mes_wireorder" class="pull-right" wireorderid="0"></span></a> </li>
-                                                <li> <a href="javascript:void(0);">产品 <span id="mes_product" class="pull-right"></span></a> </li>
-                                                <li> <a href="javascript:void(0);">数量 <span id="mes_pqty" class="pull-right"></span></a> </li>
+                                                <li> <a href="javascript:void(0);">重工 <span class="pull-right" id="serialrework"></span></a> </li>
+                                                <li> <a href="javascript:void(0);">客户料号 <span class="pull-right" id="customercode"></span></a> </li>
+                                                <li> <a href="javascript:void(0);">内部料号 <span class="pull-right" id="internalcode"></span></a> </li>
                                             </ul>
                                         </div>
                                     </div>
@@ -86,7 +85,7 @@
                                             <h3 class="box-title">员工清单</h3>
                                         </div>
                                         <div class="box-body no-padding">
-                                            <ul id="wirecut_employees" class="nav nav-pills nav-stacked">
+                                            <ul id="finalchecking_employees" class="nav nav-pills nav-stacked">
                                                 <t t-foreach="employeelist" t-as="temployee">
                                                     <li class="cemployee" t-attf-id="employee_{{temployee['employee_id']}}">
                                                         <a href="javascript:void(0);">
@@ -98,11 +97,28 @@
                                             </ul>
                                         </div>
                                     </div>
+                                    <div class="box box-solid">
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">设备清单</h3>
+                                        </div>
+                                        <div class="box-body no-padding">
+                                            <ul class="nav nav-pills nav-stacked">
+                                                <t t-foreach="equipmentlist" t-as="tequipment">
+                                                    <li>
+                                                        <a href="javascript:void(0);"> <t t-esc="tequipment"/> </a>
+                                                    </li>
+                                                </t>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="col-md-9">
                                     <div class="box box-primary">
                                         <div class="box-header with-border">
-                                            <h3 class="box-title">工单详情</h3>
+                                            <h3 class="box-title">操作记录</h3>
+                                            <div class="box-tools pull-right">
+                                                <span id="ctserialnumber" style="color:#72AFD2;"></span>
+                                            </div>
                                         </div>
                                         <div class="box-body no-padding">
                                             <div class="table-responsive mailbox-messages">
@@ -110,15 +126,14 @@
                                                     <thead>
                                                         <tr>
                                                             <td></td>
-                                                            <td>工单</td>
-                                                            <td>产品</td>
-                                                            <td>单位</td>
-                                                            <td>数量</td>
-                                                            <td>产出</td>
-                                                            <td>状态</td>
+                                                            <td>序号</td>
+                                                            <td>工序名称</td>
+                                                            <td>设备</td>
+                                                            <td>操作员</td>
+                                                            <td>出货时间</td>
                                                         </tr>
                                                     </thead>
-                                                    <tbody id="workorderlist"></tbody>
+                                                    <tbody id="operationlist"></tbody>
                                                 </table>
                                             </div>
                                         </div>
@@ -141,7 +156,7 @@
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
-                <script src="/aas_mes/static/src/js/mes_wirecutting.js"></script>
+                <script src="/aas_mes/static/src/js/mes_finalchecking.js"></script>
             </body>
         </html>
     </template>

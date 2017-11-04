@@ -503,3 +503,8 @@ class AASMESEquipmentWorkstationWizard(models.TransientModel):
             'mesline_id': self.mesline_workstation.mesline_id.id,
             'workstation_id': self.mesline_workstation.workstation_id.id
         })
+        self.env['aas.mes.workstation.equipment'].create({
+            'equipment_id': self.equipment_id.id,
+            'mesline_id': self.mesline_workstation.mesline_id.id,
+            'workstation_id': self.mesline_workstation.workstation_id.id
+        })
