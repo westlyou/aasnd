@@ -31,6 +31,7 @@
         'views/aas_stock_inventory_view.xml',
         'wizard/aas_stock_inventory_wizard_view.xml',
         'views/aas_stock_move_view.xml',
+        'views/aas_container_view.xml',
 
         'oracle/aas_stock_purchase_view.xml',
         'oracle/aas_stock_sales_view.xml',

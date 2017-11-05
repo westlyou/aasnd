@@ -278,12 +278,13 @@ class AASMESWorkorder(models.Model):
 
 
     @api.model
-    def action_output(self, workorder_id, product_id, output_qty, serialnumber=None):
+    def action_output(self, workorder_id, product_id, output_qty, container_id=None, serialnumber=None):
         """
         工单产出
         :param workorder_id:
         :param product_id:
         :param output_qty:
+        :param container_id:
         :param serialnumber:
         :return:
         """
@@ -299,11 +300,9 @@ class AASMESWorkorder(models.Model):
         output_date = workorder.mesline_id.workdate
         lot_name = output_date.replace('-', '')
         # 成品批次
-        if serialnumber:
-            product_lot = False
-        else:
-            product_lot = self.env['stock.production.lot'].action_checkout_lot(product_id, lot_name).id
-        outputdomain = [('workorder_id', '=', workorder_id), ('output_date', '=', output_date)]
+        product_lot = False if not serialnumber else self.env['stock.production.lot'].action_checkout_lot(product_id, lot_name).id
+        container_id = False if not container_id else container_id
+        outputdomain = [('workorder_id', '=', workorder_id), ('output_date', '=', output_date), ('container_id', '=', container_id)]
         outputdomain.extend([('product_id', '=', product_id), ('product_lot', '=', product_lot)])
         outputdomain.append(('mesline_id', '=', workorder.mesline_id.id))
         if workorder.mesline_id.schedule_id:
@@ -317,6 +316,7 @@ class AASMESWorkorder(models.Model):
             outputrecord = self.env['aas.mes.workorder.product'].create(outputvals)
         outputrecord.write({'waiting_qty': outputrecord.waiting_qty + output_qty})
         if serialnumber:
+            # 更新序列号产出信息
             serialrecord = self.env['aas.mes.serialnumber'].search([('name', '=', serialnumber)], limit=1)
             if not serialrecord:
                 return True
@@ -324,6 +324,16 @@ class AASMESWorkorder(models.Model):
                 'output_time': fields.Datetime.now(), 'outputuser_id': self.env.user.id,
                 'workorder_id': workorder_id, 'outputrecord_id': outputrecord.id
             })
+        if container_id:
+            # 更新容器中物品清单信息
+            cdomain = [('container_id', '=', container_id), ('product_id', '=', product_id), ('product_lot', '=', product_lot)]
+            cdomain.append(('label_id', '=', False))
+            productline = self.env['aas.container.product'].search(cdomain, limit=1)
+            if not productline:
+                productline = self.env['aas.container.product'].create({
+                    'container_id': container_id, 'product_id': product_id, 'product_lot': product_lot
+                })
+            productline.write({'temp_qty': productline.temp_qty+output_qty})
         return True
 
     @api.model
@@ -357,6 +367,7 @@ class AASMESWorkorderProduct(models.Model):
     product_qty = fields.Float(string=u'已产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     waiting_qty = fields.Float(string=u'待消耗数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     output_date = fields.Char(string=u'产出日期', copy=False)
+    container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict')
 
 
     @api.multi
@@ -368,6 +379,7 @@ class AASMESWorkorderProduct(models.Model):
         values = {'success': True, 'message': ''}
         meslineids = []
         for record in self:
+            waiting_qty = record.waiting_qty
             if record.mesline_id.id not in meslineids:
                 meslineids.append(record.mesline_id.id)
             buildresult = self.action_build_consumerecords(record)
@@ -427,6 +439,14 @@ class AASMESWorkorderProduct(models.Model):
             seriallist = self.env['aas.mes.serialnumber'].search([('outputrecord_id', '=', record.id), ('traced', '=', False)])
             if seriallist and len(seriallist) > 0:
                 seriallist.write({'traced': True})
+            if record.container_id:
+                # 容器中相应数量物品入库存
+                productdomain = [('container_id', '=', record.container_id.id), ('product_id', '=', record.product_id.id)]
+                productdomain.append(('label_id', '=', False))
+                productdomain.append(('product_lot', '=', False if not record.product_lot else record.product_lot.id))
+                productline = self.env['aas.container.product'].search(productdomain, limit=1)
+                if productline:
+                    productline.action_stock(waiting_qty)
         for meslineid in meslineids:
             # 刷新产线投料库存
             feedmateriallist = self.env['aas.mes.feedmaterial'].search([('mesline_id', '=', meslineid)])

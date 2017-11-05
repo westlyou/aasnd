@@ -31,3 +31,4 @@ import aas_stock_receipt
 import aas_stock_delivery
 import aas_stock_inventory
 import aas_stock_move
+import aas_container
