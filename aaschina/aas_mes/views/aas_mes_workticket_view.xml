@@ -177,6 +177,13 @@
                             <field name="workstation_id" readonly="1"/>
                         </group>
                     </group>
+                    <group>
+                        <group>
+                            <field name="need_container" invisible="1"/>
+                            <field name="container_id" options="{'no_create':true}"
+                                    attrs="{'invisible':[('need_container','=',False)], 'required':[('need_container','=',True)]}"/>
+                        </group>
+                    </group>
                     <notebook>
                         <page string="不良模式">
                             <field name="badmode_lines">

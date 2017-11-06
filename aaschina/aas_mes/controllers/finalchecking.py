@@ -116,32 +116,17 @@ class AASMESFinalCheckingController(http.Controller):
             })
             if not values.get('message', False):
                 values['message'] = u'请仔细检查，生成条码操作还未完成！'
-        if tempoperation.embed_piece:
-            embedrecord = tempoperation.embed_record_id
-            recordlist.append({
-                'result': True, 'sequence': 2, 'operation_name': u'置入连接片',
-                'employee_name': False if not embedrecord.employee_id else embedrecord.employee_id.name,
-                'equipment_code': False if not embedrecord.equipment_id else embedrecord.equipment_id.code,
-                'operation_time': fields.Datetime.to_timezone_string(embedrecord.operate_time, 'Asia/Shanghai')
-            })
-        else:
-            recordlist.append({
-                'result': False, 'sequence': 2, 'operation_name': u'置入连接片',
-                'employee_name': False, 'equipment_code': False, 'operation_time': False
-            })
-            if not values.get('message', False):
-                values['message'] = u'请仔细检查，置入连接片操作还未完成！'
         if tempoperation.function_test:
             ftestrecord = tempoperation.functiontest_record_id
             recordlist.append({
-                'result': True, 'sequence': 3, 'operation_name': u'功能测试',
+                'result': True, 'sequence': 2, 'operation_name': u'功能测试',
                 'employee_name': False if not ftestrecord.employee_id else ftestrecord.employee_id.name,
                 'equipment_code': False if not ftestrecord.equipment_id else ftestrecord.equipment_id.code,
                 'operation_time': fields.Datetime.to_timezone_string(ftestrecord.operate_time, 'Asia/Shanghai')
             })
         else:
             recordlist.append({
-                'result': False, 'sequence': 3, 'operation_name': u'功能测试',
+                'result': False, 'sequence': 2, 'operation_name': u'功能测试',
                 'employee_name': False, 'equipment_code': False, 'operation_time': False
             })
             if not values.get('message', False):
@@ -150,7 +135,7 @@ class AASMESFinalCheckingController(http.Controller):
         if tempoperation.final_quality_check:
             checkrecord = tempoperation.fqccheck_record_id
             recordlist.append({
-                'result': True, 'sequence': 4, 'operation_name': u'最终检查',
+                'result': True, 'sequence': 3, 'operation_name': u'最终检查',
                 'employee_name': False if not checkrecord.employee_id else checkrecord.employee_id.name,
                 'equipment_code': False if not checkrecord.equipment_id else checkrecord.equipment_id.code,
                 'operation_time': fields.Datetime.to_timezone_string(checkrecord.operate_time, 'Asia/Shanghai')
@@ -158,7 +143,7 @@ class AASMESFinalCheckingController(http.Controller):
             values['checkval'] = 'done'
         else:
             recordlist.append({
-                'result': False, 'sequence': 4, 'operation_name': u'最终检查',
+                'result': False, 'sequence': 3, 'operation_name': u'最终检查',
                 'employee_name': False, 'equipment_code': False, 'operation_time': False
             })
             values['checkval'] = 'waiting'

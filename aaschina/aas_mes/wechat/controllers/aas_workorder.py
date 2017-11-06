@@ -92,7 +92,7 @@ class AASWorkorderWechatController(http.Controller):
 
     @http.route('/aaswechat/mes/workticket/finish/<int:workticketid>', type='http', auth='user')
     def aas_wechat_mes_workticketfinish(self, workticketid):
-        values = {'success': True, 'message': ''}
+        values = {'success': True, 'message': '', 'showcontainer': 'none'}
         workticket = request.env['aas.mes.workticket'].browse(workticketid)
         if not workticket:
             values.update({'success': False, 'message': u'工票异常，可能已经被删除！'})
@@ -105,20 +105,23 @@ class AASWorkorderWechatController(http.Controller):
             'workticket_id': workticketid, 'workticket_name': workticket.name,
             'sequence': workticket.sequence, 'workcenter_name': workticket.workcenter_name,
             'product_code': workticket.product_id.default_code, 'input_qty': workticket.input_qty,
-            'mesline_name': workticket.mesline_name, 'time_start': fields.Datetime.to_timezone_string(workticket.time_start, 'Asia/Shanghai'),
-            'workstation_name': '', 'employeelist': [], 'equipmentlist': []
+            'time_start': fields.Datetime.to_timezone_string(workticket.time_start, 'Asia/Shanghai'),
+            'mesline_name': workticket.mesline_name, 'workstation_name': '', 'employeelist': [], 'equipmentlist': []
         })
         if workticket.workcenter_id.workstation_id:
             workstation = workticket.workcenter_id.workstation_id
             values['workstation_name'] = workstation.name
             if workstation.employee_lines and len(workstation.employee_lines) > 0:
                 values['employeelist'] = [{
-                    'employee_name': temployee.name, 'employee_code': temployee.code
+                    'employee_name': temployee.employee_id.name, 'employee_code': temployee.employee_id.code
                 } for temployee in workstation.employee_lines]
             if workstation.equipment_lines and len(workstation.equipment_lines) > 0:
                 values['equipmentlist'] = [{
-                    'equipment_name': tequipment.name, 'equipment_code': tequipment.code
+                    'equipment_name': tequipment.equipment_id.name, 'equipment_code': tequipment.equipment_id.code
                 } for tequipment in workstation.equipment_lines]
+        routing_id, sequence = workticket.workcenter_id.routing_id.id, workticket.workcenter_id.sequence
+        if request.env['aas.mes.routing.line'].search_count([('routing_id', '=', routing_id), ('sequence', '>', sequence)]) <= 0:
+            values['showcontainer'] = 'block'
         return request.render('aas_mes.wechat_mes_workticketfinish', values)
 
 

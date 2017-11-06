@@ -113,8 +113,19 @@ class AASMESWireCuttingController(http.Controller):
         return values
 
 
+    @http.route('/aasmes/wirecutting/scancontainer', type='json', auth="user")
+    def aasmes_wirecutting_scancontainer(self, barcode):
+        values = {'success': True, 'message': ''}
+        container = request.env['aas.container'].search([('barcode', '=', barcode)], limit=1)
+        if not container:
+            values.update({'success': False, 'message': u'请仔细检查确认扫描的容器是否在系统中存在！'})
+            return values
+        values.update({'container_id': container.id, 'container_name': container.name})
+        return values
+
+
     @http.route('/aasmes/wirecutting/output', type='json', auth="user")
-    def aasmes_wirecutting_output(self, workorder_id, output_qty):
+    def aasmes_wirecutting_output(self, workorder_id, output_qty, container_id):
         values = {'success': True, 'message': ''}
         loginuser = request.env.user
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
@@ -132,7 +143,7 @@ class AASMESWireCuttingController(http.Controller):
         workorder = request.env['aas.mes.workorder'].browse(workorder_id)
         product = workorder.product_id
         try:
-            workorder.action_output(workorder_id, product.id, output_qty)
+            workorder.action_output(workorder_id, product.id, output_qty, container_id)
         except UserError,ue:
             values.update({'success': False, 'message':ue.name})
             return values

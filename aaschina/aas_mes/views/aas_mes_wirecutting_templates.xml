@@ -65,16 +65,16 @@
                             <div class="row">
                                 <div class="col-md-3">
                                     <a id="wire_refresh" href="javascript:void(0);" class="btn btn-primary btn-block margin-bottom">刷新</a>
-                                    <a id="wire_output" href="javascript:void(0);" class="btn btn-primary btn-block margin-bottom"
-                                       wireorderid="0" workorderid="0">产出</a>
+                                    <a id="wire_output" href="javascript:void(0);" class="btn btn-primary btn-block margin-bottom">产出</a>
                                     <div class="box box-solid">
                                         <div class="box-header with-border">
                                             <h3 class="box-title">基础信息</h3>
                                         </div>
                                         <div class="box-body no-padding">
                                             <ul class="nav nav-pills nav-stacked">
-                                                <li> <a href="javascript:void(0);">产线 <span class="pull-right" t-esc="mesline_name"/></a> </li>
-                                                <li> <a href="javascript:void(0);">工位 <span class="pull-right" t-esc="workstation_name"/></a> </li>
+                                                <li> <a href="javascript:void(0);">产线 <span id="mes_mesline" class="pull-right" t-esc="mesline_name"/></a> </li>
+                                                <li> <a href="javascript:void(0);">工位 <span id="mes_workstation" class="pull-right" t-esc="workstation_name"/></a> </li>
+                                                <li> <a href="javascript:void(0);">容器 <span id="mes_container" class="pull-right" containerid="0"/></a> </li>
                                                 <li> <a href="javascript:void(0);">工单 <span id="mes_wireorder" class="pull-right" wireorderid="0"></span></a> </li>
                                                 <li> <a href="javascript:void(0);">产品 <span id="mes_product" class="pull-right"></span></a> </li>
                                                 <li> <a href="javascript:void(0);">数量 <span id="mes_pqty" class="pull-right"></span></a> </li>
@@ -103,6 +103,9 @@
                                     <div class="box box-primary">
                                         <div class="box-header with-border">
                                             <h3 class="box-title">工单详情</h3>
+                                            <div class="box-tools pull-right">
+                                                <span id="mes_workorder" workorderid="0" style="color:#72AFD2;"></span>
+                                            </div>
                                         </div>
                                         <div class="box-body no-padding">
                                             <div class="table-responsive mailbox-messages">

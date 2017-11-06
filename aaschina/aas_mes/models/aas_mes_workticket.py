@@ -53,7 +53,7 @@ class AASMESWorkticket(models.Model):
     badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     badmode_lines = fields.One2many(comodel_name='aas.mes.workticket.badmode', inverse_name='workticket_id', string=u'不良明细')
 
-
+    container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict')
 
     @api.depends('name')
     def _compute_barcode(self):
@@ -142,6 +142,9 @@ class AASMESWorkticket(models.Model):
             'workticket_id': self.id, 'workstation_id': workstation.id,
             'input_qty': self.input_qty, 'workcenter_id': self.workcenter_id.id
         }
+        routing_id, sequence = self.workcenter_id.routing_id.id, self.workcenter_id.sequence
+        if self.env['aas.mes.routing.line'].search_count([('routing_id', '=', routing_id), ('sequence', '>', sequence)]) <= 0:
+            wizardvals['need_container'] = True
         wizard = self.env['aas.mes.workticket.finish.wizard'].create(wizardvals)
         view_form = self.env.ref('aas_mes.view_form_aas_mes_workticket_finish_wizard')
         return {
@@ -301,14 +304,28 @@ class AASMESWorkticket(models.Model):
                     workordervals['consume_lines'] = consumelines
             workorder.write(workordervals)
         else:
+            # 工单完工
+            mesline, product = workorder.mesline_id, self.product_id
+            if not mesline.workdate:
+                mesline.action_refresh_schedule()
+            lotname = mesline.workdate.replace('-', '')
+            product_lot = self.env['stock.production.lot'].action_checkout_lot(self.product_id.id, lotname)
             workorder.write({
                 'workcenter_id': False, 'workcenter_name': False, 'workcenter_finish': self.id,
                 'product_lines': [(0, 0, {
-                    'product_id': self.product_id.id, 'product_qty': self.output_qty, 'mesline_id': self.mesline_id.id,
+                    'mesline_id': mesline.id, 'product_id': product.id,
+                    'product_qty': self.output_qty, 'product_lot': product_lot.id,
+                    'container_id': False if not self.container_id else self.container_id.id,
                     'schedule_id': False if not self.mesline_id.schedule_id else self.mesline_id.schedule_id.id
                 })]
             })
             self.workorder_id.action_done()
+            # 容器产品进入库存
+            if self.container_id:
+                self.env['aas.container.product'].create({
+                    'container_id': self.container_id.id, 'product_id': product.id,
+                    'product_lot': product_lot.id, 'temp_qty': self.output_qty
+                }).action_stock(self.output_qty)
 
 
 
@@ -363,6 +380,9 @@ class AASMESWorkticketFinishWizard(models.TransientModel):
     output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     badmode_lines = fields.One2many(comodel_name='aas.mes.workticket.badmode.wizard', inverse_name='wizard_id', string=u'不良信息')
 
+    need_container = fields.Boolean(string=u'需要容器', default=False, copy=False)
+    container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict')
+
     @api.model
     def create(self, vals):
         record = super(AASMESWorkticketFinishWizard, self).create(vals)
@@ -381,8 +401,13 @@ class AASMESWorkticketFinishWizard(models.TransientModel):
         if float_compare(badmode_qty, self.input_qty, precision_rounding=0.000001) > 0.0:
             raise UserError(u'不良数量的总和不可以大于投入数量！')
         self.write({'output_qty': self.input_qty-badmode_qty})
+        ticketval = {}
         if badmode_lines and len(badmode_lines) > 0:
-            self.workticket_id.write({'badmode_lines': badmode_lines})
+            ticketval['badmode_lines'] = badmode_lines
+        if self.need_container and self.container_id:
+            ticketval['container_id'] = self.container_id.id
+        if ticketval and len(ticketval) > 0:
+            self.workticket_id.write(ticketval)
         self.workticket_id.action_doing_finish()
 
 class AASMESWorkticketFinishBadmodeWizard(models.TransientModel):

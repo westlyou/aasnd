@@ -20,6 +20,14 @@ mui.init({
 
 mui.ready(function(){
 
+    var containerline = document.getElementById('container_line');
+    var csval = containerline.getAttribute('sval');
+    if(csval=='block'){
+        containerline.style.display = 'block';
+        document.getElementById('action_scancontainer').style.display = 'block';
+    }
+
+
     //加载动画
     function aas_finish_loading(){
         var tempmask = mui.createMask();
@@ -209,6 +217,11 @@ mui.ready(function(){
     document.getElementById('action_finish').addEventListener('tap', function(){
         if(finish_flag){
             mui.toast('操作正在处理，请耐心等待！');
+            return ;
+        }
+        var containerid = parseInt(document.getElementById('mes_container').getAttribute('containerid'));
+        if(csval=='block' && containerid==0){
+            mui.toast('您还没有扫描容器；请先扫描容器，成品产出将直接存放在容器中！');
             return ;
         }
         var badmodenamelist = document.querySelectorAll('.aas-badmode-name');

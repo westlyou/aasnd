@@ -84,6 +84,20 @@ class AASMESSchedule(models.Model):
             'context': self.env.context
         }
 
+    @api.multi
+    def unlink(self):
+        meslineids, meslines = []
+        for record in self:
+            if record.mesline_id.id not in meslineids:
+                meslines.append(record.mesline_id)
+                meslineids.append(record.mesline_id.id)
+        result = super(AASMESSchedule, self).unlink()
+        for mesline in meslines:
+            schedulecount = self.env['aas.mes.schedule'].search_count([('mesline_id', '=', mesline.id)])
+            if schedulecount <= 0:
+                raise UserError(u'产线%s下至少要保留一个班次！'% mesline.name)
+        return result
+
 
 
 

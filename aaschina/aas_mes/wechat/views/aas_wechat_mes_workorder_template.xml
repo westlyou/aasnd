@@ -113,8 +113,17 @@
                                     <span class="mui-pull-left">不良数量</span>
                                     <span id="badmode_qty" class="mui-pull-right" badmodeqty="0.0">0.0</span>
                                 </li>
+                                <li id="container_line" class="mui-table-view-cell" t-att-sval="showcontainer">
+                                    <span class="mui-pull-left">成品容器</span>
+                                    <span id="mes_container" class="mui-pull-right" containerid="0"></span>
+                                </li>
                             </ul>
                             <ul class="mui-table-view aas-ul">
+                                <li id="action_scancontainer" class="mui-table-view-cell" style="display:none;">
+                                    <div class="aas-btn">
+                                        <button type="button" class="mui-btn mui-btn-primary mui-btn-block">扫描容器</button>
+                                    </div>
+                                </li>
                                 <li id="action_finish" class="mui-table-view-cell">
                                     <div class="aas-btn">
                                         <button type="button" class="mui-btn mui-btn-primary mui-btn-block">确认完工</button>
