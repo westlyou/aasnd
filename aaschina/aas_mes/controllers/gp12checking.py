@@ -45,37 +45,35 @@ class AASMESGP12CheckingController(http.Controller):
 
 
     @http.route('/aasmes/gp12/scanemployee', type='json', auth="user")
-    def aasmes_gp12_scan_employee(self, barcode):
+    def aasmes_gp12_scanemployee(self, barcode):
         values = {'success': True, 'message': '', 'employee_id': '0', 'employee_name': '', 'action': 'working'}
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        if lineuser.mesrole != 'gp12checker':
+            values.update({'success': False, 'message': u'当前登录账号还未授权GP12'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
+            return values
         employee = request.env['aas.hr.employee'].search([('barcode', '=', barcode)], limit=1)
         if not employee:
             values.update({'success': False, 'message': u'员工卡扫描异常，请检查系统中是否存在该员工！'})
-            return employee
+            return values
         values.update({'employee_id': employee.id, 'employee_name': employee.name})
         attendancedomain = [('employee_id', '=', employee.id), ('attend_done', '=', False)]
         mesattendance = request.env['aas.mes.work.attendance'].search(attendancedomain, limit=1)
         if mesattendance:
             mesattendance.action_done()
-            values['action'] = 'leave'
-            values.update({'success': True, 'message': u'亲，您已离岗了哦！'})
+            values.update({'action': 'leave', 'message': u'亲，您已离岗了哦！'})
         else:
-            lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
-            if not lineuser:
-                values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
-                return values
-            if lineuser.mesrole != 'gp12checker':
-                values.update({'success': False, 'message': u'当前登录账号还未授权GP12'})
-                return values
-            workstation = lineuser.workstation_id
-            if not workstation:
-                values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
-                return values
-            attendancevals = {
-                'employee_id': employee.id,
-                'mesline_id': lineuser.mesline_id.id, 'workstation_id': lineuser.workstation_id.id
-            }
-            if workstation.equipment_lines and len(workstation.equipment_lines) > 0:
-                attendancevals['equipment_id'] = workstation.equipment_lines[0].id
+            attendancevals = {'employee_id': employee.id, 'mesline_id': mesline.id, 'workstation_id': workstation.id}
+            equipmentdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+            tequipment = request.env['aas.mes.workstation.equipment'].search(equipmentdomain, limit=1)
+            if tequipment:
+                attendancevals['equipment_id'] = tequipment.equipment_id.id
             request.env['aas.mes.work.attendance'].create(attendancevals)
             values['message'] = u'亲，您已上岗！努力工作吧，加油！'
         return values
@@ -109,8 +107,6 @@ class AASMESGP12CheckingController(http.Controller):
                 })
                 count += 1
         # 返工记录
-
-
         serialnumber_name = serialnumber.name
         operation_time = fields.Datetime.to_timezone_string(fields.Datetime.now(), 'Asia/Shanghai')
         # 返工件

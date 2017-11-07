@@ -7,14 +7,15 @@ $(function() {
     var scanable = true; //是否可以继续扫描
     new VScanner(function(barcode) {
         if (barcode == null || barcode == '') {
+            scanable = true;
             layer.msg('扫描条码异常！', {icon: 5});
             return;
         }
         var prefix = barcode.substring(0,2);
         if(prefix=='AM'){
-            action_scan_employee();
+            action_scan_employee(barcode);
         }else{
-            action_scan_serialnumber();
+            action_scan_serialnumber(barcode);
         }
     });
 
@@ -70,6 +71,12 @@ $(function() {
         scanable = false;
         var employeeid = parseInt($('#current_employee').attr('employeeid'));
         if(employeeid==0){
+            scanable = true;
+            var employeelist = $('.aas-employee');
+            if(employeelist==undefined || employeelist==null || employeelist.length<=0){
+                layer.msg('当前GP12工位还没有员工上岗，请先扫描员工工牌上岗！', {icon: 5});
+                return ;
+            }
             layer.msg('请在左侧员工列表中选择一个当前操作员工', {icon: 5});
             return ;
         }
