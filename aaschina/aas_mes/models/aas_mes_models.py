@@ -129,8 +129,20 @@ class AASMESLine(models.Model):
         searchdomain = [('actual_start', '<=', currenttime), ('actual_finish', '>=', currenttime)]
         searchdomain.append(('mesline_id', '=', self.id))
         schedule = self.env['aas.mes.schedule'].search(searchdomain, limit=1)
-        if not schedule or not self.schedule_id or schedule.id != self.schedule_id:
-            self.write({'workorder_id': False, 'schedule_id': False if not schedule else schedule.id})
+        if not schedule or not self.schedule_id or schedule.id != self.schedule_id.id:
+            if self.workorder_id and self.workorder_id.isproducing:
+                self.workorder_id.write({'isproducing': False})
+            ordervals = {'workorder_id': False, 'schedule_id': False}
+            if self.schedule_id:
+                self.schedule_id.write({'state': 'break'})
+            if schedule:
+                ordervals['schedule_id'] = schedule.id
+                schedule.write({'state': 'working'})
+            self.write(ordervals)
+            # 清理上一个班次用料
+            self.action_clear_feeding(self.id)
+            # 清理上一个班次员工上岗信息
+            self.action_clear_employees(self.id)
 
 
     @api.model

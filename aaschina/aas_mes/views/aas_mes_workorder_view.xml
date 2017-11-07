@@ -33,6 +33,8 @@
                         <button name="action_confirm" type="object" string="确认工单" class="oe_highlight" states="draft"/>
                         <button name="action_producing" type="object" string="开始生产" class="oe_highlight"
                                 attrs="{'invisible':['|','|',('mesline_type','=','station'),('isproducing','=',True),('state','in',['draft','done'])]}"/>
+                        <button name="action_waitconsume" type="object" string="原料消耗" class="oe_highlight" attrs="{'invisible':[('waitconsume','=',False)]}"/>
+                        <button name="action_close" type="object" string="关闭工单" class="oe_highlight" states="confirm,producing,pause"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,producing,pause,done"/>
                     </header>
                     <sheet>
@@ -65,9 +67,11 @@
                             <group>
                                 <field name="date_code" readonly="1"/>
                                 <field name="output_qty" readonly="1"/>
-                                <field name="workcenter_name" readonly="1" string="当前工序"/>
-                                <field name="mesline_type" invisible="1"/>
+                                <field name="closer_id" readonly="1" attrs="{'invisible':[('closer_id','=',False)]}"/>
+                                <field name="workcenter_name" readonly="1" string="当前工序"
+                                        attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
                                 <field name="isproducing" invisible="1"/>
+                                <field name="waitconsume" invisible="1"/>
                                 <field name="workcenter_start" readonly="1"
                                         attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
                                 <field name="workcenter_finish" readonly="1"
@@ -228,6 +232,27 @@
         <record id="view_form_aas_mes_workorder_producing_wizard" model="ir.ui.view">
             <field name="name">aas.mes.workorder.producing.wizard</field>
             <field name="model">aas.mes.workorder.producing.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="workorder_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <div>
+                        <field name="action_message" readonly="1"/>
+                    </div>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_workorder_close_wizard" model="ir.ui.view">
+            <field name="name">aas.mes.workorder.close.wizard</field>
+            <field name="model">aas.mes.workorder.close.wizard</field>
             <field name="arch" type="xml">
                 <form>
                     <group>

@@ -72,24 +72,24 @@ $(function(){
                     $('#checkwarning').html(dresult.message);
                 }
                 if(dresult.rework){
-                    $('#serialrework').html('是').attr('class', 'text-red');
+                    $('#serialrework').html('是').attr('class', 'pull-right text-red');
                 }else{
-                    $('#serialrework').html('否').attr('class', 'text-green');
+                    $('#serialrework').html('否').attr('class', 'pull-right text-green');
                 }
                 $('#customercode').html(dresult.customer_code);
                 $('#internalcode').html(dresult.internal_code);
-                $.each(dresult.recordlist, function(record){
+                $.each(dresult.recordlist, function(index, record){
                     var operationtr = $('<tr></tr>');
                     if(record.result){
                         $('<td></td>').html('<i class="fa fa-check text-green"></i>').appendTo(operationtr);
                     }else{
                         $('<td></td>').html('<i class="fa fa-exclamation text-red"></i>').appendTo(operationtr);
                     }
-                    $('<td></td>').html(dresult.sequence).appendTo(operationtr);
-                    $('<td></td>').html(dresult.operation_name).appendTo(operationtr);
-                    $('<td></td>').html(dresult.equipment_code).appendTo(operationtr);
-                    $('<td></td>').html(dresult.employee_name).appendTo(operationtr);
-                    $('<td></td>').html(dresult.operation_time).appendTo(operationtr);
+                    $('<td></td>').html(record.sequence).appendTo(operationtr);
+                    $('<td></td>').html(record.operation_name).appendTo(operationtr);
+                    $('<td></td>').html(record.equipment_code).appendTo(operationtr);
+                    $('<td></td>').html(record.employee_name).appendTo(operationtr);
+                    $('<td></td>').html(record.operation_time).appendTo(operationtr);
                     $('#operationlist').append(operationtr);
                 });
             },
@@ -104,6 +104,11 @@ $(function(){
             layer.msg('当前产线还未分配工单，暂不可以操作！', {icon: 5});
             return ;
         }
+        var employeelist = $('.cemployee');
+        if(employeelist==undefined || employeelist==null || employeelist.length<=0){
+            layer.msg('当前工位上没有员工，不可以确认操作，请先扫描工牌上岗！', {icon: 5});
+            return ;
+        }
         var operationid = parseInt($(this).attr('operationid'));
         if(operationid==0){
             layer.msg('您还没有扫描条码，暂不可以操作！', {icon: 5});
@@ -115,11 +120,6 @@ $(function(){
             return ;
         }else if(checkval=='done'){
             layer.msg('当前条码已经确认，请不要重复操作！', {icon: 5});
-            return ;
-        }
-        var employeelist = $('.cemployee');
-        if(employeelist==undefined || employeelist==null || employeelist.length<=0){
-            layer.msg('当前工位上没有员工，不可以确认操作，请先扫描工牌上岗！', {icon: 5});
             return ;
         }
         var scanparams = {'operationid': operationid, 'workorderid': workorderid};

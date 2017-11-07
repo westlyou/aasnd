@@ -78,20 +78,24 @@ class AASMESOperationRecord(models.Model):
         if vals.get('operate_type', False):
             vals['operate_name'] = OPERATEDICT.get(vals.get('operate_type'), False)
         record = super(AASMESOperationRecord, self).create(vals)
+        record.action_after_create()
         return record
 
     @api.one
     def action_after_create(self):
+        operationvals = {}
         if self.operate_type == 'newbarcode':
-            self.operator_id.write({'barcode_create': True, 'barcode_record_id': self.id})
+            operationvals.update({'barcode_create': True, 'barcode_record_id': self.id})
         elif self.operate_type == 'embedpiece':
-            self.operator_id.write({'embed_piece': True, 'embed_record_id': self.id})
+            operationvals.update({'embed_piece': True, 'embed_record_id': self.id})
         elif self.operate_type == 'functiontest':
-            self.operator_id.write({'function_test': True, 'functiontest_record_id': self.id})
+            operationvals.update({'function_test': True, 'functiontest_record_id': self.id})
         elif self.operate_type == 'fqc':
-            self.operator_id.write({'final_quality_check': True, 'fqccheckt_record_id': self.id})
+            operationvals.update({'final_quality_check': True, 'fqccheckt_record_id': self.id})
         elif self.operate_type == 'gp12':
-            self.operator_id.write({'gp12_check': True, 'gp12_record_id': self.id})
+            operationvals.update({'gp12_check': True, 'gp12_record_id': self.id})
+        if operationvals and len(operationvals) > 0:
+            self.operation_id.write(operationvals)
 
 
 

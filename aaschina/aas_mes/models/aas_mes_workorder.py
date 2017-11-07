@@ -44,7 +44,6 @@ class AASMESWorkorder(models.Model):
     mainorder_id = fields.Many2one(comodel_name='aas.mes.mainorder', string=u'主工单', ondelete='cascade', index=True)
     wireorder_id = fields.Many2one(comodel_name='aas.mes.wireorder', string=u'线材工单', ondelete='cascade', index=True)
     mesline_type = fields.Selection(selection=MESLINETYPE, string=u'产线类型', compute='_compute_mesline', store=True)
-    mesline_name = fields.Char(string=u'名称', compute='_compute_mesline', store=True)
     mainorder_name = fields.Char(string=u'主工单', compute='_compute_mainorder', store=True)
     product_code = fields.Char(string=u'产品编码', copy=False)
     workcenter_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'当前工序', ondelete='restrict')
@@ -52,14 +51,14 @@ class AASMESWorkorder(models.Model):
     workcenter_start = fields.Many2one(comodel_name='aas.mes.workticket', string=u'开始工序', ondelete='restrict')
     workcenter_finish = fields.Many2one(comodel_name='aas.mes.workticket', string=u'结束工序', ondelete='restrict')
     isproducing = fields.Boolean(string=u'正在生产', default=False, copy=False, help=u'当前工单在相应的产线上正在生产')
-    output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_output_qty', store=True)
+    output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_orderoutput', store=True)
+    waitconsume = fields.Boolean(string=u'等待物料', copy=False, compute='_compute_orderoutput', store=True, help=u'已经成品产出，因原料不足等待中')
+    closer_id = fields.Many2one(comodel_name='res.users', string=u'手工关单员', ondelete='restrict', copy=False)
+
 
     workticket_lines = fields.One2many(comodel_name='aas.mes.workticket', inverse_name='workorder_id', string=u'工票明细')
     product_lines = fields.One2many(comodel_name='aas.mes.workorder.product', inverse_name='workorder_id', string=u'成品明细')
     consume_lines = fields.One2many(comodel_name='aas.mes.workorder.consume', inverse_name='workorder_id', string=u'消耗明细')
-
-
-
 
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'子工单名称不可以重复！')
@@ -69,7 +68,6 @@ class AASMESWorkorder(models.Model):
     def _compute_mesline(self):
         for record in self:
             record.mesline_type = record.mesline_id.line_type
-            record.mesline_name = record.mesline_id.name
 
     @api.depends('name')
     def _compute_barcode(self):
@@ -81,13 +79,18 @@ class AASMESWorkorder(models.Model):
         for record in self:
             record.mainorder_name = record.mainorder_id.name
 
-    @api.depends('product_lines.product_qty')
-    def _compute_output_qty(self):
+    @api.depends('product_lines.waiting_qty')
+    def _compute_orderoutput(self):
         for record in self:
-            tempqty = 0.0
+            tempqty, waitconsume = 0.0, False
             if record.product_lines and len(record.product_lines) > 0:
-                tempqty = sum([pline.product_qty for pline in record.product_lines])
+                for pline in record.product_lines:
+                    if pline.product_id.id == record.product_id.id:
+                        tempqty += pline.product_qty
+                    if float_compare(pline.waiting_qty, 0.0, precision_rounding=0.000001) > 0.0:
+                        waitconsume = True
             record.output_qty = tempqty
+            record.waitconsume = waitconsume
 
 
     @api.one
@@ -229,17 +232,6 @@ class AASMESWorkorder(models.Model):
         self.write({'consume_lines': consumelist})
 
 
-
-
-
-    @api.one
-    def action_done(self):
-        self.write({'state': 'done', 'produce_finish': fields.Datetime.now()})
-        if self.mainorder_id:
-            if self.env['aas.mes.workorder'].search_count([('mainorder_id', '=', self.mainorder_id.id), ('state', '!=', 'done')]) <= 0:
-               self.mainorder_id.write({'state': 'done', 'produce_finish': fields.Datetime.now()})
-
-
     @api.multi
     def action_producing(self):
         """
@@ -267,14 +259,59 @@ class AASMESWorkorder(models.Model):
             'context': self.env.context
         }
 
-    @api.model
-    def get_product_lot(self, product_id, lot_name):
-        productlot = self.env['stock.production.lot'].search([('product_id', '=', product_id), ('name', '=', lot_name)], limit=1)
-        if not productlot:
-            productlot = self.env['stock.production.lot'].create({
-                'name': lot_name, 'product_id': product_id, 'create_date': fields.Datetime.now()
-            })
-        return productlot
+
+    @api.one
+    def action_done(self):
+        if self.waitconsume:
+            raise UserError(u'当前工单仍有产出的产品还未消耗原料，请先扣除相关原料消耗才能关闭工单！')
+        self.write({'state': 'done', 'produce_finish': fields.Datetime.now()})
+        if self.mainorder_id:
+            if self.env['aas.mes.workorder'].search_count([('mainorder_id', '=', self.mainorder_id.id), ('state', '!=', 'done')]) <= 0:
+               self.mainorder_id.write({'state': 'done', 'produce_finish': fields.Datetime.now()})
+
+    @api.one
+    def action_waitconsume(self):
+        """
+        手工原料消耗
+        :return:
+        """
+        outputdomain = [('workorder_id', '=', self.id), ('waiting_qty', '>', 0.0)]
+        outputlist = self.env['aas.mes.workorder.product'].search(outputdomain)
+        if outputlist and len(outputlist) > 0:
+            result = outputlist.action_consume()
+            if not result['success']:
+                raise UserError(result['message'])
+
+
+    @api.multi
+    def action_close(self):
+        """
+        手工关闭工单
+        :return:
+        """
+        self.ensure_one()
+        if self.waitconsume:
+            raise UserError(u'当前工单仍有产出的产品还未消耗原料，请先扣除相关原料消耗才能关闭工单！')
+        if float_compare(self.output_qty, self.input_qty, precision_rounding=0.000001) >= 0.0:
+            self.action_done()
+            self.write({'time_finish': fields.Datetime.now(), 'closer_id': self.env.user.id})
+        else:
+            action_message = u"当前工单产出数量还未达到计划的生产数量，确认要关闭工单吗？"
+            wizard = self.env['aas.mes.workorder.close.wizard'].create({'workorder_id': self.id, 'action_message': action_message})
+            view_form = self.env.ref('aas_mes.view_form_aas_mes_workorder_close_wizard')
+            return {
+                'name': u"关闭工单",
+                'type': 'ir.actions.act_window',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_model': 'aas.mes.workorder.close.wizard',
+                'views': [(view_form.id, 'form')],
+                'view_id': view_form.id,
+                'target': 'new',
+                'res_id': wizard.id,
+                'context': self.env.context
+            }
+
 
 
     @api.model
@@ -288,14 +325,16 @@ class AASMESWorkorder(models.Model):
         :param serialnumber:
         :return:
         """
-        result = {'outputrecord': False, 'containerproduct': False}
+        result = {'success': True, 'message': '', 'outputrecord': False, 'containerproduct': False}
         workorder = self.env['aas.mes.workorder'].browse(workorder_id)
         if not workorder.aas_bom_id:
-            raise UserError(u'工单未设置BOM清单，请仔细检查！')
+            result.update({'success': False, 'message': u'工单未设置BOM清单，请仔细检查！'})
+            return result
         if product_id != workorder.product_id.id:
-            tempbomlines = self.env['aas.mes.bom.line'].search([('bom_id', '=', workorder.aas_bom_id.id), ('product_id', '=', product_id)])
-            if not tempbomlines or len(tempbomlines) <= 0:
-                raise UserError(u'成品产出异常，可能不是当前工单产物！')
+            tempdomain = [('bom_id', '=', workorder.aas_bom_id.id), ('product_id', '=', product_id)]
+            if self.env['aas.mes.bom.line'].search_count(tempdomain) <= 0:
+                result.update({'success': False, 'message': u'成品产出异常，可能不是当前工单产物！'})
+                return result
         if not workorder.mesline_id.workdate:
             workorder.mesline_id.action_refresh_schedule()
         output_date = workorder.mesline_id.workdate
@@ -339,6 +378,14 @@ class AASMESWorkorder(models.Model):
                     'product_lot': product_lot, 'temp_qty': output_qty
                 })
             result['containerproduct'] = productline
+        # 更新工单信息
+        workordervals = {}
+        if workorder.state != 'producing':
+            workordervals['state'] = 'producing'
+        if not workorder.produce_start:
+            workordervals['produce_start'] = fields.Datetime.now()
+        if workordervals and len(workordervals) > 0:
+            workorder.write(workordervals)
         return result
 
     @api.model
@@ -602,3 +649,18 @@ class AASMESWorkorderProducingWizard(models.TransientModel):
             mesline.workorder_id.write({'isproducing': False})
         mesline.write({'workorder_id': workorder.id})
         workorder.write({'isproducing': True})
+
+
+
+class AASMESWorkorderProducingWizard(models.TransientModel):
+    _name = 'aas.mes.workorder.close.wizard'
+    _description = 'AAS MES Workorder Close Wizard'
+
+    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='cascade')
+    action_message = fields.Char(string=u'提示信息', copy=False)
+
+    @api.one
+    def action_done(self):
+        workorder = self.workorder_id
+        workorder.action_done()
+        workorder.write({'time_finish': fields.Datetime.now(), 'closer_id': self.env.user.id})

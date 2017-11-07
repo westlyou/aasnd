@@ -88,7 +88,11 @@ class AASMESSerialnumber(models.Model):
     def action_after_create(self):
         operation = self.env['aas.mes.operation'].create({'serialnumber_id': self.id, 'serialnumber_name': self.name})
         barcoderecord = self.env['aas.mes.operation.record'].create({
-            'operation_id': operation.id, 'operator_id': self.user_id.id,
+            'operation_id': operation.id, 'operator_id': self.operator_id.id,
             'operate_type': 'newbarcode', 'employee_id': self.employee_id.id, 'equipment_id': self.equipment_id.id
         })
         operation.write({'barcode_create': True, 'barcode_record_id': barcoderecord.id})
+
+    @api.one
+    def action_functiontest(self):
+        self.env['aas.mes.operation.record'].action_functiontest(self.name, 'NC00000001', 'ND20160021', True, 'PASS')

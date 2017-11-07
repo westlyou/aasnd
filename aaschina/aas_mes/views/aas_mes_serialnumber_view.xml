@@ -31,6 +31,7 @@
             <field name="arch" type="xml">
                 <form create="false" edit="false" labelprint="true">
                     <header>
+                        <!--<button name="action_functiontest" type="object" string="功能测试" class="oe_highlight"/>-->
                         <field name="state" widget="statusbar" statusbar_visible="draft,normal,rework,shipped"/>
                     </header>
                     <sheet>

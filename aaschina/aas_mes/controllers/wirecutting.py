@@ -143,10 +143,9 @@ class AASMESWireCuttingController(http.Controller):
             return values
         workorder = request.env['aas.mes.workorder'].browse(workorder_id)
         product = workorder.product_id
-        try:
-            outputresult = workorder.action_output(workorder_id, product.id, output_qty, container_id=container_id)
-        except UserError, ue:
-            values.update({'success': False, 'message': ue.name})
+        outputresult = workorder.action_output(workorder_id, product.id, output_qty, container_id=container_id)
+        if not outputresult['success']:
+            values.update({'success': False, 'message': outputresult['message']})
             return values
         consumeresult = workorder.action_consume(workorder_id, product.id)
         if not consumeresult.get('success', False):

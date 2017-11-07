@@ -117,7 +117,7 @@
                                     <div class="box box-primary">
                                         <div class="box-header with-border">
                                             <h3 class="box-title">操作记录</h3>
-                                            <div class="box-tools pull-right">
+                                            <div class="box-tools pull-right" style="font-size:22px; font-weight:bold;">
                                                 <span id="ctserialnumber" style="color:#72AFD2;"></span>
                                             </div>
                                         </div>

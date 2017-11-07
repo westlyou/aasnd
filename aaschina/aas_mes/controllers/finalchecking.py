@@ -74,7 +74,7 @@ class AASMESFinalCheckingController(http.Controller):
             if not lineuser:
                 values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
                 return values
-            if lineuser.mesrole != 'wirecutter':
+            if lineuser.mesrole != 'fqcchecker':
                 values.update({'success': False, 'message': u'当前登录账号还未授权终检！'})
                 return values
             workstation = lineuser.workstation_id
@@ -104,53 +104,56 @@ class AASMESFinalCheckingController(http.Controller):
             'rework': serialnumber.reworked, 'internal_code': serialnumber.internal_product_code,
             'customer_code': serialnumber.customer_product_code, 'operationid': tempoperation.id
         })
-        recordlist = []
+        recordlist, couldcheck = [], True
         if tempoperation.barcode_create:
             createrecord = tempoperation.barcode_record_id
             recordlist.append({
                 'result': True, 'sequence': 1, 'operation_name': u'生成条码',
-                'employee_name': False if not createrecord.employee_id else createrecord.employee_id.name,
-                'equipment_code': False if not createrecord.equipment_id else createrecord.equipment_id.code,
+                'employee_name': '' if not createrecord.employee_id else createrecord.employee_id.name,
+                'equipment_code': '' if not createrecord.equipment_id else createrecord.equipment_id.code,
                 'operation_time': fields.Datetime.to_timezone_string(createrecord.operate_time, 'Asia/Shanghai')
             })
         else:
             recordlist.append({
                 'result': False, 'sequence': 1, 'operation_name': u'生成条码',
-                'employee_name': False, 'equipment_code': False, 'operation_time': False
+                'employee_name': '', 'equipment_code': '', 'operation_time': ''
             })
             if not values.get('message', False):
                 values['message'] = u'请仔细检查，生成条码操作还未完成！'
+            couldcheck = False
         if tempoperation.function_test:
             ftestrecord = tempoperation.functiontest_record_id
             recordlist.append({
                 'result': True, 'sequence': 2, 'operation_name': u'功能测试',
-                'employee_name': False if not ftestrecord.employee_id else ftestrecord.employee_id.name,
-                'equipment_code': False if not ftestrecord.equipment_id else ftestrecord.equipment_id.code,
+                'employee_name': '' if not ftestrecord.employee_id else ftestrecord.employee_id.name,
+                'equipment_code': '' if not ftestrecord.equipment_id else ftestrecord.equipment_id.code,
                 'operation_time': fields.Datetime.to_timezone_string(ftestrecord.operate_time, 'Asia/Shanghai')
             })
         else:
             recordlist.append({
                 'result': False, 'sequence': 2, 'operation_name': u'功能测试',
-                'employee_name': False, 'equipment_code': False, 'operation_time': False
+                'employee_name': '', 'equipment_code': '', 'operation_time': ''
             })
             if not values.get('message', False):
                 values['message'] = u'请仔细检查，功能测试操作还未完成！'
+            couldcheck = False
         values['checkval'] = 'forbidden'
         if tempoperation.final_quality_check:
             checkrecord = tempoperation.fqccheck_record_id
             recordlist.append({
                 'result': True, 'sequence': 3, 'operation_name': u'最终检查',
-                'employee_name': False if not checkrecord.employee_id else checkrecord.employee_id.name,
-                'equipment_code': False if not checkrecord.equipment_id else checkrecord.equipment_id.code,
+                'employee_name': '' if not checkrecord.employee_id else checkrecord.employee_id.name,
+                'equipment_code': '' if not checkrecord.equipment_id else checkrecord.equipment_id.code,
                 'operation_time': fields.Datetime.to_timezone_string(checkrecord.operate_time, 'Asia/Shanghai')
             })
             values['checkval'] = 'done'
         else:
             recordlist.append({
                 'result': False, 'sequence': 3, 'operation_name': u'最终检查',
-                'employee_name': False, 'equipment_code': False, 'operation_time': False
+                'employee_name': '', 'equipment_code': '', 'operation_time': ''
             })
-            values['checkval'] = 'waiting'
+            if couldcheck:
+                values['checkval'] = 'waiting'
         values['recordlist'] = recordlist
         return values
 
@@ -186,10 +189,9 @@ class AASMESFinalCheckingController(http.Controller):
             'operator_id': request.env.user.id, 'operation_pass': True, 'operate_result': 'Pass', 'operate_type': 'fqc'
         })
         tempoperation.write({'fqccheck_record_id': operationrecord.id})
-        try:
-            workorder.action_output(workorder.id, workorder.product_id.id, 1, serialnumber=tempoperation.serialnumber_name)
-        except UserError, ue:
-            values.update({'success': False, 'message': ue.name})
+        outputresult = workorder.action_output(workorder.id, workorder.product_id.id, 1, serialnumber=tempoperation.serialnumber_name)
+        if not outputresult['success']:
+            values.update({'success': False, 'message': outputresult['message']})
             return values
         tempvals = workorder.action_consume(workorder.id, workorder.product_id.id)
         if tempvals['message']:
