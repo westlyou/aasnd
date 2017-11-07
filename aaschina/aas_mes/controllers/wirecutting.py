@@ -12,6 +12,7 @@ import werkzeug
 
 from odoo import http
 from odoo.http import request
+from odoo.tools.float_utils import float_compare, float_is_zero
 from odoo.exceptions import AccessDenied, UserError, ValidationError
 
 logger = logging.getLogger(__name__)
@@ -106,7 +107,7 @@ class AASMESWireCuttingController(http.Controller):
         })
         workorderlist = [{
             'id': workorder.id, 'order_name': workorder.name, 'product_code': workorder.product_code,
-            'product_uom': workorder.product_id.uom_id.name, 'product_qty': workorder.product_qty,
+            'product_uom': workorder.product_id.uom_id.name, 'product_qty': workorder.input_qty,
             'output_qty': workorder.output_qty, 'state_name': ORDERSTATESDICT[workorder.state]
         } for workorder in wireorder.workorder_lines]
         values['workorderlist'] = workorderlist
@@ -143,13 +144,62 @@ class AASMESWireCuttingController(http.Controller):
         workorder = request.env['aas.mes.workorder'].browse(workorder_id)
         product = workorder.product_id
         try:
-            workorder.action_output(workorder_id, product.id, output_qty, container_id)
-        except UserError,ue:
-            values.update({'success': False, 'message':ue.name})
+            outputresult = workorder.action_output(workorder_id, product.id, output_qty, container_id=container_id)
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
             return values
         consumeresult = workorder.action_consume(workorder_id, product.id)
         if not consumeresult.get('success', False):
+            outputrecord = outputresult['outputrecord']
+            outputrecord.write({'waiting_qty': outputrecord.waiting_qty - output_qty})
+            if float_is_zero(outputrecord.total_qty, precision_rounding=0.000001):
+                outputrecord.unlink()
+            if outputresult['containerproduct']:
+                containerproduct = outputresult['containerproduct']
+                containerproduct.write({'temp_qty': containerproduct.temp_qty - output_qty})
+                if not containerproduct.product_qty:
+                    containerproduct.unlink()
             values.update(consumeresult)
             return values
         values.update({'output_qty': workorder.output_qty, 'state_name': ORDERSTATESDICT[workorder.state]})
+        return values
+
+
+
+    @http.route('/aasmes/wirecutting/actionrefresh', type='json', auth="user")
+    def aasmes_wirecutting_output(self, wireorder_id):
+        values = {'success': True, 'message': ''}
+        loginuser = request.env.user
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        values['mesline_name'] = lineuser.mesline_id.name
+        if lineuser.mesrole != 'wirecutter':
+            values.update({'success': False, 'message': u'当前登录账号还未授权切线'})
+            return request.render('aas_mes.aas_wirecutting', values)
+        workstation = lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定切线工位！'})
+            return values
+        wireorder = request.env['aas.mes.wireorder'].browse(wireorder_id)
+        if not wireorder:
+            values.update({'success': False, 'message': u'请仔细检查确认扫描工单是否在系统中存在！'})
+            return values
+        if wireorder.state not in ['wait', 'producing']:
+            values.update({'success': False, 'message': u'请仔细检查线材工单状态异常可能还未投产或已经完成！'})
+            return values
+        if not wireorder.workorder_lines or len(wireorder.workorder_lines) <= 0:
+            values.update({'success': False, 'message': u'请仔细检查线材工单没有下线工单需要操作！'})
+            return values
+        values.update({
+            'wireorder_id': wireorder.id, 'wireorder_name': wireorder.name,
+            'product_code': wireorder.product_id.default_code, 'product_qty': wireorder.product_qty
+        })
+        workorderlist = [{
+            'id': workorder.id, 'order_name': workorder.name, 'product_code': workorder.product_code,
+            'product_uom': workorder.product_id.uom_id.name, 'product_qty': workorder.input_qty,
+            'output_qty': workorder.output_qty, 'state_name': ORDERSTATESDICT[workorder.state]
+        } for workorder in wireorder.workorder_lines]
+        values['workorderlist'] = workorderlist
         return values

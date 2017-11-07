@@ -20,6 +20,9 @@
                    <script src="/aas_base/static/libs/html5shiv.min.js"></script>
                    <script src="/aas_base/static/libs/respond.min.js"></script>
                 <![endif]-->
+                <style>
+                    .cutting{ color:#72AFD2; font-size:18px; }
+                </style>
             </head>
             <body class="hold-transition skin-blue layout-top-nav">
                 <div class="wrapper">
@@ -104,7 +107,9 @@
                                         <div class="box-header with-border">
                                             <h3 class="box-title">工单详情</h3>
                                             <div class="box-tools pull-right">
-                                                <span id="mes_workorder" workorderid="0" style="color:#72AFD2;"></span>
+                                                <div style="font-size:22px; font-weight:bold;">
+                                                    <span id="mes_workorder" workorderid="0" style="color:#72AFD2;"></span>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="box-body no-padding">

@@ -78,18 +78,17 @@ $(function(){
                     layer.msg('线材工单已经扫描过，请不要重复操作！', {icon: 5});
                     return ;
                 }
-                $('#mes_wireorder').attr('wireorderid', dresult.wireorder_id);
-                $('#mes_wireorder').html(dresult.wireorder_name);
+                $('#mes_wireorder').attr('wireorderid', dresult.wireorder_id).html(dresult.wireorder_name);
                 $('#mes_product').html(dresult.product_code);
                 $('#mes_pqty').html(dresult.product_qty);
                 $('#workorderlist').html('');
-                $.each(dresult.workorderlist, function(workorder){
+                $.each(dresult.workorderlist, function(index, workorder){
                     var workorder_id = 'workorder_'+workorder.id;
-                    var ordertr = $('<tr></tr>').attr({
+                    var ordertr = $('<tr class="workorder"></tr>').attr({
                         'id': workorder_id, 'output_qty': workorder.output_qty,
                         'workorderid': workorder.id, 'order_name': workorder.order_name, 'product_code': workorder.product_code
                     });
-                    $('<td></td>').appendTo(ordertr).html('<input class="ordercheck" wid="'+workorder_id+'" type="checkbox"/>');
+                    $('<td></td>').appendTo(ordertr).html('<input type="checkbox"/>');
                     $('<td></td>').appendTo(ordertr).html(workorder.order_name);
                     $('<td></td>').appendTo(ordertr).html(workorder.product_code);
                     $('<td></td>').appendTo(ordertr).html(workorder.product_uom);
@@ -97,6 +96,9 @@ $(function(){
                     $('<td></td>').appendTo(ordertr).html(workorder.output_qty);
                     $('<td></td>').appendTo(ordertr).html(workorder.state_name);
                     $('#workorderlist').append(ordertr);
+                    ordertr.click(function(){
+                        temptrclick(ordertr);
+                    });
                 });
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
@@ -126,7 +128,11 @@ $(function(){
 
     //产出
     $('#wire_output').click(function(){
-        var self = this;
+        var containerid = parseInt($('#mes_container').attr('containerid'));
+        if(containerid==0){
+            layer.msg('您还没添加产出容器，请先扫描容器标签添加容器！', {icon: 5});
+            return ;
+        }
         var wireorderid = parseInt($('#mes_wireorder').attr('wireorderid'));
         if(wireorderid==0){
             layer.msg('您还未扫描线材工单！', {icon: 5});
@@ -135,11 +141,6 @@ $(function(){
         var workorderid = parseInt($('#mes_workorder').attr('workorderid'));
         if (workorderid==0){
             layer.msg('您还没选择需要产出的线材，请先选择需要产出的线材！', {icon: 5});
-            return ;
-        }
-        var containerid = parseInt($('#mes_container').attr('containerid'));
-        if(containerid==0){
-            layer.msg('您还没添加产出容器，请先扫描容器标签添加容器！', {icon: 5});
             return ;
         }
         layer.prompt({title: '输入需要产出数量，并确认', formType: 3}, function(text, index){
@@ -170,23 +171,84 @@ $(function(){
         });
     });
 
-
     //切换生产子工单
-    $('.ordercheck').change(function(){
-        var wid = $(this).attr('wid');
-        $.each($('.ordercheck'), function(){
-            var twid = $(this).attr('wid');
-            if(twid!=wid){
-                $(this).attr('checked',false);
-            }
-        });
-        var workordertr = $('#'+wid);
-        if($(this).attr('checked')){
-            $('#mes_workorder').attr('workorderid', workordertr.attr('workorderid'));
-            $('#mes_workorder').html(workordertr.attr('order_name'));
+    function temptrclick(datatr){
+        var self = $(datatr);
+        if(self.hasClass('cutting')){
+            var tempipt = self.children(":first").children(":first");
+            tempipt.removeAttr('checked');
+            self.removeClass('cutting');
+            $('#mes_workorder').attr('workorderid', '0').html('');
         }else{
-            $('#mes_workorder').attr('workorderid', '0');
-            $('#mes_workorder').html('');
+            var cuttingtrs = $('.cutting');
+            if(cuttingtrs!=undefined && cuttingtrs!=null && cuttingtrs.length>0){
+                $.each(cuttingtrs, function(index, ctr){
+                    var tempipt = $(ctr).children(":first").children(":first");
+                    tempipt.removeAttr('checked');
+                    $(ctr).removeClass('cutting');
+                });
+            }
+            var selfipt = self.children(":first").children(":first");
+            selfipt.attr('checked','checked');
+            self.addClass('cutting');
+            var workorder_id = self.attr('workorderid');
+            var product_code = self.attr('product_code');
+            $('#mes_workorder').attr('workorderid', workorder_id).html(product_code);
+        }
+    }
+
+    //刷新页面
+    $('#wire_refresh').click(function(){
+        var wireorderid = parseInt($('#mes_wireorder').attr('wireorderid'));
+        if(wireorderid==0){
+            window.location.reload(true);
+        }else{
+            var refreshparams = {'wireorder_id': workorderid};
+            var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+            $.ajax({
+                url: '/aasmes/wirecutting/actionrefresh',
+                headers:{'Content-Type':'application/json'},
+                type: 'post', timeout:10000, dataType: 'json',
+                data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: refreshparams, id: access_id}),
+                success:function(data){
+                    $('#mes_wireorder').attr('wireorderid', '0').html('');
+                    $('#mes_product').html('');
+                    $('#mes_pqty').html('');
+                    $('#workorderlist').html('');
+                    $('#mes_workorder').attr('workorderid', '0').html('');
+                    $('#mes_mesline').html('');
+                    $('#mes_workstation').html('');
+                    var dresult = data.result;
+                    if(!dresult.success){
+                        layer.msg(dresult.message, {icon: 5});
+                        return ;
+                    }
+                    $('#mes_wireorder').attr('wireorderid', dresult.wireorder_id).html(dresult.wireorder_name);
+                    $('#mes_product').html(dresult.product_code);
+                    $('#mes_pqty').html(dresult.product_qty);
+                    $('#mes_mesline').html(dresult.mesline_name);
+                    $('#mes_workstation').html(dresult.workstation_name);
+                    $.each(dresult.workorderlist, function(index, workorder){
+                        var workorder_id = 'workorder_'+workorder.id;
+                        var ordertr = $('<tr class="workorder"></tr>').attr({
+                            'id': workorder_id, 'output_qty': workorder.output_qty,
+                            'workorderid': workorder.id, 'order_name': workorder.order_name, 'product_code': workorder.product_code
+                        });
+                        $('<td></td>').appendTo(ordertr).html('<input type="checkbox"/>');
+                        $('<td></td>').appendTo(ordertr).html(workorder.order_name);
+                        $('<td></td>').appendTo(ordertr).html(workorder.product_code);
+                        $('<td></td>').appendTo(ordertr).html(workorder.product_uom);
+                        $('<td></td>').appendTo(ordertr).html(workorder.product_qty);
+                        $('<td></td>').appendTo(ordertr).html(workorder.output_qty);
+                        $('<td></td>').appendTo(ordertr).html(workorder.state_name);
+                        $('#workorderlist').append(ordertr);
+                        ordertr.click(function(){
+                            temptrclick(ordertr);
+                        });
+                    });
+                },
+                error:function(xhr,type,errorThrown){ console.log(type);}
+            });
         }
     });
 

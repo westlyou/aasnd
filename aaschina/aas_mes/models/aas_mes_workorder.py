@@ -220,7 +220,7 @@ class AASMESWorkorder(models.Model):
                     }))
             else:
                 consumelist.append((0, 0, {
-                    'product_id': self.product_id.id, 'material_id': tempmaterial.product_id.id,
+                    'product_id': self.product_id.id, 'material_id': tempmaterial.id,
                     'consume_unit': consume_unit, 'input_qty': self.input_qty * consume_unit,
                     'workcenter_id': False if not bomline.workcenter_id else bomline.workcenter_id.id
                 }))
@@ -288,6 +288,7 @@ class AASMESWorkorder(models.Model):
         :param serialnumber:
         :return:
         """
+        result = {'outputrecord': False, 'containerproduct': False}
         workorder = self.env['aas.mes.workorder'].browse(workorder_id)
         if not workorder.aas_bom_id:
             raise UserError(u'工单未设置BOM清单，请仔细检查！')
@@ -300,7 +301,7 @@ class AASMESWorkorder(models.Model):
         output_date = workorder.mesline_id.workdate
         lot_name = output_date.replace('-', '')
         # 成品批次
-        product_lot = False if not serialnumber else self.env['stock.production.lot'].action_checkout_lot(product_id, lot_name).id
+        product_lot = False if serialnumber else self.env['stock.production.lot'].action_checkout_lot(product_id, lot_name).id
         container_id = False if not container_id else container_id
         outputdomain = [('workorder_id', '=', workorder_id), ('output_date', '=', output_date), ('container_id', '=', container_id)]
         outputdomain.extend([('product_id', '=', product_id), ('product_lot', '=', product_lot)])
@@ -315,6 +316,7 @@ class AASMESWorkorder(models.Model):
                 outputvals['schedule_id'] = workorder.mesline_id.schedule_id.id
             outputrecord = self.env['aas.mes.workorder.product'].create(outputvals)
         outputrecord.write({'waiting_qty': outputrecord.waiting_qty + output_qty})
+        result['outputrecord'] = outputrecord
         if serialnumber:
             # 更新序列号产出信息
             serialrecord = self.env['aas.mes.serialnumber'].search([('name', '=', serialnumber)], limit=1)
@@ -329,12 +331,15 @@ class AASMESWorkorder(models.Model):
             cdomain = [('container_id', '=', container_id), ('product_id', '=', product_id), ('product_lot', '=', product_lot)]
             cdomain.append(('label_id', '=', False))
             productline = self.env['aas.container.product'].search(cdomain, limit=1)
-            if not productline:
+            if productline:
+                productline.write({'temp_qty': productline.temp_qty+output_qty})
+            else:
                 productline = self.env['aas.container.product'].create({
-                    'container_id': container_id, 'product_id': product_id, 'product_lot': product_lot
+                    'container_id': container_id, 'product_id': product_id,
+                    'product_lot': product_lot, 'temp_qty': output_qty
                 })
-            productline.write({'temp_qty': productline.temp_qty+output_qty})
-        return True
+            result['containerproduct'] = productline
+        return result
 
     @api.model
     def action_consume(self, workorder_id, product_id):
@@ -368,7 +373,12 @@ class AASMESWorkorderProduct(models.Model):
     waiting_qty = fields.Float(string=u'待消耗数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     output_date = fields.Char(string=u'产出日期', copy=False)
     container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict')
+    total_qty = fields.Float(string=u'总数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_total_qty', store=True)
 
+    @api.depends('product_qty', 'waiting_qty')
+    def _compute_total_qty(self):
+        for record in self:
+            record.total_qty = record.product_qty + record.waiting_qty
 
     @api.multi
     def action_consume(self):
@@ -474,7 +484,7 @@ class AASMESWorkorderProduct(models.Model):
             return values
         maintracevals = {'mesline_id': mesline.id, 'product_id': product.id, 'workorder_id': workorder.id}
         serialdomain = [('outputrecord_id', '=', outputrecord.id), ('traced', '=', False)]
-        serialnumberlist = self.env['aas.mes.serialnumber'].search(serialdomain, fields=['name'])
+        serialnumberlist = self.env['aas.mes.serialnumber'].search_read(serialdomain, fields=['name'])
         if serialnumberlist and len(serialnumberlist) > 0:
             maintracevals['serialnumbers'] = ','.join([serialrecord.get('name') for serialrecord in serialnumberlist])
         if workorder.mainorder_id:

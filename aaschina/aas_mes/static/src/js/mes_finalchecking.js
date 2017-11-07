@@ -99,6 +99,11 @@ $(function(){
 
     //终检确认
     $('#action_confirm').click(function(){
+        var workorderid = parseInt($('#mes_workorder').attr('workorderid'));
+        if(workorderid==0){
+            layer.msg('当前产线还未分配工单，暂不可以操作！', {icon: 5});
+            return ;
+        }
         var operationid = parseInt($(this).attr('operationid'));
         if(operationid==0){
             layer.msg('您还没有扫描条码，暂不可以操作！', {icon: 5});
@@ -117,7 +122,7 @@ $(function(){
             layer.msg('当前工位上没有员工，不可以确认操作，请先扫描工牌上岗！', {icon: 5});
             return ;
         }
-        var scanparams = {'operationid': operationid};
+        var scanparams = {'operationid': operationid, 'workorderid': workorderid};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
             url: '/aasmes/finalchecking/actionconfirm',
@@ -129,6 +134,9 @@ $(function(){
                 if(!dresult.success){
                     layer.msg(dresult.message, {icon: 5});
                     return ;
+                }
+                if(dresult.message){
+                    layer.msg(dresult.message, {icon: 5});
                 }
                 window.location.reload(true);
             },

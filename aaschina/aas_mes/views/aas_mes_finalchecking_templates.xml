@@ -74,9 +74,10 @@
                                             <ul class="nav nav-pills nav-stacked">
                                                 <li> <a href="javascript:void(0);">产线 <span class="pull-right" t-esc="mesline_name"/></a> </li>
                                                 <li> <a href="javascript:void(0);">工位 <span class="pull-right" t-esc="workstation_name"/></a> </li>
-                                                <li> <a href="javascript:void(0);">重工 <span class="pull-right" id="serialrework"></span></a> </li>
-                                                <li> <a href="javascript:void(0);">客户料号 <span class="pull-right" id="customercode"></span></a> </li>
-                                                <li> <a href="javascript:void(0);">内部料号 <span class="pull-right" id="internalcode"></span></a> </li>
+                                                <li> <a href="javascript:void(0);">工单 <span id="mes_workorder" class="pull-right" t-esc="workorder_name" t-att-workorderid="workorder_id"/></a> </li>
+                                                <li> <a href="javascript:void(0);">重工 <span id="serialrework" class="pull-right"></span></a> </li>
+                                                <li> <a href="javascript:void(0);">客户料号 <span id="customercode" class="pull-right"></span></a> </li>
+                                                <li> <a href="javascript:void(0);">内部料号 <span id="internalcode" class="pull-right"></span></a> </li>
                                             </ul>
                                         </div>
                                     </div>

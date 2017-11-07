@@ -23,6 +23,7 @@ WIREBOMSTATE = [('draft', u'草稿'), ('normal', u'正常'), ('override', u'失�
 class AASMESWirebom(models.Model):
     _name = 'aas.mes.wirebom'
     _description = 'AAS MES Wire BOM'
+    _rec_name = 'product_id'
 
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
@@ -49,6 +50,11 @@ class AASMESWirebom(models.Model):
         product = self.env['product.product'].browse(vals['product_id'])
         vals['product_uom'] = product.uom_id.id
         return super(AASMESWirebom, self).create(vals)
+
+
+    @api.one
+    def action_confirm(self):
+        self.write({'state': 'normal'})
 
 
 
@@ -97,7 +103,7 @@ class AASMESWireOrder(models.Model):
     _name = 'aas.mes.wireorder'
     _description = 'AAS MES Wire Order'
 
-    name = fields.Char(string=u'名称', required=True, copy=False)
+    name = fields.Char(string=u'名称', copy=False)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
@@ -124,12 +130,11 @@ class AASMESWireOrder(models.Model):
         else:
             self.product_uom, self.wirebom_id = False, False
 
-
     @api.model
     def create(self, vals):
+        vals['name'] = self.env['ir.sequence'].next_by_code('aas.mes.wireorder')
         product = self.env['product.product'].browse(vals['product_id'])
         vals['product_uom'] = product.uom_id.id
-        vals['name'] = self.env['ir.sequence'].next_by_code('aas.mes.wireorder')
         return super(AASMESWireOrder, self).create(vals)
 
     @api.multi
@@ -178,7 +183,7 @@ class AASMESWireOrder(models.Model):
             material = tempmaterial.material_id
             aasbom = self.env['aas.mes.bom'].search([('product_id', '=', material.id), ('active', '=', True)], limit=1)
             workorder = self.env['aas.mes.workorder'].create({
-                'name': tempname+str(tempindex), 'product_id': material.id,
+                'name': tempname+'-'+str(tempindex), 'product_id': material.id,
                 'product_uom': material.uom_id.id, 'aas_bom_id': aasbom.id,
                 'mesline_id': self.mesline_id.id, 'wireorder_id': self.id,
                 'input_qty': (tempmaterial.material_qty / wirebom.product_qty) * self.product_qty

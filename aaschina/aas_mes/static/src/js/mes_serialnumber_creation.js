@@ -40,8 +40,12 @@ $(function() {
                         layer.msg('序列号的数量必须是一个大于零的整数！', {icon: 5});
                         return ;
                     }
-                    layer.close(index);
                     var serialcount = parseInt(text);
+                    if(serialcount > 200){
+                        layer.msg('一次最多生成200个序列号！', {icon: 5});
+                        return ;
+                    }
+                    layer.close(index);
                     var tempid = Math.floor(Math.random() * 1000 * 1000 * 1000);
                     $.ajax({
                         url: '/aasmes/serialnumber/adddone',

@@ -120,7 +120,7 @@ class AASContainerProduct(models.Model):
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict')
     stock_qty = fields.Float(string=u'库存数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     temp_qty = fields.Float(string=u'未入库数', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default='_compute_product_qty', store=True)
+    product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_product_qty', store=True)
 
     @api.depends('stock_qty', 'temp_qty')
     def _compute_product_qty(self):

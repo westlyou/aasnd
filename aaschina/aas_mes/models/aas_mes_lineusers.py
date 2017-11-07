@@ -19,7 +19,7 @@ _logger = logging.getLogger(__name__)
 
 ROLELIST = [
     ('gp12checker', u'GP12'), ('checker', u'考勤员'), ('serialnumber', u'序列号'),
-    ('cutline', u'切线员'), ('wirecutter', u'切线员'), ('fqcchecker', u'最终检查')
+    ('wirecutter', u'切线员'), ('fqcchecker', u'最终检查')
 ]
 
 
