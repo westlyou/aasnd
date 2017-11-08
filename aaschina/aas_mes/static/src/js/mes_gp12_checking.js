@@ -52,8 +52,14 @@ $(function() {
                     return ;
                 }
                 var employeeli = $('<li class="aas-employee"></li>').appendTo($('#menulist'));
-                employeeli.attr('id', 'employee_'+dresult.employee_id);
+                employeeli.attr('employeeid', dresult.employee_id);
+                employeeli.attr({
+                    'id': 'employee_'+dresult.employee_id, 'employeeid': dresult.employee_id, 'employeename': dresult.employee_name
+                });
                 employeeli.html('<a href="javascript:void(0);" style="font-size:25px;font-weight:bold;"><span>'+dresult.employee_name+'</span></a>');
+                employeeli.click(function(){
+                    $('#current_employee').attr('employeeid', dresult.employee_id).html(dresult.employee_name);
+                });
             },
             error:function(xhr,type,errorThrown){
                 scanable = true;

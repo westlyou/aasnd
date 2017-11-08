@@ -31,16 +31,18 @@ class AASMESGP12CheckingController(http.Controller):
         if lineuser.mesrole != 'gp12checker':
             values.update({'success': False, 'message': u'当前登录账号还未授权GP12'})
             return request.render('aas_mes.aas_gp12_checking', values)
-        if not lineuser.workstation_id:
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
             values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
             return request.render('aas_mes.aas_gp12_checking', values)
-        if lineuser.workstation_id.employee_lines and len(lineuser.workstation_id.employee_lines) > 0:
+        if workstation.employee_lines and len(workstation.employee_lines) > 0:
             employeelist = []
-            for employee in lineuser.workstation_id.employee_lines:
+            for temployee in workstation.employee_lines:
                 employeelist.append({
-                    'employee_id': employee.id,
-                    'employee_name': employee.name, 'employee_code': employee.code
+                    'employee_id': temployee.employee_id.id,
+                    'employee_name': temployee.employee_id.name, 'employee_code': temployee.employee_id.code
                 })
+            values['employeelist'] = employeelist
         return request.render('aas_mes.aas_gp12_checking', values)
 
 
