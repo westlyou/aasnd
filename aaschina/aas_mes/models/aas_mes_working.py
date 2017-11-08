@@ -293,19 +293,6 @@ class AASMESWorkAttendance(models.Model):
                 record.attendance_date = False
 
 
-    @api.constrains('mesline_id', 'employee_id')
-    def action_checking_employee(self):
-        meslineids, meslines = [], []
-        attendancelist = self.env['aas.mes.work.attendance'].search([('employee_id', '=', self.employee_id.id)])
-        if attendancelist and len(attendancelist) > 0:
-            for tattendance in attendancelist:
-                if tattendance.mesline_id.id not in meslineids:
-                    meslineids.append(tattendance.mesline_id.id)
-                    meslines.append(tattendance.mesline_id)
-        if len(meslines) > 1:
-            raise ValidationError(u'同一个员工不可以在多个产线同时开工！')
-
-
 
     @api.model
     def action_trace_employees_equipments(self, mesline_id, schedule_id, workstation_id, attendance_date):
@@ -346,9 +333,6 @@ class AASMESWorkAttendance(models.Model):
         return tracevals
 
 
-
-
-
     @api.model
     def create(self, vals):
         record = super(AASMESWorkAttendance, self).create(vals)
@@ -375,8 +359,6 @@ class AASMESWorkAttendance(models.Model):
         self.env['aas.mes.workstation.employee'].create({
             'workstation_id': self.workstation_id.id, 'mesline_id': self.mesline_id.id, 'employee_id': self.employee_id.id
         })
-        if not employee.mesline_id or employee.mesline_id.id != self.mesline_id.id:
-            self.env['aas.mes.line.employee'].create({'employee_id': employee.id, 'mesline_id': self.mesline_id.id})
 
     @api.one
     def action_done(self):

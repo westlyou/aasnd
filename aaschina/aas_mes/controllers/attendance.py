@@ -87,12 +87,12 @@ class AASMESAttendanceController(http.Controller):
         lineuser = request.env['aas.mes.lineusers'].search(lineusersdomain, limit=1)
         if not lineuser or lineuser.mesrole != 'checker':
             values.update({'success': False, 'message': u'当前登录用户可能不是考勤员，请仔细检查！'})
+        mesline = lineuser.mesline_id
         searchdomain = [('employee_id', '=', employeeid), ('attend_done', '=', False)]
         mesattendance = request.env['aas.mes.work.attendance'].search(searchdomain, limit=1)
         if not mesattendance or mesattendance.workstation_id.id != stationid:
-            request.env['aas.mes.work.attendance'].create({
-                'employee_id': employeeid, 'workstation_id': stationid, 'mesline_id': lineuser.mesline_id.id
-            })
+            attendancevals = {'employee_id': employeeid, 'workstation_id': stationid, 'mesline_id': mesline.id}
+            request.env['aas.mes.work.attendance'].create(attendancevals)
         values['message'] = u'亲，您已上岗！努力工作吧，加油！'
         return values
 

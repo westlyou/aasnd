@@ -19,7 +19,7 @@ _logger = logging.getLogger(__name__)
 
 ROLELIST = [
     ('gp12checker', u'GP12'), ('checker', u'考勤员'), ('serialnumber', u'序列号'),
-    ('wirecutter', u'切线员'), ('fqcchecker', u'最终检查')
+    ('feeder', u'上料员'), ('wirecutter', u'切线员'), ('fqcchecker', u'最终检查')
 ]
 
 
@@ -32,7 +32,6 @@ class AASMESLineusers(models.Model):
     lineuser_id = fields.Many2one(comodel_name='res.users', string=u'用户', ondelete='restrict')
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
-    isfeeder = fields.Boolean(string=u'上料员', default=False, copy=False)
     mesrole = fields.Selection(selection=ROLELIST, string=u'角色', copy=False)
 
     _sql_constraints = [

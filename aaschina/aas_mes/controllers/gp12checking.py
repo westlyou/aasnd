@@ -74,7 +74,11 @@ class AASMESGP12CheckingController(http.Controller):
             tequipment = request.env['aas.mes.workstation.equipment'].search(equipmentdomain, limit=1)
             if tequipment:
                 attendancevals['equipment_id'] = tequipment.equipment_id.id
-            request.env['aas.mes.work.attendance'].create(attendancevals)
+            try:
+                request.env['aas.mes.work.attendance'].create(attendancevals)
+            except ValidationError, ve:
+                values.update({'success': False, 'message': ve.name})
+                return values
             values['message'] = u'亲，您已上岗！努力工作吧，加油！'
         return values
 

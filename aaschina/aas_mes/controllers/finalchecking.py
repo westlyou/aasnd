@@ -62,6 +62,17 @@ class AASMESFinalCheckingController(http.Controller):
         if not employee:
             values.update({'success': False, 'message': u'员工卡扫描异常，请检查系统中是否存在该员工！'})
             return values
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        if lineuser.mesrole != 'fqcchecker':
+            values.update({'success': False, 'message': u'当前登录账号还未授权终检！'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位'})
+            return values
         values.update({'employee_id': employee.id, 'employee_name': employee.name, 'employee_code': employee.code})
         attendancedomain = [('employee_id', '=', employee.id), ('attend_done', '=', False)]
         mesattendance = request.env['aas.mes.work.attendance'].search(attendancedomain, limit=1)
@@ -70,23 +81,11 @@ class AASMESFinalCheckingController(http.Controller):
             values['action'] = 'leave'
             values.update({'success': True, 'message': u'亲，您已离岗了哦！'})
         else:
-            lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
-            if not lineuser:
-                values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
-                return values
-            if lineuser.mesrole != 'fqcchecker':
-                values.update({'success': False, 'message': u'当前登录账号还未授权终检！'})
-                return values
-            workstation = lineuser.workstation_id
-            if not workstation:
-                values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位'})
-                return values
-            attendancevals = {
-                'employee_id': employee.id,
-                'mesline_id': lineuser.mesline_id.id, 'workstation_id': lineuser.workstation_id.id
-            }
-            if workstation.equipment_lines and len(workstation.equipment_lines) > 0:
-                attendancevals['equipment_id'] = workstation.equipment_lines[0].id
+            attendancevals = {'employee_id': employee.id, 'mesline_id': mesline.id, 'workstation_id': workstation.id}
+            equipmentdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+            tequipment = request.env['aas.mes.workstation.equipment'].search(equipmentdomain, limit=1)
+            if tequipment:
+                attendancevals['equipment_id'] = tequipment.equipment_id.id
             request.env['aas.mes.work.attendance'].create(attendancevals)
             values['message'] = u'亲，您已上岗！努力工作吧，加油！'
         return values

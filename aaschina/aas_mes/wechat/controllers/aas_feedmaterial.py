@@ -22,7 +22,8 @@ class AASFeedmaterialWechatController(http.Controller):
     def aas_wechat_mes_linefeeding(self):
         values = {'success': True, 'message': ''}
         loginuser = request.env.user
-        linefeeder = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id), ('isfeeder', '=', True)], limit=1)
+        feeddomain = [('lineuser_id', '=', loginuser.id), ('mesrole', '=', 'feeder')]
+        linefeeder = request.env['aas.mes.lineusers'].search(feeddomain, limit=1)
         if not linefeeder:
             values.update({'success': False, 'message': u'当前登录用户可能还不是领班，请仔细检查！'})
             return request.render('aas_mes.wechat_mes_message', values)
