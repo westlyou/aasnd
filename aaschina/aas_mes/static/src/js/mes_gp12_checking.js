@@ -44,22 +44,19 @@ $(function() {
                     layer.msg(dresult.message, {icon: 1});
                 }
                 if(dresult.action=='leave'){
-                    var currentemployeeid = $('#current_employee').attr('employeeid');
+                    var currentemployeeid = $('#mes_operator').attr('employeeid');
                     if (currentemployeeid==dresult.employee_id){
-                        $('#current_employee').attr('employeeid', '0').html('');
+                        $('#mes_operator').attr('employeeid', '0').html('');
                     }
                     $('#employee_'+dresult.employee_id).remove();
                     return ;
                 }
-                var employeeli = $('<li class="aas-employee"></li>').appendTo($('#menulist'));
+                var employeeli = $('<li class="aas-employee"></li>').appendTo($('#employee_list'));
                 employeeli.attr('employeeid', dresult.employee_id);
                 employeeli.attr({
                     'id': 'employee_'+dresult.employee_id, 'employeeid': dresult.employee_id, 'employeename': dresult.employee_name
                 });
-                employeeli.html('<a href="javascript:void(0);" style="font-size:25px;font-weight:bold;"><span>'+dresult.employee_name+'</span></a>');
-                employeeli.click(function(){
-                    $('#current_employee').attr('employeeid', dresult.employee_id).html(dresult.employee_name);
-                });
+                employeeli.html('<a href="javascript:void(0);">'+dresult.employee_name+'</a>');
             },
             error:function(xhr,type,errorThrown){
                 scanable = true;
@@ -75,7 +72,7 @@ $(function() {
             return ;
         }
         scanable = false;
-        var employeeid = parseInt($('#current_employee').attr('employeeid'));
+        var employeeid = parseInt($('#mes_operator').attr('employeeid'));
         if(employeeid==0){
             scanable = true;
             var employeelist = $('.aas-employee');
@@ -88,7 +85,7 @@ $(function() {
         }
         var scanparams = {'barcode': barcode, 'employeeid': employeeid};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
-        var customercode = $('#customer_code').attr('customercode');
+        var customercode = $('#mes_currentpn').attr('customercode');
         if(customercode!=null && customercode!=''){
             scanparams['productcode'] = customercode;
         }
@@ -104,20 +101,37 @@ $(function() {
                     layer.msg(dresult.message, {icon: 5});
                     return ;
                 }
-                var checkresult = $('#check_result');
+                $('#check_result').html(dresult.result);
                 if(dresult.result=='OK'){
-                    checkresult.css({'color': 'green'}).html(dresult.result);
+                    $('#check_result_box').removeClass('bg-red').addClass('bg-green');
+                    $('#pass_list').append('<tr><td>'+dresult.operate_result+'</td></tr>');
+                    var scount = parseInt($('#pass_count').attr('scount'));
+                    scount += 1;
+                    $('#pass_count').attr('scount', scount).html(scount);
                 }else{
-                    checkresult.css({'color': 'red'}).html(dresult.result);
+                    $('#check_result_box').removeClass('bg-green').addClass('bg-red');
+                    $('#fail_list').append('<tr><td>'+dresult.operate_result+'</td></tr>');
                 }
                 if(dresult.message!=null && dresult.message!=''){
-                    $('#checking_message').html(dresult.message);
+                    $('#checkwarning').html(dresult.message);
                 }
-                var custmoercodespan = $('#customer_code');
+                var custmoercodespan = $('#mes_currentpn');
                 var customercode = custmoercodespan.attr('customercode');
                 if(customercode==null || customercode==''){
-                    custmoercodespan.attr('customercode', dresult.productcode);
+                    custmoercodespan.attr('customercode', dresult.productcode).html(dresult.productcode);
                 }
+                if(dresult.functiontestlist.length > 0){
+                    $.each(dresult.functiontestlist, function(index, record){
+                        var lineno = index+1;
+                        var functiontesttr = $('<tr></tr>').appendTo($('#functiontest_list'));
+                        $('<td></td>').html(lineno).appendTo(functiontesttr);
+                        $('<td></td>').html(record.operate_time).appendTo(functiontesttr);
+                        $('<td></td>').html(record.operate_result).appendTo(functiontesttr);
+                        $('<td></td>').html(record.operator_name).appendTo(functiontesttr);
+                        $('<td></td>').html(record.operate_equipment).appendTo(functiontesttr);
+                    });
+                }
+                $('#mes_serialnumber').html(barcode);
             },
             error:function(xhr,type,errorThrown){
                 scanable = true;
@@ -125,5 +139,13 @@ $(function() {
             }
         });
     }
+
+    //单击员工清单
+    $('#employee_list').on('click', '.aas-employee', function(){
+        var self = $(this);
+        var employeeid = self.attr('employeeid');
+        var employeename = self.attr('employeename');
+        $('#mes_operator').attr('employeeid', employeeid).html(employeename);
+    });
 
 });

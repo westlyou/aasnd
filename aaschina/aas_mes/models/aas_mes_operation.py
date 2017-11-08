@@ -83,6 +83,7 @@ class AASMESOperationRecord(models.Model):
 
     @api.one
     def action_after_create(self):
+        serialnumber = self.operation_id.serialnumber_id
         operationvals = {}
         if self.operate_type == 'newbarcode':
             operationvals.update({'barcode_create': True, 'barcode_record_id': self.id})
@@ -90,6 +91,8 @@ class AASMESOperationRecord(models.Model):
             operationvals.update({'embed_piece': True, 'embed_record_id': self.id})
         elif self.operate_type == 'functiontest':
             operationvals.update({'function_test': True, 'functiontest_record_id': self.id})
+            if serialnumber.state == 'draft':
+                serialnumber.write({'state': 'normal'})
         elif self.operate_type == 'fqc':
             operationvals.update({'final_quality_check': True, 'fqccheckt_record_id': self.id})
         elif self.operate_type == 'gp12':
@@ -116,7 +119,7 @@ class AASMESOperationRecord(models.Model):
         functiontestvals = {'operation_id': toperation.id, 'operate_type': 'functiontest'}
         employee = self.env['aas.hr.employee'].search([('code', '=', employee_code)], limit=1)
         if not employee:
-            result.update({'success': False, 'message': u'当前员工为搜索到，请仔细检查系统中是否存在此员工！'})
+            result.update({'success': False, 'message': u'当前员工未搜索到，请仔细检查系统中是否存在此员工！'})
             return result
         functiontestvals['employee_id'] = employee.id
         equipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)

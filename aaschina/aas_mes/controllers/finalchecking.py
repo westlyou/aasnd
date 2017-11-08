@@ -27,7 +27,6 @@ class AASMESFinalCheckingController(http.Controller):
         if not lineuser:
             values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
             return request.render('aas_mes.aas_finalchecking', values)
-        values['mesline_name'] = lineuser.mesline_id.name
         if lineuser.mesrole != 'fqcchecker':
             values.update({'success': False, 'message': u'当前登录账号还未授权终检'})
             return request.render('aas_mes.aas_finalchecking', values)
@@ -35,6 +34,7 @@ class AASMESFinalCheckingController(http.Controller):
         if not workstation:
             values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位！'})
             return request.render('aas_mes.aas_finalchecking', values)
+        values.update({'mesline_name': mesline.name, 'workstation_name': workstation.name})
         if not mesline.workorder_id:
             values.update({'success': False, 'message': u'当前产线还未指定生产工单，请联系领班分配生产工单！'})
             return request.render('aas_mes.aas_finalchecking', values)

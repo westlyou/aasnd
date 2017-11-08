@@ -35,14 +35,14 @@ class AASMESGP12CheckingController(http.Controller):
         if not workstation:
             values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
             return request.render('aas_mes.aas_gp12_checking', values)
-        if workstation.employee_lines and len(workstation.employee_lines) > 0:
-            employeelist = []
-            for temployee in workstation.employee_lines:
-                employeelist.append({
-                    'employee_id': temployee.employee_id.id,
-                    'employee_name': temployee.employee_id.name, 'employee_code': temployee.employee_id.code
-                })
-            values['employeelist'] = employeelist
+        values.update({'mesline_name': mesline.name, 'workstation_name': workstation.name})
+        employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        employeelist = request.env['aas.mes.workstation.employee'].search(employeedomain)
+        if employeelist and len(employeelist) > 0:
+            values['employeelist'] = [{
+                'employee_id': temployee.employee_id.id,
+                'employee_name': temployee.employee_id.name, 'employee_code': temployee.employee_id.code
+            } for temployee in employeelist]
         return request.render('aas_mes.aas_gp12_checking', values)
 
 
@@ -88,30 +88,31 @@ class AASMESGP12CheckingController(http.Controller):
     @http.route('/aasmes/gp12/scanserialnumber', type='json', auth="user")
     def aasmes_gp12_scan_serialnumber(self, barcode, employeeid, productcode=None):
         values = {'success': True, 'message': '', 'result': 'OK', 'functiontestlist': [], 'reworklist': []}
-        tempoperation = self.env['aas.mes.operation'].search([('serialnumber_name', '=', barcode)], limit=1)
+        tempoperation = request.env['aas.mes.operation'].search([('serialnumber_name', '=', barcode)], limit=1)
         if not tempoperation:
             values.update({
                 'result': 'NG',
                 'success': False, 'message': u'序列号异常，请检查您扫描的标签是否是一个正确的序列号！'
             })
             return values
+        if tempoperation.gp12_check:
+            values.update({'success':False, 'message': u'GP12已操作，请不要重复操作！'})
+            return values
         serialnumber = tempoperation.serialnumber_id
         values['productcode'] = serialnumber.customer_product_code.replace('-', '')
-        if productcode and productcode!=values['productcode']:
+        if productcode and productcode != values['productcode']:
             values.update({'success': False, 'message': u'序列号异常，请确认可能与其他序列号不是同类别的产品混入！！'})
             return values
         # 功能测试记录
         operatedomain = [('operation_id', '=', tempoperation.id), ('operate_type', '=', 'functiontest')]
         functiontestlist = request.env['aas.mes.operation.record'].search(operatedomain)
         if functiontestlist and len(functiontestlist) > 0:
-            count = 1
-            for record in functiontestlist:
-                values['functiontestlist'].append({
-                    'operate_no': count, 'operator_name': record.employee_id.name,
-                    'operate_result': record.operate_result, 'operate_equipment': record.equipment_id.name,
-                    'operate_time': fields.Datetime.to_timezone_string(record.operate_time, 'Asia/Shanghai')
-                })
-                count += 1
+            values['functiontestlist'] = [{
+                'operate_result': record.operate_result,
+                'operator_name': '' if not record.employee_id else record.employee_id.name,
+                'operate_equipment': '' if not record.equipment_id else record.equipment_id.code,
+                'operate_time': fields.Datetime.to_timezone_string(record.operate_time, 'Asia/Shanghai')
+            } for record in functiontestlist]
         # 返工记录
         serialnumber_name = serialnumber.name
         operation_time = fields.Datetime.to_timezone_string(fields.Datetime.now(), 'Asia/Shanghai')
@@ -125,10 +126,6 @@ class AASMESGP12CheckingController(http.Controller):
                 values['operate_result'] = ','.join([serialnumber_name, 'NG', operation_time])
                 values.update({'message': u'序列号异常，正在等待IPQC确认！！', 'result': 'NG'})
                 return values
-        if tempoperation.gp12_check:
-            values['operate_result'] = ','.join([serialnumber_name, 'NG', operation_time])
-            values.update({'message': u'GP12已操作，请不要重复操作！', 'result': 'NG'})
-            return values
         if not tempoperation.function_test:
             values['operate_result'] = ','.join([serialnumber_name, 'NG', operation_time])
             values.update({'message': u'序列号异常，隔离板测试还没有操作！', 'result': 'NG'})
