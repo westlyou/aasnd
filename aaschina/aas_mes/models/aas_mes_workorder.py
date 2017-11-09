@@ -184,7 +184,7 @@ class AASMESWorkorder(models.Model):
             'product_id': self.product_id.id, 'product_uom': self.product_uom.id,
             'input_qty': self.input_qty, 'state': 'waiting', 'time_wait': fields.Datetime.now(),
             'workorder_id': self.id, 'workorder_name': self.name, 'mesline_id': self.mesline_id.id,
-            'mesline_name': self.mesline_name, 'routing_id': self.routing_id.id,
+            'mesline_name': self.mesline_id.name, 'routing_id': self.routing_id.id,
             'mainorder_id': False if not self.mainorder_id else self.mainorder_id.id,
             'mainorder_name': False if not self.mainorder_name else self.mainorder_name
         })
