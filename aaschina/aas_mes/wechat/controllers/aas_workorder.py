@@ -12,6 +12,7 @@ import werkzeug
 
 from odoo import http, fields
 from odoo.http import request
+from odoo.tools.float_utils import float_compare, float_is_zero
 from odoo.exceptions import AccessDenied, UserError, ValidationError
 
 logger = logging.getLogger(__name__)
@@ -92,7 +93,7 @@ class AASWorkorderWechatController(http.Controller):
 
     @http.route('/aaswechat/mes/workticket/finish/<int:workticketid>', type='http', auth='user')
     def aas_wechat_mes_workticketfinish(self, workticketid):
-        values = {'success': True, 'message': '', 'showcontainer': 'none'}
+        values = {'success': True, 'message': ''}
         workticket = request.env['aas.mes.workticket'].browse(workticketid)
         if not workticket:
             values.update({'success': False, 'message': u'工票异常，可能已经被删除！'})
@@ -119,9 +120,6 @@ class AASWorkorderWechatController(http.Controller):
                 values['equipmentlist'] = [{
                     'equipment_name': tequipment.equipment_id.name, 'equipment_code': tequipment.equipment_id.code
                 } for tequipment in workstation.equipment_lines]
-        routing_id, sequence = workticket.workcenter_id.routing_id.id, workticket.workcenter_id.sequence
-        if request.env['aas.mes.routing.line'].search_count([('routing_id', '=', routing_id), ('sequence', '>', sequence)]) <= 0:
-            values['showcontainer'] = 'block'
         return request.render('aas_mes.wechat_mes_workticketfinish', values)
 
 
@@ -140,19 +138,31 @@ class AASWorkorderWechatController(http.Controller):
 
 
     @http.route('/aaswechat/mes/workticket/finishdone', type='json', auth="user")
-    def aas_wechat_mes_workticket_finishdone(self, workticketid, badmode_lines=[]):
+    def aas_wechat_mes_workticket_finishdone(self, workticketid, badmode_lines=[], container_id=None):
         values = {'success': True, 'message': '', 'workticket_id': workticketid}
         workticket = request.env['aas.mes.workticket'].browse(workticketid)
         if not workticket:
             values.update({'success': False, 'message': u'工票异常，可能已经被删除！'})
             return values
-        workstation = workticket.workcenter_id.workstation_id
+        workcenter, workstation = workticket.workcenter_id, workticket.workcenter_id.workstation_id
         if not workstation:
             values.update({'success': False, 'message': u'工序%s还未设置工位信息，无法提取员工信息，请联系相关人员设置工位！'% workticket.workcenter_name})
             return values
         if not workstation.employee_lines or len(workstation.employee_lines) <= 0:
             values.update({'success': False, 'message': u'工位%s还没有员工信息，请先刷卡上岗再操作工单！'% workstation.name})
             return values
+        # 验证投料是否足够消耗
+        mesline, workorder = workticket.mesline_id, workticket.workorder_id
+        cresult = request.env['aas.mes.workorder'].action_validate_consume(workorder.id, workcenter.id, workstation.id, workticket.product_id.id, workticket.input_qty)
+        if not cresult['success']:
+            values.update(cresult)
+            return values
+        if workticket.islastworkcenter():
+            if not container_id:
+                values.update({'success': False, 'message': u'当前工序未最后一道工序成品产出需要指定容器，请先扫描容器条码！'})
+                return values
+            else:
+              workticket.write({'container_id': container_id})
         try:
             if badmode_lines and len(badmode_lines) > 0:
                 workticket.write({'badmode_lines': [(0, 0, badmode) for badmode in badmode_lines]})

@@ -405,6 +405,59 @@ class AASMESWorkorder(models.Model):
         return values
 
 
+    @api.model
+    def action_validate_consume(self, workorder_id, workcenter_id, workstation_id, product_id, product_qty):
+        """
+
+        :param mesline_id:
+        :param workcenter_id:
+        :param workstation_id:
+        :param product_id:
+        :param product_qty:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        workorder = self.env['aas.mes.workorder'].browse(workorder_id)
+        workstation = self.env['aas.mes.workstation'].browse(workstation_id)
+        mesline = workorder.mesline_id
+        consumedomain = [('workorder_id', '=', workorder_id), ('workcenter_id', '=', workcenter_id), ('product_id', '=', product_id)]
+        consumelist = self.env['aas.mes.workorder.consume'].search(consumedomain)
+        if consumelist and len(consumelist) > 0:
+            consumedict, feedmaterialdict = {}, {}
+            for tempconsume in consumelist:
+                pkey = 'P-'+str(tempconsume.material_id.id)
+                if pkey not in consumedict:
+                    consumedict[pkey] = {'code': tempconsume.material_id.default_code, 'qty': tempconsume.consume_unit * product_qty}
+                else:
+                    consumedict[pkey]['qty'] += tempconsume.consume_unit * product_qty
+            feedmateriallist = self.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation_id)])
+            if not feedmateriallist or len(feedmateriallist) <= 0:
+                values.update({'success': False, 'message': u'工位%s还未上料，请联系上料员上料！'% workstation.name})
+                return values
+            for feedmaterial in feedmateriallist:
+                pkey = 'P-'+str(feedmaterial.material_id.id)
+                if pkey in feedmaterialdict:
+                    feedmaterialdict[pkey] += feedmaterial.material_qty
+                else:
+                    feedmaterialdict[pkey] = feedmaterial.material_qty
+            lesslist, nonelist = [], []
+            for ckey, cval in consumedict.items():
+                if ckey not in feedmaterialdict:
+                    nonelist.append(cval['code'])
+                consume_qty, feed_qty = cval['qty'], feedmaterialdict[ckey]
+                if float_compare(feed_qty, consume_qty, precision_rounding=0.000001) < 0.0:
+                    lesslist.append(cval['code'])
+            if nonelist and len(nonelist) > 0:
+                values.update({'success': False, 'message': '原料%s未投料；'% ','.join(nonelist)})
+            if lesslist and len(lesslist) > 0:
+                values['success'] = False
+                values['message'] = values['message'] + ('原料%s投料不足'% ','.join(lesslist))
+        return values
+
+
+
+
+
 # 工单产出
 class AASMESWorkorderProduct(models.Model):
     _name = 'aas.mes.workorder.product'

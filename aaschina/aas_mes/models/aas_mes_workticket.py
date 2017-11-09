@@ -328,6 +328,22 @@ class AASMESWorkticket(models.Model):
                 }).action_stock(self.output_qty)
 
 
+    @api.multi
+    def islastworkcenter(self):
+        """
+        验证是否是最后一道工序
+        :return:
+        """
+        self.ensure_one()
+        routing_id, sequence = self.routing_id.id, self.sequence
+        workcenterlist = self.env['aas.mes.routing.line'].search([('routing_id', '=', routing_id), ('sequence', '=', sequence)])
+        if workcenterlist and len(workcenterlist) > 0:
+            return False
+        else:
+            return True
+
+
+
 
 
 
