@@ -49,7 +49,7 @@ class AASMESWorkticket(models.Model):
     mainorder_name = fields.Char(string=u'主工单')
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'生产线', ondelete='restrict')
     mesline_name = fields.Char(string=u'生产线')
-    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', required=True, domain=[], ondelete='restrict')
+    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', ondelete='restrict')
     badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     badmode_lines = fields.One2many(comodel_name='aas.mes.workticket.badmode', inverse_name='workticket_id', string=u'不良明细')
 
