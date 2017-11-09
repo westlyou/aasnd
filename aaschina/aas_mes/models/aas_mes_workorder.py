@@ -444,6 +444,7 @@ class AASMESWorkorder(models.Model):
             for ckey, cval in consumedict.items():
                 if ckey not in feedmaterialdict:
                     nonelist.append(cval['code'])
+                    continue
                 consume_qty, feed_qty = cval['qty'], feedmaterialdict[ckey]
                 if float_compare(feed_qty, consume_qty, precision_rounding=0.000001) < 0.0:
                     lesslist.append(cval['code'])
