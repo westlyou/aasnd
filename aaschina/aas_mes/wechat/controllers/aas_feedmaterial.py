@@ -34,11 +34,11 @@ class AASFeedmaterialWechatController(http.Controller):
             return request.render('aas_mes.wechat_mes_message', values)
         workstationlist = []
         for wkstation in workstations:
+            workstation = wkstation.workstation_id
             stationvals = {
-                'workstation_id': wkstation.id, 'workstation_name': wkstation.name,
-                'workstation_code': wkstation.code, 'materiallist': []
+                'workstation_id': workstation.id, 'workstation_name': workstation.name, 'workstation_code': workstation.code, 'materiallist': []
             }
-            materiallist = request.env['aas.mes.feedmaterial'].search([('workstation_id', '=', wkstation.id)])
+            materiallist = request.env['aas.mes.feedmaterial'].search([('workstation_id', '=', workstation.id)])
             if materiallist and len(materiallist) > 0:
                 stationvals['materiallist'] = [{
                     'feeding_id': feedmaterial.id, 'material_code': feedmaterial.material_id.default_code,
