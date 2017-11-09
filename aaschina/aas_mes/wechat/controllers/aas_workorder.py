@@ -93,7 +93,7 @@ class AASWorkorderWechatController(http.Controller):
 
     @http.route('/aaswechat/mes/workticket/finish/<int:workticketid>', type='http', auth='user')
     def aas_wechat_mes_workticketfinish(self, workticketid):
-        values = {'success': True, 'message': ''}
+        values = {'success': True, 'message': '', 'needcontainer': 'none'}
         workticket = request.env['aas.mes.workticket'].browse(workticketid)
         if not workticket:
             values.update({'success': False, 'message': u'工票异常，可能已经被删除！'})
@@ -120,6 +120,8 @@ class AASWorkorderWechatController(http.Controller):
                 values['equipmentlist'] = [{
                     'equipment_name': tequipment.equipment_id.name, 'equipment_code': tequipment.equipment_id.code
                 } for tequipment in workstation.equipment_lines]
+        if workticket.islastworkcenter():
+            values['needcontainer'] = 'wanted'
         return request.render('aas_mes.wechat_mes_workticketfinish', values)
 
 
@@ -173,4 +175,6 @@ class AASWorkorderWechatController(http.Controller):
         except ValidationError, ve:
             values.update({'success': False, 'message': ve.name})
             return values
+        if workorder.state == 'done':
+            workorder.write({'time_finish': fields.Datetime.now()})
         return values

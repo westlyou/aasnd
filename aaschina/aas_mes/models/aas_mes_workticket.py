@@ -326,7 +326,10 @@ class AASMESWorkticket(models.Model):
                     'container_id': self.container_id.id, 'product_id': product.id,
                     'product_lot': product_lot.id, 'temp_qty': self.output_qty
                 }).action_stock(self.output_qty)
-
+            # 刷新成品批次
+            tracelist = self.env['aas.mes.tracing'].search([('workorder_id', '=', workorder.id), ('product_id', '=', product.id)])
+            if tracelist and len(tracelist) > 0:
+                tracelist.write({'product_lot': product_lot.id, 'product_lot_name': product_lot.name})
 
     @api.multi
     def islastworkcenter(self):

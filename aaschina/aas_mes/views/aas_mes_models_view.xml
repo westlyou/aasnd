@@ -144,6 +144,7 @@
                             <group>
                                 <field name="workday_start" readonly="1"/>
                                 <field name="workday_finish" readonly="1"/>
+                                <field name="serialnumber_id" attrs="{'invisible':[('serialnumber_id','=',False)]}" readonly="1"/>
                             </group>
                         </group>
                         <notebook>

@@ -21,8 +21,8 @@ mui.init({
 mui.ready(function(){
 
     var containerline = document.getElementById('container_line');
-    var csval = containerline.getAttribute('sval');
-    if(csval=='block'){
+    var needcontainer = containerline.getAttribute('needcontainer');
+    if(needcontainer=='wanted'){
         containerline.style.display = 'block';
         document.getElementById('action_scancontainer').style.display = 'block';
     }
@@ -219,10 +219,16 @@ mui.ready(function(){
             mui.toast('操作正在处理，请耐心等待！');
             return ;
         }
-        var containerid = parseInt(document.getElementById('mes_container').getAttribute('containerid'));
-        if(csval=='block' && containerid==0){
-            mui.toast('您还没有扫描容器；请先扫描容器，成品产出将直接存放在容器中！');
-            return ;
+        var params = {'workticketid': workticketid};
+        var needcontainer = document.getElementById('container_line').getAttribute('needcontainer');
+        if(needcontainer == 'wanted'){
+            var containerid = parseInt(document.getElementById('mes_container').getAttribute('containerid'));
+            if(containerid==0){
+                mui.toast('您还没有扫描容器；请先扫描容器，成品产出将直接存放在容器中！');
+                return ;
+            }else{
+                params['container_id'] = containerid;
+            }
         }
         var badmodenamelist = document.querySelectorAll('.aas-badmode-name');
         if(badmodenamelist!=undefined && badmodenamelist.length>0){
@@ -259,7 +265,6 @@ mui.ready(function(){
         }
         finish_flag = true;
         var workticketid = parseInt(document.getElementById('workticket_finish_pullrefresh').getAttribute('workticketid'));
-        var params = {'workticketid': workticketid};
         var badmodelist = document.querySelectorAll('.aas-badmode');
         if(badmodelist!=undefined && badmodelist.length>0){
             var badmode_lines = [];

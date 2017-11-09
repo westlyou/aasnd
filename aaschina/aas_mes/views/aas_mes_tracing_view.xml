@@ -9,6 +9,7 @@
             <field name="arch" type="xml">
                 <tree create="false" edit="false" delete="false">
                     <field name="mesline_id"/>
+                    <field name="workdate"/>
                     <field name="schedule_id"/>
                     <field name="mainorder_id"/>
                     <field name="workorder_id"/>
@@ -52,6 +53,7 @@
                         </group>
                         <group>
                             <group>
+                                <field name="workdate"/>
                                 <field name="mainorder_id"/>
                                 <field name="workcenter_id"/>
                                 <field name="workstation_id"/>
@@ -86,6 +88,7 @@
                     <field name="product_lot" string="批次" filter_domain="[('product_lot','ilike',self)]"/>
                     <field name="workcenter_id" string="工序" filter_domain="[('workcenter_id','ilike',self)]"/>
                     <field name="workstation_id" string="工位" filter_domain="[('workstation_id','ilike',self)]"/>
+                    <field name="workdate" string="工作日" filter_domain="[('workdate','ilike',self)]"/>
                     <field name="mainorder_id" string="主工单" filter_domain="[('mainorder_id','ilike',self)]"/>
                     <field name="workorder_id" string="子工单" filter_domain="[('workorder_id','ilike',self)]"/>
                     <field name="date_code" string="DateCode" filter_domain="[('date_code','ilike',self)]"/>
@@ -100,6 +103,7 @@
                         <filter string="批次" context="{'group_by':'product_lot'}"/>
                         <filter string="工序" context="{'group_by':'workcenter_id'}"/>
                         <filter string="工位" context="{'group_by':'workstation_id'}"/>
+                        <filter string="工作日" context="{'group_by':'workdate'}"/>
                         <filter string="主工单" context="{'group_by':'mainorder_id'}"/>
                         <filter string="子工单" context="{'group_by':'workorder_id'}"/>
                     </group>

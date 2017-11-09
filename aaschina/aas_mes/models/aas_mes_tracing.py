@@ -36,6 +36,7 @@ class AASMESTracing(models.Model):
     mesline_name = fields.Char(string=u'生产线名称', index=True)
     schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', ondelete='restrict')
     schedule_name = fields.Char(string=u'班次名称', copy=False)
+    workdate = fields.Char(string=u'工作日', copy=False)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict', index=True)
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     product_code = fields.Char(string=u'产品编码', index=True)
@@ -48,6 +49,8 @@ class AASMESTracing(models.Model):
     equipmentlist = fields.Text(string=u'设备信息')
     employeelist = fields.Text(string=u'员工信息')
     serialnumbers = fields.Text(string=u'序列号信息')
+
+
 
     @api.model
     def create(self, vals):
@@ -68,6 +71,8 @@ class AASMESTracing(models.Model):
             vals['workstation_name'] = self.workstation_id.name
         if self.mesline_id:
             vals['mesline_name'] = self.mesline_id.name
+            if self.mesline_id.workdate:
+                vals['workdate'] = self.mesline_id.workdate
         if self.schedule_id:
             vals['schedule_name'] = self.schedule_id.name
         if self.product_id:

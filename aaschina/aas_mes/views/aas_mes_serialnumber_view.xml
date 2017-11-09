@@ -10,16 +10,15 @@
                 <tree create="false" edit="false" labelprint="true">
                     <field name="name"/>
                     <field name="sequence_code"/>
-                    <field name="regular_code"/>
-                    <field name="sequence"/>
                     <field name="used"/>
+                    <field name="qualified"/>
+                    <field name="reworked"/>
                     <field name="operator_id"/>
                     <field name="operation_date"/>
                     <field name="internal_product_code"/>
                     <field name="customer_product_code"/>
                     <field name="product_lot"/>
                     <field name="state"/>
-                    <field name="qualified"/>
                 </tree>
             </field>
         </record>
@@ -38,28 +37,27 @@
                         <group>
                             <group>
                                 <field name="name" readonly="1"/>
-                                <field name="used" readonly="1"/>
+                                <field name="operator_id" readonly="1"/>
                                 <field name="internal_product_code" readonly="1"/>
                             </group>
                             <group>
-                                <field name="regular_code" readonly="1"/>
-                                <field name="sequence" readonly="1"/>
+                                <field name="sequence_code" readonly="1"/>
+                                <field name="operation_time" readonly="1"/>
                                 <field name="customer_product_code" readonly="1"/>
                             </group>
                         </group>
                         <group>
                             <group>
-                                <field name="sequence_code" readonly="1"/>
-                                <field name="product_lot" readonly="1"/>
-                                <field name="operator_id" readonly="1"/>
-                                <field name="operation_date" readonly="1"/>
-                                <field name="operation_time" readonly="1"/>
+                                <field name="workorder_id" readonly="1"/>
+                                <field name="output_time" readonly="1"/>
+                                <field name="output_internal" readonly="1" widget="float_time"/>
+                                <field name="outputuser_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="used" readonly="1"/>
                                 <field name="qualified" readonly="1"/>
                                 <field name="reworked" readonly="1"/>
-                                <field name="workorder_id" readonly="1"/>
-                                <field name="outputrecord_id" readonly="1"/>
-                                <field name="outputuser_id" readonly="1"/>
-                                <field name="output_time" readonly="1"/>
+                                <field name="product_lot" readonly="1"/>
                             </group>
                         </group>
                     </sheet>

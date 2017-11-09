@@ -58,6 +58,7 @@ class AASMESLine(models.Model):
     workday_start = fields.Datetime(string=u'当天开工时间', copy=False)
     workday_finish = fields.Datetime(string=u'当天完工时间', copy=False)
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'默认工位')
+    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'新序列号', ondelete='restrict', help=u'最近一次产出的序列号')
 
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'产线名称不可以重复！')

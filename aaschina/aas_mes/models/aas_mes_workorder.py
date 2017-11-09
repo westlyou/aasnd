@@ -360,11 +360,20 @@ class AASMESWorkorder(models.Model):
             # 更新序列号产出信息
             serialrecord = self.env['aas.mes.serialnumber'].search([('name', '=', serialnumber)], limit=1)
             if not serialrecord:
-                return True
-            serialrecord.write({
-                'output_time': fields.Datetime.now(), 'outputuser_id': self.env.user.id,
-                'workorder_id': workorder_id, 'outputrecord_id': outputrecord.id
-            })
+                result.update({'success': False, 'message': u'序列号异常，无法产出！'})
+                return result
+            mesline, output_time = workorder.mesline_id, fields.Datetime.now()
+            outputvals = {
+                'output_time': output_time, 'outputuser_id': self.env.user.id, 'workorder_id': workorder_id,
+                'outputrecord_id': outputrecord.id
+            }
+            if mesline.serialnumber_id:
+                outputvals['lastone_id'] = mesline.serialnumber_id.id
+                currenttime = fields.Datetime.from_string(output_time)
+                lasttime = fields.Datetime.from_string(mesline.serialnumber_id.output_time)
+                outputvals['output_internal'] = (currenttime - lasttime).seconds() / 3600.0
+            serialrecord.write(outputvals)
+            mesline.write({'serialnumber_id': serialrecord.id})
         if container_id:
             # 更新容器中物品清单信息
             cdomain = [('container_id', '=', container_id), ('product_id', '=', product_id), ('product_lot', '=', product_lot)]
@@ -374,8 +383,7 @@ class AASMESWorkorder(models.Model):
                 productline.write({'temp_qty': productline.temp_qty+output_qty})
             else:
                 productline = self.env['aas.container.product'].create({
-                    'container_id': container_id, 'product_id': product_id,
-                    'product_lot': product_lot, 'temp_qty': output_qty
+                    'container_id': container_id, 'product_id': product_id, 'product_lot': product_lot, 'temp_qty': output_qty
                 })
             result['containerproduct'] = productline
         # 更新工单信息

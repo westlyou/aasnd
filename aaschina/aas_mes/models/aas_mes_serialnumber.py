@@ -42,7 +42,9 @@ class AASMESSerialnumber(models.Model):
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'操作设备', ondelete='restrict')
 
+    lastone_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'上一个', ondelete='restrict')
     output_time = fields.Datetime(string=u'产出时间', copy=False)
+    output_internal = fields.Float(string=u'产出间隔', default=0.0, help=u'上一次产出的序列号与本次产出的时间间隔')
     outputuser_id = fields.Many2one(comodel_name='res.users', string=u'产出用户', ondelete='restrict')
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'产出工单', ondelete='restrict')
     outputrecord_id = fields.Many2one(comodel_name='aas.mes.workorder.product', string=u'产出记录', ondelete='restrict')

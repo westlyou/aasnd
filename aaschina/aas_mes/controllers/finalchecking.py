@@ -169,7 +169,7 @@ class AASMESFinalCheckingController(http.Controller):
         if lineuser.mesrole != 'fqcchecker':
             values.update({'success': False, 'message': u'当前登录账号还未授权终检'})
             return values
-        workstation = lineuser.workstation_id
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
         if not workstation:
             values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位！'})
             return values
