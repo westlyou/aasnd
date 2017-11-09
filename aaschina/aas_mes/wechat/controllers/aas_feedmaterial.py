@@ -58,7 +58,7 @@ class AASFeedmaterialWechatController(http.Controller):
         if not linefeeder:
             values.update({'success': False, 'message': u'当前登录用户可能还不是上料员，请仔细检查！'})
             return request.render('aas_mes.wechat_mes_message', values)
-        mesline = linefeeder.mesline_id.id
+        mesline = linefeeder.mesline_id
         materiallabel = request.env['aas.product.label'].search([('barcode', '=', barcode)], limit=1)
         if not materiallabel:
             values.update({'success': False, 'message': u'未获取当前物料的标签信息，请仔细检查！'})
