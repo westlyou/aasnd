@@ -224,7 +224,7 @@ class AASMESWorkticket(models.Model):
         consumelist = self.env['aas.mes.workorder.consume'].search(consumedomain)
         if not consumelist or len(consumelist) <= 0:
             return
-        destlocationid, companyid = self.env.ref('aas_wms.location_production').id, self.env.user.company_id.id
+        destlocationid, companyid = self.env.ref('stock.location_production').id, self.env.user.company_id.id
         tracing = self.env['aas.mes.tracing'].search([('workorder_id', '=', workorder.id), ('workcenter_id', '=', workcenter.id)], limit=1)
         movevallist, consumelines, materiallist, movelist = [], [], [], self.env['stock.move']
         for tempconsume in consumelist:
