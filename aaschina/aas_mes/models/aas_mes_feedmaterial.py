@@ -36,7 +36,7 @@ class AASMESFeedmaterial(models.Model):
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
 
     _sql_constraints = [
-        ('uniq_lot', 'unique (workstation_id, material_id, material_lot)', u'请不要在工位上不要重复添加同一批次的物料！')
+        ('uniq_materiallot', 'unique (mesline_id, workstation_id, material_id, material_lot)', u'请不要在工位上重复添加同一批次的物料！')
     ]
 
 
@@ -85,9 +85,6 @@ class AASMESFeedmaterial(models.Model):
         if vals.get('material_id', False):
             material = self.env['product.product'].browse(vals.get('material_id'))
             vals['material_uom'] = material.uom_id.id
-        if vals.get('workstation_id', False):
-            workstation = self.env['aas.mes.workstation'].browse(vals.get('workstation_id'))
-            vals['mesline_id'] = workstation.mesline_id.id
         record = super(AASMESFeedmaterial, self).create(vals)
         record.action_refresh_stock()
         return record
@@ -99,11 +96,3 @@ class AASMESFeedmaterial(models.Model):
             self.material_uom = self.material_id.uom_id.id
         else:
             self.material_uom = False
-
-
-    @api.onchange('workstation_id')
-    def action_change_workstation(self):
-        if self.workstation_id:
-            self.mesline_id = self.workstation_id.mesline_id.id
-        else:
-            self.mesline_id = False

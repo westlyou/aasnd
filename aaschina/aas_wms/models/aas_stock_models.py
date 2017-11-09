@@ -51,6 +51,10 @@ class ProductTemplate(models.Model):
     split_qty = fields.Float(string=u'拆分批次数量', digits=dp.get_precision('Product Unit of Measure'), help=u'主工单拆分成子工单，子工单的生产数量')
     product_yield = fields.Float(string=u'良率', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
 
+    _sql_constraints = [
+        ('uniq_defaultcode', 'unique(default_code)', u'产品料号不可以重复！')
+    ]
+
     @api.one
     @api.constrains('split_qty', 'product_yield')
     def action_check_template(self):
