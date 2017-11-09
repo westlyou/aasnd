@@ -21,7 +21,7 @@
                             </group>
                         </group>
                         <group>
-                            <group>
+                            <group colspan="4">
                                 <field name="agent_id"/>
                                 <field name="callback_url"/>
                                 <field name="app_token"/>
@@ -29,7 +29,7 @@
                             </group>
                         </group>
                         <group>
-                            <group>
+                            <group colspan="4">
                                 <field name="company_id"/>
                             </group>
                         </group>

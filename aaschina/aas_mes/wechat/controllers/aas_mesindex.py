@@ -13,7 +13,7 @@ import time, random, string
 
 from odoo import http
 from odoo.http import request
-from odoo.exceptions import AccessDenied,UserError,ValidationError
+from odoo.exceptions import AccessDenied, UserError, ValidationError
 from wechatpy.enterprise.crypto import WeChatCrypto
 from wechatpy.enterprise.client import WeChatClient
 
@@ -28,12 +28,12 @@ class AASMESIndexWechatController(http.Controller):
         appdomain = [('app_code', '=', 'aas_mes')]
         aas_application = request.env['aas.wechat.enapplication'].sudo().search(appdomain, limit=1)
         self.token = aas_application.app_token
-        self.encoding_aesey = aas_application.encoding_aes_key
+        self.encoding_aeskey = aas_application.encoding_aes_key
         self.corpid = aas_application.corp_id
         self.role_secret = aas_application.role_secret
 
         global mes_crypto
-        mes_crypto = WeChatCrypto(self.token, self.encoding_aesey, self.corpid)
+        mes_crypto = WeChatCrypto(self.token, self.encoding_aeskey, self.corpid)
         global mes_client
         mes_client = WeChatClient(self.corpid, self.role_secret)
 
