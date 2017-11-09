@@ -65,7 +65,7 @@ mui.ready(function(){
                 var labelbarcode = result.resultStr;
                 var scanparams = {'barcode': labelbarcode, 'workstationid': workstationid};
                 var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
-                var scanmask = aas_picking_detail_loading();
+                var scanmask = aas_feeding_loading();
                 mui.ajax('/aasmes/mes/feeding/materialscan',{
                     data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scanparams, id: access_id }),
                     dataType:'json', type:'post', timeout:10000,
