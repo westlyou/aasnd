@@ -67,7 +67,7 @@
                         <h1 class="mui-title"> 警告信息 </h1>
                     </header>
                     <div class="mui-content mui-scroll-wrapper" style="height:100%;">
-                        <div style="with:100%;height:100%;text-align:center;padding-top:48%;">
+                        <div style="with:100%;height:100%;text-align:center;padding-top:48%;color:red;">
                             <span t-esc="message"/>
                         </div>
 
