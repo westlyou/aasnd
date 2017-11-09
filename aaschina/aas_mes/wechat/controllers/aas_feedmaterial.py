@@ -79,13 +79,13 @@ class AASFeedmaterialWechatController(http.Controller):
             values.update({'success': False, 'message': u'请不要扫描非[%s]产线的物料！'% mesline.name})
             return values
         materialdomain = [('material_id', '=', material.id), ('material_lot', '=', mlot.id)]
-        materialdomain.append(('workstation_id', '=', workstationid))
+        materialdomain.extend([('workstation_id', '=', workstationid), ('mesline_id', '=', mesline.id)])
         tempfeedmaterial = request.env['aas.mes.feedmaterial'].search(materialdomain, limit=1)
         if tempfeedmaterial:
             values.update({'success': False, 'message': u'当前[%s]批次的原料[%s]已经上过料，请不要重复操作！'% (mlot.name, material.default_code)})
             return values
         feedmaterial = request.env['aas.mes.feedmaterial'].create({
-            'material_id': material.id, 'material_lot': mlot.id, 'workstation_id': workstationid
+            'material_id': material.id, 'material_lot': mlot.id, 'workstation_id': workstationid, 'mesline_id': mesline.id
         })
         values.update({
             'feeding_id': feedmaterial.id, 'material_code': materiallabel.product_code,
