@@ -148,22 +148,28 @@
                                         <field name="time_start"/>
                                         <field name="time_finish"/>
                                         <field name="badmode_qty"/>
+                                        <field name="state"/>
                                     </tree>
                                     <form>
-                                        <group>
+                                        <header>
+                                            <field name="state" widget="statusbar" statusbar_visible="draft,waiting,producing,pause,done"/>
+                                        </header>
+                                        <sheet>
                                             <group>
-                                                <field name="sequence"/>
-                                                <field name="workcenter_id"/>
-                                                <field name="input_qty"/>
-                                                <field name="output_qty"/>
+                                                <group>
+                                                    <field name="sequence"/>
+                                                    <field name="workcenter_id"/>
+                                                    <field name="input_qty"/>
+                                                    <field name="output_qty"/>
+                                                </group>
+                                                <group>
+                                                    <field name="time_wait"/>
+                                                    <field name="time_start"/>
+                                                    <field name="time_finish"/>
+                                                    <field name="badmode_qty"/>
+                                                </group>
                                             </group>
-                                            <group>
-                                                <field name="time_wait"/>
-                                                <field name="time_start"/>
-                                                <field name="time_finish"/>
-                                                <field name="badmode_qty"/>
-                                            </group>
-                                        </group>
+                                        </sheet>
                                     </form>
                                 </field>
                             </page>
