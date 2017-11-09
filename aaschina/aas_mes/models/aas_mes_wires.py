@@ -159,10 +159,10 @@ class AASMESWireOrder(models.Model):
         else:
             labeldomain = domain
         if not labeldomain or len(labeldomain) <= 0:
-            return {'success': False, 'message': u'您可能已经选择了所有容器或未选择任何容器，请选中需要打印的容器！'}
+            return {'success': False, 'message': u'您可能已经选择了所有工单或未选择任何工单，请选中需要打印的工单！'}
         records = self.search_read(domain=labeldomain, fields=field_list)
         if not records or len(records) <= 0:
-            values.update({'success': False, 'message': u'未搜索到需要打印的容器！'})
+            values.update({'success': False, 'message': u'未搜索到需要打印的工单！'})
             return values
         records = printer.action_correct_records(records)
         values['records'] = records
