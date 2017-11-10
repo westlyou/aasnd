@@ -148,6 +148,24 @@ class AASBaseRedis(models.Model):
             raise UserError(u"无对应Redis缓存名称配置")
 
 
+    @api.model
+    def get_redis_settings(self, name):
+        """
+        获取redisi缓存配置信息
+        :param name:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        record = self.search([('name', '=', name)], limit=1)
+        if not record:
+            values.update({'success': False, 'message': u'请仔细检查，系统中为搜搜到%s的Redis缓存信息'% name})
+            return values
+        values.update({
+            'host': record.host, 'port': record.port
+        })
+        return values
+
+
     @api.multi
     def connect_test(self):
         self.ensure_one()
