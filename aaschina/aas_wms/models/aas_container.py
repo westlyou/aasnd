@@ -23,6 +23,7 @@ class AASContainer(models.Model):
     _inherits = {'stock.location': 'stock_location_id'}
 
     barcode = fields.Char(string=u'条码', copy=False, index=True)
+    alias = fields.Char(string=u'说明', copy=False)
     stock_location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', required=True, ondelete='cascade', auto_join=True, index=True)
     location_id = fields.Many2one(comodel_name='stock.location', string=u'上级库位', default= lambda self: self.env.ref('aas_wms.stock_location_container'))
 

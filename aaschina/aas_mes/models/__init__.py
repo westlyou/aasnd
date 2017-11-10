@@ -35,6 +35,7 @@
 MESLINETYPE = [('station', u'工位式生产'), ('flowing', u'流水线生产')]
 
 import aas_mes_models
+import aas_mes_line
 import aas_mes_working
 import aas_mes_badmode
 import aas_mes_routing

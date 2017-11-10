@@ -22,6 +22,7 @@
         'views/aas_stock_report_view.xml',
         'views/aas_mes_models_view.xml',
         'wizard/aas_mes_models_wizard_view.xml',
+        'views/aas_mes_line_view.xml',
         'views/aas_mes_working_view.xml',
         'views/aas_mes_attendance_templates.xml',
         'views/aas_mes_badmode_view.xml',

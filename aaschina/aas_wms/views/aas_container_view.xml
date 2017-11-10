@@ -8,7 +8,8 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree labelprint="true" import="true">
-                    <field name="name"/>
+                    <field name="name" string="编码"/>
+                    <field name="alias"/>
                     <field name="location_id"/>
                 </tree>
             </field>
@@ -27,7 +28,7 @@
                     <sheet>
                         <group>
                             <group>
-                                <field name="name" string="名称"/>
+                                <field name="name" string="编码"/>
                                 <field name="barcode" readonly="1"/>
                                 <field name="mrblocation" readonly="1"/>
                                 <field name="edgelocation" readonly="1"/>
@@ -42,6 +43,7 @@
                         </group>
                         <group>
                             <group colspan="4">
+                                <field name="alias"/>
                                 <field name="partner_id" options="{'no_create':true}"/>
                             </group>
                         </group>
@@ -83,7 +85,8 @@
             <field name="model">aas.container</field>
             <field name="arch" type="xml">
                 <search>
-                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="name" string="编码" filter_domain="[('name','ilike',self)]"/>
+                    <field name="alias" string="说明" filter_domain="[('alias','ilike',self)]"/>
                     <field name="location_id" string="上级库位" filter_domain="[('location_id','ilike',self)]"/>
                     <separator/>
                     <filter string="线边库容器" domain="[('edgelocation','=',True)]" />

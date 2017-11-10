@@ -37,10 +37,10 @@
                 <form create="false" edit="false" delete="false" labelprint="true">
                     <header>
                         <button name="action_unpack" string="拆包" type="object" class="oe_highlight"
-                                attrs="{'invisible': ['|','|',('has_children','=',False),('state','!=','normal'),('locked','=',True)]}"
+                                attrs="{'invisible': ['|','|','|',('has_children','=',False),('state','!=','normal'),('locked','=',True),('isproduction','=',True)]}"
                                 groups="stock.group_stock_user,stock.group_stock_manager"/>
                         <button name="action_split" string="拆分" type="object" class="oe_highlight"
-                                attrs="{'invisible': ['|','|',('has_children','=',True), ('state','!=','normal'),('locked','=',True)]}"
+                                attrs="{'invisible': ['|','|','|',('has_children','=',True), ('state','!=','normal'),('locked','=',True),('isproduction','=',True)]}"
                                 groups="stock.group_stock_user,stock.group_stock_manager"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,normal,frozen,over"/>
                     </header>
@@ -92,6 +92,7 @@
                                 <field name="company_id"/>
                                 <field name="barcode" invisible="1"/>
                                 <field name="has_children" invisible="1"/>
+                                <field name="isproduction" invisible="1"/>
                             </group>
                         </group>
                         <notebook>

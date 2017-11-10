@@ -21,6 +21,9 @@
                                     domain="[('id','child_of',inventory_location)]"/>
                         </group>
                     </group>
+                    <group>
+                        <group> <field name="systemstock"/> </group>
+                    </group>
                     <notebook>
                         <page string="批次明细">
                             <field name="lot_lines" context="{'default_product_lot':product_lot}">

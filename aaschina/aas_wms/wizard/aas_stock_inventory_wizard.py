@@ -27,6 +27,7 @@ class AASStockInventoryAddlabelWizard(models.TransientModel):
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='restrict')
     product_lot = fields.Char(string=u'批次')
+    systemstock = fields.Boolean(string=u'系统库存', default=False, copy=False)
 
     lot_lines = fields.One2many(comodel_name='aas.stock.inventory.addlabel.lots.wizard', inverse_name='wizard_id', string=u'批次明细')
     label_lines = fields.One2many(comodel_name='aas.stock.inventory.addlabel.labels.wizard', inverse_name='wizard_id', string=u'标签明细')
@@ -93,24 +94,28 @@ class AASStockInventoryAddlabelWizard(models.TransientModel):
             })
             labelist.append(templabel)
         movedict, inventory_location, current_time = {}, self.env.ref('stock.location_inventory'), fields.Datetime.now()
-        for lotline in self.lot_lines:
-            templotid = lotdict[lotline.product_lot]
-            mkey = 'M_'+str(self.product_id.id)+'_'+str(templotid)+'_'+str(self.location_id.id)+'_'+str(inventory_location.id)
-            if mkey in movedict:
-                movedict[mkey]['product_uom_qty'] += lotline.product_qty
-            else:
-                movedict[mkey] = {
-                    'name': self.product_id.name,
-                    'product_id': self.product_id.id,
-                    'product_uom': self.product_id.uom_id.id,
-                    'create_date': current_time,
-                    'restrict_lot_id': templotid,
-                    'product_uom_qty': lotline.product_qty,
-                    'location_id': inventory_location.id,
-                    'location_dest_id': self.location_id.id
-                }
-        for tkey, tval in movedict.items():
-            self.env['stock.move'].create(tval).action_done()
+        if not self.systemstock:
+            for lotline in self.lot_lines:
+                templotid = lotdict[lotline.product_lot]
+                mkey = 'M_'+str(self.product_id.id)+'_'+str(templotid)+'_'+str(self.location_id.id)+'_'+str(inventory_location.id)
+                if mkey in movedict:
+                    movedict[mkey]['product_uom_qty'] += lotline.product_qty
+                else:
+                    movedict[mkey] = {
+                        'name': self.product_id.name,
+                        'product_id': self.product_id.id,
+                        'product_uom': self.product_id.uom_id.id,
+                        'create_date': current_time,
+                        'restrict_lot_id': templotid,
+                        'product_uom_qty': lotline.product_qty,
+                        'location_id': inventory_location.id,
+                        'location_dest_id': self.location_id.id
+                    }
+        if movedict and len(movedict) > 0:
+            movelist = self.env['stock.move']
+            for tkey, tval in movedict.items():
+                movelist |= self.env['stock.move'].create(tval)
+            movelist.action_done()
         self.inventory_id.action_refresh()
         self.inventory_id.write({'inventory_labels': [(0, 0, {'label_id': tlabel.id}) for tlabel in labelist]})
 

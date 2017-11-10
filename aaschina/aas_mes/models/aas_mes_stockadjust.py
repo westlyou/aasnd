@@ -112,6 +112,13 @@ class AASMESStockadjust(models.Model):
             for feedmaterial in feedmateriallist:
                 feedmaterial.action_refresh_stock()
 
+    @api.multi
+    def unlink(self):
+        for record in self:
+            if record.state == 'done':
+                raise UserError(u'调整记录已经执行，不可以删除！')
+        return super(AASMESStockadjust, self).unlink()
+
 
 
 
