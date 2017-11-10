@@ -184,6 +184,7 @@
                         </div>
                     </div>
                 </body>
+                <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
                 <script src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
                 <script src="/aas_base/static/wechat/mui/js/mui.picker.min.js"></script>
                 <script src="/aas_mes/static/wechat/wechat_mes_workticketfinish.js"></script>
