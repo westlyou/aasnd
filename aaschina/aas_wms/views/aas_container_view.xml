@@ -7,7 +7,7 @@
             <field name="model">aas.container</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree labelprint="true">
+                <tree labelprint="true" import="true">
                     <field name="name"/>
                     <field name="location_id"/>
                 </tree>
