@@ -95,3 +95,29 @@ class AASMESFeedmaterial(models.Model):
             self.material_uom = self.material_id.uom_id.id
         else:
             self.material_uom = False
+
+
+    @api.model
+    def get_workstation_materiallist(self, equipment_code):
+        """
+        根据设备获取相应产线工位的上料清单
+        :param equipment_code:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'materiallist': []}
+        equipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)
+        if not equipment:
+            values.update({'success': False, 'message': u'请仔细检查设备编码是否正确，系统中未搜索到此设备！'})
+            return values
+        if not equipment.mesline_id or not equipment.workstation_id:
+            values.update({'success': False, 'message': u'设备当前还未绑定产线和工位，请联系相关人员设置产线和工位！'})
+            return values
+        feeddomain = [('mesline_id', '=', equipment.mesline_id.id), ('workstation_id', '=', equipment.workstation_id.id)]
+        feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
+        if feedmateriallist and len(feedmateriallist) > 0:
+            values['materiallist'] = [{
+                'material_id': feedmaterial.material_id.id, 'material_code': feedmaterial.material_id.default_code,
+                'materiallot_id': feedmaterial.material_lot.id, 'materiallot_name': feedmaterial.material_lot.name,
+                'material_qty': feedmaterial.material_qty
+            } for feedmaterial in feedmateriallist]
+        return values
