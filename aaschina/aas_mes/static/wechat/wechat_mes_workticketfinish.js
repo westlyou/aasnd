@@ -219,6 +219,7 @@ mui.ready(function(){
             mui.toast('操作正在处理，请耐心等待！');
             return ;
         }
+        var workticketid = parseInt(document.getElementById('workticket_finish_pullrefresh').getAttribute('workticketid'));
         var params = {'workticketid': workticketid};
         var needcontainer = document.getElementById('container_line').getAttribute('needcontainer');
         if(needcontainer == 'wanted'){
@@ -264,7 +265,6 @@ mui.ready(function(){
             return ;
         }
         finish_flag = true;
-        var workticketid = parseInt(document.getElementById('workticket_finish_pullrefresh').getAttribute('workticketid'));
         var badmodelist = document.querySelectorAll('.aas-badmode');
         if(badmodelist!=undefined && badmodelist.length>0){
             var badmode_lines = [];
