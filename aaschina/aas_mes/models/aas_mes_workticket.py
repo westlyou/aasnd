@@ -313,8 +313,8 @@ class AASMESWorkticket(models.Model):
             workorder.write({
                 'workcenter_id': False, 'workcenter_name': False, 'workcenter_finish': self.id,
                 'product_lines': [(0, 0, {
-                    'mesline_id': mesline.id, 'product_id': product.id,
-                    'product_qty': self.output_qty, 'product_lot': product_lot.id,
+                    'mesline_id': mesline.id, 'product_id': product.id, 'product_qty': self.output_qty,
+                    'product_lot': product_lot.id, 'output_date': self.mesline_id.workdate,
                     'container_id': False if not self.container_id else self.container_id.id,
                     'schedule_id': False if not self.mesline_id.schedule_id else self.mesline_id.schedule_id.id
                 })]
