@@ -178,3 +178,15 @@ class AASWorkorderWechatController(http.Controller):
         if workorder.state == 'done':
             workorder.write({'time_finish': fields.Datetime.now()})
         return values
+
+
+
+    @http.route('/aaswechat/mes/workticket/scancontainer', type='json', auth="user")
+    def aas_wechat_mes_workticket_scancontainer(self, barcode):
+        values = {'success': True, 'message': ''}
+        container = request.env['aas.container'].search([('barcode', '=', barcode)], limit=1)
+        if not container:
+            values.update({'success': False, 'message': u'请检查二维码是否是有效的容器二维码！'})
+            return values
+        values.update({'container_id': container.id, 'container_name': container.name})
+        return values

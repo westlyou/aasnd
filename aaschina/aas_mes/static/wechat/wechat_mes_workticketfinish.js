@@ -299,4 +299,34 @@ mui.ready(function(){
         });
     });
 
+    //扫描容器
+    document.getElementById('action_scancontainer').addEventListener('tap', function(){
+        wx.scanQRCode({
+            needResult: 1,
+            desc: '扫描容器',
+            scanType: ["qrCode"],
+            success: function (result) {
+                var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+                var barcode = result.resultStr;
+                mui.ajax('/aaswechat/mes/workticket/scancontainer',{
+                    data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {'barcode': barcode}, id: access_id }),
+                    dataType:'json', type:'post', timeout:10000,
+                    headers:{'Content-Type':'application/json'},
+                    success:function(data){
+                        var dresult = data.result;
+                        if (!dresult.success){
+                            mui.toast(dresult.message);
+                            return ;
+                        }
+                        var mescontainer = document.getElementById('mes_container');
+                        mescontainer.setAttribute('containerid', dresult.container_id);
+                        mescontainer.innerHTML = dresult.container_name;
+                    },
+                    error:function(xhr,type,errorThrown){ console.log(type);}
+                });
+            },
+            fail: function (result) {mui.toast(result.errMsg);}
+        });
+    });
+
 });
