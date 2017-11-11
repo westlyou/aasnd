@@ -23,9 +23,12 @@
                 <form labelprint="true">
                     <header>
                         <button name="action_move" type="object" string="调拨" class="oe_highlight"/>
-                        <button name="action_show_moves" type="object" string="调拨清单" class="oe_highlight"/>
+                        <button name="action_adjust" type="object" string="库存调整" class="oe_highlight"/>
                     </header>
                     <sheet>
+                        <div class="oe_button_box" name="button_box">
+                           <button name="action_show_moves" type="object" class="oe_stat_button" string="调拨清单" icon="fa-list"/>
+                        </div>
                         <group>
                             <group>
                                 <field name="name" string="编码"/>
@@ -241,6 +244,45 @@
                     <notebook>
                         <page string="调拨备注">
                             <field name="move_note"/>
+                        </page>
+                    </notebook>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_form_aas_container_adjust_wizard" model="ir.ui.view">
+            <field name="name">aas.container.adjust.wizard</field>
+            <field name="model">aas.container.adjust.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="container_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="调整明细">
+                            <field name="adjust_lines">
+                                <tree editable="bottom">
+                                    <field name="line_id" invisible="1"/>
+                                    <field name="label_id" options="{'no_create':true}"
+                                           attrs="{'readonly':[('line_id','!=',False)]}"/>
+                                    <field name="product_id" options="{'no_create':true}" required="1"
+                                            attrs="{'readonly':['|',('line_id','!=',False),('label_id','!=',False)]}"/>
+                                    <field name="product_lot" options="{'no_create':true}"
+                                           domain="[('product_id','=',product_id)]"
+                                           attrs="{'readonly':['|',('line_id','!=',False),('label_id','!=',False)]}"/>
+                                    <field name="stock_qty" attrs="{'readonly':[('label_id','!=',False)]}"/>
+                                    <field name="temp_qty" attrs="{'readonly':[('label_id','!=',False)]}"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="调整备注">
+                            <field name="adjust_note"/>
                         </page>
                     </notebook>
                     <footer>

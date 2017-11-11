@@ -214,6 +214,8 @@ class AASMESWorkorder(models.Model):
                 if not virtualbom.bom_lines or len(virtualbom.bom_lines) <= 0:
                     raise UserError(u'请先仔细检查虚拟物料%s的BOM清单是否正确设置！'% tempmaterial.default_code)
                 for virtualbomline in virtualbom.bom_lines:
+                    if virtualbomline.product_id.virtual_material:
+                        continue
                     virtual_consume_unit = virtualbomline.product_qty / virtualbom.product_qty
                     total_consume_unit = consume_unit * virtual_consume_unit
                     consumelist.append((0, 0, {

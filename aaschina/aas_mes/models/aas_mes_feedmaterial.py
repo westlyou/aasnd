@@ -86,7 +86,6 @@ class AASMESFeedmaterial(models.Model):
         record = super(AASMESFeedmaterial, self).create(vals)
         record.write({'material_uom': record.material_id.uom_id.id})
         record.action_refresh_stock()
-        record.action_disable_labellist()
         return record
 
 
@@ -96,25 +95,6 @@ class AASMESFeedmaterial(models.Model):
             self.material_uom = self.material_id.uom_id.id
         else:
             self.material_uom = False
-
-    @api.one
-    def action_disable_labellist(self):
-        """
-        将当前产线上与上料的物料批次相同的标签状态更新为消亡
-        :return:
-        """
-        if not self.mesline_id.location_production_id:
-            return
-        if not self.mesline_id.location_material_list or len(self.mesline_id.location_material_list) <= 0:
-            return
-        locationids = [self.mesline_id.location_production_id.id]
-        for mlocation in self.mesline_id.location_material_list:
-            locationids.append(mlocation.location_id.id)
-        labeldomain = [('product_id', '=', self.material_id.id), ('product_lot', '=', self.material_lot.id)]
-        labeldomain.extend([('state', '=', 'normal'), ('location_id', 'child_of', locationids)])
-        labellist = self.env['aas.product.label'].search(labeldomain)
-        if labellist and len(labellist) > 0:
-            labellist.write({'state': 'over'})
 
 
 

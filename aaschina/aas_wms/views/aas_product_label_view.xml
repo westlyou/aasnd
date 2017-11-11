@@ -210,5 +210,126 @@
         <menuitem id="menu_aas_product_label_list"  name="产品标签" action="action_aas_product_label"
                           parent="menu_aas_product_label" sequence="1" groups="stock.group_stock_user,stock.group_stock_manager"/>
 
+
+        <record id="view_tree_aas_product_label_adjust" model="ir.ui.view">
+            <field name="name">aas.product.label.adjust.tree</field>
+            <field name="model">aas.product.label.adjust</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="product_id"/>
+                    <field name="adjuster_id"/>
+                    <field name="adjust_time"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_product_label_adjust" model="ir.ui.view">
+            <field name="name">aas.product.label.adjust.form</field>
+            <field name="model">aas.product.label.adjust</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_adjust" type="object" string="调整完成" class="oe_highlight" states="draft"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="product_id" options="{'no_create':true}" required="1"
+                                       attrs="{'readonly':[('state','=','done')]}"/>
+                            </group>
+                            <group>
+                                <field name="adjuster_id" readonly="1"/>
+                                <field name="adjust_time" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="调整明细">
+                                <field name="label_lines" attrs="{'readonly':[('state','=','done')]}">
+                                    <tree editable="bottom">
+                                        <field name="label_id" options="{'no_create':true}" required="1"
+                                               domain="[('product_id','=',parent.product_id),('isproduction','=',False),('locked','=',False),('state','=','normal'),('parent_id','=',False),('has_children','=',False)]"/>
+                                        <field name="product_lot" readonly="1"/>
+                                        <field name="before_qty" readonly="1"/>
+                                        <field name="after_qty" required="1"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="label_id" options="{'no_create':true}" required="1"
+                                                       domain="[('product_id','=',parent.product_id),('isproduction','=',False),('locked','=',False),('state','=','normal'),('parent_id','=',False),('has_children','=',False)]"/>
+                                                <field name="product_lot" readonly="1"/>
+                                            </group>
+                                            <group>
+                                                <field name="before_qty" readonly="1"/>
+                                                <field name="after_qty" required="1"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="调整说明">
+                                <field name="adjust_note" required="1" attrs="{'readonly':[('state','=','done')]}"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_product_label_adjust" model="ir.ui.view">
+            <field name="name">aas.product.label.adjust.search</field>
+            <field name="model">aas.product.label.adjust</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="adjuster_id" string="调整人" filter_domain="[('adjuster_id','ilike',self)]"/>
+                    <separator/>
+                    <filter string="未完成" domain="[('state','=','draft')]" />
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="调整人" context="{'group_by':'adjuster_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_product_label_adjust" model="ir.actions.act_window">
+            <field name="name">标签调整</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.product.label.adjust</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_product_label_adjust"/>
+            <field name="search_view_id" ref="view_search_aas_product_label_adjust"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加标签调整</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_product_label_adjust" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_product_label_adjust"/>
+            <field name="act_window_id" ref="action_aas_product_label_adjust"/>
+        </record>
+
+        <record id="act_view_form_aas_product_label_adjust" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_product_label_adjust"/>
+            <field name="act_window_id" ref="action_aas_product_label_adjust"/>
+        </record>
+
+        <menuitem id="menu_aas_product_label_adjust"  name="标签调整" action="action_aas_product_label_adjust"
+                          parent="menu_aas_product_label" sequence="3" groups="stock.group_stock_user,stock.group_stock_manager"/>
+
     </data>
 </odoo>

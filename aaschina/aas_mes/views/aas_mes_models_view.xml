@@ -103,10 +103,6 @@
                           parent="menu_aas_mes_resources" sequence="1" groups="group_aas_manufacture_user"/>
 
 
-        <menuitem id="menu_aas_product_label_mes"  name="标签" action="aas_wms.action_aas_product_label"
-                          parent="menu_aas_mes_resources" sequence="2" groups="group_aas_manufacture_user"/>
-
-
         <record id="view_kanban_aas_hr_employee_mes" model="ir.ui.view">
             <field name="name">aas.hr.employee.mes.kanban</field>
             <field name="model">aas.hr.employee</field>

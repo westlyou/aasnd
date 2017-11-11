@@ -241,24 +241,3 @@ class StockSettings(models.TransientModel):
         for name, groups, implied_group in classified['group']:
             if name in check_group_fields:
                 groups.write({'implied_ids': [(4, implied_group.id)]})
-
-# 容器调拨向导
-class AASContainerMoveWizard(models.TransientModel):
-    _name = 'aas.container.move.wizard'
-    _description = 'AAS Container Move Wizard'
-
-    container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict')
-    location_src_id = fields.Many2one(comodel_name='stock.location', string=u'来源库位', ondelete='restrict')
-    location_dest_id = fields.Many2one(comodel_name='stock.location', string=u'目标库位', ondelete='restrict')
-    move_note = fields.Text(string=u'备注')
-
-    @api.one
-    def action_done(self):
-        tempcount = self.env['aas.container.product'].search_count([('container_id', '=', self.container_id.id), ('product_label', '=', False)])
-        if not self.location_dest_id.edgelocation and tempcount > 0:
-            raise UserError(u'容器中还有未打包成标签的产品不可以直接调拨到仓库库存库位！')
-        self.env['aas.container.move'].create({
-            'container_id': self.container_id.id, 'location_src_id': self.location_src_id.id,
-            'location_dest_id': self.location_dest_id.id, 'move_note': False if not self.move_note else self.move_note
-        })
-        self.container_id.write({'location_id': self.location_dest_id.id})

@@ -4,7 +4,7 @@ from odoo import api, fields, models, _
 from odoo.addons import decimal_precision as dp
 from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.tools.float_utils import float_compare
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 import math
 import logging
@@ -210,7 +210,8 @@ class AASProductLabel(models.Model):
         if 'product_lot' in vals:
             raise UserError(u'标签的批次不可以变更！')
         if 'product_qty' in vals:
-            self.action_journal_qty(vals.get('product_qty'))
+            operate_order = self.env.context.get('operate_order', False)
+            self.action_journal_qty(vals.get('product_qty'), operate_order)
         if vals.get('location_id'):
             self.action_journal_location(vals.get('location_id'))
         result = super(AASProductLabel, self).write(vals)
@@ -219,7 +220,7 @@ class AASProductLabel(models.Model):
 
 
     @api.multi
-    def action_journal_qty(self, product_qty):
+    def action_journal_qty(self, product_qty, operate_order=None):
         for record in self:
             journalvals = {'label_id': record.id}
             temp_qty = record.product_qty - product_qty
@@ -230,6 +231,8 @@ class AASProductLabel(models.Model):
             journalvals.update({'journal_qty': abs(temp_qty), 'balance_qty': product_qty})
             if record.company_id:
                 journalvals['company_id'] = record.company_id.id
+            if operate_order:
+                journalvals['operate_order'] = operate_order
             self.env['aas.product.label.journal'].create(journalvals)
 
     @api.multi
@@ -384,6 +387,112 @@ class AASProductLabelJournal(models.Model):
         self.action_before_create(vals)
         return super(AASProductLabelJournal, self).create(vals)
 
+# 标签调整记录
+class AASProductLabelAdjust(models.Model):
+    _name = 'aas.product.label.adjust'
+    _description = 'AAS Product Label Adjust'
+
+    name = fields.Char(string=u'名称', copy=False)
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
+    adjust_time = fields.Datetime(string=u'调整时间', default=fields.Datetime.now, copy=False)
+    adjuster_id = fields.Many2one(comodel_name='res.users', string=u'调整人', ondelete='restrict', default=lambda self:self.env.user)
+    adjust_note = fields.Text(string=u'调整说明')
+    state = fields.Selection(selection=[('draft', u'草稿'), ('done', u'完成')], string=u'状态', default='draft', copy=False)
+    label_lines = fields.One2many(comodel_name='aas.product.label.adjust.line', inverse_name='adjust_id', string=u'调整明细')
+
+    @api.onchange('product_id')
+    def change_product(self):
+        self.label_lines = False
+
+    @api.model
+    def create(self, vals):
+        vals['name'] = self.env['ir.sequence'].next_by_code('aas.product.label.adjust')
+        return super(AASProductLabelAdjust, self).create(vals)
+
+    @api.multi
+    def unlink(self):
+        for record in self:
+            if record.state == 'done':
+                raise UserError(u'调整已完成，不可以删除！')
+        return super(AASProductLabelAdjust, self).unlink()
+
+    @api.one
+    def action_adjust(self):
+        if not self.label_lines or len(self.label_lines) <= 0:
+            raise UserError(u'请先添加调整明细')
+        movedict, destlocation, company = {}, self.env.ref('stock.location_inventory'), self.env.user.company_id
+        for mline in self.label_lines:
+            tlabel = mline.label_id
+            balance_qty = mline.before_qty - mline.after_qty
+            if not tlabel.isproduction:
+                if float_compare(balance_qty, 0.0, precision_rounding=0.0000001) > 0:
+                    mkey = 'M-0-'+str(tlabel.location_id)+'-'+str(tlabel.product_lot.id)
+                    if mkey in movedict:
+                        movedict[mkey]['product_uom_qty'] += balance_qty
+                    else:
+                        movedict[mkey] = {
+                            'name': self.name, 'product_id': self.product_id.id, 'product_uom': tlabel.product_uom.id, 'create_date': fields.Datetime.now(),
+                            'restrict_lot_id': tlabel.product_lot.id, 'product_uom_qty': balance_qty, 'location_id': tlabel.location_id.id, 'location_dest_id': destlocation.id, 'company_id': company.id
+                        }
+                else:
+                    mkey = 'M-'+str(tlabel.location_id)+'-0-'+str(tlabel.product_lot.id)
+                    if mkey in movedict:
+                        movedict[mkey]['product_uom_qty'] += abs(balance_qty)
+                    else:
+                        movedict[mkey] = {
+                            'name': self.name, 'product_id': self.product_id.id, 'product_uom': tlabel.product_uom.id, 'create_date': fields.Datetime.now(),
+                            'restrict_lot_id': tlabel.product_lot.id, 'product_uom_qty': abs(balance_qty), 'location_id': destlocation.id, 'location_dest_id': tlabel.location_id.id, 'company_id': company.id
+                        }
+            tlabel.with_context({'operate_order': self.name}).write({'product_qty': mline.after_qty})
+        if movedict and len(movedict) > 0:
+            movelist = self.env['stock.move']
+            for mkey, mval in movedict.items():
+                movelist |= self.env['stock.move'].create(mval)
+            movelist.action_done()
+        self.write({'state': 'done', 'adjust_time': fields.Datetime.now()})
+
+
+
+# 标签调整明细
+class AASProductLabelAdjustLine(models.Model):
+    _name = 'aas.product.label.adjust.line'
+    _description = 'AAS Product Label Adjust Line'
+
+    adjust_id = fields.Many2one(comodel_name='model.name', string=u'调整', ondelete='cascade')
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    before_qty = fields.Float(string=u'调整前数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    after_qty = fields.Float(string=u'调整后数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+
+    @api.onchange('label_id')
+    def change_label(self):
+        if self.label_id:
+            self.product_lot, self.before_qty = self.label_id.product_lot.id, self.label_id.product_qty
+        else:
+            self.product_lot, self.before_qty = False, 0.0
+
+    @api.one
+    @api.constrains('after_qty')
+    def action_check_afterqty(self):
+        if float_compare(self.after_qty, 0.0, precision_rounding=0.000001) < 0.0:
+            raise ValidationError(u'调整后的数量不能小于零！')
+        if float_compare(self.after_qty, self.before_qty, precision_rounding=0.000001) == 0.0:
+            raise ValidationError(u'调整前后的数量不能相同！')
+
+
+
+    @api.model
+    def create(self, vals):
+        tlabel = self.env['aas.product.label'].browse(vals.get('label_id'))
+        vals.update({'product_lot': tlabel.product_lot.id, 'before_qty': tlabel.product_qty})
+        return super(AASProductLabelAdjustLine, self).create(vals)
+
+    @api.multi
+    def write(self, vals):
+        if vals.get('label_id', False):
+            tlabel = self.env['aas.product.label'].browse(vals.get('label_id'))
+            vals.update({'product_lot': tlabel.product_lot.id, 'before_qty': tlabel.product_qty})
+        return super(AASProductLabelAdjustLine, self).write(vals)
 
 
 class ProductProduct(models.Model):

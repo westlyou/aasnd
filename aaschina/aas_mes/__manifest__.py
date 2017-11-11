@@ -35,6 +35,7 @@
         'views/aas_mes_tracing_view.xml',
         'views/aas_mes_feedmaterial_view.xml',
         'views/aas_mes_stockadjust_view.xml',
+        'views/aas_product_label_view.xml',
         'views/aas_mes_lineusers_view.xml',
         'views/aas_mes_serialnumber_view.xml',
         'views/aas_mes_serialnumber_templates.xml',
