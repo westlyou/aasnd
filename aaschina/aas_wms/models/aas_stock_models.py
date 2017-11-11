@@ -50,6 +50,7 @@ class ProductTemplate(models.Model):
     virtual_material = fields.Boolean(string=u'虚拟物料', default=False, copy=False)
     split_qty = fields.Float(string=u'拆分批次数量', digits=dp.get_precision('Product Unit of Measure'), help=u'主工单拆分成子工单，子工单的生产数量')
     product_yield = fields.Float(string=u'良率', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
+    weld_count = fields.Integer(string=u'焊接次数')
 
     _sql_constraints = [
         ('uniq_defaultcode', 'unique(default_code)', u'产品料号不可以重复！')

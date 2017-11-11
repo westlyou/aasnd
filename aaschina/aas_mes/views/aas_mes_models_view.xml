@@ -50,9 +50,10 @@
                                 <field name="customer_product_code"/>
                             </group>
                             <group>
+                                <field name="virtual_material"/>
+                                <field name="weld_count"/>
                                 <field name="need_warranty"/>
                                 <field name="stock_age"/>
-                                <field name="virtual_material"/>
                                 <field name="split_qty"/>
                                 <field name="product_yield"/>
                             </group>
