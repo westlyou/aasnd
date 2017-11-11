@@ -7,7 +7,7 @@
             <field name="model">aas.container</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree labelprint="true" import="true">
+                <tree labelprint="true" batchadd="true">
                     <field name="name" string="编码"/>
                     <field name="alias"/>
                     <field name="location_id"/>

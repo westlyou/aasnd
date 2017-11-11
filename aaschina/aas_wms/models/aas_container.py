@@ -124,6 +124,23 @@ class AASContainer(models.Model):
             'target': 'self'
         }
 
+    @api.model
+    def action_batchadd(self, rulecode, addcount, addnote):
+        values = {'success': True, 'message': ''}
+        location_id = self.env.ref('aas_wms.stock_location_container').id
+        maxone = self.env['aas.container'].search([('name', 'like', rulecode+'%')], order='name desc', limit=1)
+        if maxone:
+            startindex = int(maxone.name[len(rulecode):]) + 1
+        else:
+            startindex = 1
+        startindex += 1000000
+        for index in range(0, addcount):
+            tempname = str(startindex+index)[1:]
+            self.env['aas.container'].create({
+                'name': rulecode+tempname, 'location_id': location_id, 'alias': addnote, 'usage': 'container'
+            })
+        return values
+
 
 # 容器调拨记录
 class AASContainerMove(models.Model):

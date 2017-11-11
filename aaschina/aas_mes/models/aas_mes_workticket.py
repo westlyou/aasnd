@@ -21,7 +21,7 @@ _logger = logging.getLogger(__name__)
 # 工票
 
 TICKETSTATES = [('draft', u'草稿'), ('waiting', u'等待'), ('producing', u'生产'), ('pause', u'暂停'), ('done', u'完成')]
-
+TICKETSTATEDICT = {'draft': u'草稿', 'waiting': u'等待', 'producing': u'生产', 'pause': u'暂停', 'done': u'完成'}
 
 class AASMESWorkticket(models.Model):
     _name = 'aas.mes.workticket'
@@ -344,6 +344,100 @@ class AASMESWorkticket(models.Model):
             return False
         else:
             return True
+
+
+    @api.model
+    def get_workstation_workticket(self, equipment_code, barcode):
+        """
+        当前工位上获取工票
+        :param equipment_code: 设备编码
+        :param barcode: 子工单条码
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        equipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)
+        if not equipment:
+            values.update({'success': False, 'message': u'设备编码异常，未搜索到相应编码的设备；请仔细检查！'})
+            return values
+        values.update({'equipment_id': equipment.id, 'equipment_code': equipment_code})
+        mesline, workstation = equipment.mesline_id, equipment.workstation_id
+        if not mesline:
+            values.update({'success': False, 'message': u'设备还未绑定产线，请联系相关人员设置！'})
+            return values
+        if not mesline.location_production_id or (not mesline.location_material_list or len(mesline.location_material_list)<= 0):
+            values.update({'success': False, 'message': u'产线%s还未设置成品原料库位，请联系相关人员设置！'})
+            return values
+        if not workstation:
+            values.update({'success': False, 'message': u'设备还未绑定工位，请联系相关人员设置！'})
+            return values
+        workorder = self.env['aas.mes.workorder'].search([('barcode', '=', barcode)], limit=1)
+        if not workorder:
+            values.update({'success': False, 'message': u'系统中未搜索到此工单，请仔细检查！'})
+            return values
+        if workorder.state == 'draft':
+            values.update({'success': False, 'message': u'工单%s还未投入生产，请不要扫描此工单'% workorder.name})
+            return values
+        if workorder.state == 'done':
+            values.update({'success': False, 'message': u'工单%s已完成，请不要扫描此工单'% workorder.name})
+            return values
+        if not workorder.workticket_lines or len(workorder.workticket_lines) <= 0:
+            values.update({'success': False, 'message': u'工单异常，工单%s没有工票清单，请仔细检查！'% workorder.name})
+            return values
+        routing = workorder.routing_id
+        workcenter = self.env['aas.mes.routing.line'].search([('routing_id', '=', routing.id), ('workstation_id', '=', workstation.id)], limit=1)
+        if not workcenter:
+            values.update({'success': False, 'message': u'工艺异常，可能未将工位%s设置到工艺路线中,请仔细检查！'% workstation.code})
+            return values
+        workticket = workorder.workcenter_id
+        if workticket.workcenter_id.id != workcenter.id:
+            values.update({'success': False, 'message': u'工艺异常，工位的工序和工单的工艺工序冲突，请仔细检查！'})
+            return values
+        values.update({
+            'workticket_id': workticket.id, 'workticket_name': workticket.name, 'state': TICKETSTATEDICT[workticket.state],
+            'workcenter_name': workcenter.name, 'sequence': workticket.sequence, 'input_qty': workticket.input_qty, 'mesline_name': workticket.mesline_name,
+            'schedule_name': '' if not workticket.schedule_id else workticket.schedule_id.name, 'lastworkcenter': workticket.islastworkcenter()
+        })
+        return values
+
+    @api.model
+    def action_workticket_start_onstationclient(self, workticket_id, equipment_id):
+        """
+        工控工位客户端上开工
+        :param workticket_id:
+        :param equipment_id:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        equipment = self.env['aas.equipment.equipment'].browse(equipment_id)
+        mesline, workstation = equipment.mesline_id, equipment.workstation_id
+        wemployees = self.env['aas.mes.workstation.employee'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
+        if not wemployees or len(wemployees) <= 0:
+            values.update({'success': False, 'message': u'当前工位上还没有员工上岗，请先让员工上岗再进行其他操作！'})
+            return values
+        workticket = self.env['aas.mes.workticket'].browse(workticket_id)
+        workticket.action_doing_start()
+        return values
+
+    @api.model
+    def action_workticket_finish_onstationclient(self, workticket_id, equipment_id):
+        """
+        工控工位客户端上报工
+        :param workticket_id:
+        :param equipment_id:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        equipment = self.env['aas.equipment.equipment'].browse(equipment_id)
+        mesline, workstation = equipment.mesline_id, equipment.workstation_id
+        wemployees = self.env['aas.mes.workstation.employee'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
+        if not wemployees or len(wemployees) <= 0:
+            values.update({'success': False, 'message': u'当前工位上还没有员工上岗，请先让员工上岗再进行其他操作！'})
+            return values
+        workticket = self.env['aas.mes.workticket'].browse(workticket_id)
+        # todo 未完待续
+        workticket.action_doing_finish()
+        return values
+
 
 
 

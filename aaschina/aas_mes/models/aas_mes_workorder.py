@@ -465,6 +465,64 @@ class AASMESWorkorder(models.Model):
                 values['message'] = values['message'] + ('原料%s投料不足'% ','.join(lesslist))
         return values
 
+    @api.model
+    def get_virtual_materiallist(self, equipment_code):
+        """
+        获取工位上虚拟件的消耗清单
+        :param equipment_code:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        equipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)
+        if not equipment:
+            values.update({'success': False, 'message': u'设备编码异常，未搜索到相应编码的设备；请仔细检查！'})
+            return values
+        mesline, workstation = equipment.mesline_id, equipment.workstation_id
+        if not mesline:
+            values.update({'success': False, 'message': u'设备还未绑定产线，请联系相关人员设置！'})
+            return values
+        if not workstation:
+            values.update({'success': False, 'message': u'设备还未绑定工位，请联系相关人员设置！'})
+            return values
+        workorder = mesline.workorder_id
+        if not workorder:
+            values.update({'success': False, 'message': u'设备产线还未指定生产工单，请联系领班设置工单！'})
+            return values
+        values.update({
+            'workorder_id': workorder.id, 'workorder_name': workorder.name, 'product_id': workorder.product_id.id,
+            'product_code': workorder.product_id.default_code, 'input_qty': workorder.input_qty
+        })
+        routing = workorder.routing_id
+        if not routing:
+            values.update({'success': False, 'message': u'工单%s上未设置工艺路线，请仔细检查！'% workorder.name})
+            return values
+        workcenter = self.env['aas.mes.routing.line'].search([('routing_id', '=', routing.id), ('workstation_id', '=', workstation.id)], limit=1)
+        if not workcenter:
+            values.update({'success': False, 'message': u'工位%s上未设置相应工序，请仔细检查！'% workcenter.name})
+            return values
+        materialdomain = [('workorder_id', '=', workorder.id), ('workcenter_id', '=', workcenter.id)]
+        materialdomain.append(('product_id', '!=', workorder.product_id.id))
+        materiallist = self.env['aas.mes.workorder.consume'].search(materialdomain)
+        if materiallist and len(materiallist) > 0:
+            productdict = {}
+            for cmaterial in materiallist:
+                pkey = 'P-'+str(cmaterial.product_id.id)
+                materialval = {
+                    'input_qty': cmaterial.input_qty, 'consume_qty': cmaterial.consume_qty,
+                    'material_id': cmaterial.material_id.id, 'material_code': cmaterial.material_id.default_code
+                }
+                if pkey not in productdict:
+                    cproduct = cmaterial.product_id
+                    productdict[pkey] = {'product_id': cproduct.id, 'product_code': cproduct.default_code, 'output_qty': 0.0}
+                    productdict[pkey]['materiallist'] = [materialval]
+                    outputlist = self.env['aas.mes.workorder.product'].search([('workorder_id', '=', workorder.id), ('product_id', '=', cproduct.id)])
+                    if outputlist and len(outputlist) > 0:
+                        productdict[pkey]['output_qty'] = sum([output.total_qty for output in outputlist])
+                else:
+                    productdict[pkey]['materiallist'].append(materialval)
+            values['materiallist'] = productdict.values()
+        return values
+
 
 
 

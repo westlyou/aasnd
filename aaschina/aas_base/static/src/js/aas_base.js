@@ -82,7 +82,7 @@ odoo.define('aas.base', function (require) {
         },
         is_action_enabled: function(action) {
             var attrs = this.fields_view.arch.attrs;
-            if(action=='orderimport' || action=='import' || action=='labelprint'){
+            if(action=='orderimport' || action=='import' || action=='labelprint' || action=='batchadd'){
                 return (action in attrs) ? JSON.parse(attrs[action]) : false;
             }
             return (action in attrs) ? JSON.parse(attrs[action]) : true;
@@ -96,6 +96,7 @@ odoo.define('aas.base', function (require) {
             this._super.apply(this, arguments); // Sets this.$buttons
             if(add_button && this.$buttons) {
                 this.$buttons.on('click', '.o_list_button_orderimport', this.do_aas_order_import);
+                this.$buttons.on('click', '.o_list_button_batchadd', this.do_aas_batchadd);
             }
         },
         render_sidebar: function($node) {
@@ -122,6 +123,9 @@ odoo.define('aas.base', function (require) {
         },
         do_aas_order_import: function(){
             new AASOrderImport(this, this.dataset).open();
+        },
+        do_aas_batchadd: function(){
+            new AASBatchADD(this, this.dataset).open();
         },
         do_aas_label_print: function(){
             new AASLabelPrint(this, this.dataset).open();
@@ -466,6 +470,68 @@ odoo.define('aas.base', function (require) {
             }
             var OrderModel = new Model(self.res_model);
             OrderModel.call('action_import_order',[ordernumber]).then(function(data){
+                if(data.success==undefined || data.success){
+                    self.close();
+                }else{
+                    self.do_warn('警告', data.message, false);
+                }
+            }, function(error,event) {
+                if (event) {
+                    event.preventDefault();
+                }
+                self.do_warn(error.message, error.data.message, false);
+            });
+        }
+    });
+
+    var AASBatchADD = Dialog.extend({
+        template: 'AASBatchADDDialog',
+        init: function(parent, dataset) {
+            var options = {
+                title: '批量新增',
+                buttons: [
+                    {text: '新增', click: this.batch_add, classes: "btn-primary"},
+                    {text: '关闭', close: true},
+                ],
+            };
+            this._super(parent, options);
+            this.dataset = dataset;
+            this.res_model = dataset.model;
+            this.$modal.find(".modal-content").css("height", "240");
+        },
+        start: function() {
+            this._super.apply(this, arguments);
+        },
+        batch_add: function() {
+            var self = this;
+            var coderule = self.$('#code_rule').val();
+            if (coderule==null || coderule==''){
+                Dialog.alert(this, "请先填入编码规则..............");
+                return;
+            }
+            var addcount = self.$('#add_count').val();
+            if (addcount==null || addcount==''){
+                Dialog.alert(this, "请先填入新增数量..............");
+                return;
+            }
+            var numberreg = /^[1-9]\d*$/;
+            if(!numberreg.test(addcount)){
+                Dialog.alert(this, "新增数量必须是一个大于等于1的整数！");
+                return;
+            }
+            addcount = parseInt(addcount);
+            if (addcount > 200){
+                Dialog.alert(this, "一次最多添加200条记录！");
+                return;
+            }
+            var addnote = self.$('#add_note').val();
+            if (addnote==null || addnote==''){
+                Dialog.alert(this, "请先填入默认说明..............");
+                return;
+            }
+
+            var ObjectModel = new Model(self.res_model);
+            ObjectModel.call('action_batchadd',[coderule, addcount, addnote]).then(function(data){
                 if(data.success==undefined || data.success){
                     self.close();
                 }else{
