@@ -139,6 +139,21 @@ class AASMESRoutingBadmode(models.Model):
             vals['badmode_name'] = badmode.name
         return super(AASMESRoutingBadmode, self).write(vals)
 
+    @api.model
+    def action_loading_badmodelist(self, workcenter_id):
+        """
+        获取指定工序的不良模式列表
+        :param workcenter_id:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'badmodelist': []}
+        badmodelist = self.env['aas.mes.routing.badmode'].search([('workcenter_id', '=', workcenter_id)])
+        if not badmodelist or len(badmodelist) <= 0:
+            values.update({'success': False, 'message': u'当前工序还未设置不良模式！'})
+            return values
+        values['badmodelist'] = [{'badmode_id': badmode.badmode_id.id, 'badmode_name': badmode.badmode_name} for badmode in badmodelist]
+        return values
+
 
 
 

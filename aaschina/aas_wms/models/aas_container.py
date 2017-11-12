@@ -141,6 +141,23 @@ class AASContainer(models.Model):
             })
         return values
 
+    @api.model
+    def action_scanning(self, barcode):
+        """
+        客户端扫描容器
+        :param barcode:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        container = self.env['aas.container'].search([('barcode', '=', barcode)], limit=1)
+        if not container:
+            values.update({'success': False, 'message': u'未搜索到容器，请仔细检查条码是否正确！'})
+            return values
+        values.update({
+            'container_id': container.id, 'container_name': container.name, 'contianer_alias': container.alias
+        })
+        return values
+
 
 # 容器调拨记录
 class AASContainerMove(models.Model):

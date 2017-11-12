@@ -134,10 +134,12 @@ class AASMESWorkticket(models.Model):
         employeeliststr = workstation.action_get_employeestr(self.mesline_id.id, workstation.id)
         if not employeeliststr:
             raise UserError(u'当前工位%s上没有员工在岗不可以完工！'% workstation.name)
-        #判断有没有上料
-        feedmateriallist = self.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
-        if not feedmateriallist or len(feedmateriallist) <= 0:
-            raise UserError(u'当前工位%s上没有投料不可以完工！'% workstation.name)
+        #验证物料消耗
+        workorder = self.workorder_id
+        cresult = workorder.action_validate_consume(workorder.id, self.workcenter_id.id, workstation.id, self.product_id.id, self.input_qty)
+        if not cresult['success']:
+            raise UserError(cresult['message'])
+        # 弹出报工向导
         wizardvals = {
             'workticket_id': self.id, 'workstation_id': workstation.id,
             'input_qty': self.input_qty, 'workcenter_id': self.workcenter_id.id
@@ -419,11 +421,13 @@ class AASMESWorkticket(models.Model):
         return values
 
     @api.model
-    def action_workticket_finish_onstationclient(self, workticket_id, equipment_id):
+    def action_workticket_finish_onstationclient(self, workticket_id, equipment_id, badmode_lines=[], container_id=False):
         """
         工控工位客户端上报工
         :param workticket_id:
         :param equipment_id:
+        :param badmode_lines:
+        :param container_id:
         :return:
         """
         values = {'success': True, 'message': ''}
@@ -434,8 +438,30 @@ class AASMESWorkticket(models.Model):
             values.update({'success': False, 'message': u'当前工位上还没有员工上岗，请先让员工上岗再进行其他操作！'})
             return values
         workticket = self.env['aas.mes.workticket'].browse(workticket_id)
-        # todo 未完待续
-        workticket.action_doing_finish()
+        # 更新容器或不良模式
+        ticketvals = {}
+        if workticket.islastworkcenter():
+            if not container_id:
+                values.update({'success': False, 'message': u'当前工序是工艺中最后一道工序，需要扫描产出容器！'})
+                return values
+            else:
+                ticketvals['container_id'] = container_id
+        if badmode_lines and len(badmode_lines) > 0:
+            ticketvals['badmode_lines'] = [(0, 0, badmode) for badmode in badmode_lines]
+        if ticketvals and len(ticketvals) > 0:
+            workticket.write(ticketvals)
+        # 验证物料消耗
+        workorder = workticket.workorder_id
+        cresult = workorder.action_validate_consume(workorder.id, workticket.workcenter_id.id, workstation.id, workticket.product_id.id, workticket.input_qty)
+        if not cresult['success']:
+            values.update(cresult)
+            return values
+        # 消耗物料并产出
+        try:
+            workticket.action_doing_finish()
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
         return values
 
 
