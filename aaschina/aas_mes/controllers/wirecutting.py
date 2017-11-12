@@ -164,7 +164,7 @@ class AASMESWireCuttingController(http.Controller):
 
 
     @http.route('/aasmes/wirecutting/actionrefresh', type='json', auth="user")
-    def aasmes_wirecutting_output(self, wireorder_id):
+    def aasmes_wirecutting_refresh(self, wireorder_id):
         values = {'success': True, 'message': ''}
         loginuser = request.env.user
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)

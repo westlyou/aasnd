@@ -226,15 +226,42 @@ mui.ready(function(){
         badmodeqtyspan.setAttribute('badmodeqty', total_badmode_qty);
     });
 
-    // 确认完工
-    var finish_flag = false;
+    // 生产报工
     document.getElementById('action_finish').addEventListener('tap', function(){
+        mui.confirm('您确认现在就报工吗？', '生产报工', ['确认', '取消'], function(e) {
+            if(e.index!=0){
+                mui.swipeoutClose(li);
+                return ;
+            }
+            action_commit();
+        });
+    });
+
+    var finish_flag = false;
+    function action_commit(){
         if(finish_flag){
             mui.toast('操作正在处理，请耐心等待！');
             return ;
         }
         var workticketid = parseInt(document.getElementById('workticket_finish_pullrefresh').getAttribute('workticketid'));
         var params = {'workticketid': workticketid};
+        var commitqty = document.getElementById('mes_commitqty').value;
+        if(commitqty==undefined || commitqty==null || commitqty==''){
+            mui.toast('请先输入报工数量；报工的数量中包含了不良数量！');
+            return ;
+        }
+        if(!isAboveZeroFloat(commitqty) || parseFloat(commitqty)==0.0){
+            mui.toast('报工数量必须是一个大于零的数！');
+            return ;
+        }
+        commitqty = parseFloat(commitqty);
+        var input_qty = parseFloat(document.getElementById('input_qty').getAttribute('inputqty'));
+        var output_qty = parseFloat(document.getElementById('output_qty').getAttribute('outputqty'));
+        if(commitqty+output_qty > input_qty){
+            mui.toast('报工数量和已产出量的总数已经大于计划数量，请仔细检查！');
+            return ;
+        }
+        params['commit_qty'] = commitqty;
         var needcontainer = document.getElementById('container_line').getAttribute('needcontainer');
         if(needcontainer == 'wanted'){
             var containerid = parseInt(document.getElementById('mes_container').getAttribute('containerid'));
@@ -274,8 +301,8 @@ mui.ready(function(){
 
         var inputqty = parseFloat(document.getElementById('input_qty').getAttribute('inputqty'));
         var badmodeqty = parseFloat(document.getElementById('badmode_qty').getAttribute('badmodeqty'));
-        if(badmodeqty > inputqty){
-            mui.toast('不良数量的总和不能大于投入数量，请仔细检查！');
+        if(badmodeqty > commitqty){
+            mui.toast('不良数量的总和不能大于报工数量，请仔细检查！');
             return ;
         }
         finish_flag = true;
@@ -291,7 +318,7 @@ mui.ready(function(){
         }
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         var finishmask = aas_finish_loading();
-        mui.ajax('/aaswechat/mes/workticket/finishdone',{
+        mui.ajax('/aaswechat/mes/workticket/docommit',{
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: params, id: access_id }),
             dataType:'json', type:'post', timeout:20000,
             headers:{'Content-Type':'application/json'},
@@ -311,7 +338,9 @@ mui.ready(function(){
                 finishmask.close();
             }
         });
-    });
+    }
+
+
 
     //扫描容器
     document.getElementById('action_scancontainer').addEventListener('tap', function(){

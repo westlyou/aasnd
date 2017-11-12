@@ -139,8 +139,8 @@ class AASWorkorderWechatController(http.Controller):
         return values
 
 
-    @http.route('/aaswechat/mes/workticket/finishdone', type='json', auth="user")
-    def aas_wechat_mes_workticket_finishdone(self, workticketid, badmode_lines=[], container_id=None):
+    @http.route('/aaswechat/mes/workticket/docommit', type='json', auth="user")
+    def aas_wechat_mes_workticket_docommit(self, workticketid, commit_qty, badmode_lines=[], container_id=False):
         values = {'success': True, 'message': '', 'workticket_id': workticketid}
         workticket = request.env['aas.mes.workticket'].browse(workticketid)
         if not workticket:
@@ -155,28 +155,25 @@ class AASWorkorderWechatController(http.Controller):
             return values
         # 验证投料是否足够消耗
         mesline, workorder = workticket.mesline_id, workticket.workorder_id
-        cresult = request.env['aas.mes.workorder'].action_validate_consume(workorder.id, workcenter.id, workstation.id, workticket.product_id.id, workticket.input_qty)
+        cresult = request.env['aas.mes.workorder'].action_validate_consume(workorder.id, workcenter.id, workstation.id, workticket.product_id.id, commit_qty)
         if not cresult['success']:
             values.update(cresult)
             return values
+        ticketvals = {'output_qty': workticket.output_qty + commit_qty}
         if workticket.islastworkcenter():
             if not container_id:
                 values.update({'success': False, 'message': u'当前工序未最后一道工序成品产出需要指定容器，请先扫描容器条码！'})
                 return values
             else:
-              workticket.write({'container_id': container_id})
+                ticketvals['container_id'] = container_id
         try:
-            if badmode_lines and len(badmode_lines) > 0:
-                workticket.write({'badmode_lines': [(0, 0, badmode) for badmode in badmode_lines]})
-            workticket.action_doing_finish()
+            workticket.action_doing_commit(commit_qty, badmode_lines, container_id)
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
             return values
         except ValidationError, ve:
             values.update({'success': False, 'message': ve.name})
             return values
-        if workorder.state == 'done':
-            workorder.write({'time_finish': fields.Datetime.now()})
         return values
 
 

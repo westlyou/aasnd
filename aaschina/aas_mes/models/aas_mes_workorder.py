@@ -266,10 +266,11 @@ class AASMESWorkorder(models.Model):
     def action_done(self):
         if self.waitconsume:
             raise UserError(u'当前工单仍有产出的产品还未消耗原料，请先扣除相关原料消耗才能关闭工单！')
-        self.write({'state': 'done', 'produce_finish': fields.Datetime.now()})
+        currenttime = fields.Datetime.now()
+        self.write({'state': 'done', 'produce_finish': currenttime, 'time_finish': currenttime})
         if self.mainorder_id:
             if self.env['aas.mes.workorder'].search_count([('mainorder_id', '=', self.mainorder_id.id), ('state', '!=', 'done')]) <= 0:
-               self.mainorder_id.write({'state': 'done', 'produce_finish': fields.Datetime.now()})
+               self.mainorder_id.write({'state': 'done', 'produce_finish': currenttime})
 
     @api.one
     def action_waitconsume(self):

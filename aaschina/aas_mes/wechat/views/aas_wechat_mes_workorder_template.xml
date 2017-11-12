@@ -98,6 +98,10 @@
                                     <span id="input_qty" class="mui-pull-right" t-esc="input_qty" t-att-inputqty="input_qty"></span>
                                 </li>
                                 <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">产出数量</span>
+                                    <span id="output_qty" class="mui-pull-right" t-esc="output_qty" t-att-outputqty="output_qty"></span>
+                                </li>
+                                <li class="mui-table-view-cell">
                                     <span class="mui-pull-left">产线名称</span>
                                     <span class="mui-pull-right" t-esc="mesline_name"></span>
                                 </li>
@@ -109,14 +113,21 @@
                                     <span class="mui-pull-left">生产工位</span>
                                     <span class="mui-pull-right" t-esc="workstation_name"></span>
                                 </li>
+                                <li id="container_line" class="mui-table-view-cell" t-att-needcontainer="needcontainer" style="display:none;">
+                                    <span class="mui-pull-left">成品容器</span>
+                                    <span id="mes_container" class="mui-pull-right" containerid="0"></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <div class="mui-table">
+                                        <div class="mui-table-cell mui-col-xs-4 mui-text-left">报工数量</div>
+                                        <div class="mui-table-cell mui-col-xs-8 mui-text-right">
+                                            <input id="mes_commitqty" type='text' style='margin-bottom:0;height:30px;text-align: right;'/>
+                                        </div>
+                                    </div>
+                                </li>
                                 <li class="mui-table-view-cell">
                                     <span class="mui-pull-left">不良数量</span>
                                     <span id="badmode_qty" class="mui-pull-right" badmodeqty="0.0">0.0</span>
-                                </li>
-                                <li id="container_line" class="mui-table-view-cell" t-att-needcontainer="needcontainer"
-                                    style="display:none;">
-                                    <span class="mui-pull-left">成品容器</span>
-                                    <span id="mes_container" class="mui-pull-right" containerid="0"></span>
                                 </li>
                             </ul>
                             <ul class="mui-table-view aas-ul">
@@ -127,7 +138,7 @@
                                 </li>
                                 <li id="action_finish" class="mui-table-view-cell">
                                     <div class="aas-btn">
-                                        <button type="button" class="mui-btn mui-btn-primary mui-btn-block">确认完工</button>
+                                        <button type="button" class="mui-btn mui-btn-primary mui-btn-block">生产报工</button>
                                     </div>
                                 </li>
                                 <li id="action_addbadmode" class="mui-table-view-cell">
