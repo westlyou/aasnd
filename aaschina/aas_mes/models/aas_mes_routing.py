@@ -114,6 +114,29 @@ class AASMESRoutingLine(models.Model):
         return super(AASMESRoutingLine, self).create(vals)
 
 
+    @api.multi
+    def action_update_badmode(self):
+        self.ensure_one()
+        wizard = self.env['aas.mes.workcenter.badmode.wizard'].create({
+            'workcenter_id': self.id,
+            'badmode_lines': [(0, 0, {'badmode_id': bline.badmode_id.id}) for bline in self.badmode_lines]
+        })
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_workcenter_badmode_wizard')
+        return {
+            'name': u"更新不良模式",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.mes.workcenter.badmode.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
+
+
 # 工序不良模式
 class AASMESRoutingBadmode(models.Model):
     _name = 'aas.mes.routing.badmode'
@@ -123,6 +146,10 @@ class AASMESRoutingBadmode(models.Model):
     workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='cascade')
     badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')
     badmode_name = fields.Char(string=u'不良名称', copy=False)
+
+    _sql_constraints = [
+        ('uniq_badmode', 'unique (workcenter_id, badmode_id)', u'请不要重复添加同一个不良模式！')
+    ]
 
     @api.model
     def create(self, vals):
@@ -227,4 +254,27 @@ class AASMESRoutingLineBadmodeWizard(models.TransientModel):
     _description = 'AAS MES Routing Line Badmode Wizard'
 
     rline_id = fields.Many2one(comodel_name='aas.mes.routing.line.wizard', string=u'工序', ondelete='cascade')
+    badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')
+
+
+class AASMESWorkcenterBadmodeWizard(models.TransientModel):
+    _name = 'aas.mes.workcenter.badmode.wizard'
+    _description = 'AAS MES Workcenter Badmode Wizard'
+
+    workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='restrict')
+    badmode_lines = fields.One2many(comodel_name='aas.mes.workcenter.badmode.line.wizard', inverse_name='wizard_id', string=u'不良模式清单')
+
+    @api.one
+    def action_done(self):
+        if self.workcenter_id.badmode_lines and len(self.workcenter_id.badmode_lines) > 0:
+            self.workcenter_id.badmode_lines.unlink()
+        if self.badmode_lines and len(self.badmode_lines) > 0:
+            self.workcenter_id.write({'badmode_lines': [(0, 0, {'badmode_id': templine.badmode_id.id}) for templine in self.badmode_lines]})
+
+
+class AASMESWorkcenterBadmodeLineWizard(models.TransientModel):
+    _name = 'aas.mes.workcenter.badmode.line.wizard'
+    _description = 'AAS MES Workcenter Badmode Line Wizard'
+
+    wizard_id = fields.Many2one(comodel_name='aas.mes.workcenter.badmode.wizard', string='Wizard', ondelete='cascade')
     badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')

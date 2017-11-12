@@ -57,6 +57,7 @@
                                         <field name="sequence" required="1"/>
                                         <field name="workstation_id" options="{'no_create':true}" required="1"/>
                                         <field name="note"/>
+                                        <button name="action_update_badmode" string="不良模式" type="object" icon="fa-list"/>
                                     </tree>
                                     <form>
                                         <group>
@@ -230,6 +231,33 @@
                                         </page>
                                     </notebook>
                                 </form>
+                            </field>
+                        </page>
+                    </notebook>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_workcenter_badmode_wizard" model="ir.ui.view">
+            <field name="name">aas.mes.workcenter.badmode.wizard</field>
+            <field name="model">aas.mes.workcenter.badmode.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="workcenter_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="不良模式" name="wizard_lines">
+                            <field name="badmode_lines">
+                                <tree editable="bottom">
+                                    <field name="badmode_id" required="1" options="{'no_create':true}"/>
+                                </tree>
                             </field>
                         </page>
                     </notebook>
