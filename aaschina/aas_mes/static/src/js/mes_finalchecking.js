@@ -144,4 +144,28 @@ $(function(){
         });
     });
 
+    $('#action_consume').click(function(){
+        layer.confirm('您确认是要操作班次结单？', {'btn': ['确定', '取消']}, function(){
+            var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+            $.ajax({
+                url: '/aasmes/finalchecking/actionconsume',
+                headers:{'Content-Type':'application/json'},
+                type: 'post', timeout:10000, dataType: 'json',
+                data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {}, id: access_id}),
+                success:function(data){
+                    var dresult = data.result;
+                    if(!dresult.success){
+                        layer.msg(dresult.message, {icon: 5});
+                        return ;
+                    }
+                    if(dresult.message){
+                        layer.msg(dresult.message, {icon: 5});
+                    }
+                    window.location.reload(true);
+                },
+                error:function(xhr,type,errorThrown){ console.log(type);}
+            });
+        }, function(){});
+    });
+
 });

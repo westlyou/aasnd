@@ -196,7 +196,6 @@ class AASMESBOMWorkcenter(models.Model):
             raise ValidationError(u'当前物料清单已设置了工艺，请设置好工艺工序！')
 
 
-
     @api.onchange('product_id')
     def action_change_product(self):
         if not self.product_id:
@@ -211,7 +210,7 @@ class AASMESBOMWorkcenter(models.Model):
         record.action_after_create()
         return record
 
-    @api.one
+    @api.model
     def action_before_create(self, vals):
         if vals.get('product_id', False):
             product = self.env['product.product'].browse(vals.get('product_id'))

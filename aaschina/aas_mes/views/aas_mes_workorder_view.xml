@@ -7,7 +7,7 @@
             <field name="model">aas.mes.workorder</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree labelprint="true">
                     <field name="name"/>
                     <field name="mesline_id"/>
                     <field name="product_id"/>
@@ -28,7 +28,7 @@
             <field name="model">aas.mes.workorder</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form>
+                <form labelprint="true">
                     <header>
                         <button name="action_confirm" type="object" string="确认工单" class="oe_highlight" states="draft"/>
                         <button name="action_producing" type="object" string="开始生产" class="oe_highlight"

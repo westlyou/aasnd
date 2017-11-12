@@ -30,7 +30,7 @@ class AASMESWorkorder(models.Model):
     barcode = fields.Char(string=u'条码', compute='_compute_barcode', store=True, index=True)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', required=True, index=True)
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
-    input_qty = fields.Float(string=u'投入数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
+    input_qty = fields.Float(string=u'计划数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
     aas_bom_id = fields.Many2one(comodel_name='aas.mes.bom', string=u'物料清单', ondelete='restrict', index=True)
     routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺路线', ondelete='restrict', index=True)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict', index=True)
@@ -280,9 +280,10 @@ class AASMESWorkorder(models.Model):
         outputdomain = [('workorder_id', '=', self.id), ('waiting_qty', '>', 0.0)]
         outputlist = self.env['aas.mes.workorder.product'].search(outputdomain)
         if outputlist and len(outputlist) > 0:
-            result = outputlist.action_consume()
-            if not result['success']:
-                raise UserError(result['message'])
+            for output in outputlist:
+                result = output.action_consume()
+                if not result['success']:
+                    raise UserError(result['message'])
 
 
     @api.multi
@@ -411,7 +412,11 @@ class AASMESWorkorder(models.Model):
         outputdomain.append(('waiting_qty', '>', 0.0))
         outputlist = self.env['aas.mes.workorder.product'].search(outputdomain)
         if outputlist and len(outputlist) > 0:
-            values.update(outputlist.action_consume())
+            for output in outputlist:
+                result = output.action_consume()
+                if not result['success']:
+                    values.update(result)
+                    return values
         return values
 
 
@@ -521,6 +526,30 @@ class AASMESWorkorder(models.Model):
                 else:
                     productdict[pkey]['materiallist'].append(materialval)
             values['materiallist'] = productdict.values()
+        return values
+
+
+    @api.model
+    def action_print_label(self, printer_id, ids=[], domain=[]):
+        values = {'success': True, 'message': ''}
+        printer = self.env['aas.label.printer'].browse(printer_id)
+        if not printer.field_lines or len(printer.field_lines) <= 0:
+            values.update({'success': False, 'message': u'请联系管理员标签打印未指定具体打印内容！'})
+            return values
+        values.update({'printer': printer.name, 'serverurl': printer.serverurl})
+        field_list = [fline.field_name for fline in printer.field_lines]
+        if ids and len(ids) > 0:
+            labeldomain = [('id', 'in', ids)]
+        else:
+            labeldomain = domain
+        if not labeldomain or len(labeldomain) <= 0:
+            return {'success': False, 'message': u'您可能已经选择了所有工单或未选择任何工单，请选中需要打印的工单！'}
+        records = self.search_read(domain=labeldomain, fields=field_list)
+        if not records or len(records) <= 0:
+            values.update({'success': False, 'message': u'未搜索到需要打印的工单！'})
+            return values
+        records = printer.action_correct_records(records)
+        values['records'] = records
         return values
 
 
@@ -743,7 +772,7 @@ class AASMESWorkorderConsume(models.Model):
     product_id = fields.Many2one(comodel_name='product.product', string=u'成品', ondelete='restrict')
     material_id = fields.Many2one(comodel_name='product.product', string=u'原料', ondelete='restrict')
     consume_unit = fields.Float(string=u'单位消耗', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    input_qty = fields.Float(string=u'投入数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    input_qty = fields.Float(string=u'计划数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     consume_qty = fields.Float(string=u'已消耗量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     leave_qty = fields.Float(string=u'剩余数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_leave_qty', store=True)
 

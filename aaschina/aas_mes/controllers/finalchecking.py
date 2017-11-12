@@ -196,3 +196,30 @@ class AASMESFinalCheckingController(http.Controller):
         if tempvals['message']:
             values['message'] = tempvals['message']
         return values
+
+
+
+    @http.route('/aasmes/finalchecking/actionconsume', type='json', auth="user")
+    def aasmes_finalchecking_actionconsume(self):
+        values = {'success': True, 'message': ''}
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        values['mesline_name'] = lineuser.mesline_id.name
+        if lineuser.mesrole != 'fqcchecker':
+            values.update({'success': False, 'message': u'当前登录账号还未授权终检'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位！'})
+            return values
+        workorder = mesline.workorder_id
+        if not workorder:
+            values.update({'success': False, 'message': u'当前产线还未指定生产工单，请联系领班设置生产工单！'})
+            return values
+        cresult = workorder.action_consume(workorder.id, workorder.product_id.id)
+        if not cresult['success']:
+            values.update(cresult)
+            return values
+        return values
