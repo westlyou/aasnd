@@ -37,6 +37,11 @@
 
                                 <div class="navbar-custom-menu">
                                     <ul class="nav navbar-nav">
+                                        <li id="wire_refresh" class="notifications-menu">
+                                            <a href="javascript:void(0);">
+                                                <i class="fa fa-refresh"></i> 刷新
+                                            </a>
+                                        </li>
                                         <li class="dropdown notifications-menu">
                                             <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">
                                                 <i class="fa fa-user"></i> <span t-esc="checker"/>
@@ -67,7 +72,6 @@
                         <section class="content">
                             <div class="row">
                                 <div class="col-md-3">
-                                    <a id="wire_refresh" href="javascript:void(0);" class="btn btn-primary btn-block margin-bottom">刷新</a>
                                     <a id="wire_output" href="javascript:void(0);" class="btn btn-primary btn-block margin-bottom">产出</a>
                                     <div class="box box-solid">
                                         <div class="box-header with-border">
@@ -95,6 +99,24 @@
                                                         <a href="javascript:void(0);">
                                                             <t t-esc="temployee['employee_name']"/>
                                                             <span class="pull-right" t-esc="temployee['employee_code']"/>
+                                                        </a>
+                                                    </li>
+                                                </t>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div class="box box-solid">
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">上料清单</h3>
+                                        </div>
+                                        <div class="box-body no-padding">
+                                            <ul id="wirecut_materiallist" class="nav nav-pills nav-stacked">
+                                                <t t-foreach="materiallist" t-as="tmaterial">
+                                                    <li>
+                                                        <a href="javascript:void(0);">
+                                                            <t t-esc="tmaterial['material_name']"/>
+                                                            <span class="pull-right" t-esc="tmaterial['material_qty']"/>
                                                         </a>
                                                     </li>
                                                 </t>

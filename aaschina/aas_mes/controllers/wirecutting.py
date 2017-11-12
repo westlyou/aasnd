@@ -23,7 +23,7 @@ class AASMESWireCuttingController(http.Controller):
 
     @http.route('/aasmes/wirecutting', type='http', auth="user")
     def aasmes_wirecutting(self):
-        values = {'success': True, 'message': '', 'employeelist': []}
+        values = {'success': True, 'message': '', 'employeelist': [], 'materiallist': []}
         loginuser = request.env.user
         values['checker'] = loginuser.name
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
@@ -44,6 +44,12 @@ class AASMESWireCuttingController(http.Controller):
                 'employee_name': wemployee.employee_id.name,
                 'employee_code': wemployee.employee_id.code
             } for wemployee in workstation.employee_lines]
+        feedmateriallist = request.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
+        if feedmateriallist and len(feedmateriallist) > 0:
+            values['materiallist'] = [{
+                'material_name': feedmaterial.material_id.default_code+'['+feedmaterial.material_lot.name+']',
+                'material_qty': feedmaterial.material_qty
+            } for feedmaterial in feedmateriallist]
         return request.render('aas_mes.aas_wirecutting', values)
 
 
@@ -123,6 +129,50 @@ class AASMESWireCuttingController(http.Controller):
         return values
 
 
+    @http.route('/aasmes/wirecutting/scanmaterial', type='json', auth="user")
+    def aasmes_wirecutting_scanmaterial(self, barcode):
+        values = {'success': True, 'message': ''}
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        if lineuser.mesrole != 'wirecutter':
+            values.update({'success': False, 'message': u'当前登录账号还未授权切线'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定切线工位！'})
+            return values
+        label = request.env['aas.product.label'].search([('barcode', '=', barcode)], limit=1)
+        if not label:
+            values.update({'success': False, 'message': u'请仔细检查确认扫描的标签是否在系统中存在！'})
+            return values
+        if not mesline.location_production_id or (not mesline.location_material_list or len(mesline.location_material_list)<= 0):
+            values.update({'success': False, 'message': u'产线%s的成品原料库位还未设置，请联系相关人员设置！'% mesline.name})
+            return values
+        locationids = [mlocation.location_id.id for mlocation in mesline.location_material_list]
+        locationids.append(mesline.location_production_id.id)
+        locationlist = request.env['stock.location'].search([('id', 'child_of', locationids)])
+        if label.location_id.id not in locationlist.ids:
+            values.update({'success': False, 'message': u'当前标签不在产线%s的线边库，请不要扫描此标签！'% mesline.name})
+            return values
+        feeddomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        feeddomain.extend([('material_id', '=', label.product_id.id), ('material_lot', '=', label.product_lot.id)])
+        feedmaterial = request.env['aas.mes.feedmaterial'].search(feeddomain, limit=1)
+        if feedmaterial:
+            values.update({'success': False, 'message': u'此物料的相同批次已经上料，请不要重复操作！'})
+            return values
+        else:
+            feedmaterial = request.env['aas.mes.feedmaterial'].create({
+                'mesline_id': mesline.id, 'workstation_id': workstation.id,
+                'material_id': label.product_id.id, 'material_lot': label.product_lot.id
+            })
+        values.update({
+            'material_name': label.product_code+'['+label.product_lotname+']', 'material_qty': feedmaterial.material_qty
+        })
+        return values
+
+
     @http.route('/aasmes/wirecutting/output', type='json', auth="user")
     def aasmes_wirecutting_output(self, workorder_id, output_qty, container_id):
         values = {'success': True, 'message': ''}
@@ -165,13 +215,14 @@ class AASMESWireCuttingController(http.Controller):
 
     @http.route('/aasmes/wirecutting/actionrefresh', type='json', auth="user")
     def aasmes_wirecutting_refresh(self, wireorder_id):
-        values = {'success': True, 'message': ''}
+        values = {'success': True, 'message': '', 'workorderlist': [], 'materiallist': []}
         loginuser = request.env.user
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
         if not lineuser:
             values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
             return values
-        values['mesline_name'] = lineuser.mesline_id.name
+        mesline = lineuser.mesline_id
+        values['mesline_name'] = mesline.name
         if lineuser.mesrole != 'wirecutter':
             values.update({'success': False, 'message': u'当前登录账号还未授权切线'})
             return request.render('aas_mes.aas_wirecutting', values)
@@ -199,4 +250,10 @@ class AASMESWireCuttingController(http.Controller):
             'output_qty': workorder.output_qty, 'state_name': ORDERSTATESDICT[workorder.state]
         } for workorder in wireorder.workorder_lines]
         values['workorderlist'] = workorderlist
+        feedmateriallist = request.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
+        if feedmateriallist and len(feedmateriallist) > 0:
+            values['materiallist'] = [{
+                'material_name': feedmaterial.material_id.default_code+'['+feedmaterial.material_lot.name+']',
+                'material_qty': feedmaterial.material_qty
+            } for feedmaterial in feedmateriallist]
         return values

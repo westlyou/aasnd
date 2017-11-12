@@ -22,6 +22,8 @@ $(function(){
             action_scanwireorder(barcode);
         }else if(prefix=='AT'){
             action_scancontainer(barcode);
+        }else if(prefix=='AC'){
+            action_scanmaterial(barcode);
         }else{
             layer.msg('扫描异常，请确认是否在扫描员工工牌或线材工单！', {icon: 5});
             return ;
@@ -100,6 +102,29 @@ $(function(){
                         temptrclick(ordertr);
                     });
                 });
+            },
+            error:function(xhr,type,errorThrown){ console.log(type);}
+        });
+    }
+
+    //上料扫描
+    function action_scanmaterial(barcode){
+        var scanparams = {'barcode': barcode};
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        $.ajax({
+            url: '/aasmes/wirecutting/scanmaterial',
+            headers:{'Content-Type':'application/json'},
+            type: 'post', timeout:10000, dataType: 'json',
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scanparams, id: access_id}),
+            success:function(data){
+                var dresult = data.result;
+                if(!dresult.success){
+                    layer.msg(dresult.message, {icon: 5});
+                    return ;
+                }
+                var materialstr = '<a href="javascript:void(0);">'+dresult.material_name+'<span class="pull-right">' +
+                    dresult.material_qty+'</span></a>';
+                $('<li></li>').html(materialstr).appendTo($('#wirecut_materiallist'));
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
         });
@@ -246,6 +271,15 @@ $(function(){
                             temptrclick(ordertr);
                         });
                     });
+                    $('#wirecut_materiallist').html('');
+                    if(dresult.materiallist.length > 0){
+                        var wmateriallist = $('#wirecut_materiallist');
+                        $.each(dresult.materiallist, function(index, tmaterial){
+                            var materialstr = '<a href="javascript:void(0);">'+tmaterial.material_name +
+                                '<span class="pull-right">'+tmaterial.material_qty+'</span></a>';
+                            $('<li></li>').html(materialstr).appendTo(wmateriallist);
+                        });
+                    }
                 },
                 error:function(xhr,type,errorThrown){ console.log(type);}
             });

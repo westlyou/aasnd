@@ -720,12 +720,20 @@ class AASMESWorkorderProduct(models.Model):
                     message = (u'工位%s,'% workstation.name) + message
                 values.update({'success': False, 'message': message})
                 return values
-            feed_qty, quantlist = 0.0, []
+            feed_qty, quantdict = 0.0, {}
             for feedmaterial in feedmateriallist:
                 # 刷新线边库库存
                 quants = feedmaterial.action_checking_quants()
                 if quants and len(quants) > 0:
-                    quantlist.extend([tempquant for tempquant in quants])
+                    for tempquant in quants:
+                        qkey = 'Q-'+str(tempquant.lot_id.id)+'-'+str(tempquant.location_id.id)
+                        if qkey in quantdict:
+                            quantdict['qkey']['product_qty'] += tempquant.qty
+                        else:
+                            quantdict['qkey'] = {
+                                'location_id': tempquant.location_id.id, 'product_qty': tempquant.qty,
+                                'material_lot': tempquant.lot_id.id, 'material_lot_name': tempquant.lot_id.name
+                            }
                 feed_qty += feedmaterial.material_qty
             if float_compare(feed_qty, want_qty, precision_rounding=0.000001) < 0.0:
                 message = u'原料%s投入量不足！'% material.default_code
@@ -741,20 +749,20 @@ class AASMESWorkorderProduct(models.Model):
             })
             # 库存分配
             tempmovedict = {}
-            for tempquant in quantlist:
+            for qkey, qval in quantdict.items():
                 if float_compare(want_qty, 0.0, precision_rounding=0.000001) <= 0.0:
                     break
-                lkey = 'L-'+str(tempquant.lot_id.id)+'-'+str(tempquant.location_id.id)
-                if float_compare(want_qty, tempquant.qty, precision_rounding=0.000001) >= 0.0:
-                    tempqty = tempquant.qty
+                lkey = 'L-'+str(qval['material_lot'])+'-'+str(qval['location_id'])
+                if float_compare(want_qty, qval['product_qty'], precision_rounding=0.000001) >= 0.0:
+                    tempqty = qval['product_qty']
                 else:
                     tempqty = want_qty
                 if lkey in tempmovedict:
                     tempmovedict[lkey]['product_qty'] += tempqty
                 else:
                     tempmovedict[lkey] = {
-                        'location_id': tempquant.location_id.id, 'product_qty': tempqty,
-                        'material_lot': tempquant.lot_id.id, 'material_lot_name': tempquant.lot_id.name
+                        'location_id': qval['location_id'], 'product_qty': tempqty,
+                        'material_lot': qval['material_lot'], 'material_lot_name': qval['material_lot_name']
                     }
                 want_qty -= tempqty
             materialvals['movelines'] = tempmovedict.values()
