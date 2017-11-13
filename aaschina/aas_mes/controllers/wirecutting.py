@@ -152,6 +152,10 @@ class AASMESWireCuttingController(http.Controller):
             values.update({'success': False, 'message': u'当前登录账号还未授权切线'})
             return request.render('aas_mes.aas_wirecutting', values)
         mesline = lineuser.mesline_id
+        if not mesline.location_production_id or (not mesline.location_material_list or len(mesline.location_material_list) <= 0):
+            values.update({'success': False, 'message': u'当前产线还未设置成品和原料线边库，请联系相关人员设置'})
+            return request.render('aas_mes.aas_wirecutting', values)
+        container.action_domove(mesline.location_production_id.id, movenote=u'线材产出容器自动调拨')
         values.update({'container_id': container.id, 'container_name': container.name})
         return values
 

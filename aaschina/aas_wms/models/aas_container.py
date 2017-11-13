@@ -183,6 +183,22 @@ class AASContainer(models.Model):
             self.write({'product_lines': stocklist})
 
 
+    @api.one
+    def action_domove(self, destlocationid, movenote=False):
+        """
+        容器调拨
+        :param destlocationid:
+        :param movenote:
+        :return:
+        """
+        self.env['aas.container.move'].create({
+            'container_id': self.id, 'move_note': movenote,
+            'location_src_id': self.location_id.id, 'location_dest_id': destlocationid
+        })
+        self.write({'location_id': destlocationid})
+
+
+
 
 # 容器调拨记录
 class AASContainerMove(models.Model):
@@ -243,11 +259,7 @@ class AASContainerMoveWizard(models.TransientModel):
 
     @api.one
     def action_done(self):
-        self.env['aas.container.move'].create({
-            'container_id': self.container_id.id, 'location_src_id': self.location_src_id.id,
-            'location_dest_id': self.location_dest_id.id, 'move_note': False if not self.move_note else self.move_note
-        })
-        self.container_id.write({'location_id': self.location_dest_id.id})
+        self.container_id.action_domove(self.location_dest_id.id, self.move_note)
 
 
 # 容器库存调整向导
