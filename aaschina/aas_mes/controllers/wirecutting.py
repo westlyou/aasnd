@@ -209,7 +209,7 @@ class AASMESWireCuttingController(http.Controller):
             values.update({'success': False, 'message': u'当前登录账号还未绑定切线工位！'})
             return values
         workorder = request.env['aas.mes.workorder'].browse(workorder_id)
-        outputresult = request.env['aas.mes.wireorder'].action_wirecutting_output(workorder.id, workorder.product_id.id,
+        outputresult = request.env['aas.mes.wireorder'].action_wirecutting_output(workorder.id, output_qty,
                                                                    container_id,  workstation.id, employee_id, equipment_id)
         if not outputresult['success']:
             values.update(outputresult)
