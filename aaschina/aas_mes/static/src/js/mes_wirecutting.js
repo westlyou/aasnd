@@ -269,7 +269,7 @@ $(function(){
     });
 
     function action_refresh_cutting(wireorderid){
-        var refreshparams = {'wireorder_id': workorderid};
+        var refreshparams = {'wireorder_id': wireorderid};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
             url: '/aasmes/wirecutting/actionrefresh',

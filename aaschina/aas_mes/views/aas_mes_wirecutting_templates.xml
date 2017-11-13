@@ -81,12 +81,12 @@
                                             <ul class="nav nav-pills nav-stacked">
                                                 <li> <a href="javascript:void(0);">产线 <span id="mes_mesline" class="pull-right" t-esc="mesline_name"/></a> </li>
                                                 <li> <a href="javascript:void(0);">工位 <span id="mes_workstation" class="pull-right" t-esc="workstation_name"/></a> </li>
+                                                <li> <a href="javascript:void(0);">设备 <span id="mes_equipment" class="pull-right" equipmentid="0"/></a> </li>
                                                 <li>
                                                     <a href="javascript:void(0);">员工
                                                         <span id="mes_employee" class="pull-right" t-att-employeeid="employee_id" t-esc="employee_name"/>
                                                     </a>
                                                 </li>
-                                                <li> <a href="javascript:void(0);">设备 <span id="mes_equipment" class="pull-right" equipmentid="0"/></a> </li>
                                                 <li> <a href="javascript:void(0);">容器 <span id="mes_container" class="pull-right" containerid="0"/></a> </li>
                                                 <li> <a href="javascript:void(0);">工单 <span id="mes_wireorder" class="pull-right" wireorderid="0"></span></a> </li>
                                                 <li> <a href="javascript:void(0);">产品 <span id="mes_product" class="pull-right"></span></a> </li>
