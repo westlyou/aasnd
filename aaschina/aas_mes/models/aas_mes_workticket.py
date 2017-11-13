@@ -146,7 +146,7 @@ class AASMESWorkticket(models.Model):
 
     @api.one
     def action_doing_commit(self, commit_qty, badmode_lines=[], container_id=False):
-        ticketvals = {'output_qty': self.output_qty + commit_qty}
+        ticketvals, product_output_qty = {'output_qty': self.output_qty + commit_qty}, commit_qty
         if self.islastworkcenter():
             if not container_id:
                 raise UserError(u'当前工序是最后一道工序，需要先添加产出容器！')
@@ -158,6 +158,7 @@ class AASMESWorkticket(models.Model):
                 badmodelist.append((0, 0, badmode))
                 badmode_qty += badmode['badmode_qty']
             ticketvals['badmode_lines'] = badmodelist
+            product_output_qty -= badmode_qty
             ticketvals['output_qty'] -= badmode_qty
             ticketvals['badmode_qty'] = badmode_qty + self.badmode_qty
         self.write(ticketvals)
@@ -166,7 +167,7 @@ class AASMESWorkticket(models.Model):
         # 消耗物料
         self.action_material_consume(temptrace, commit_qty)
         # 工单报工善后
-        self.action_after_commit(temptrace, ticketvals['output_qty'])
+        self.action_after_commit(temptrace, product_output_qty)
 
 
 
