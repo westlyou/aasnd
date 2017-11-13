@@ -15,6 +15,7 @@ $(function(){
             layer.msg('扫描条码异常！', {icon: 5});
             return ;
         }
+        console.log(barcode);
         var prefix = barcode.substring(0,2);
         if(prefix=='AM'){
             action_scanemployee(barcode);
@@ -178,11 +179,6 @@ $(function(){
 
     //产出
     $('#wire_output').click(function(){
-        var containerid = parseInt($('#mes_container').attr('containerid'));
-        if(containerid==0){
-            layer.msg('您还没添加产出容器，请先扫描容器标签添加容器！', {icon: 5});
-            return ;
-        }
         var equipment_id = parseInt($('#mes_equipment').attr('equipmentid'));
         if(equipment_id==0){
             layer.msg('当前工位还未添加设备，请先扫描设备二维码添加设备！', {icon: 5});
@@ -191,6 +187,11 @@ $(function(){
         var employee_id = parseInt($('#mes_employee').attr('employeeid'));
         if(employee_id==0){
             layer.msg('当前工位还没有员工上岗，请先扫描员工卡上岗！', {icon: 5});
+            return ;
+        }
+        var containerid = parseInt($('#mes_container').attr('containerid'));
+        if(containerid==0){
+            layer.msg('您还没添加产出容器，请先扫描容器标签添加容器！', {icon: 5});
             return ;
         }
         var wireorderid = parseInt($('#mes_wireorder').attr('wireorderid'));
