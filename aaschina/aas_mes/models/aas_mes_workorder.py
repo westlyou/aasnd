@@ -662,7 +662,6 @@ class AASMESWorkorderProduct(models.Model):
         if outputrecord.container_id:
             # 容器中相应数量物品入库存
             productdomain = [('container_id', '=', outputrecord.container_id.id), ('product_id', '=', outputrecord.product_id.id)]
-            productdomain.append(('label_id', '=', False))
             productdomain.append(('product_lot', '=', False if not outputrecord.product_lot else outputrecord.product_lot.id))
             productline = self.env['aas.container.product'].search(productdomain, limit=1)
             if productline:
