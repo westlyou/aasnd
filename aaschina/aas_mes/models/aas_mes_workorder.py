@@ -54,7 +54,7 @@ class AASMESWorkorder(models.Model):
     output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_orderoutput', store=True)
     waitconsume = fields.Boolean(string=u'等待物料', copy=False, compute='_compute_orderoutput', store=True, help=u'已经成品产出，因原料不足等待中')
     closer_id = fields.Many2one(comodel_name='res.users', string=u'手工关单员', ondelete='restrict', copy=False)
-
+    output_time = fields.Datetime(string=u'产出时间', copy=False, help=u'最近一次产出的时间')
 
     workticket_lines = fields.One2many(comodel_name='aas.mes.workticket', inverse_name='workorder_id', string=u'工票明细')
     product_lines = fields.One2many(comodel_name='aas.mes.workorder.product', inverse_name='workorder_id', string=u'成品明细')

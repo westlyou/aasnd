@@ -221,8 +221,11 @@ class AASMESWireOrder(models.Model):
             temployee = self.env['aas.hr.employee'].browse(employee_id)
             tequipment = self.env['aas.equipment.equipment'].browse(equipment_id)
             tracelist.write({
-                'employeelist': temployee.name+'['+temployee.code+']', 'equipmentlist': tequipment.name+'['+tequipment.code+']'
+                'employeelist': temployee.name+'['+temployee.code+']',
+                'equipmentlist': tequipment.name+'['+tequipment.code+']',
+                'date_start': workorder.output_time, 'date_finish': fields.Datetime.now()
             })
+            workorder.write({'output_time': fields.Datetime.now()})
         if not csresult['success']:
             values.update(csresult)
             return values
