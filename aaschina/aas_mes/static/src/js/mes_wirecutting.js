@@ -15,16 +15,15 @@ $(function(){
             layer.msg('扫描条码异常！', {icon: 5});
             return ;
         }
-        console.log(barcode);
         var prefix = barcode.substring(0,2);
         if(prefix=='AM'){
             action_scanemployee(barcode);
+        }else if(prefix=='AC'){
+            action_scanmaterial(barcode);
         }else if(prefix=='AU'){
             action_scanwireorder(barcode);
         }else if(prefix=='AT'){
             action_scancontainer(barcode);
-        }else if(prefix=='AC'){
-            action_scanmaterial(barcode);
         }else if(prefix=='AK'){
             action_scanequipment(barcode);
         }else{

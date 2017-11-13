@@ -144,6 +144,14 @@ class AASMESWireCuttingController(http.Controller):
         if not container:
             values.update({'success': False, 'message': u'请仔细检查确认扫描的容器是否在系统中存在！'})
             return values
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return request.render('aas_mes.aas_wirecutting', values)
+        if lineuser.mesrole != 'wirecutter':
+            values.update({'success': False, 'message': u'当前登录账号还未授权切线'})
+            return request.render('aas_mes.aas_wirecutting', values)
+        mesline = lineuser.mesline_id
         values.update({'container_id': container.id, 'container_name': container.name})
         return values
 

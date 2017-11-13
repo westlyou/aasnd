@@ -217,18 +217,22 @@ class AASMESWireOrder(models.Model):
             return values
         csresult = workorder.action_consume(workorder.id, workorder.product_id.id)
         if csresult['tracelist'] and len(csresult['tracelist']) > 0:
+            outputtime = fields.Datetime.now()
             tracelist = self.env['aas.mes.tracing'].browse(csresult['tracelist'])
             temployee = self.env['aas.hr.employee'].browse(employee_id)
             tequipment = self.env['aas.equipment.equipment'].browse(equipment_id)
             tracelist.write({
                 'employeelist': temployee.name+'['+temployee.code+']',
                 'equipmentlist': tequipment.name+'['+tequipment.code+']',
-                'date_start': workorder.output_time, 'date_finish': fields.Datetime.now()
+                'date_start': workorder.output_time, 'date_finish': outputtime
             })
-            workorder.write({'output_time': fields.Datetime.now()})
+            workorder.write({'output_time': outputtime})
         if not csresult['success']:
             values.update(csresult)
             return values
+        if float_compare(workorder.output_qty, workorder.input_qty, precision_rounding=0.000001) >= 0.0:
+            currenttime = fields.Datetime.now()
+            workorder.write({'produce_finish': currenttime, 'time_finish': currenttime, 'state': 'done'})
         return values
 
 

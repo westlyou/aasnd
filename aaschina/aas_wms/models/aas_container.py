@@ -158,6 +158,31 @@ class AASContainer(models.Model):
         })
         return values
 
+    @api.one
+    def action_consume(self, product_id, product_lot, product_qty):
+        """
+        容器库存消耗
+        :param product_id:
+        :param product_lot:
+        :param product_qty:
+        :return:
+        """
+        pdomain = [('container_id', '=', self.id), ('product_id', '=', product_id), ('product_lot', '=', product_lot)]
+        productlines = self.env['aas.container.product'].search(pdomain)
+        if productlines and len(productlines) > 0:
+            stocklist = []
+            for pline in productlines:
+                if float_compare(product_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+                    break
+                if float_compare(product_qty, pline.stock_qty, precision_rounding=0.000001) >= 0.0:
+                    stocklist.append((2, pline.id, False))
+                    product_qty -= pline.stock_qty
+                else:
+                    stocklist.append((1, pline.id, {'stock_qty': pline.stock_qty - product_qty}))
+                    product_qty = 0.0
+            self.write({'product_lines': stocklist})
+
+
 
 # 容器调拨记录
 class AASContainerMove(models.Model):
@@ -218,9 +243,6 @@ class AASContainerMoveWizard(models.TransientModel):
 
     @api.one
     def action_done(self):
-        tempcount = self.env['aas.container.product'].search_count([('container_id', '=', self.container_id.id), ('product_label', '=', False)])
-        if not self.location_dest_id.edgelocation and tempcount > 0:
-            raise UserError(u'容器中还有未打包成标签的产品不可以直接调拨到仓库库存库位！')
         self.env['aas.container.move'].create({
             'container_id': self.container_id.id, 'location_src_id': self.location_src_id.id,
             'location_dest_id': self.location_dest_id.id, 'move_note': False if not self.move_note else self.move_note

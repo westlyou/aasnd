@@ -257,7 +257,14 @@ class AASMESWorkticket(models.Model):
                 want_qty -= tempqty
         if movevallist and len(movevallist) > 0:
             for moveval in movevallist:
-                movelist |= self.env['stock.move'].create(moveval)
+                moverecord = self.env['stock.move'].create(moveval)
+                # 如果来源库位是一个容器则需要更新容器库存信息
+                tcontainer = moverecord.location_id.container_id
+                if tcontainer:
+                    tproduct_qty = moverecord.product_uom_qty
+                    tproduct_id, tproduct_lot = moverecord.product_id.id, moverecord.restrict_lot_id.id
+                    tcontainer.action_consume(tproduct_id, tproduct_lot, tproduct_qty)
+                movelist |= moverecord
         if movelist and len(movelist) > 0:
             movelist.action_done()
         if materiallist and len(materiallist) > 0:

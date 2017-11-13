@@ -638,6 +638,12 @@ class AASMESWorkorderProduct(models.Model):
                         'location_id': tempmove['location_id'], 'location_dest_id': destlocationid,
                         'restrict_lot_id': tempmove['material_lot'], 'product_uom_qty': tempmove['product_qty']
                     })
+                    # 如果来源库位是一个容器则需要更新容器库存信息
+                    tcontainer = moverecord.location_id.container_id
+                    if tcontainer:
+                        tproduct_qty = moverecord.product_uom_qty
+                        tproduct_id, tproduct_lot = moverecord.product_id.id, moverecord.restrict_lot_id.id
+                        tcontainer.action_consume(tproduct_id, tproduct_lot, tproduct_qty)
                     movelist |= moverecord
             movelist.action_done()
             tracerecord.write({'materiallist': ','.join(materiallist)})
