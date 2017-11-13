@@ -9,7 +9,7 @@ access_aas_product_label_adjust_manager,aas.product.label.adjust manager,aas_wms
 access_aas_product_label_adjust_line_foreman,aas.product.label.adjust.line foreman,aas_wms.model_aas_product_label_adjust_line,group_aas_manufacture_foreman,1,1,1,1
 access_aas_product_label_adjust_line_manager,aas.product.label.adjust.line manager,aas_wms.model_aas_product_label_adjust_line,group_aas_manufacture_manager,1,1,1,1
 
-access_stock_move_manufacture_user,stock.move manufacture_user,stock.model_stock_move,group_aas_manufacture_user,1,0,1,0
+access_stock_move_manufacture_user,stock.move manufacture_user,stock.model_stock_move,group_aas_manufacture_user,1,1,1,1
 
 access_aas_stock_receipt_move_report_manufacture_user,aas.stock.receipt.move.report manufacture_user,aas_wms.model_aas_stock_receipt_move_report,group_aas_manufacture_user,1,0,0,0
 access_aas_stock_delivery_move_report_manufacture_user,aas.stock.delivery.move.report manufacture_user,aas_wms.model_aas_stock_delivery_move_report,group_aas_manufacture_user,1,0,0,0
