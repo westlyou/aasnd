@@ -23,7 +23,7 @@ class AASMESWireCuttingController(http.Controller):
 
     @http.route('/aasmes/wirecutting', type='http', auth="user")
     def aasmes_wirecutting(self):
-        values = {'success': True, 'message': '', 'employeelist': [], 'materiallist': []}
+        values = {'success': True, 'message': '', 'materiallist': [], 'employee_id': '0', 'employee_name': ''}
         loginuser = request.env.user
         values['checker'] = loginuser.name
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
@@ -38,12 +38,10 @@ class AASMESWireCuttingController(http.Controller):
             values.update({'success': False, 'message': u'当前登录账号还未绑定切线工位！'})
             return request.render('aas_mes.aas_wirecutting', values)
         values.update({'mesline_name': mesline.name, 'workstation_name': workstation.name})
-        if workstation.employee_lines and len(workstation.employee_lines) > 0:
-            values['employeelist'] = [{
-                'employee_id': wemployee.employee_id.id,
-                'employee_name': wemployee.employee_id.name,
-                'employee_code': wemployee.employee_id.code
-            } for wemployee in workstation.employee_lines]
+        employeelist = request.env['aas.mes.workstation.employee'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
+        if employeelist and len(employeelist) > 0:
+            temployee = employeelist[0].employee_id
+            values.update({'employee_id': temployee.id, 'employee_name': temployee.name+'['+temployee.code+']'})
         feedmateriallist = request.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
         if feedmateriallist and len(feedmateriallist) > 0:
             values['materiallist'] = [{
