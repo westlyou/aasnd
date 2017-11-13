@@ -381,7 +381,6 @@ class AASMESWorkorder(models.Model):
         if container_id:
             # 更新容器中物品清单信息
             cdomain = [('container_id', '=', container_id), ('product_id', '=', product_id), ('product_lot', '=', product_lot)]
-            cdomain.append(('label_id', '=', False))
             productline = self.env['aas.container.product'].search(cdomain, limit=1)
             if productline:
                 productline.write({'temp_qty': productline.temp_qty+output_qty})
