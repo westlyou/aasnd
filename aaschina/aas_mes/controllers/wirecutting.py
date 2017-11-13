@@ -235,6 +235,7 @@ class AASMESWireCuttingController(http.Controller):
         if not workstation:
             values.update({'success': False, 'message': u'当前登录账号还未绑定切线工位！'})
             return values
+        values['workstation_name'] = workstation.name
         wireorder = request.env['aas.mes.wireorder'].browse(wireorder_id)
         if not wireorder:
             values.update({'success': False, 'message': u'请仔细检查确认扫描工单是否在系统中存在！'})
