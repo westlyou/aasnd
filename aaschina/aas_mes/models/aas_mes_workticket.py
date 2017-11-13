@@ -146,7 +146,7 @@ class AASMESWorkticket(models.Model):
 
     @api.one
     def action_doing_commit(self, commit_qty, badmode_lines=[], container_id=False):
-        ticketvals, output_qty = {}, commit_qty
+        ticketvals = {'output_qty': self.output_qty + commit_qty}
         if self.islastworkcenter():
             if not container_id:
                 raise UserError(u'当前工序是最后一道工序，需要先添加产出容器！')
@@ -158,8 +158,7 @@ class AASMESWorkticket(models.Model):
                 badmodelist.append((0, 0, badmode))
                 badmode_qty += badmode['badmode_qty']
             ticketvals['badmode_lines'] = badmodelist
-            output_qty -= badmode_qty
-            ticketvals['output_qty'] = output_qty + self.output_qty
+            ticketvals['output_qty'] -= badmode_qty
             ticketvals['badmode_qty'] = badmode_qty + self.badmode_qty
         self.write(ticketvals)
         # 添加追溯信息
@@ -167,7 +166,7 @@ class AASMESWorkticket(models.Model):
         # 消耗物料
         self.action_material_consume(temptrace, commit_qty)
         # 工单报工善后
-        self.action_after_commit(temptrace, output_qty)
+        self.action_after_commit(temptrace, ticketvals['output_qty'])
 
 
 
@@ -182,7 +181,7 @@ class AASMESWorkticket(models.Model):
         tracevals = {
             'workorder_id': self.workorder_id.id, 'workcenter_id': self.workcenter_id.id,
             'workstation_id': workstation.id, 'product_id': self.product_id.id, 'mesline_id': self.mesline_id.id,
-            'schedule_id': False if not self.schedule_id else self.schedule_id.id,
+            'schedule_id': False if not self.mesline_id.schedule_id else self.mesline_id.schedule_id.id,
             'mainorder_id': False if not self.mainorder_id else self.mainorder_id.id,
             'date_start': self.time_start if not self.time_finish else self.time_finish,
             'date_finish': fields.Datetime.now(),
@@ -235,6 +234,9 @@ class AASMESWorkticket(models.Model):
                             }
             if float_compare(quant_qty, want_qty, precision_rounding=0.000001) < 0.0:
                 raise UserError(u'当前工位上原料%s投料不足，请先继续投料再进行其他操作！'% material.default_code)
+            #更新消耗信息
+            consumelines.append((1, tempconsume.id, {'consume_qty': tempconsume.consume_qty+want_qty}))
+            # 添加库存消耗移库信息
             for qkey, qval in quantdict.items():
                 if float_compare(want_qty, 0.0, precision_rounding=0.000001) <= 0.0:
                     break
@@ -252,7 +254,6 @@ class AASMESWorkticket(models.Model):
                 }
                 movevallist.append(moveval)
                 want_qty -= tempqty
-            consumelines.append((1, tempconsume.id, {'consume_qty': tempconsume.consume_qty+want_qty}))
         if movevallist and len(movevallist) > 0:
             for moveval in movevallist:
                 movelist |= self.env['stock.move'].create(moveval)
