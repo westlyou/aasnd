@@ -58,7 +58,6 @@
                                         <field name="product_lot"/>
                                         <field name="stock_qty"/>
                                         <field name="temp_qty"/>
-                                        <field name="label_id"/>
                                     </tree>
                                     <form>
                                         <group>
@@ -70,9 +69,6 @@
                                                 <field name="stock_qty"/>
                                                 <field name="temp_qty"/>
                                             </group>
-                                        </group>
-                                        <group>
-                                            <group> <field name="label_id"/> </group>
                                         </group>
                                     </form>
                                 </field>
@@ -269,15 +265,12 @@
                             <field name="adjust_lines">
                                 <tree editable="bottom">
                                     <field name="line_id" invisible="1"/>
-                                    <field name="label_id" options="{'no_create':true}"
-                                           attrs="{'readonly':[('line_id','!=',False)]}"/>
                                     <field name="product_id" options="{'no_create':true}" required="1"
-                                            attrs="{'readonly':['|',('line_id','!=',False),('label_id','!=',False)]}"/>
+                                            attrs="{'readonly':[('line_id','!=',False)]}"/>
                                     <field name="product_lot" options="{'no_create':true}"
-                                           domain="[('product_id','=',product_id)]"
-                                           attrs="{'readonly':['|',('line_id','!=',False),('label_id','!=',False)]}"/>
-                                    <field name="stock_qty" attrs="{'readonly':[('label_id','!=',False)]}"/>
-                                    <field name="temp_qty" attrs="{'readonly':[('label_id','!=',False)]}"/>
+                                           domain="[('product_id','=',product_id)]" attrs="{'readonly':[('line_id','!=',False)]}"/>
+                                    <field name="stock_qty"/>
+                                    <field name="temp_qty"/>
                                 </tree>
                             </field>
                         </page>

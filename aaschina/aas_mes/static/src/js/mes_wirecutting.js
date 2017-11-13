@@ -24,6 +24,8 @@ $(function(){
             action_scancontainer(barcode);
         }else if(prefix=='AC'){
             action_scanmaterial(barcode);
+        }else if(prefix=='AK'){
+            action_scanequipment(barcode);
         }else{
             layer.msg('扫描异常，请确认是否在扫描员工工牌或线材工单！', {icon: 5});
             return ;
@@ -32,7 +34,12 @@ $(function(){
 
     //扫描员工卡
     function action_scanemployee(barcode){
-        var scanparams = {'barcode': barcode};
+        var equipmentid = parseInt($('#mes_equipment').attr('equipmentid'));
+        if(equipmentid==0){
+            layer.msg('请先扫描设备二维码，添加设备后再上岗扫描！', {icon: 5});
+            return ;
+        }
+        var scanparams = {'barcode': barcode, 'equipment_id': equipmentid};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
             url: '/aasmes/wirecutting/scanemployee',
@@ -49,13 +56,31 @@ $(function(){
                     layer.msg(dresult.message, {icon: 1});
                 }
                 if(dresult.action=='working'){
-                    var templi = $('<li class="cemployee" id="employee_'+dresult.employee_id+'"></li>');
-                    templi.html('<a href="javascript:void(0);">'+dresult.employee_name+'<span class="pull-right">'+dresult.employee_code+'</span></a>');
-                    $('#wirecut_employees').append(templi);
+                    $('#mes_employee').attr('employeeid', dresult.employee_id).html(dresult.employee_name);
                 }else{
-                    var templi = $('#employee_'+dresult.employee_id);
-                    templi.remove();
+                    $('#mes_employee').attr('employeeid', '0').html('');
                 }
+            },
+            error:function(xhr,type,errorThrown){ console.log(type);}
+        });
+    }
+
+    //扫描设备
+    function action_scanequipment(barcode){
+        var scanparams = {'barcode': barcode};
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        $.ajax({
+            url: '/aasmes/wirecutting/scanequipment',
+            headers:{'Content-Type':'application/json'},
+            type: 'post', timeout:10000, dataType: 'json',
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scanparams, id: access_id}),
+            success:function(data){
+                var dresult = data.result;
+                if(!dresult.success){
+                    layer.msg(dresult.message, {icon: 5});
+                    return ;
+                }
+                $('#mes_equipment').attr('equipmentid', dresult.equipment_id).html(dresult.equipment_code);
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
         });
@@ -158,6 +183,16 @@ $(function(){
             layer.msg('您还没添加产出容器，请先扫描容器标签添加容器！', {icon: 5});
             return ;
         }
+        var equipment_id = parseInt($('#mes_equipment').attr('equipmentid'));
+        if(equipment_id==0){
+            layer.msg('当前工位还未添加设备，请先扫描设备二维码添加设备！', {icon: 5});
+            return ;
+        }
+        var employee_id = parseInt($('#mes_employee').attr('employeeid'));
+        if(employee_id==0){
+            layer.msg('当前工位还没有员工上岗，请先扫描员工卡上岗！', {icon: 5});
+            return ;
+        }
         var wireorderid = parseInt($('#mes_wireorder').attr('wireorderid'));
         if(wireorderid==0){
             layer.msg('您还未扫描线材工单！', {icon: 5});
@@ -177,6 +212,8 @@ $(function(){
             var output_qty = parseFloat(text);
             var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
             var outputparams = {'workorder_id': workorderid, 'output_qty': output_qty, 'container_id': containerid};
+            outputparams['employee_id'] = employee_id;
+            outputparams['equipment_id'] = equipment_id;
             $.ajax({
                 url: '/aasmes/wirecutting/output',
                 headers:{'Content-Type':'application/json'},
@@ -188,8 +225,7 @@ $(function(){
                         layer.msg(dresult.message, {icon: 5});
                         return ;
                     }
-                    $('#workorder_'+workorderid).children().eq(5).html(dresult.output_qty);
-                    $('#workorder_'+workorderid).children().eq(6).html(dresult.state_name);
+                    action_refresh_cutting(wireorderid);
                 },
                 error:function(xhr,type,errorThrown){ console.log(type);}
             });
@@ -228,62 +264,66 @@ $(function(){
         if(wireorderid==0){
             window.location.reload(true);
         }else{
-            var refreshparams = {'wireorder_id': workorderid};
-            var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
-            $.ajax({
-                url: '/aasmes/wirecutting/actionrefresh',
-                headers:{'Content-Type':'application/json'},
-                type: 'post', timeout:10000, dataType: 'json',
-                data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: refreshparams, id: access_id}),
-                success:function(data){
-                    $('#mes_wireorder').attr('wireorderid', '0').html('');
-                    $('#mes_product').html('');
-                    $('#mes_pqty').html('');
-                    $('#workorderlist').html('');
-                    $('#mes_workorder').attr('workorderid', '0').html('');
-                    $('#mes_mesline').html('');
-                    $('#mes_workstation').html('');
-                    var dresult = data.result;
-                    if(!dresult.success){
-                        layer.msg(dresult.message, {icon: 5});
-                        return ;
-                    }
-                    $('#mes_wireorder').attr('wireorderid', dresult.wireorder_id).html(dresult.wireorder_name);
-                    $('#mes_product').html(dresult.product_code);
-                    $('#mes_pqty').html(dresult.product_qty);
-                    $('#mes_mesline').html(dresult.mesline_name);
-                    $('#mes_workstation').html(dresult.workstation_name);
-                    $.each(dresult.workorderlist, function(index, workorder){
-                        var workorder_id = 'workorder_'+workorder.id;
-                        var ordertr = $('<tr class="workorder"></tr>').attr({
-                            'id': workorder_id, 'output_qty': workorder.output_qty,
-                            'workorderid': workorder.id, 'order_name': workorder.order_name, 'product_code': workorder.product_code
-                        });
-                        $('<td></td>').appendTo(ordertr).html('<input type="checkbox"/>');
-                        $('<td></td>').appendTo(ordertr).html(workorder.order_name);
-                        $('<td></td>').appendTo(ordertr).html(workorder.product_code);
-                        $('<td></td>').appendTo(ordertr).html(workorder.product_uom);
-                        $('<td></td>').appendTo(ordertr).html(workorder.product_qty);
-                        $('<td></td>').appendTo(ordertr).html(workorder.output_qty);
-                        $('<td></td>').appendTo(ordertr).html(workorder.state_name);
-                        $('#workorderlist').append(ordertr);
-                        ordertr.click(function(){
-                            temptrclick(ordertr);
-                        });
-                    });
-                    $('#wirecut_materiallist').html('');
-                    if(dresult.materiallist.length > 0){
-                        var wmateriallist = $('#wirecut_materiallist');
-                        $.each(dresult.materiallist, function(index, tmaterial){
-                            var materialstr = '<a href="javascript:void(0);">'+tmaterial.material_name +
-                                '<span class="pull-right">'+tmaterial.material_qty+'</span></a>';
-                            $('<li></li>').html(materialstr).appendTo(wmateriallist);
-                        });
-                    }
-                },
-                error:function(xhr,type,errorThrown){ console.log(type);}
-            });
+            action_refresh_cutting(wireorderid);
         }
     });
+
+    function action_refresh_cutting(wireorderid){
+        var refreshparams = {'wireorder_id': workorderid};
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        $.ajax({
+            url: '/aasmes/wirecutting/actionrefresh',
+            headers:{'Content-Type':'application/json'},
+            type: 'post', timeout:10000, dataType: 'json',
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: refreshparams, id: access_id}),
+            success:function(data){
+                $('#mes_wireorder').attr('wireorderid', '0').html('');
+                $('#mes_product').html('');
+                $('#mes_pqty').html('');
+                $('#workorderlist').html('');
+                $('#mes_workorder').attr('workorderid', '0').html('');
+                $('#mes_mesline').html('');
+                $('#mes_workstation').html('');
+                var dresult = data.result;
+                if(!dresult.success){
+                    layer.msg(dresult.message, {icon: 5});
+                    return ;
+                }
+                $('#mes_wireorder').attr('wireorderid', dresult.wireorder_id).html(dresult.wireorder_name);
+                $('#mes_product').html(dresult.product_code);
+                $('#mes_pqty').html(dresult.product_qty);
+                $('#mes_mesline').html(dresult.mesline_name);
+                $('#mes_workstation').html(dresult.workstation_name);
+                $.each(dresult.workorderlist, function(index, workorder){
+                    var workorder_id = 'workorder_'+workorder.id;
+                    var ordertr = $('<tr class="workorder"></tr>').attr({
+                        'id': workorder_id, 'output_qty': workorder.output_qty,
+                        'workorderid': workorder.id, 'order_name': workorder.order_name, 'product_code': workorder.product_code
+                    });
+                    $('<td></td>').appendTo(ordertr).html('<input type="checkbox"/>');
+                    $('<td></td>').appendTo(ordertr).html(workorder.order_name);
+                    $('<td></td>').appendTo(ordertr).html(workorder.product_code);
+                    $('<td></td>').appendTo(ordertr).html(workorder.product_uom);
+                    $('<td></td>').appendTo(ordertr).html(workorder.product_qty);
+                    $('<td></td>').appendTo(ordertr).html(workorder.output_qty);
+                    $('<td></td>').appendTo(ordertr).html(workorder.state_name);
+                    $('#workorderlist').append(ordertr);
+                    ordertr.click(function(){
+                        temptrclick(ordertr);
+                    });
+                });
+                $('#wirecut_materiallist').html('');
+                if(dresult.materiallist.length > 0){
+                    var wmateriallist = $('#wirecut_materiallist');
+                    $.each(dresult.materiallist, function(index, tmaterial){
+                        var materialstr = '<a href="javascript:void(0);">'+tmaterial.material_name +
+                            '<span class="pull-right">'+tmaterial.material_qty+'</span></a>';
+                        $('<li></li>').html(materialstr).appendTo(wmateriallist);
+                    });
+                }
+            },
+            error:function(xhr,type,errorThrown){ console.log(type);}
+        });
+    }
 
 });

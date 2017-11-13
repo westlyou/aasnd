@@ -193,3 +193,39 @@ class AASMESWireOrder(models.Model):
         self.write({'pusher_id': self.env.user.id, 'push_time': fields.Datetime.now(), 'state': 'wait'})
 
 
+
+    @api.model
+    def action_wirecutting_output(self, workorder_id, output_qty, container_id, workstation_id, employee_id, equipment_id):
+        """
+        线材工单产出
+        :param workorder_id:
+        :param output_qty:
+        :param container_id:
+        :param employee_id:
+        :param equipment_id:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        workorder = self.env['aas.mes.workorder'].browse(workorder_id)
+        cresult = workorder.action_validate_consume(workorder.id, workorder.product_id.id, output_qty, workstation_id)
+        if not cresult['success']:
+            values.update(cresult)
+            return values
+        oresult = workorder.action_output(workorder.id, workorder.product_id.id, output_qty, container_id)
+        if not oresult['success']:
+            values.update(oresult)
+            return values
+        csresult = workorder.action_consume(workorder.id, workorder.product_id.id)
+        if csresult['tracelist'] and len(csresult['tracelist']) > 0:
+            tracelist = self.env['aas.mes.tracing'].browse(csresult['tracelist'])
+            temployee = self.env['aas.hr.employee'].browse(employee_id)
+            tequipment = self.env['aas.equipment.equipment'].browse(equipment_id)
+            tracelist.write({
+                'employeelist': temployee.name+'['+temployee.code+']', 'equipmentlist': tequipment.name+'['+tequipment.code+']'
+            })
+        if not csresult['success']:
+            values.update(csresult)
+            return values
+        return values
+
+

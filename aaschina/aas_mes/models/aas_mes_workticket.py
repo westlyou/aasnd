@@ -449,7 +449,7 @@ class AASMESWorkticket(models.Model):
             workticket.write(ticketvals)
         # 验证物料消耗
         workorder = workticket.workorder_id
-        cresult = workorder.action_validate_consume(workorder.id, workticket.workcenter_id.id, workstation.id, workticket.product_id.id, workticket.input_qty)
+        cresult = workorder.action_validate_consume(workorder.id, workticket.product_id.id, workticket.input_qty, workstation.id, workticket.workcenter_id.id)
         if not cresult['success']:
             values.update(cresult)
             return values
@@ -538,7 +538,7 @@ class AASMESWorkticketCommitWizard(models.TransientModel):
             raise UserError(u'不良数量的总和不可以大于报工数量！')
         workorder, workcenter = self.workticket_id.workorder_id, self.workticket_id.workcenter_id
         workstation, product = workcenter.workstation_id, self.workticket_id.product_id
-        cresult = workorder.action_validate_consume(workorder.id, workcenter.id, workstation.id, product.id, self.commit_qty)
+        cresult = workorder.action_validate_consume(workorder.id, product.id, self.commit_qty, workstation.id, workcenter.id)
         if not cresult['success']:
             raise UserError(cresult['message'])
         self.workticket_id.action_doing_commit(self.commit_qty, badmode_lines, container_id)

@@ -282,7 +282,7 @@ class AASMESWorkorder(models.Model):
         outputlist = self.env['aas.mes.workorder.product'].search(outputdomain)
         if outputlist and len(outputlist) > 0:
             for output in outputlist:
-                result = output.action_consume()
+                result = output.action_output_consume(output)
                 if not result['success']:
                     raise UserError(result['message'])
 
@@ -408,35 +408,47 @@ class AASMESWorkorder(models.Model):
         :param product_id:
         :return:
         """
-        values = {'success': True, 'message': ''}
+        values = {'success': True, 'message': '', 'tracelist':[]}
         outputdomain = [('workorder_id', '=', workorder_id), ('product_id', '=', product_id)]
         outputdomain.append(('waiting_qty', '>', 0.0))
         outputlist = self.env['aas.mes.workorder.product'].search(outputdomain)
         if outputlist and len(outputlist) > 0:
+            meslineids  = []
             for output in outputlist:
-                result = output.action_consume()
+                meslineids.append(output.mesline_id.id)
+                result = output.action_output_consume(output)
+                if result['tracelist'] and len(result['tracelist']) > 0:
+                    values['tracelist'].extend(result['tracelist'])
                 if not result['success']:
                     values.update(result)
                     return values
+            if meslineids and len(meslineids) > 0:
+                # 刷新一下上料清单库存
+                feedmateriallist = self.env['aas.mes.feedmaterial'].search([('mesline_id', 'in', meslineids)])
+                if feedmateriallist and len(feedmateriallist) > 0:
+                    for feedmaterial in feedmateriallist:
+                        feedmaterial.action_refresh_stock()
         return values
 
 
     @api.model
-    def action_validate_consume(self, workorder_id, workcenter_id, workstation_id, product_id, product_qty):
+    def action_validate_consume(self, workorder_id, product_id, product_qty, workstation_id, workcenter_id=False):
         """
-
-        :param mesline_id:
-        :param workcenter_id:
-        :param workstation_id:
+        物料消耗验证
+        :param workorder_id:
         :param product_id:
         :param product_qty:
+        :param workstation_id:
+        :param workcenter_id:
         :return:
         """
         values = {'success': True, 'message': ''}
         workorder = self.env['aas.mes.workorder'].browse(workorder_id)
         workstation = self.env['aas.mes.workstation'].browse(workstation_id)
         mesline = workorder.mesline_id
-        consumedomain = [('workorder_id', '=', workorder_id), ('workcenter_id', '=', workcenter_id), ('product_id', '=', product_id)]
+        consumedomain = [('workorder_id', '=', workorder_id), ('product_id', '=', product_id)]
+        if workcenter_id:
+            consumedomain.append(('workcenter_id', '=', workcenter_id))
         consumelist = self.env['aas.mes.workorder.consume'].search(consumedomain)
         if consumelist and len(consumelist) > 0:
             consumedict, feedmaterialdict = {}, {}
@@ -579,89 +591,82 @@ class AASMESWorkorderProduct(models.Model):
         for record in self:
             record.total_qty = record.product_qty + record.waiting_qty
 
-    @api.multi
-    def action_consume(self):
+
+
+
+    @api.model
+    def action_output_consume(self, outputrecord):
         """
         产出物料消耗
         :return:
         """
-        values = {'success': True, 'message': ''}
-        meslineids = []
-        for record in self:
-            waiting_qty = record.waiting_qty
-            if record.mesline_id.id not in meslineids:
-                meslineids.append(record.mesline_id.id)
-            buildresult = self.action_build_consumerecords(record)
-            if not buildresult['success']:
-                return buildresult
-            consumerecords = buildresult['records']
-            if not consumerecords or len(consumerecords) <= 0:
-                continue
-            workorder = record.workorder_id
-            companyid = self.env.user.company_id.id
-            destlocationid = self.env.ref('stock.location_production').id
-            for tempconsume in consumerecords:
-                tracevals = {
-                    'mesline_id': tempconsume['mesline_id'], 'product_id': tempconsume['product_id'],
-                    'workorder_id': tempconsume['workorder_id'], 'mainorder_id': tempconsume.get('mainorder_id', False),
-                    'serialnumbers': tempconsume.get('serialnumbers', False), 'schedule_id': tempconsume.get('schedule_id', False),
-                    'product_lot': tempconsume.get('product_lot', False), 'employeelist': tempconsume.get('employeelist', False),
-                    'equipmentlist': tempconsume.get('equipmentlist', False)
-                }
-                workstation_id, workcenter_id = tempconsume.get('workstation_id', 0), tempconsume.get('workcenter_id', 0)
-                if workstation_id and workstation_id > 0:
-                    tracevals['workstation_id'] = workstation_id
-                if workcenter_id and workcenter_id > 0:
-                    tracevals['workcenter_id'] = workcenter_id
-                # 创建追溯信息
-                tracerecord = self.env['aas.mes.tracing'].create(tracevals)
-                materiallist, movevallist, movelist = [], [], self.env['stock.move']
-                for tempmaterial in tempconsume['materiallines']:
-                    material_id = tempmaterial['material_id']
-                    material_uom, material_code = tempmaterial['material_uom'], tempmaterial['material_code']
-                    for tempmove in tempmaterial['movelines']:
-                        materiallist.append(material_code+'['+tempmove['material_lot_name']+']')
-                        # 库存移动
-                        moverecord = self.env['stock.move'].create({
-                            'name': workorder.name, 'product_id': material_id,
-                            'company_id': companyid, 'trace_id': tracerecord.id,
-                            'product_uom': material_uom, 'create_date': fields.Datetime.now(),
-                            'location_id': tempmove['location_id'], 'location_dest_id': destlocationid,
-                            'restrict_lot_id': tempmove['material_lot'], 'product_uom_qty': tempmove['product_qty']
-                        })
-                        movelist |= moverecord
-                movelist.action_done()
-                tracerecord.write({'materiallist': ','.join(materiallist)})
-            # 更新产出记录信息
-            product_id, output_qty = record.product_id.id, record.waiting_qty
-            product_qty = record.product_qty + record.waiting_qty
-            workordervals = {'product_lines': [(1, record.id, {'product_qty': product_qty, 'waiting_qty': 0.0})]}
-            consumelist = []
-            consumedomain = [('workorder_id', '=', workorder.id), ('product_id', '=', product_id)]
-            workorder_consume_list = self.env['aas.mes.workorder.consume'].search(consumedomain)
-            for wkconsume in workorder_consume_list:
-                consume_qty = wkconsume.consume_qty + (wkconsume.consume_unit * output_qty)
-                consumelist.append((1, wkconsume.id, {'consume_qty': consume_qty}))
-            workordervals['consume_lines'] = consumelist
-            workorder.write(workordervals)
-            # 序列号设置为已追溯
-            seriallist = self.env['aas.mes.serialnumber'].search([('outputrecord_id', '=', record.id), ('traced', '=', False)])
-            if seriallist and len(seriallist) > 0:
-                seriallist.write({'traced': True})
-            if record.container_id:
-                # 容器中相应数量物品入库存
-                productdomain = [('container_id', '=', record.container_id.id), ('product_id', '=', record.product_id.id)]
-                productdomain.append(('label_id', '=', False))
-                productdomain.append(('product_lot', '=', False if not record.product_lot else record.product_lot.id))
-                productline = self.env['aas.container.product'].search(productdomain, limit=1)
-                if productline:
-                    productline.action_stock(waiting_qty)
-        for meslineid in meslineids:
-            # 刷新产线投料库存
-            feedmateriallist = self.env['aas.mes.feedmaterial'].search([('mesline_id', '=', meslineid)])
-            if feedmateriallist and len(feedmateriallist) > 0:
-                for feedmaterial in feedmateriallist:
-                    feedmaterial.action_refresh_stock()
+        self.ensure_one()
+        values = {'success': True, 'message': '', 'tracelist': []}
+        buildresult = self.action_build_consumerecords(outputrecord)
+        if not buildresult['success']:
+            return buildresult
+        consumerecords = buildresult['records']
+        if not consumerecords or len(consumerecords) <= 0:
+            return values
+        workorder, companyid = outputrecord.workorder_id, self.env.user.company_id.id
+        destlocationid = self.env.ref('stock.location_production').id
+        for tempconsume in consumerecords:
+            tracevals = {
+                'mesline_id': tempconsume['mesline_id'], 'product_id': tempconsume['product_id'],
+                'workorder_id': tempconsume['workorder_id'], 'mainorder_id': tempconsume.get('mainorder_id', False),
+                'serialnumbers': tempconsume.get('serialnumbers', False), 'schedule_id': tempconsume.get('schedule_id', False),
+                'product_lot': tempconsume.get('product_lot', False), 'employeelist': tempconsume.get('employeelist', False),
+                'equipmentlist': tempconsume.get('equipmentlist', False)
+            }
+            workstation_id, workcenter_id = tempconsume.get('workstation_id', 0), tempconsume.get('workcenter_id', 0)
+            if workstation_id and workstation_id > 0:
+                tracevals['workstation_id'] = workstation_id
+            if workcenter_id and workcenter_id > 0:
+                tracevals['workcenter_id'] = workcenter_id
+            # 创建追溯信息
+            tracerecord = self.env['aas.mes.tracing'].create(tracevals)
+            materiallist, movevallist, movelist = [], [], self.env['stock.move']
+            for tempmaterial in tempconsume['materiallines']:
+                material_id = tempmaterial['material_id']
+                material_uom, material_code = tempmaterial['material_uom'], tempmaterial['material_code']
+                for tempmove in tempmaterial['movelines']:
+                    materiallist.append(material_code+'['+tempmove['material_lot_name']+']')
+                    # 库存移动
+                    moverecord = self.env['stock.move'].create({
+                        'name': workorder.name, 'product_id': material_id,
+                        'company_id': companyid, 'trace_id': tracerecord.id,
+                        'product_uom': material_uom, 'create_date': fields.Datetime.now(),
+                        'location_id': tempmove['location_id'], 'location_dest_id': destlocationid,
+                        'restrict_lot_id': tempmove['material_lot'], 'product_uom_qty': tempmove['product_qty']
+                    })
+                    movelist |= moverecord
+            movelist.action_done()
+            tracerecord.write({'materiallist': ','.join(materiallist)})
+            values['tracelist'].append(tracerecord.id)
+        # 更新产出记录信息
+        product_id, output_qty = outputrecord.product_id.id, outputrecord.waiting_qty
+        product_qty = outputrecord.product_qty + outputrecord.waiting_qty
+        workordervals = {'product_lines': [(1, outputrecord.id, {'product_qty': product_qty, 'waiting_qty': 0.0})]}
+        consumelist = []
+        consumedomain = [('workorder_id', '=', workorder.id), ('product_id', '=', product_id)]
+        workorder_consume_list = self.env['aas.mes.workorder.consume'].search(consumedomain)
+        for wkconsume in workorder_consume_list:
+            consume_qty = wkconsume.consume_qty + (wkconsume.consume_unit * output_qty)
+            consumelist.append((1, wkconsume.id, {'consume_qty': consume_qty}))
+        workordervals['consume_lines'] = consumelist
+        workorder.write(workordervals)
+        # 序列号设置为已追溯
+        seriallist = self.env['aas.mes.serialnumber'].search([('outputrecord_id', '=', outputrecord.id), ('traced', '=', False)])
+        if seriallist and len(seriallist) > 0:
+            seriallist.write({'traced': True})
+        if outputrecord.container_id:
+            # 容器中相应数量物品入库存
+            productdomain = [('container_id', '=', outputrecord.container_id.id), ('product_id', '=', outputrecord.product_id.id)]
+            productdomain.append(('label_id', '=', False))
+            productdomain.append(('product_lot', '=', False if not outputrecord.product_lot else outputrecord.product_lot.id))
+            productline = self.env['aas.container.product'].search(productdomain, limit=1)
+            if productline:
+                productline.action_stock(outputrecord.waiting_qty)
         return values
 
 

@@ -58,50 +58,105 @@ mui.ready(function(){
         var self = this;
         wx.scanQRCode({
             needResult: 1,
-            desc: '扫描物料',
+            desc: '扫描上料',
             scanType: ["qrCode"],
             success: function (result) {
                 var workstationid = parseInt(self.getAttribute('workstationid'));
-                var labelbarcode = result.resultStr;
-                var scanparams = {'barcode': labelbarcode, 'workstationid': workstationid};
-                var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
-                var scanmask = aas_feeding_loading();
-                mui.ajax('/aasmes/mes/feeding/materialscan',{
-                    data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scanparams, id: access_id }),
-                    dataType:'json', type:'post', timeout:10000,
-                    headers:{'Content-Type':'application/json'},
-                    success:function(data){
-                        var dresult = data.result;
-                        feeding_flag = false;
-                        scanmask.close();
-                        if (!dresult.success){
-                            mui.toast(dresult.message);
-                            return ;
-                        }
-                        var feedline = document.createElement('li');
-                        feedline.className = 'mui-table-view-cell';
-                        feedline.setAttribute('id', 'feeding_'+dresult.feeding_id);
-                        feedline.setAttribute('feedingid', dresult.feeding_id);
-                        feedline.innerHTML = "<div class='mui-slider-right mui-disabled'> <a class='mui-btn mui-btn-red aas-feeding-del'>删除</a> </div> " +
-                            "<div class='mui-slider-handle'>" +
-                                "<div class='mui-table'>" +
-                                    "<div class='mui-table-cell mui-col-xs-4 mui-text-left'>"+dresult.material_code+"</div>" +
-                                    "<div class='mui-table-cell mui-col-xs-4 mui-text-left'>"+dresult.material_lot+"</div>" +
-                                    "<div class='mui-table-cell mui-col-xs-4 mui-text-left'>"+dresult.material_qty+"</div>" +
-                                "</div>" +
-                            "</div>";
-                        document.getElementById('workstation_'+workstationid).appendChild(feedline);
-                    },
-                    error:function(xhr,type,errorThrown){
-                        console.log(type);
-                        feeding_flag = false;
-                        scanmask.close();
-                    }
-                });
+                var barcode = result.resultStr;
+                var prefix = barcode.substring(0,2);
+                if(prefix=='AT'){
+                    action_scancontainer(barcode, workstationid);
+                }else{
+                    action_scanlabel(barcode, workstationid);
+                }
             },
             fail: function(result){  mui.toast(result.errMsg); }
         });
     });
+
+    //标签上料
+    function action_scanlabel(barcode, workstationid){
+        var scanparams = {'barcode': barcode, 'workstationid': workstationid};
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        var scanmask = aas_feeding_loading();
+        mui.ajax('/aasmes/mes/feeding/materialscan',{
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scanparams, id: access_id }),
+            dataType:'json', type:'post', timeout:10000,
+            headers:{'Content-Type':'application/json'},
+            success:function(data){
+                var dresult = data.result;
+                feeding_flag = false;
+                scanmask.close();
+                if (!dresult.success){
+                    mui.toast(dresult.message);
+                    return ;
+                }
+                var feedline = document.createElement('li');
+                feedline.className = 'mui-table-view-cell';
+                feedline.setAttribute('id', 'feeding_'+dresult.feeding_id);
+                feedline.setAttribute('feedingid', dresult.feeding_id);
+                feedline.innerHTML = "<div class='mui-slider-right mui-disabled'> <a class='mui-btn mui-btn-red aas-feeding-del'>删除</a> </div> " +
+                    "<div class='mui-slider-handle'>" +
+                        "<div class='mui-table'>" +
+                            "<div class='mui-table-cell mui-col-xs-4 mui-text-left'>"+dresult.material_code+"</div>" +
+                            "<div class='mui-table-cell mui-col-xs-4 mui-text-center'>"+dresult.material_lot+"</div>" +
+                            "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>"+dresult.material_qty+"</div>" +
+                        "</div>" +
+                    "</div>";
+                document.getElementById('workstation_'+workstationid).appendChild(feedline);
+            },
+            error:function(xhr,type,errorThrown){
+                console.log(type);
+                feeding_flag = false;
+                scanmask.close();
+            }
+        });
+    }
+
+    //容器上料
+    function action_scancontainer(barcode, workstationid){
+        var scanparams = {'barcode': barcode, 'workstationid': workstationid};
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        var scanmask = aas_feeding_loading();
+        mui.ajax('/aasmes/mes/feeding/containerscan',{
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scanparams, id: access_id }),
+            dataType:'json', type:'post', timeout:10000,
+            headers:{'Content-Type':'application/json'},
+            success:function(data){
+                var dresult = data.result;
+                feeding_flag = false;
+                scanmask.close();
+                if (!dresult.success){
+                    mui.toast(dresult.message);
+                    return ;
+                }
+                if(dresult.materiallist.length <= 0){
+                    return ;
+                }
+                mui.each(dresult.materiallist, function(index, tmaterial){
+                    var feedline = document.createElement('li');
+                    feedline.className = 'mui-table-view-cell';
+                    feedline.setAttribute('id', 'feeding_'+tmaterial.feeding_id);
+                    feedline.setAttribute('feedingid', tmaterial.feeding_id);
+                    feedline.innerHTML = "<div class='mui-slider-right mui-disabled'> <a class='mui-btn mui-btn-red aas-feeding-del'>删除</a> </div> " +
+                        "<div class='mui-slider-handle'>" +
+                            "<div class='mui-table'>" +
+                                "<div class='mui-table-cell mui-col-xs-4 mui-text-left'>"+tmaterial.material_code+"</div>" +
+                                "<div class='mui-table-cell mui-col-xs-4 mui-text-center'>"+tmaterial.material_lot+"</div>" +
+                                "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>"+tmaterial.material_qty+"</div>" +
+                            "</div>" +
+                        "</div>";
+                    document.getElementById('workstation_'+workstationid).appendChild(feedline);
+                });
+            },
+            error:function(xhr,type,errorThrown){
+                console.log(type);
+                feeding_flag = false;
+                scanmask.close();
+            }
+        });
+    }
+
 
 
     //删除上料记录

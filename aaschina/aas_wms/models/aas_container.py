@@ -181,7 +181,6 @@ class AASContainerProduct(models.Model):
     container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
-    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict')
     stock_qty = fields.Float(string=u'库存数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     temp_qty = fields.Float(string=u'未入库数', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_product_qty', store=True)
@@ -253,18 +252,10 @@ class AASContainerAdjustWizard(models.TransientModel):
                     if tval and len(tval) > 0:
                        productlines.append((1, tadjust.line_id.id, tval))
                 else:
-                    tlabel = tadjust.label_id
-                    if tlabel:
-                        tval = {
-                            'label_id': tlabel.id, 'product_id': tlabel.product_id.id,
-                            'product_lot': tlabel.product_lot.id, 'stock_qty': tlabel.product_qty
-                        }
-                    else:
-                        tval = {
-                            'product_id': tadjust.product_id.id, 'product_lot': tadjust.product_lot.id,
-                            'stock_qty': tadjust.stock_qty, 'temp_qty': tadjust.temp_qty
-                        }
-                    productlines.append((0, 0, tval))
+                    productlines.append((0, 0, {
+                            'product_id': tadjust.product_id.id, 'stock_qty': tadjust.stock_qty,
+                            'product_lot': tadjust.product_lot.id, 'temp_qty': tadjust.temp_qty
+                        }))
         if self.container_id.product_lines and len(self.container_id.product_lines) > 0:
             for pline in self.container_id.product_lines:
                 if pline.id not in lineids:
@@ -284,16 +275,7 @@ class AASContainerAdjustLineWizard(models.TransientModel):
     line_id = fields.Many2one(comodel_name='aas.container.product', string=u'容器库存', ondelete='restrict')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
-    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict')
     stock_qty = fields.Float(string=u'库存数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     temp_qty = fields.Float(string=u'未入库数', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-
-    @api.onchange('label_id')
-    def change_label(self):
-        if not self.label_id:
-            self.product_id, self.product_lot, self.stock_qty, self.temp_qty = False, False, 0.0, 0.0
-        else:
-            self.product_id, self.product_lot = self.label_id.product_id.id, self.label_id.product_lot.id
-            self.stock_qty, self.temp_qty = self.label_id.product_qty, 0.0
 
 

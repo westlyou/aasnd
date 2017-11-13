@@ -54,7 +54,7 @@ class AASMESWireCuttingController(http.Controller):
 
 
     @http.route('/aasmes/wirecutting/scanemployee', type='json', auth="user")
-    def aasmes_wirecutting_scanemployee(self, barcode):
+    def aasmes_wirecutting_scanemployee(self, barcode, equipment_id):
         values = {
             'success': True, 'message': '', 'action': 'working',
             'employee_id': '0', 'employee_name': '', 'employee_code': ''
@@ -74,7 +74,7 @@ class AASMESWireCuttingController(http.Controller):
         if not workstation:
             values.update({'success': False, 'message': u'当前登录账号还未绑定下线工位'})
             return values
-        values.update({'employee_id': employee.id, 'employee_name': employee.name, 'employee_code': employee.code})
+        values.update({'employee_id': employee.id, 'employee_name': employee.name+'['+employee.code+']'})
         attendancedomain = [('employee_id', '=', employee.id), ('attend_done', '=', False)]
         mesattendance = request.env['aas.mes.work.attendance'].search(attendancedomain, limit=1)
         if mesattendance:
@@ -83,12 +83,33 @@ class AASMESWireCuttingController(http.Controller):
             values.update({'success': True, 'message': u'亲，您已离岗了哦！'})
         else:
             attendancevals = {'employee_id': employee.id, 'mesline_id': mesline.id, 'workstation_id': workstation.id}
-            equipmentdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-            tequipment = request.env['aas.mes.workstation.equipment'].search(equipmentdomain, limit=1)
-            if tequipment:
-                attendancevals['equipment_id'] = tequipment.equipment_id.id
+            if equipment_id:
+                attendancevals['equipment_id'] = equipment_id
             request.env['aas.mes.work.attendance'].create(attendancevals)
             values['message'] = u'亲，您已上岗！努力工作吧，加油！'
+        return values
+
+    @http.route('/aasmes/wirecutting/scanequipment', type='json', auth="user")
+    def aasmes_wirecutting_scanequipment(self, barcode):
+        values = {
+            'success': True, 'message': '', 'equipment_id': '0', 'equipment_code': ''
+        }
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        if lineuser.mesrole != 'wirecutter':
+            values.update({'success': False, 'message': u'当前登录账号还未授权下线！'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定下线工位'})
+            return values
+        equipment = request.env['aas.equipment.equipment'].search([('barcode', '=', barcode)], limit=1)
+        if not equipment:
+            values.update({'success': False, 'message': u'系统并未搜索到此设备，请仔细检查！'})
+            return values
+        values.update({'equipment_id': equipment.id, 'equipment_code': equipment.code})
         return values
 
 
@@ -174,7 +195,7 @@ class AASMESWireCuttingController(http.Controller):
 
 
     @http.route('/aasmes/wirecutting/output', type='json', auth="user")
-    def aasmes_wirecutting_output(self, workorder_id, output_qty, container_id):
+    def aasmes_wirecutting_output(self, workorder_id, output_qty, container_id, employee_id, equipment_id):
         values = {'success': True, 'message': ''}
         loginuser = request.env.user
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
@@ -190,25 +211,11 @@ class AASMESWireCuttingController(http.Controller):
             values.update({'success': False, 'message': u'当前登录账号还未绑定切线工位！'})
             return values
         workorder = request.env['aas.mes.workorder'].browse(workorder_id)
-        product = workorder.product_id
-        outputresult = workorder.action_output(workorder_id, product.id, output_qty, container_id=container_id)
+        outputresult = request.env['aas.mes.wireorder'].action_wirecutting_output(workorder.id, workorder.product_id.id,
+                                                                   container_id,  workstation.id, employee_id, equipment_id)
         if not outputresult['success']:
-            values.update({'success': False, 'message': outputresult['message']})
+            values.update(outputresult)
             return values
-        consumeresult = workorder.action_consume(workorder_id, product.id)
-        if not consumeresult.get('success', False):
-            outputrecord = outputresult['outputrecord']
-            outputrecord.write({'waiting_qty': outputrecord.waiting_qty - output_qty})
-            if float_is_zero(outputrecord.total_qty, precision_rounding=0.000001):
-                outputrecord.unlink()
-            if outputresult['containerproduct']:
-                containerproduct = outputresult['containerproduct']
-                containerproduct.write({'temp_qty': containerproduct.temp_qty - output_qty})
-                if not containerproduct.product_qty:
-                    containerproduct.unlink()
-            values.update(consumeresult)
-            return values
-        values.update({'output_qty': workorder.output_qty, 'state_name': ORDERSTATESDICT[workorder.state]})
         return values
 
 
