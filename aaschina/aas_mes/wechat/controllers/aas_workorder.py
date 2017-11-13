@@ -106,6 +106,7 @@ class AASWorkorderWechatController(http.Controller):
             'workticket_id': workticketid, 'workticket_name': workticket.name,
             'sequence': workticket.sequence, 'workcenter_name': workticket.workcenter_name,
             'product_code': workticket.product_id.default_code, 'input_qty': workticket.input_qty,
+            'output_qty': workticket.output_qty + workticket.badmode_qty,
             'time_start': fields.Datetime.to_timezone_string(workticket.time_start, 'Asia/Shanghai'),
             'mesline_name': workticket.mesline_name, 'workstation_name': '', 'employeelist': [], 'equipmentlist': []
         })
