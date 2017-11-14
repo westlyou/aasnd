@@ -32,15 +32,17 @@ $(function(){
     //    }
     //});
 
+    $('#mes_barcode').focus();
+
     // 条码扫描
     $('#mes_barcode').keyup(function(event){
         event.stopPropagation();
-        var barcode = $(this).val();
-        if(barcode==undefined || barcode==null || barcode==''){
-            layer.msg('请先扫描相关条码！', {icon: 5});
-            return ;
-        }
         if(event.which==13){
+            var barcode = $(this).val();
+            if(barcode==undefined || barcode==null || barcode==''){
+                layer.msg('请先扫描相关条码！', {icon: 5});
+                return ;
+            }
             var prefix = barcode.substring(0,2);
             if(prefix=='AM'){
                 action_scanemployee(barcode);
@@ -54,8 +56,10 @@ $(function(){
                 action_scanequipment(barcode);
             }else{
                 layer.msg('扫描异常，请确认是否在上岗扫描、上料扫描、容器扫描、设备扫描或者工单扫描！', {icon: 5});
+                $('#mes_barcode').val('').focus();
                 return ;
             }
+            $('#mes_barcode').val('').focus();
         }
     });
 
