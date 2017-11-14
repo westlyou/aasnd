@@ -33,9 +33,6 @@ $(function(){
     //});
 
     $('#mes_barcode').focus();
-    $('#mes_barcode').blur(function(){
-        $(this).val('').focus();
-    });
 
     // 条码扫描
     $('#mes_barcode').keyup(function(event){
