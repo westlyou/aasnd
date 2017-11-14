@@ -4,11 +4,10 @@ var VScanner = function(callback){
      * keypress的event.which值为事件触发的键的值的字符代码即相应字符的ascii码
     */
 
+    this.delay = 50;
     this.barcode = '';
-    this.delaytimes = 50; //keydown和keyup之间的延迟毫秒
+    this.timer = null;
     this.scanning = true; // 是否扫描模式
-    this.charlist = [];
-    this.timelist = [];
     this.callback = callback;
     var self = this;
 
@@ -29,44 +28,25 @@ var VScanner = function(callback){
         188: "<", 190: ">", 191: "?", 219: "{", 221: "}", 222: "|'", 59: ":"
     };
 
-    document.body.addEventListener('keydown', function(event){
-        if (!self.scanning){
-            return ;
-        }
-        var keycode = event.which;
-        if (keycode in _keycode_dictionary){
-            self.timelist.push(new Date().getTime());
-        }else if(keycode==13 || keycode==108){
-            self.timelist.push(new Date().getTime());
-        }
-    });
     document.body.addEventListener('keypress', function(event){
         if (!self.scanning || event.which==13){
             return ;
         }
-        self.charlist.push(String.fromCharCode(event.which));
+        self.barcode += String.fromCharCode(event.which);
+        window.clearTimeout(self.timer);
+        self.timer = window.setTimeout(function(){
+            self.barcode = "";
+        }, self.delay);
     });
     document.body.addEventListener('keyup', function(event){
         if (!self.scanning){
             return ;
         }
-        var keycode = event.which;
-        if (keycode in _keycode_dictionary){
-            var starttime = self.timelist.shift();
-            var finishtime = new Date().getTime();
-            if (finishtime - starttime <= self.delaytimes){
-                self.barcode += self.charlist.shift();
-            }
-        }else if (keycode==13 || keycode==108){
-            var starttime = self.timelist.shift();
-            var finishtime = new Date().getTime();
-            if (finishtime - starttime <= self.delaytimes){
-                self.actionscan(self.barcode);
-                self.clear();
-            }
+        if (event.which==13){
+            self.actionscan(self.barcode);
+            self.barcode = "";
 		}
     });
-
 
 };
 
@@ -74,9 +54,3 @@ var VScanner = function(callback){
 VScanner.prototype.actionscan = function(barcode){
 	this.callback(barcode);
 };
-
-VScanner.prototype.clear = function(){
-    this.barcode = '';
-    this.charlist = [];
-    this.timelist = [];
-}
