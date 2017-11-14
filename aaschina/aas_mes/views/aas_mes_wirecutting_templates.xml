@@ -64,7 +64,7 @@
 
                     <div class="content-wrapper">
                         <section class="content-header">
-                            <h1> 线材工单 </h1>
+                            <h1>线材工单</h1>
                             <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;color:red;">
                                 <span t-esc="message"/>
                             </div>
