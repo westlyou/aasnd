@@ -27,7 +27,7 @@ $(function(){
         }else if(prefix=='AK'){
             action_scanequipment(barcode);
         }else{
-            layer.msg('扫描异常，请确认是否在扫描员工工牌或线材工单！', {icon: 5});
+            layer.msg('扫描异常，请确认是否在上岗扫描、上料扫描、容器扫描、设备扫描或者工单扫描！', {icon: 5});
             return ;
         }
     });
