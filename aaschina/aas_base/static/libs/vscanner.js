@@ -40,6 +40,8 @@ var VScanner = function(callback){
         }else if(keycode==13 || keycode==108){
             self.timelist.push(new Date().getTime());
         }
+        event['aid'] = new Date().getTime();
+        console.log(event);
     });
     document.body.addEventListener('keypress', function(event){
         if (!self.scanning || event.which==13){
@@ -66,6 +68,7 @@ var VScanner = function(callback){
                 self.barcode = '';
             }
 		}
+        console.log(event);
     });
 
 
