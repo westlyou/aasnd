@@ -10,30 +10,27 @@ $(function(){
         return false;
     }
 
-    // 绑定扫描方法
-    function action_scanning(){
-        new VScanner(function(barcode){
-            if(barcode==null || barcode==''){
-                layer.msg('扫描条码异常！', {icon: 5});
-                return ;
-            }
-            var prefix = barcode.substring(0,2);
-            if(prefix=='AM'){
-                action_scanemployee(barcode);
-            }else if(prefix=='AC'){
-                action_scanmaterial(barcode);
-            }else if(prefix=='AU'){
-                action_scanwireorder(barcode);
-            }else if(prefix=='AT'){
-                action_scancontainer(barcode);
-            }else if(prefix=='AK'){
-                action_scanequipment(barcode);
-            }else{
-                layer.msg('扫描异常，请确认是否在上岗扫描、上料扫描、容器扫描、设备扫描或者工单扫描！', {icon: 5});
-                return ;
-            }
-        });
-    }
+    new VScanner(function(barcode){
+        if(barcode==null || barcode==''){
+            layer.msg('扫描条码异常！', {icon: 5});
+            return ;
+        }
+        var prefix = barcode.substring(0,2);
+        if(prefix=='AM'){
+            action_scanemployee(barcode);
+        }else if(prefix=='AC'){
+            action_scanmaterial(barcode);
+        }else if(prefix=='AU'){
+            action_scanwireorder(barcode);
+        }else if(prefix=='AT'){
+            action_scancontainer(barcode);
+        }else if(prefix=='AK'){
+            action_scanequipment(barcode);
+        }else{
+            layer.msg('扫描异常，请确认是否在上岗扫描、上料扫描、容器扫描、设备扫描或者工单扫描！', {icon: 5});
+            return ;
+        }
+    });
 
 
 
@@ -334,13 +331,9 @@ $(function(){
                     $('#workorder_'+workorderid).click();
                 }
                 $('#mes_container').attr('containerid', '0').html('');
-                action_scanning();
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
         });
     }
-
-
-    action_scanning();
 
 });

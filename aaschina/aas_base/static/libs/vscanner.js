@@ -29,7 +29,7 @@ var VScanner = function(callback){
         188: "<", 190: ">", 191: "?", 219: "{", 221: "}", 222: "|'", 59: ":"
     };
 
-    var vkeydown = function(event) {
+    document.body.addEventListener('keydown', function(event){
         if (!self.scanning){
             return ;
         }
@@ -39,16 +39,14 @@ var VScanner = function(callback){
         }else if(keycode==13 || keycode==108){
             self.timelist.push(new Date().getTime());
         }
-    }
-
-    var vkeypress = function(event){
+    });
+    document.body.addEventListener('keypress', function(event){
         if (!self.scanning || event.which==13){
             return ;
         }
         self.charlist.push(String.fromCharCode(event.which));
-    }
-
-    var vkeyup = function(event){
+    });
+    document.body.addEventListener('keyup', function(event){
         if (!self.scanning){
             return ;
         }
@@ -67,15 +65,7 @@ var VScanner = function(callback){
                 self.clear();
             }
 		}
-    }
-
-    document.body.removeEventListener('keydown', vkeydown);
-    document.body.removeEventListener('keypress', vkeypress);
-    document.body.removeEventListener('keyup', vkeyup);
-
-    document.body.addEventListener('keydown', vkeydown);
-    document.body.addEventListener('keypress', vkeypress);
-    document.body.addEventListener('keyup', vkeyup);
+    });
 
 
 };
