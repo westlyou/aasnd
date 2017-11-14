@@ -147,14 +147,22 @@ class AASMESWireCuttingController(http.Controller):
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
         if not lineuser:
             values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
-            return request.render('aas_mes.aas_wirecutting', values)
+            return values
         if lineuser.mesrole != 'wirecutter':
             values.update({'success': False, 'message': u'当前登录账号还未授权切线'})
-            return request.render('aas_mes.aas_wirecutting', values)
+            return values
         mesline = lineuser.mesline_id
         if not mesline.location_production_id or (not mesline.location_material_list or len(mesline.location_material_list) <= 0):
             values.update({'success': False, 'message': u'当前产线还未设置成品和原料线边库，请联系相关人员设置'})
-            return request.render('aas_mes.aas_wirecutting', values)
+            return values
+        workstation = lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'下线工位还未设置！'})
+            return values
+        feedmateriallist = request.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
+        if not feedmateriallist or len(feedmateriallist) <= 0:
+            values.update({'success': False, 'message': u'当前工位还未上料，请上料再操作产出！'})
+            return values
         container.action_domove(mesline.location_production_id.id, movenote=u'线材产出容器自动调拨')
         values.update({'container_id': container.id, 'container_name': container.name})
         return values

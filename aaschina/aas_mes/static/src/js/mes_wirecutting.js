@@ -325,6 +325,7 @@ $(function(){
                 if(workorderid > 0){
                     $('#workorder_'+workorderid).click();
                 }
+                $('#mes_container').attr('containerid', '0').html('');
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
         });
