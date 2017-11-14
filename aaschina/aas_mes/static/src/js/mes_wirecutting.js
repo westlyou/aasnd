@@ -225,7 +225,7 @@ $(function(){
                         layer.msg(dresult.message, {icon: 5});
                         return ;
                     }
-                    action_refresh_cutting(wireorderid);
+                    action_refresh_cutting(wireorderid, workorderid);
                 },
                 error:function(xhr,type,errorThrown){ console.log(type);}
             });
@@ -261,14 +261,15 @@ $(function(){
     //刷新页面
     $('#wire_refresh').click(function(){
         var wireorderid = parseInt($('#mes_wireorder').attr('wireorderid'));
+        var workorderid = parseInt($('#mes_workorder').attr('workorderid'));
         if(wireorderid==0){
             window.location.reload(true);
         }else{
-            action_refresh_cutting(wireorderid);
+            action_refresh_cutting(wireorderid, workorderid);
         }
     });
 
-    function action_refresh_cutting(wireorderid){
+    function action_refresh_cutting(wireorderid, workorderid){
         var refreshparams = {'wireorder_id': wireorderid};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
@@ -320,6 +321,9 @@ $(function(){
                             '<span class="pull-right">'+tmaterial.material_qty+'</span></a>';
                         $('<li></li>').html(materialstr).appendTo(wmateriallist);
                     });
+                }
+                if(workorderid > 0){
+                    $('#workorder_'+workorderid).click();
                 }
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
