@@ -33,6 +33,9 @@ $(function(){
     //});
 
     $('#mes_barcode').focus();
+    $('#mes_barcode').blur(function(){
+        $(this).val('').focus();
+    });
 
     // 条码扫描
     $('#mes_barcode').keyup(function(event){
@@ -62,6 +65,8 @@ $(function(){
             $('#mes_barcode').val('').focus();
         }
     });
+
+
 
 
 
@@ -362,6 +367,7 @@ $(function(){
                     $('#workorder_'+workorderid).click();
                 }
                 $('#mes_container').attr('containerid', '0').html('');
+                $('#mes_barcode').val('').focus();
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
         });
