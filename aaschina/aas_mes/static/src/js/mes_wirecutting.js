@@ -10,27 +10,37 @@ $(function(){
         return false;
     }
 
-    new VScanner(function(barcode){
-        if(barcode==null || barcode==''){
-            layer.msg('扫描条码异常！', {icon: 5});
-            return ;
-        }
-        var prefix = barcode.substring(0,2);
-        if(prefix=='AM'){
-            action_scanemployee(barcode);
-        }else if(prefix=='AC'){
-            action_scanmaterial(barcode);
-        }else if(prefix=='AU'){
-            action_scanwireorder(barcode);
-        }else if(prefix=='AT'){
-            action_scancontainer(barcode);
-        }else if(prefix=='AK'){
-            action_scanequipment(barcode);
-        }else{
-            layer.msg('扫描异常，请确认是否在上岗扫描、上料扫描、容器扫描、设备扫描或者工单扫描！', {icon: 5});
-            return ;
+    $('#mes_barcode').focus();
+
+    // 条码扫描
+    $('#mes_barcode').keyup(function(event){
+        event.stopPropagation();
+        if(event.which==13){
+            var barcode = $(this).val();
+            if(barcode==undefined || barcode==null || barcode==''){
+                layer.msg('请先扫描相关条码！', {icon: 5});
+                return ;
+            }
+            var prefix = barcode.substring(0,2);
+            if(prefix=='AM'){
+                action_scanemployee(barcode);
+            }else if(prefix=='AC'){
+                action_scanmaterial(barcode);
+            }else if(prefix=='AU'){
+                action_scanwireorder(barcode);
+            }else if(prefix=='AT'){
+                action_scancontainer(barcode);
+            }else if(prefix=='AK'){
+                action_scanequipment(barcode);
+            }else{
+                layer.msg('扫描异常，请确认是否在上岗扫描、上料扫描、容器扫描、设备扫描或者工单扫描！', {icon: 5});
+                $('#mes_barcode').val('').focus();
+                return ;
+            }
+            $('#mes_barcode').val('').focus();
         }
     });
+
 
 
     //扫描员工卡
@@ -330,6 +340,7 @@ $(function(){
                     $('#workorder_'+workorderid).click();
                 }
                 $('#mes_container').attr('containerid', '0').html('');
+                $('#mes_barcode').val('').focus();
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
         });
