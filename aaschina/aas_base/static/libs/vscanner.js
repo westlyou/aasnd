@@ -63,7 +63,7 @@ var VScanner = function(callback){
             var finishtime = new Date().getTime();
             if (finishtime - starttime <= self.delaytimes){
                 self.actionscan(self.barcode);
-                self.barcode = '';
+                self.clear();
             }
 		}
     });
@@ -75,3 +75,9 @@ var VScanner = function(callback){
 VScanner.prototype.actionscan = function(barcode){
 	this.callback(barcode);
 };
+
+VScanner.prototype.clear = function(){
+    this.barcode = '';
+    this.charlist = [];
+    this.timelist = [];
+}
