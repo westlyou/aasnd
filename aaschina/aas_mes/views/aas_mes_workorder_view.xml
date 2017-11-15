@@ -65,6 +65,7 @@
                         </group>
                         <group>
                             <group>
+                                <field name="scrap_qty" attrs="{'invisible':[('scrap_qty','!=',0.0)]}"/>
                                 <field name="date_code" readonly="1"/>
                                 <field name="output_qty" readonly="1"/>
                                 <field name="closer_id" readonly="1" attrs="{'invisible':[('closer_id','=',False)]}"/>

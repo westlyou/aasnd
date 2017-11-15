@@ -132,6 +132,7 @@ $(function(){
                     $('<td></td>').appendTo(ordertr).html(workorder.product_uom);
                     $('<td></td>').appendTo(ordertr).html(workorder.product_qty);
                     $('<td></td>').appendTo(ordertr).html(workorder.output_qty);
+                    $('<td></td>').appendTo(ordertr).html(workorder.scrap_qty);
                     $('<td></td>').appendTo(ordertr).html(workorder.state_name);
                     $('#workorderlist').append(ordertr);
                     ordertr.click(function(){
@@ -374,6 +375,7 @@ $(function(){
                     $('<td></td>').appendTo(ordertr).html(workorder.product_uom);
                     $('<td></td>').appendTo(ordertr).html(workorder.product_qty);
                     $('<td></td>').appendTo(ordertr).html(workorder.output_qty);
+                    $('<td></td>').appendTo(ordertr).html(workorder.scrap_qty);
                     $('<td></td>').appendTo(ordertr).html(workorder.state_name);
                     $('#workorderlist').append(ordertr);
                     ordertr.click(function(){

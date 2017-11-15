@@ -135,6 +135,7 @@
                                                             <td>单位</td>
                                                             <td>数量</td>
                                                             <td>产出</td>
+                                                            <td>报废</td>
                                                             <td>状态</td>
                                                         </tr>
                                                     </thead>

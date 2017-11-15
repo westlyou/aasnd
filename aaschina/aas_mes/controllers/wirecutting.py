@@ -131,7 +131,7 @@ class AASMESWireCuttingController(http.Controller):
         workorderlist = [{
             'id': workorder.id, 'order_name': workorder.name, 'product_code': workorder.product_code,
             'product_uom': workorder.product_id.uom_id.name, 'product_qty': workorder.input_qty,
-            'output_qty': workorder.output_qty, 'state_name': ORDERSTATESDICT[workorder.state]
+            'output_qty': workorder.output_qty, 'state_name': ORDERSTATESDICT[workorder.state], 'scrap_qty': workorder.scrap_qty
         } for workorder in wireorder.workorder_lines]
         values['workorderlist'] = workorderlist
         return values
@@ -299,7 +299,7 @@ class AASMESWireCuttingController(http.Controller):
         workorderlist = [{
             'id': workorder.id, 'order_name': workorder.name, 'product_code': workorder.product_code,
             'product_uom': workorder.product_id.uom_id.name, 'product_qty': workorder.input_qty,
-            'output_qty': workorder.output_qty, 'state_name': ORDERSTATESDICT[workorder.state]
+            'output_qty': workorder.output_qty, 'state_name': ORDERSTATESDICT[workorder.state], 'scrap_qty': workorder.scrap_qty
         } for workorder in wireorder.workorder_lines]
         values['workorderlist'] = workorderlist
         feedmateriallist = request.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
