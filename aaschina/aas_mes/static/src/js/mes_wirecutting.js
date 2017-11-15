@@ -285,7 +285,7 @@ $(function(){
                 url: '/aasmes/wirecutting/scrap',
                 headers:{'Content-Type':'application/json'},
                 type: 'post', timeout:10000, dataType: 'json',
-                data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: outputparams, id: access_id}),
+                data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scrapparams, id: access_id}),
                 success:function(data){
                     var dresult = data.result;
                     if(!dresult.success){
