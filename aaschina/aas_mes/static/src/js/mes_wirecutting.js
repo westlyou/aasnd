@@ -245,7 +245,8 @@ $(function(){
 
     //线材报废
     $('#wire_scrap').click(function(){
-        layer.confirm('您确认是要线材报废？', {'btn': ['确定', '取消']}, function(){ action_scrap(); }, function(){});
+        //layer.confirm('您确认是要线材报废？', {'btn': ['确定', '取消']}, function(){ action_scrap(); }, function(){});
+        action_scrap();
     });
     //报废
     function action_scrap(){
