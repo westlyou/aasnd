@@ -131,7 +131,7 @@ class AASMESWireCuttingController(http.Controller):
         workorderlist = [{
             'id': workorder.id, 'order_name': workorder.name, 'product_code': workorder.product_code,
             'product_uom': workorder.product_id.uom_id.name, 'product_qty': workorder.input_qty,
-            'output_qty': workorder.output_qty, 'state_name': ORDERSTATESDICT[workorder.state]
+            'output_qty': workorder.output_qty, 'state_name': ORDERSTATESDICT[workorder.state], 'scrap_qty': workorder.scrap_qty
         } for workorder in wireorder.workorder_lines]
         values['workorderlist'] = workorderlist
         return values
@@ -240,6 +240,29 @@ class AASMESWireCuttingController(http.Controller):
         return values
 
 
+    @http.route('/aasmes/wirecutting/scrap', type='json', auth="user")
+    def aasmes_wirecutting_scrap(self, workorder_id, scrap_qty, employee_id, equipment_id):
+        values = {'success': True, 'message': ''}
+        loginuser = request.env.user
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        values['mesline_name'] = lineuser.mesline_id.name
+        if lineuser.mesrole != 'wirecutter':
+            values.update({'success': False, 'message': u'当前登录账号还未授权切线'})
+            return request.render('aas_mes.aas_wirecutting', values)
+        workstation = lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定切线工位！'})
+            return values
+        scrapresult = request.env['aas.mes.wireorder'].action_wirecutting_scrap(workorder_id, scrap_qty, workstation.id, employee_id, equipment_id)
+        if not scrapresult['success']:
+            values.update(scrapresult)
+            return values
+        return values
+
+
 
     @http.route('/aasmes/wirecutting/actionrefresh', type='json', auth="user")
     def aasmes_wirecutting_refresh(self, wireorder_id):
@@ -276,7 +299,7 @@ class AASMESWireCuttingController(http.Controller):
         workorderlist = [{
             'id': workorder.id, 'order_name': workorder.name, 'product_code': workorder.product_code,
             'product_uom': workorder.product_id.uom_id.name, 'product_qty': workorder.input_qty,
-            'output_qty': workorder.output_qty, 'state_name': ORDERSTATESDICT[workorder.state]
+            'output_qty': workorder.output_qty, 'state_name': ORDERSTATESDICT[workorder.state], 'scrap_qty': workorder.scrap_qty
         } for workorder in wireorder.workorder_lines]
         values['workorderlist'] = workorderlist
         feedmateriallist = request.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])

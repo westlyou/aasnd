@@ -132,6 +132,7 @@ $(function(){
                     $('<td></td>').appendTo(ordertr).html(workorder.product_uom);
                     $('<td></td>').appendTo(ordertr).html(workorder.product_qty);
                     $('<td></td>').appendTo(ordertr).html(workorder.output_qty);
+                    $('<td></td>').appendTo(ordertr).html(workorder.scrap_qty);
                     $('<td></td>').appendTo(ordertr).html(workorder.state_name);
                     $('#workorderlist').append(ordertr);
                     ordertr.click(function(){
@@ -186,9 +187,6 @@ $(function(){
             error:function(xhr,type,errorThrown){ console.log(type);}
         });
     }
-
-
-
 
     //产出
     $('#wire_output').click(function(){
@@ -245,6 +243,62 @@ $(function(){
             });
         });
     });
+
+    //线材报废
+    $('#wire_scrap').click(function(){
+        //layer.confirm('您确认是要线材报废？', {'btn': ['确定', '取消']}, function(){ action_scrap(); }, function(){});
+        action_scrap();
+    });
+    //报废
+    function action_scrap(){
+        var equipment_id = parseInt($('#mes_equipment').attr('equipmentid'));
+        if(equipment_id==0){
+            layer.msg('当前工位还未添加设备，请先扫描设备二维码添加设备！', {icon: 5});
+            return ;
+        }
+        var employee_id = parseInt($('#mes_employee').attr('employeeid'));
+        if(employee_id==0){
+            layer.msg('当前工位还没有员工上岗，请先扫描员工卡上岗！', {icon: 5});
+            return ;
+        }
+        var wireorderid = parseInt($('#mes_wireorder').attr('wireorderid'));
+        if(wireorderid==0){
+            layer.msg('您还未扫描线材工单！', {icon: 5});
+            return ;
+        }
+        var workorderid = parseInt($('#mes_workorder').attr('workorderid'));
+        if (workorderid==0){
+            layer.msg('您还没选择需要报废的线材，请先选择需要报废的线材！', {icon: 5});
+            return ;
+        }
+        layer.prompt({title: '输入需要报废数量，并确认', formType: 3}, function(text, index){
+            if(!isAboveZeroFloat(text)){
+                layer.msg('报废数量必须是一个大于零的正数！', {icon: 5});
+                return ;
+            }
+            layer.close(index);
+            var scrap_qty = parseFloat(text);
+            var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+            var scrapparams = {'workorder_id': workorderid, 'scrap_qty': scrap_qty};
+            scrapparams['employee_id'] = employee_id;
+            scrapparams['equipment_id'] = equipment_id;
+            $.ajax({
+                url: '/aasmes/wirecutting/scrap',
+                headers:{'Content-Type':'application/json'},
+                type: 'post', timeout:10000, dataType: 'json',
+                data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scrapparams, id: access_id}),
+                success:function(data){
+                    var dresult = data.result;
+                    if(!dresult.success){
+                        layer.msg(dresult.message, {icon: 5});
+                        return ;
+                    }
+                    action_refresh_cutting(wireorderid, workorderid);
+                },
+                error:function(xhr,type,errorThrown){ console.log(type);}
+            });
+        });
+    }
 
     //切换生产子工单
     function temptrclick(datatr){
@@ -321,6 +375,7 @@ $(function(){
                     $('<td></td>').appendTo(ordertr).html(workorder.product_uom);
                     $('<td></td>').appendTo(ordertr).html(workorder.product_qty);
                     $('<td></td>').appendTo(ordertr).html(workorder.output_qty);
+                    $('<td></td>').appendTo(ordertr).html(workorder.scrap_qty);
                     $('<td></td>').appendTo(ordertr).html(workorder.state_name);
                     $('#workorderlist').append(ordertr);
                     ordertr.click(function(){

@@ -43,6 +43,7 @@
         'views/aas_mes_wirecutting_templates.xml',
         'views/aas_mes_finalchecking_templates.xml',
         'views/aas_mes_rework_view.xml',
+        'views/aas_mes_scrap_view.xml',
 
         'oracle/aas_ebs_mainorder_view.xml',
 

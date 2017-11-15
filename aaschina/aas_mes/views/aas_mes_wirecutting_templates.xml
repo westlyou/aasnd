@@ -38,9 +38,10 @@
                                 <div class="navbar-custom-menu">
                                     <ul class="nav navbar-nav">
                                         <li id="wire_refresh" class="notifications-menu">
-                                            <a href="javascript:void(0);">
-                                                <i class="fa fa-refresh"></i> 刷新
-                                            </a>
+                                            <a href="javascript:void(0);"> <i class="fa fa-refresh"></i> 刷新 </a>
+                                        </li>
+                                        <li id="wire_scrap" class="notifications-menu">
+                                            <a href="javascript:void(0);"> <i class="fa fa-times-circle-o"></i> 报废 </a>
                                         </li>
                                         <li class="dropdown notifications-menu">
                                             <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">
@@ -134,6 +135,7 @@
                                                             <td>单位</td>
                                                             <td>数量</td>
                                                             <td>产出</td>
+                                                            <td>报废</td>
                                                             <td>状态</td>
                                                         </tr>
                                                     </thead>

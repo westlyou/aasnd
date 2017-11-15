@@ -23,7 +23,7 @@ class AASMESFeedmaterial(models.Model):
     _name = 'aas.mes.feedmaterial'
     _description = 'AAS MES Feed Material'
     _rec_name = 'material_id'
-    _order = 'feed_time desc'
+    _order = 'feed_time asc'
 
 
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
