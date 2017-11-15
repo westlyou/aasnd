@@ -110,3 +110,6 @@ access_aas_ebs_production_manufacture_manager,aas.ebs.production manufacture_man
 
 access_aas_mes_operation_manufacture_user,aas.mes.operation manufacture_user,model_aas_mes_operation,group_aas_manufacture_user,1,1,1,0
 access_aas_mes_operation_record_manufacture_user,aas.mes.operation.record manufacture_user,model_aas_mes_operation_record,group_aas_manufacture_user,1,1,1,0
+
+access_aas_mes_rework_manufacture_user,aas.mes.rework manufacture_user,model_aas_mes_rework,group_aas_manufacture_user,1,1,1,1
+access_aas_mes_rework_manufacture_foreman,aas.mes.rework manufacture_foreman,model_aas_mes_rework,group_aas_manufacture_foreman,1,1,1,1
