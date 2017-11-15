@@ -263,6 +263,7 @@ class AASMESWireOrder(models.Model):
             'product_qty': scrap_qty, 'mesline_id': workorder.mesline_id.id, 'workorder_id': workorder.id,
             'workstation_id': workstation_id, 'equipment_id': equipment_id, 'operator_id': employee_id
         })
+        workorder.write({'scrap_qty': workorder.scrap_qty + scrap_qty})
         return values
 
 
