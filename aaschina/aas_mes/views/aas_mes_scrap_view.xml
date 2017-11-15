@@ -26,7 +26,7 @@
             <field name="model">aas.mes.scrap</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form create="fale" edit="false" delete="false">
+                <form create="false" edit="false" delete="false">
                     <sheet>
                         <group>
                             <group>
