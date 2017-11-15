@@ -256,7 +256,7 @@ class AASMESWireOrder(models.Model):
             return values
         scresult = self.action_workorder_scrapconsume(workorder, scrap_qty, workstation_id)
         if not scresult['success']:
-            values.update({scresult})
+            values.update(scresult)
             return values
         self.env['aas.mes.scrap'].create({
             'product_id': workorder.product_id.id, 'product_uom': workorder.product_id.uom_id.id,
