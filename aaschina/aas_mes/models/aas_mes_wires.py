@@ -236,3 +236,138 @@ class AASMESWireOrder(models.Model):
         return values
 
 
+
+    @api.model
+    def action_wirecutting_scrap(self, workorder_id, scrap_qty, workstation_id, employee_id, equipment_id):
+        """
+        线材工单报废
+        :param workorder_id:
+        :param scrap_qty:
+        :param container_id:
+        :param employee_id:
+        :param equipment_id:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        workorder = self.env['aas.mes.workorder'].browse(workorder_id)
+        cresult = workorder.action_validate_consume(workorder.id, workorder.product_id.id, scrap_qty, workstation_id)
+        if not cresult['success']:
+            values.update(cresult)
+            return values
+        scresult = self.action_workorder_scrapconsume(workorder, scrap_qty, workstation_id)
+        if not scresult['success']:
+            values.update({scresult})
+            return values
+        self.env['aas.mes.scrap'].create({
+            'product_id': workorder.product_id.id, 'product_uom': workorder.product_id.uom_id.id,
+            'product_qty': scrap_qty, 'mesline_id': workorder.mesline_id.id, 'workorder_id': workorder.id,
+            'workstation_id': workstation_id, 'equipment_id': equipment_id, 'operator_id': employee_id
+        })
+        return values
+
+
+
+    def action_workorder_scrapconsume(self, workorder, product_qty, workstation_id):
+        """
+        线材工单报废消耗
+        :param workorder:
+        :param product_qty:
+        :param workstation_id:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        mesline, workstation = workorder.mesline_id, self.env['aas.mes.workstation'].browse(workstation_id)
+        consumeresult = self.action_build_workorder_consumerecords(workorder, product_qty, mesline, workstation)
+        if not consumeresult['success']:
+            values.update(consumeresult)
+            return values
+        consumerecords = consumeresult['records']
+        if not consumerecords or len(consumerecords) <= 0:
+            return values
+        companyid = self.env.user.company_id.id
+        destlocationid = self.env.ref('stock.location_production').id
+        movelist = self.env['stock.move']
+        for crecord in consumerecords:
+            for cmove in crecord['movelines']:
+                movelist |= self.env['stock.move'].create({
+                    'name': workorder.name, 'product_id': crecord['material_id'], 'company_id': companyid,
+                    'product_uom': crecord['material_uom'], 'create_date': fields.Datetime.now(),
+                    'location_id': cmove['location_id'], 'location_dest_id': destlocationid,
+                    'restrict_lot_id': cmove['material_lot'], 'product_uom_qty': cmove['product_qty']
+                })
+        movelist.action_done()
+        return values
+
+    @api.model
+    def action_build_workorder_consumerecords(self, workorder, product_qty, mesline, workstation):
+        """
+        编译消耗清单
+        :param workorder:
+        :param product_qty:
+        :param mesline:
+        :param workstation:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'records': []}
+        product = workorder.product_id
+        consumedomain = [('workorder_id', '=', workorder.id), ('product_id', '=', product.id)]
+        workorder_consume_list = self.env['aas.mes.workorder.consume'].search(consumedomain)
+        if not workorder_consume_list or len(workorder_consume_list) <= 0:
+            return values
+        materiallines = []
+        for tempconsume in workorder_consume_list:
+            material, want_qty = tempconsume.material_id, product_qty * tempconsume.consume_unit
+            feeddomain = [('mesline_id', '=', mesline.id), ('material_id', '=', material.id)]
+            feeddomain.append(('workstation_id', '=', workstation.id))
+            feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
+            if not feedmateriallist or len(feedmateriallist) > 0:
+                values.update({
+                    'success': False,
+                    'message': u'工位%s的原料%s还未上料，请先上料再进行其他操作！'% (workstation.name, material.default_code)
+                })
+                return values
+            feed_qty, quantdict = 0.0, {}
+            for feedmaterial in feedmateriallist:
+                # 刷新线边库库存
+                quants = feedmaterial.action_checking_quants()
+                if quants and len(quants) > 0:
+                    for tempquant in quants:
+                        qkey = 'Q-'+str(tempquant.lot_id.id)+'-'+str(tempquant.location_id.id)
+                        if qkey in quantdict:
+                            quantdict['qkey']['product_qty'] += tempquant.qty
+                        else:
+                            quantdict['qkey'] = {
+                                'location_id': tempquant.location_id.id, 'product_qty': tempquant.qty,
+                                'material_lot': tempquant.lot_id.id, 'material_lot_name': tempquant.lot_id.name
+                            }
+                feed_qty += feedmaterial.material_qty
+            if float_compare(feed_qty, want_qty, precision_rounding=0.000001) < 0.0:
+                values.update({
+                    'success': False,
+                    'message': u'工位%s的原料%s投料不足，请先继续投料再进行其他操作！'% (workstation.name, material.default_code)
+                })
+                return values
+            # 库存分配
+            tempmovedict = {}
+            for qkey, qval in quantdict.items():
+                if float_compare(want_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+                    break
+                lkey = 'L-'+str(qval['material_lot'])+'-'+str(qval['location_id'])
+                if float_compare(want_qty, qval['product_qty'], precision_rounding=0.000001) >= 0.0:
+                    tempqty = qval['product_qty']
+                else:
+                    tempqty = want_qty
+                if lkey in tempmovedict:
+                    tempmovedict[lkey]['product_qty'] += tempqty
+                else:
+                    tempmovedict[lkey] = {
+                        'location_id': qval['location_id'], 'product_qty': tempqty,
+                        'material_lot': qval['material_lot'], 'material_lot_name': qval['material_lot_name']
+                    }
+                want_qty -= tempqty
+            materialvals = {'material_id': material.id, 'material_uom': material.uom_id.id, 'movelines': tempmovedict.values()}
+            materiallines.append(materialvals)
+        values['records'] = materiallines
+        return values
+
+
