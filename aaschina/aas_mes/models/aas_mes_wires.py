@@ -320,7 +320,7 @@ class AASMESWireOrder(models.Model):
             feeddomain = [('mesline_id', '=', mesline.id), ('material_id', '=', material.id)]
             feeddomain.append(('workstation_id', '=', workstation.id))
             feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
-            if not feedmateriallist or len(feedmateriallist) > 0:
+            if not feedmateriallist or len(feedmateriallist) < 0:
                 values.update({
                     'success': False,
                     'message': u'工位%s的原料%s还未上料，请先上料再进行其他操作！'% (workstation.name, material.default_code)
