@@ -117,6 +117,7 @@ class AASMESWireOrder(models.Model):
     operation_time = fields.Datetime(string=u'制单时间', default=fields.Datetime.now, copy=False)
     pusher_id = fields.Many2one(comodel_name='res.users', string=u'投产人', ondelete='restrict')
     push_time = fields.Datetime(string=u'投产时间', copy=False)
+    push_date = fields.Char(string=u'投产日期', compute='_compute_push_date', store=True)
     workorder_lines = fields.One2many(comodel_name='aas.mes.workorder', inverse_name='wireorder_id', string=u'工单明细')
 
 
@@ -139,6 +140,13 @@ class AASMESWireOrder(models.Model):
             else:
                 record.product_code = False
 
+    @api.depends('push_time')
+    def _compute_push_date(self):
+        for record in self:
+            if record.push_time:
+                record.push_date = fields.Datetime.to_timezone_string(record.push_time, 'Asia/Shanghai')[0:10]
+            else:
+                record.push_date = False
 
 
     @api.model
