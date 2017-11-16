@@ -56,6 +56,8 @@ class AASLabelPrinter(models.Model):
             for rkey, rval in record.items():
                 if rval and fieldsdict[rkey]['field_type'] == 'many2one':
                     record[rkey] = rval[1]
+                elif rval and fieldsdict[rkey]['field_type'] == 'datetime':
+                    record[rkey] = fields.Datetime.to_timezone_string(rval, 'Asia/Shanghai')
                 elif not rval and fieldsdict[rkey]['field_type'] != 'boolean':
                     record[rkey] = ''
                 elif rkey == 'qualified':
