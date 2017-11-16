@@ -234,7 +234,7 @@ class AASMESWireOrder(models.Model):
         :return:
         """
         values = {'success': True, 'message': ''}
-        workorder = self.env['aas.mes.workorder'].browse(workorder_id)
+        workorder, stock_qty = self.env['aas.mes.workorder'].browse(workorder_id), output_qty
         cresult = workorder.action_validate_consume(workorder.id, workorder.product_id.id, output_qty, workstation_id)
         if not cresult['success']:
             values.update(cresult)
@@ -261,6 +261,14 @@ class AASMESWireOrder(models.Model):
         if float_compare(workorder.output_qty, workorder.input_qty, precision_rounding=0.000001) >= 0.0:
             currenttime = fields.Datetime.now()
             workorder.write({'produce_finish': currenttime, 'time_finish': currenttime, 'state': 'done'})
+        wireorder = workorder.wireorder_id
+        if wireorder.state not in ['producing', 'done']:
+            wireorder.write({'state': 'producing'})
+        if all([temporder.state=='done' for temporder in wireorder.workorder_lines]):
+            wireorder.write({'state': 'done'})
+        contianeroutput = oresult.get('containerproduct', False)
+        if contianeroutput:
+            contianeroutput.action_stock(stock_qty)
         return values
 
 
