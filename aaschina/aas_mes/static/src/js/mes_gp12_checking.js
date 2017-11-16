@@ -136,7 +136,17 @@ $(function() {
                         var lineno = index + 1;
                         var reworktr = $('<tr></tr>').appendTo($('#rework_list'));
                         $('<td></td>').html(lineno).appendTo(reworktr);
-                        $('<td></td>').html(record.action_scan_serialnumber()).appendTo(reworktr);
+                        $('<td></td>').html(record.serialnumber).appendTo(reworktr);
+                        $('<td></td>').html(record.badmode_date).appendTo(reworktr);
+                        $('<td></td>').html(record.product_code).appendTo(reworktr);
+                        $('<td></td>').html(record.workcenter_name).appendTo(reworktr);
+                        $('<td></td>').html(record.badmode_name).appendTo(reworktr);
+                        $('<td></td>').html(record.commiter_name).appendTo(reworktr);
+                        $('<td></td>').html(record.state_name).appendTo(reworktr);
+                        $('<td></td>').html(record.repair_result).appendTo(reworktr);
+                        $('<td></td>').html(record.repair_time).appendTo(reworktr);
+                        $('<td></td>').html(record.repairer_name).appendTo(reworktr);
+                        $('<td></td>').html(record.ipqc_name).appendTo(reworktr);
                     });
                 }
                 $('#mes_serialnumber').html(barcode);

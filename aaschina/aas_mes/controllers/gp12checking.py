@@ -182,5 +182,29 @@ class AASMESGP12CheckingController(http.Controller):
         return request.render('aas_mes.aas_gp12_rework', values)
 
 
+    @http.route('/aasmes/gp12/rework/scanserialnumber', type='json', auth="user")
+    def aasmes_gp12_rework_scan_serialnumber(self, barcode):
+        values = {'success': True, 'message': '', 'reworklist': []}
+        serialnumber = request.env['aas.mes.serialnumber'].search([('name', '=', barcode)])
+        if not serialnumber:
+            values.update({'success': False, 'message': u'扫描序列号异常，请仔细检查当前扫描的条码是否是序列号条码！'})
+            return values
+        # 返工记录
+        reworklist = request.env['aas.mes.rework'].search([('serialnumber_id', '=', serialnumber.id)])
+        if reworklist and len(reworklist) > 0:
+            values['reworklist'] = [{
+                'serialnumber': serialnumber.name, 'badmode_date': rework.badmode_date,
+                'product_code': rework.customerpn, 'workcenter_name': rework.workstation_id.name,
+                'badmode_name': rework.badmode_id.name, 'commiter_name': rework.commiter_id.name,
+                'state_name': REWORKSTATEDICT[rework.state],
+                'repair_result': '' if not rework.repair_note else rework.repair_note,
+                'repairer_name': '' if not rework.repairer_id else rework.repairer_id.name,
+                'ipqc_name': '' if not rework.ipqcchecker_id else rework.ipqcchecker_id.name,
+                'repair_time': '' if not rework.repair_time else fields.Datetime.to_timezone_string(rework.repair_time, 'Asia/Shanghai')
+            } for rework in reworklist]
+        values.update({'serialnumber_id': serialnumber.id, 'serialnumber_name': serialnumber.name})
+        return values
+
+
 
 
