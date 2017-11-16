@@ -106,6 +106,7 @@ class AASMESWireOrder(models.Model):
     name = fields.Char(string=u'名称', copy=False)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
+    product_code = fields.Char(string=u'编码', compute='_compute_product_code', store=True)
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict', index=True)
     state = fields.Selection(selection=WIREORDERSTATES, string=u'状态', default='draft', copy=False)
@@ -129,6 +130,16 @@ class AASMESWireOrder(models.Model):
                 self.wirebom_id = wirebom.id
         else:
             self.product_uom, self.wirebom_id = False, False
+
+    @api.depends('product_id')
+    def _compute_product_code(self):
+        for record in self:
+            if record.product_id:
+                record.product_code = record.product_id.default_code
+            else:
+                record.product_code = False
+
+
 
     @api.model
     def create(self, vals):
