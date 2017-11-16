@@ -131,6 +131,14 @@ $(function() {
                         $('<td></td>').html(record.operate_equipment).appendTo(functiontesttr);
                     });
                 }
+                if(dresult.reworklist.length > 0){
+                    $.each(dresult.reworklist, function(index, record){
+                        var lineno = index + 1;
+                        var reworktr = $('<tr></tr>').appendTo($('#rework_list'));
+                        $('<td></td>').html(lineno).appendTo(reworktr);
+                        $('<td></td>').html(record.action_scan_serialnumber()).appendTo(reworktr);
+                    });
+                }
                 $('#mes_serialnumber').html(barcode);
             },
             error:function(xhr,type,errorThrown){
@@ -146,6 +154,21 @@ $(function() {
         var employeeid = self.attr('employeeid');
         var employeename = self.attr('employeename');
         $('#mes_operator').attr('employeeid', employeeid).html(employeename);
+    });
+
+    //上报不良
+    $('#action_badmode').click(function(){
+        var employeeid = parseInt($('#mes_operator').attr('employeeid'));
+        if(employeeid==0){
+            layer.msg('请在左侧员工列表中选择一个当前操作员工', {icon: 5});
+            return ;
+        }
+        localStorage.setItem('employeeid', employeeid);
+        var employeename = $('#employee_'+employeeid).attr('employeename');
+        if(employeename!=undefined&&employeename!=null&&employeename!=''){
+            localStorage.setItem(('employeename', employeename));
+        }
+        window.location.replace('/aasmes/gp12/rework');
     });
 
 });

@@ -16,6 +16,8 @@ from odoo.exceptions import AccessDenied, UserError, ValidationError
 
 logger = logging.getLogger(__name__)
 
+REWORKSTATEDICT = {'commit': u'不良上报', 'repair': u'返工维修', 'ipqc': u'IPQC确认', 'done': u'完成'}
+
 
 class AASMESGP12CheckingController(http.Controller):
 
@@ -99,6 +101,7 @@ class AASMESGP12CheckingController(http.Controller):
             values.update({'success':False, 'message': u'GP12已操作，请不要重复操作！'})
             return values
         serialnumber = tempoperation.serialnumber_id
+        values['serialnumber_id'] = serialnumber.id
         values['productcode'] = serialnumber.customer_product_code.replace('-', '')
         if productcode and productcode != values['productcode']:
             values.update({'success': False, 'message': u'序列号异常，请确认可能与其他序列号不是同类别的产品混入！！'})
@@ -114,6 +117,18 @@ class AASMESGP12CheckingController(http.Controller):
                 'operate_time': fields.Datetime.to_timezone_string(record.operate_time, 'Asia/Shanghai')
             } for record in functiontestlist]
         # 返工记录
+        reworklist = request.env['aas.mes.rework'].search([('serialnumber_id', '=', serialnumber.id)])
+        if reworklist and len(reworklist) > 0:
+            values['reworklist'] = [{
+                'serialnumber': serialnumber.name, 'badmode_date': rework.badmode_date,
+                'product_code': rework.customerpn, 'workcenter_name': rework.workstation_id.name,
+                'badmode_name': rework.badmode_id.name, 'commiter_name': rework.commiter_id.name,
+                'state_name': REWORKSTATEDICT[rework.state],
+                'repair_result': '' if not rework.repair_note else rework.repair_note,
+                'repairer_name': '' if not rework.repairer_id else rework.repairer_id.name,
+                'ipqc_name': '' if not rework.ipqcchecker_id else rework.ipqcchecker_id.name,
+                'repair_time': '' if not rework.repair_time else fields.Datetime.to_timezone_string(rework.repair_time, 'Asia/Shanghai')
+            } for rework in reworklist]
         serialnumber_name = serialnumber.name
         operation_time = fields.Datetime.to_timezone_string(fields.Datetime.now(), 'Asia/Shanghai')
         # 返工件
@@ -141,6 +156,30 @@ class AASMESGP12CheckingController(http.Controller):
         tempoperation.write({'gp12_check': True, 'gp12_record_id': gp12record.id})
         values['operate_result'] = ','.join([serialnumber_name, 'OK', operation_time])
         return values
+
+
+
+    @http.route('/aasmes/gp12/rework', type='http', auth="user")
+    def aasmes_gp12_rework(self):
+        values = {'success': True, 'message': '', 'employeelist': []}
+        loginuser = request.env.user
+        values['checker'] = loginuser.name
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return request.render('aas_mes.aas_gp12_rework', values)
+        if lineuser.mesrole != 'gp12checker':
+            values.update({'success': False, 'message': u'当前登录账号还未授权GP12'})
+            return request.render('aas_mes.aas_gp12_rework', values)
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
+            return request.render('aas_mes.aas_gp12_rework', values)
+        values.update({
+            'mesline_id':mesline.id, 'mesline_name': mesline.name,
+            'workstation_id': workstation.id, 'workstation_name': workstation.name
+        })
+        return request.render('aas_mes.aas_gp12_rework', values)
 
 
 

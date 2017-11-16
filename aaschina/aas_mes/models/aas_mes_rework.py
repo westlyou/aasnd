@@ -17,6 +17,8 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+REWORKSTATES = [('commit', u'不良上报'), ('repair', u'返工维修'), ('ipqc', u'IPQC确认'), ('done', u'完成')]
+
 class AASMESRework(models.Model):
     _name = 'aas.mes.rework'
     _description = 'AAS MES Rework'
@@ -37,7 +39,7 @@ class AASMESRework(models.Model):
     ipqcchecker_id = fields.Many2one(comodel_name='aas.hr.employee', string='IPQC', ondelete='restrict')
     ipqccheck_time = fields.Datetime(string=u'IPQC确认时间', copy=False)
     ipqccheck_note = fields.Text(string=u'IPQC结果')
-    state = fields.Selection(selection=[('commit', u'不良上报'), ('repair', u'返工维修'), ('ipqc', u'IPQC确认')], string=u'状态', default='commit', copy=False)
+    state = fields.Selection(selection=REWORKSTATES, string=u'状态', default='commit', copy=False)
 
 
     @api.depends('commit_time')
