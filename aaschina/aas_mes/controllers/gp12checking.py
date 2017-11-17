@@ -189,6 +189,11 @@ class AASMESGP12CheckingController(http.Controller):
         if not serialnumber:
             values.update({'success': False, 'message': u'扫描序列号异常，请仔细检查当前扫描的条码是否是序列号条码！'})
             return values
+        rework = request.env['aas.mes.rework'].search([('serialnumber_id', '=', serialnumber.id), ('repairer_id', '=', False)], limit=1)
+        if rework:
+            values.update({'success': False, 'message': u'不良已上报还未维修，请不要重复上报！'})
+            return values
+        values['product_code'] = serialnumber.customer_product_code
         # 返工记录
         reworklist = request.env['aas.mes.rework'].search([('serialnumber_id', '=', serialnumber.id)])
         if reworklist and len(reworklist) > 0:
@@ -196,13 +201,32 @@ class AASMESGP12CheckingController(http.Controller):
                 'serialnumber': serialnumber.name, 'badmode_date': rework.badmode_date,
                 'product_code': rework.customerpn, 'workcenter_name': rework.workstation_id.name,
                 'badmode_name': rework.badmode_id.name, 'commiter_name': rework.commiter_id.name,
-                'state_name': REWORKSTATEDICT[rework.state],
-                'repair_result': '' if not rework.repair_note else rework.repair_note,
-                'repairer_name': '' if not rework.repairer_id else rework.repairer_id.name,
-                'ipqc_name': '' if not rework.ipqcchecker_id else rework.ipqcchecker_id.name,
-                'repair_time': '' if not rework.repair_time else fields.Datetime.to_timezone_string(rework.repair_time, 'Asia/Shanghai')
+                'state_name': REWORKSTATEDICT[rework.state]
             } for rework in reworklist]
         values.update({'serialnumber_id': serialnumber.id, 'serialnumber_name': serialnumber.name})
+        return values
+
+
+    @http.route('/aasmes/gp12/rework/actioncommit', type='json', auth="user")
+    def aasmes_gp12_rework_actioncommit(self, employee_id, badmode_id, serialnumberlist):
+        values = {'success': True, 'message': ''}
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        if lineuser.mesrole != 'gp12checker':
+            values.update({'success': False, 'message': u'当前登录账号还未授权GP12'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
+            return values
+        if serialnumberlist and len(serialnumberlist) > 0:
+            for serialnumberid in serialnumberlist:
+                request.env['aas.mes.rework'].create({
+                    'serialnumber_id': serialnumberid, 'workstation_id': workstation.id,
+                    'badmode_id': badmode_id, 'commiter_id': employee_id, 'state': 'repair'
+                })
         return values
 
 
