@@ -223,10 +223,7 @@ class AASMESGP12CheckingController(http.Controller):
             return values
         if serialnumberlist and len(serialnumberlist) > 0:
             for serialnumberid in serialnumberlist:
-                request.env['aas.mes.rework'].create({
-                    'serialnumber_id': serialnumberid, 'workstation_id': workstation.id,
-                    'badmode_id': badmode_id, 'commiter_id': employee_id, 'state': 'repair'
-                })
+                request.env['aas.mes.rework'].action_commit(serialnumberid, workstation.id, badmode_id, employee_id)
         return values
 
 

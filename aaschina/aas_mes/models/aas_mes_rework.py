@@ -57,5 +57,39 @@ class AASMESRework(models.Model):
             'internalpn': self.serialnumber_id.internal_product_code,
             'customerpn': self.serialnumber_id.customer_product_code
         })
+        record.action_after_commit()
         return record
+
+
+    @api.model
+    def action_commit(self, serialnumber_id, workstation_id, badmode_id, commiter_id):
+        rework = self.env['aas.mes.rework'].create({
+            'serialnumber_id': serialnumber_id, 'workstation_id': workstation_id, 'badmode_id': badmode_id,
+            'commiter_id': commiter_id, 'commit_time': fields.Datetime.now(), 'state': 'repair'
+        })
+        operation = self.env['aas.mes.operation'].search([('serialnumber_id', '=', rework.serialnumber_id.id)], limit=1)
+        operation.write({
+            'function_test': False, 'functiontest_record_id': False, 'final_quality_check': False, 'fqccheck_record_id': False,
+            'gp12_check': False, 'gp12_record_id': False, 'commit_badness': True, 'commit_badness_count': operation.commit_badness_count + 1
+        })
+        rework.serialnumber_id.write({'qualified': False, 'reworked': True})
+
+    @api.one
+    def action_repair(self, repairer_id, repair_note):
+        self.write({
+            'repairer_id': repairer_id, 'repair_note': repair_note,
+            'repair_time': fields.Datetime.now(), 'state': 'ipqc'
+        })
+        operation = self.env['aas.mes.operation'].search([('serialnumber_id', '=', self.serialnumber_id.id)], limit=1)
+        operation.write({'dorework': True, 'dorework_count': operation.dorework_count + 1})
+
+
+    @api.one
+    def action_ipqcchecking(self, ipqcchecker_id, ipqccheck_note):
+        self.write({
+            'ipqcchecker_id': ipqcchecker_id, 'ipqccheck_note': ipqccheck_note,
+            'ipqccheck_time': fields.Datetime.now(), 'state': 'done'
+        })
+        self.serialnumber_id.write({'qualified': True})
+
 
