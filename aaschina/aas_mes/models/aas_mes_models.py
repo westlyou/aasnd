@@ -21,7 +21,7 @@ _logger = logging.getLogger(__name__)
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
-    customer_product_code = fields.Char(string=u'客户编码', copy=False, help=u'产品在客户方的编码')
+    customer_product_code = fields.Char(string=u'客户料号', copy=False, help=u'产品在客户方的料号')
 
 
 

@@ -226,6 +226,145 @@ class AASMESGP12CheckingController(http.Controller):
                 request.env['aas.mes.rework'].action_commit(serialnumberid, workstation.id, badmode_id, employee_id)
         return values
 
+    @http.route('/aasmes/gp12/dolabel', type='json', auth="user")
+    def aasmes_gp12_dolabel(self, serialnumberids, printer_id):
+        values = {'success': True, 'message': ''}
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        if lineuser.mesrole != 'gp12checker':
+            values.update({'success': False, 'message': u'当前登录账号还未授权GP12'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
+            return values
+        if not mesline.location_production_id:
+            values.update({'success': False, 'message': u'当前产线还未设置成品库位！'})
+            return values
+        serialnumberlist = request.env['aas.mes.serialnumber'].browse(serialnumberids)
+        if not serialnumberlist or len(serialnumberlist) <= 0:
+            values.update({'success': False, 'message': u'序列号获取异常，请仔细检查！'})
+            return values
+        tserialnumber = serialnumberlist[0]
+        lot_name = mesline.workdate.replace('-', '')
+        product_lot = request.env['stock.production.lot'].action_checkout_lot(tserialnumber.product_id.id, lot_name)
+        tlabel = request.env['aas.product.label'].create({
+            'product_id': tserialnumber.product_id.id, 'product_lot': product_lot.id, 'product_qty': len(serialnumberlist),
+            'location_id': mesline.location_production_id.id, 'company_id': self.env.user.company_id.id
+        })
+        srclocation = self.env.ref('stock.location_production')
+        tlabel.action_stock(srclocation.id)
+        values['label_name'] = tlabel.name
+        printvals = request.env['aas.product.label'].action_print_label(printer_id, [tlabel.id])
+        values.update(printvals)
+        return values
+
+
+    @http.route('/aasmes/gp12/delivery', type='http', auth="user")
+    def aasmes_gp12_delivery(self):
+        values = {'success': True, 'message': '', 'employeelist': []}
+        loginuser = request.env.user
+        values['checker'] = loginuser.name
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return request.render('aas_mes.aas_gp12_checking', values)
+        if lineuser.mesrole != 'gp12checker':
+            values.update({'success': False, 'message': u'当前登录账号还未授权GP12'})
+            return request.render('aas_mes.aas_gp12_checking', values)
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
+            return request.render('aas_mes.aas_gp12_checking', values)
+        values.update({'mesline_name': mesline.name, 'workstation_name': workstation.name})
+        return request.render('aas_mes.aas_gp12_delivery', values)
+
+
+    @http.route('/aasmes/gp12/delivery/scanlabel', type='json', auth="user")
+    def aasmes_gp12_dolabel(self, barcode):
+        values = {'success': True, 'message': ''}
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        if lineuser.mesrole != 'gp12checker':
+            values.update({'success': False, 'message': u'当前登录账号还未授权GP12'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
+            return values
+        if not mesline.location_production_id or (not mesline.location_material_list or len(mesline.location_material_list) <= 0):
+            values.update({'success': False, 'message': u'当前产线还未设置成品和原料库位！'})
+            return values
+        label = request.env['aas.product.label'].search([('barcode', '=', barcode)], limit=1)
+        if not label:
+            values.update({'success': False, 'message': u'未搜索到相应标签，请检查是否扫描了无效标签！'})
+            return values
+        locationids = [mlocation.location_id.id for mlocation in mesline.location_material_list]
+        locationids.append(mesline.location_production_id.id)
+        locationlist = request.env['stock.location'].search([('id', 'child_of', locationids)])
+        if label.location_id.id not in locationlist.ids:
+            values.update({'success': False, 'message': u'当前标签不在GP12的线边库中，不可以扫描其他库位的标签！'})
+            return values
+        labelvals = {
+            'id': label.id, 'name': label.name, 'product_lot': label.product_lot.name, 'product_qty': label.product_qty,
+            'customerpn': label.product_id.customer_product_code, 'internalpn': label.product_id.default_code
+        }
+        values['label'] = labelvals
+        return values
+
+
+    @http.route('/aasmes/gp12/delivery/actiondone', type='json', auth="user")
+    def aasmes_gp12_dolabel(self, labelids):
+        values = {'success': True, 'message': ''}
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        if lineuser.mesrole != 'gp12checker':
+            values.update({'success': False, 'message': u'当前登录账号还未授权GP12'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
+            return values
+        if not mesline.location_production_id or (not mesline.location_material_list or len(mesline.location_material_list) <= 0):
+            values.update({'success': False, 'message': u'当前产线还未设置成品和原料库位！'})
+            return values
+        labellist = request.env['aas.product.label'].browse(labelids)
+        receiptdict, labellines = {}, []
+        for label in labellist:
+            labellines.append((0, 0, {
+                'label_id': label.id, 'product_id': label.product_id.id, 'product_uom': label.product_uom.id,
+                'product_lot': label.product_lot.id, 'label_location': label.location_id.id, 'product_qty': label.product_qty
+            }))
+            pkey = 'P'+str(label.product_id.id)
+            if pkey not in receiptdict:
+                receiptdict[pkey] = {'product_id': label.product_id.id, 'product_qty': label.product_qty, 'label_related': True}
+            else:
+                receiptdict[pkey]['product_qty'] += label.product_qty
+        try:
+            receipt = request.env['aas.stock.receipt'].create({
+                'receipt_type': 'manufacture', 'label_lines': labellines,
+                'receipt_lines': [(0, 0, linevals) for linevals in receiptdict.values()]
+            })
+            for receiptline in receipt.receipt_lines:
+                receiptlabels = request.env['aas.stock.receipt.label'].search([('receipt_id', '=', receipt.id), ('product_id', '=', receiptline.product_id.id)])
+                receiptlabels.write({'line_id': receiptline.id})
+            receipt.action_confirm()
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
+        except ValidationError, ve:
+            values.update({'success': False, 'message': ve.name})
+            return values
+        return values
+
+
+
 
 
 

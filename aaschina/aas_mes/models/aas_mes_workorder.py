@@ -604,7 +604,8 @@ class AASMESWorkorderProduct(models.Model):
         values = {'success': True, 'message': '', 'tracelist': []}
         buildresult = self.action_build_consumerecords(outputrecord)
         if not buildresult['success']:
-            return buildresult
+            values.update(buildresult)
+            return values
         consumerecords = buildresult['records']
         if not consumerecords or len(consumerecords) <= 0:
             return values

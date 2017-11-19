@@ -112,7 +112,7 @@ $(function() {
                 }
                 $('<li class="aas-serialnumber"></li>').attr({'serialnumberid': dresult.serialnumber_id, 'id': 'serialnumber_'+dresult.serialnumber_id})
                     .html('<a href="javascript:void(0);">'+dresult.serialnumber_name+'</a>')
-                    .appendTo($('#serialnumberlist'));
+                    .prependTo($('#serialnumberlist'));
             },
             error:function(xhr,type,errorThrown){
                 scanable = true;
@@ -171,6 +171,12 @@ $(function() {
                 return ;
             }
             commitparams['employee_id'] = employeeid;
+            var badmodeid = parseInt($('#mes_badmode').val());
+            if(badmodeid==0){
+                layer.msg('请先选择不良模式！', {icon: 5});
+                return ;
+            }
+            commitparams['badmode_id'] = badmodeid;
             scanable = false;
             var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
             $.ajax({
@@ -190,6 +196,7 @@ $(function() {
                     $('#mes_serialnumber').html('');
                     $('#mes_productcode').html('');
                     $('option', '#mes_badmode').remove();
+                    $('#mes_badmode').val('0');
                 },
                 error:function(xhr,type,errorThrown){
                     scanable = true;

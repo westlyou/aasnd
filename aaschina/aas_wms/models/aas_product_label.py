@@ -360,6 +360,14 @@ class AASProductLabel(models.Model):
         values['records'] = records
         return values
 
+    @api.one
+    def action_stock(self, srclocationid, origin=False):
+        self.env['stock.move'].create({
+            'name': self.name if not origin else origin, 'product_id': self.product_id.id,
+            'product_uom': self.product_uom.id, 'create_date': fields.Datetime.now(), 'restrict_lot_id': self.product_lot.id,
+            'product_uom_qty': self.product_qty, 'location_id': srclocationid, 'location_dest_id': self.location_id.id, 'company_id': self.env.user.company_id.id
+        }).action_done()
+
 
 
 # 标签流水帐  查存卡

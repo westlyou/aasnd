@@ -54,10 +54,8 @@ class AASMESRework(models.Model):
     def create(self, vals):
         record = super(AASMESRework, self).create(vals)
         record.write({
-            'internalpn': self.serialnumber_id.internal_product_code,
-            'customerpn': self.serialnumber_id.customer_product_code
+            'internalpn': record.serialnumber_id.internal_product_code, 'customerpn': record.serialnumber_id.customer_product_code
         })
-        record.action_after_commit()
         return record
 
 
