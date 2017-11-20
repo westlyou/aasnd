@@ -13,3 +13,4 @@ import serialnumber
 import gp12checking
 import wirecutting
 import finalchecking
+import allocation

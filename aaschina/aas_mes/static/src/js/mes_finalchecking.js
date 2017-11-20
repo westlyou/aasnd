@@ -145,7 +145,8 @@ $(function(){
     });
 
     $('#action_consume').click(function(){
-        layer.confirm('您确认是要操作班次结单？', {'btn': ['确定', '取消']}, function(){
+        layer.confirm('您确认是要操作班次结单？', {'btn': ['确定', '取消']}, function(index){
+            layer.close(index);
             var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
             $.ajax({
                 url: '/aasmes/finalchecking/actionconsume',

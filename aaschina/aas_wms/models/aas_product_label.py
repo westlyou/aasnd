@@ -466,7 +466,7 @@ class AASProductLabelAdjustLine(models.Model):
     _name = 'aas.product.label.adjust.line'
     _description = 'AAS Product Label Adjust Line'
 
-    adjust_id = fields.Many2one(comodel_name='model.name', string=u'调整', ondelete='cascade')
+    adjust_id = fields.Many2one(comodel_name='aas.product.label.adjust', string=u'调整', ondelete='cascade')
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     before_qty = fields.Float(string=u'调整前数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)

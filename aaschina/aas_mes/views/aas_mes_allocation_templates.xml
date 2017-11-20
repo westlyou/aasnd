@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="aas_allocation" name="AAS MES Allocation">
+        &lt;!DOCTYPE html&gt;
+        <html>
+            <head>
+                <meta charset="utf-8" />
+                <title>安费诺先进传感器</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                <meta name="apple-mobile-web-app-capable" content="yes"/>
+                <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/skins/skin-blue.min.css"/>
+                <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+                <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+                <!--[if lt IE 9]>
+                   <script src="/aas_base/static/libs/html5shiv.min.js"></script>
+                   <script src="/aas_base/static/libs/respond.min.js"></script>
+                <![endif]-->
+            </head>
+            <body class="hold-transition skin-blue layout-top-nav">
+                <div class="wrapper">
+                    <header class="main-header">
+                        <nav class="navbar navbar-static-top">
+                            <div class="container">
+                                <div class="navbar-header">
+                                    <a href="javascript:void(0);" class="navbar-brand">
+                                        <span><b>安费诺先进传感器</b></span>
+                                    </a>
+                                </div>
+
+                                <div class="navbar-custom-menu">
+                                    <ul class="nav navbar-nav">
+                                        <li id="action_done" class="notifications-menu">
+                                            <a href="javascript:void(0);"> <i class="fa fa-send"></i> 确认调拨 </a>
+                                        </li>
+                                        <li class="dropdown notifications-menu">
+                                            <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fa fa-user"></i> <span t-esc="checker"/>
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                <li class="header">欢迎您，<t t-esc="checker"/></li>
+                                                <li>
+                                                    <ul class="menu">
+                                                        <li> <a href="/web/session/logout">注销</a> </li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </nav>
+
+                    </header>
+
+                    <div class="content-wrapper">
+                        <section class="content-header">
+                            <h1> 生产调拨 </h1>
+                        </section>
+                        <section class="content">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="box box-solid">
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">基础信息</h3>
+                                        </div>
+                                        <div class="box-body no-padding">
+                                            <ul class="nav nav-pills nav-stacked">
+                                                <li>
+                                                    <a href="javascript:void(0);">产线
+                                                        <span id="mes_mesline" class="pull-right" t-esc="mesline_name" t-att-meslineid="mesline_id"/>
+                                                    </a>
+                                                </li>
+                                                <li> <a href="javascript:void(0);">员工 <span id="mes_employee" class="pull-right" employeeid="0"/></a> </li>
+                                                <li> <a href="javascript:void(0);">容器 <span id="mes_container" class="pull-right" containerids=""/></a> </li>
+                                                <li> <a href="javascript:void(0);">标签 <span id="mes_label" class="pull-right" labelids=""/></a> </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="box box-solid" t-attf-style="display:{{showmeslines}}">
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">产线列表</h3>
+                                        </div>
+                                        <div class="box-body no-padding">
+                                            <ul id="mesline_list" class="nav nav-pills nav-stacked">
+                                                <t t-foreach="meslines" t-as="tmesline">
+                                                    <li class="mesline" t-att-meslineid="tmesline['mesline_id']"
+                                                        t-att-meslinename="tmesline['mesline_name']">
+                                                        <a href="javascript:void(0);">
+                                                            <t t-esc="tmesline['mesline_name']"/>
+                                                        </a>
+                                                    </li>
+                                                </t>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="box box-primary">
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">调拨明细</h3>
+                                        </div>
+                                        <div class="box-body no-padding">
+                                            <div class="table-responsive mailbox-messages">
+                                                <table class="table table-hover table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <td>产品</td>
+                                                            <td>单位</td>
+                                                            <td>批次</td>
+                                                            <td>数量</td>
+                                                            <td>标签</td>
+                                                            <td>容器</td>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="allocationlist"></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="main-footer">
+                        <div class="container" style="text-align:center;">
+                            <span>
+                                Copyright © 安费诺先进传感器 &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <a href="http://www.miitbeian.gov.cn" target="_blank">苏ICP备16061622</a>
+                            </span>
+                        </div>
+                    </footer>
+                </div>
+                <script src="/aas_base/static/libs/jquery/jquery-2.2.4.min.js"></script>
+                <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
+                <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
+                <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
+                <script src="/aas_base/static/libs/layer/layer.js"></script>
+                <script src="/aas_base/static/libs/vscanner.js"></script>
+                <script src="/aas_mes/static/src/js/mes_allocation.js"></script>
+            </body>
+        </html>
+    </template>
+
+</odoo>

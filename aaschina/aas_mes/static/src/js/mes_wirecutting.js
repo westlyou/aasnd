@@ -215,7 +215,7 @@ $(function(){
             layer.msg('您还没选择需要产出的线材，请先选择需要产出的线材！', {icon: 5});
             return ;
         }
-        layer.prompt({title: '输入需要产出数量，并确认', formType: 3}, function(text, index){
+        layer.prompt({'title': '输入需要产出数量，并确认', 'formType': 3, 'value': 200}, function(text, index){
             if(!isAboveZeroFloat(text)){
                 layer.msg('产出数量必须是一个大于零的整数！', {icon: 5});
                 return ;

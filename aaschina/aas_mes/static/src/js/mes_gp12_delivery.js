@@ -55,7 +55,8 @@ $(function(){
 
     //返回检测
     $('#action_back_checking').click(function(){
-        layer.confirm('您确认是返回检测操作？', {'btn': ['确定', '取消']}, function(){
+        layer.confirm('您确认是返回检测操作？', {'btn': ['确定', '取消']}, function(index){
+            layer.close(index);
             window.location.replace('/aasmes/gp12/checking');
         },function(){});
     });
@@ -71,7 +72,8 @@ $(function(){
         $(labellist, function(index, labeltr){
             labelids.append(parseInt($(labeltr).attr('labelid')));
         });
-        layer.confirm('您确认提交出货？', {'btn': ['确定', '取消']}, function(){
+        layer.confirm('您确认提交出货？', {'btn': ['确定', '取消']}, function(index){
+            layer.close(index);
             action_delivery(labelids);
         },function(){});
     });

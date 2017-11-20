@@ -550,11 +550,11 @@ class AASMESWorkticketCommitWizard(models.TransientModel):
             raise UserError(cresult['message'])
         self.workticket_id.action_doing_commit(self.commit_qty, badmode_lines, container_id)
 
-class AASMESWorkticketFinishBadmodeWizard(models.TransientModel):
+class AASMESWorkticketBadmodeWizard(models.TransientModel):
     _name = 'aas.mes.workticket.badmode.wizard'
     _description = 'AAS MES Workticket Badmode Wizard'
 
-    wizard_id = fields.Many2one(comodel_name='aas.mes.workticket.finish.wizard', string=u'完工向导', ondelete='cascade')
+    wizard_id = fields.Many2one(comodel_name='aas.mes.workticket.commit.wizard', string=u'完工向导', ondelete='cascade')
     badmode_id = fields.Many2one(comodel_name='aas.mes.routing.badmode', string=u'不良模式', ondelete='restrict')
     badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
 

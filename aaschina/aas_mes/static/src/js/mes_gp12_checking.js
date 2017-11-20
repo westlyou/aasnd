@@ -233,7 +233,8 @@ $(function() {
         if(waitcount < labelqty){
             tipmessage = '当前成品数量少于'+labelqty+',您确认要打印标签吗？';
         }
-        layer.confirm(tipmessage, {'btn': ['确定', '取消']}, function(){
+        layer.confirm(tipmessage, {'btn': ['确定', '取消']}, function(index){
+            layer.close(index);
             action_print_label();
         },function(){});
     });
@@ -248,7 +249,8 @@ $(function() {
 
     //上报不良
     $('#action_badmode').click(function(){
-        layer.confirm('您确认上报不良？', {'btn': ['确定', '取消']}, function(){
+        layer.confirm('您确认上报不良？', {'btn': ['确定', '取消']}, function(index){
+            layer.close(index);
             var employeeid = parseInt($('#mes_operator').attr('employeeid'));
             if(employeeid==0){
                 layer.msg('请在左侧员工列表中选择一个当前操作员工', {icon: 5});
@@ -265,7 +267,8 @@ $(function() {
 
     //成品入库
     $('#action_delivery').click(function(){
-        layer.confirm('您确认成品出货？', {'btn': ['确定', '取消']}, function(){
+        layer.confirm('您确认成品出货？', {'btn': ['确定', '取消']}, function(index){
+            layer.close(index);
             window.location.replace('/aasmes/gp12/delivery');
         }, function(){});
     });

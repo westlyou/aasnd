@@ -149,7 +149,8 @@ $(function() {
     });
 
     $('#action_commit_badmode').click(function(){
-        layer.confirm('您确认是上传不良？', {'btn': ['确定', '取消']}, function(){
+        layer.confirm('您确认是上传不良？', {'btn': ['确定', '取消']}, function(index){
+            layer.close(index);
             var serialnumberlist = $('li.aas-serialnumber');
             if(serialnumberlist==undefined || serialnumberlist==null || serialnumberlist.length<= 0){
                 layer.msg('你还未扫描不良品！', {icon: 5});
@@ -207,7 +208,8 @@ $(function() {
     });
 
     $('#action_back_checking').click(function(){
-        layer.confirm('您确认是返回检测操作？', {'btn': ['确定', '取消']}, function(){
+        layer.confirm('您确认是返回检测操作？', {'btn': ['确定', '取消']}, function(index){
+            layer.close(index);
             window.location.replace('/aasmes/gp12/checking');
         },function(){});
     });

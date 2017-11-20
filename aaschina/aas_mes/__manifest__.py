@@ -44,6 +44,8 @@
         'views/aas_mes_finalchecking_templates.xml',
         'views/aas_mes_rework_view.xml',
         'views/aas_mes_scrap_view.xml',
+        'views/aas_mes_allocation_view.xml',
+        'views/aas_mes_allocation_templates.xml',
 
         'oracle/aas_ebs_mainorder_view.xml',
 

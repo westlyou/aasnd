@@ -52,3 +52,4 @@ import aas_mes_serialnumber
 import aas_mes_operation
 import aas_mes_rework
 import aas_mes_scrap
+import aas_mes_allocation

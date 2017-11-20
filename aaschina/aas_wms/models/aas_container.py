@@ -27,7 +27,17 @@ class AASContainer(models.Model):
     stock_location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', required=True, ondelete='cascade', auto_join=True, index=True)
     location_id = fields.Many2one(comodel_name='stock.location', string=u'上级库位', default= lambda self: self.env.ref('aas_wms.stock_location_container'))
 
+    isempty = fields.Boolean(string=u'是否为空', compute='_compute_isempty', store=True)
     product_lines = fields.One2many(comodel_name='aas.container.product', inverse_name='container_id', string=u'产品清单')
+
+    @api.depends('product_lines')
+    def _compute_isempty(self):
+        for record in self:
+            if record.product_lines and len(record.product_lines) > 0:
+                record.isempty = False
+            else:
+                record.isempty = True
+
 
     @api.model
     def create(self, vals):
@@ -265,6 +275,18 @@ class AASContainerProduct(models.Model):
             'company_id': self.env.user.company_id.id, 'restrict_lot_id': False if not self.product_lot else self.product_lot.id
         }).action_done()
         self.write({'stock_qty': self.stock_qty + qty, 'temp_qty': self.temp_qty - qty})
+
+
+    @api.multi
+    def write(self, vals):
+        result = super(AASContainerProduct, self).write(vals)
+        productlist = self.env['aas.container.product']
+        for record in self:
+            if float_compare(record.product_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+                productlist |= record
+        if productlist and len(productlist) > 0:
+            productlist.sudo().unlink()
+        return result
 
 
 
