@@ -121,6 +121,8 @@ class AASMESWireOrder(models.Model):
     push_date = fields.Char(string=u'投产日期', compute='_compute_push_date', store=True)
     workorder_lines = fields.One2many(comodel_name='aas.mes.workorder', inverse_name='wireorder_id', string=u'工单明细')
 
+    closer_id = fields.Many2one(comodel_name='res.users', string=u'关单人', ondelete='restrict')
+
 
     @api.onchange('product_id')
     def action_change_product(self):
@@ -263,9 +265,9 @@ class AASMESWireOrder(models.Model):
             workorder.write({'produce_finish': currenttime, 'time_finish': currenttime, 'state': 'done'})
         wireorder = workorder.wireorder_id
         if wireorder.state not in ['producing', 'done']:
-            wireorder.write({'state': 'producing'})
+            wireorder.write({'state': 'producing', 'produce_start': fields.Datetime.now()})
         if all([temporder.state=='done' for temporder in wireorder.workorder_lines]):
-            wireorder.write({'state': 'done'})
+            wireorder.write({'state': 'done', 'produce_finish': fields.Datetime.now()})
         contianeroutput = oresult.get('containerproduct', False)
         if contianeroutput:
             contianeroutput.action_stock(stock_qty)
@@ -406,5 +408,52 @@ class AASMESWireOrder(models.Model):
             materiallines.append(materialvals)
         values['records'] = materiallines
         return values
+
+
+    @api.multi
+    def action_close(self):
+        """
+        关闭线材工单
+        :return:
+        """
+        self.ensure_one()
+        wizard = self.env['aas.mes.wireorder.close.wizard'].create({
+            'wireorder_id': self.id,
+            'action_message': u'当前工单还未生成完成，您确认要关闭此工单吗？'
+        })
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_wireorder_close_wizard')
+        return {
+            'name': u"关闭工单",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.mes.wireorder.close.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
+
+
+
+class AASMESWireorderCloseWizard(models.TransientModel):
+    _name = 'aas.mes.wireorder.close.wizard'
+    _description = 'AAS MES Workorder Close Wizard'
+
+    wireorder_id = fields.Many2one(comodel_name='aas.mes.wireorder', string=u'工单', ondelete='cascade')
+    action_message = fields.Char(string=u'提示信息', copy=False)
+
+    @api.one
+    def action_done(self):
+        wireorder = self.wireorder_id
+        if wireorder.workorder_lines and len(wireorder.workorder_lines) > 0:
+            for workorder in wireorder.workorder_lines:
+                if workorder.state == 'done':
+                    continue
+                workorder.action_done()
+                workorder.write({'time_finish': fields.Datetime.now(), 'closer_id': self.env.user.id})
+        wireorder.write({'state': 'done', 'produce_finish': fields.Datetime.now(), 'closer_id': self.env.user.id})
 
 

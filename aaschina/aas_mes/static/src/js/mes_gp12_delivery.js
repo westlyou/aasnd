@@ -39,7 +39,7 @@ $(function(){
                 totalqty += label.product_qty;
                 $('#mes_label').html(label.name);
                 $('#mes_totalqty').attr('qty', totalqty).html(totalqty);
-                var labeltr = $('<tr></tr>').prependTo($('#label_list')).attr('labelid', label.id);
+                var labeltr = $('<tr class="aaslabel"></tr>').prependTo($('#label_list')).attr('labelid', label.id);
                 $('<td></td>').html(label.name).appendTo(labeltr);
                 $('<td></td>').html(label.customerpn).appendTo(labeltr);
                 $('<td></td>').html(label.internalpn).appendTo(labeltr);
@@ -63,14 +63,14 @@ $(function(){
 
     //确认出货
     $('#action_dodelivery').click(function(){
-        var labellist = $('tr', '#label_list');
+        var labellist = $('.aaslabel');
         if(labellist.length <= 0){
             layer.msg('您还未添加出货明细，请先扫描需要出货条码！', {icon: 5});
             return;
         }
         var labelids = [];
-        $(labellist, function(index, labeltr){
-            labelids.append(parseInt($(labeltr).attr('labelid')));
+        $.each(labellist, function(index, labeltr){
+            labelids.push(parseInt($(labeltr).attr('labelid')));
         });
         layer.confirm('您确认提交出货？', {'btn': ['确定', '取消']}, function(index){
             layer.close(index);

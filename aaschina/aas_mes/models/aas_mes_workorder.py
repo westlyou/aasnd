@@ -823,7 +823,7 @@ class AASMESWorkorderProducingWizard(models.TransientModel):
 
 
 
-class AASMESWorkorderProducingWizard(models.TransientModel):
+class AASMESWorkorderCloseWizard(models.TransientModel):
     _name = 'aas.mes.workorder.close.wizard'
     _description = 'AAS MES Workorder Close Wizard'
 
