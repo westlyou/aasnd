@@ -97,10 +97,10 @@ class AASMESGP12CheckingController(http.Controller):
                 'success': False, 'message': u'序列号异常，请检查您扫描的标签是否是一个正确的序列号！'
             })
             return values
-        if tempoperation.gp12_check:
+        serialnumber = tempoperation.serialnumber_id
+        if tempoperation.gp12_check and serialnumber.label_id:
             values.update({'success':False, 'message': u'GP12已操作，请不要重复操作！'})
             return values
-        serialnumber = tempoperation.serialnumber_id
         values['serialnumber_id'] = serialnumber.id
         values['productcode'] = serialnumber.customer_product_code.replace('-', '')
         if productcode and productcode != values['productcode']:
@@ -149,11 +149,11 @@ class AASMESGP12CheckingController(http.Controller):
             values['operate_result'] = ','.join([serialnumber_name, 'NG', operation_time])
             values.update({'message': u'序列号异常，最终检查还没有操作！！', 'result': 'NG'})
             return values
-        gp12record = request.env['aas.mes.operation.record'].create({
-            'operation_id': tempoperation.id, 'employee_id': employeeid, 'operate_result': 'OK',
-            'operate_type': 'gp12'
-        })
-        tempoperation.write({'gp12_check': True, 'gp12_record_id': gp12record.id})
+        if not tempoperation.gp12_check:
+            gp12record = request.env['aas.mes.operation.record'].create({
+                'operation_id': tempoperation.id, 'employee_id': employeeid, 'operate_result': 'OK', 'operate_type': 'gp12'
+            })
+            tempoperation.write({'gp12_check': True, 'gp12_record_id': gp12record.id})
         values['operate_result'] = ','.join([serialnumber_name, 'OK', operation_time])
         return values
 
@@ -251,10 +251,11 @@ class AASMESGP12CheckingController(http.Controller):
         lot_name = mesline.workdate.replace('-', '')
         product_lot = request.env['stock.production.lot'].action_checkout_lot(tserialnumber.product_id.id, lot_name)
         tlabel = request.env['aas.product.label'].create({
-            'product_id': tserialnumber.product_id.id, 'product_lot': product_lot.id, 'product_qty': len(serialnumberlist),
-            'location_id': mesline.location_production_id.id, 'company_id': self.env.user.company_id.id
+            'product_id': tserialnumber.product_id.id, 'product_lot': product_lot.id,
+            'product_qty': len(serialnumberlist), 'stocked': True,
+            'location_id': mesline.location_production_id.id, 'company_id': request.env.user.company_id.id
         })
-        srclocation = self.env.ref('stock.location_production')
+        srclocation = request.env.ref('stock.location_production')
         tlabel.action_stock(srclocation.id)
         values['label_name'] = tlabel.name
         printvals = request.env['aas.product.label'].action_print_label(printer_id, [tlabel.id])
@@ -283,7 +284,7 @@ class AASMESGP12CheckingController(http.Controller):
 
 
     @http.route('/aasmes/gp12/delivery/scanlabel', type='json', auth="user")
-    def aasmes_gp12_dolabel(self, barcode):
+    def aasmes_gp12_delivery_scanlabel(self, barcode):
         values = {'success': True, 'message': ''}
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
         if not lineuser:
@@ -318,7 +319,7 @@ class AASMESGP12CheckingController(http.Controller):
 
 
     @http.route('/aasmes/gp12/delivery/actiondone', type='json', auth="user")
-    def aasmes_gp12_dolabel(self, labelids):
+    def aasmes_gp12_delivery_actiondone(self, labelids):
         values = {'success': True, 'message': ''}
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
         if not lineuser:

@@ -376,7 +376,7 @@ class AASMESWorkorder(models.Model):
                 outputvals['lastone_id'] = mesline.serialnumber_id.id
                 currenttime = fields.Datetime.from_string(output_time)
                 lasttime = fields.Datetime.from_string(mesline.serialnumber_id.output_time)
-                outputvals['output_internal'] = (currenttime - lasttime).seconds() / 3600.0
+                outputvals['output_internal'] = (currenttime - lasttime).seconds / 3600.0
             serialrecord.write(outputvals)
             mesline.write({'serialnumber_id': serialrecord.id})
         if container_id:

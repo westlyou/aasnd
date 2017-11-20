@@ -78,6 +78,11 @@ $(function() {
             layer.msg('操作正在处理，请耐心等待！', {icon: 5});
             return ;
         }
+        var printerid = $('#mes_printer').val();
+        if(printerid==null || printerid==''){
+            layer.msg('请先设置好标签打印机，在进行扫描操作！', {icon: 5});
+            return ;
+        }
         scanable = false;
         var employeeid = parseInt($('#mes_operator').attr('employeeid'));
         if(employeeid==0){
@@ -111,14 +116,19 @@ $(function() {
                 $('#check_result').html(dresult.result);
                 if(dresult.result=='OK'){
                     $('#check_result_box').removeClass('bg-red').addClass('bg-green');
+                    var serialnumbertr = $('#serialnumber_'+dresult.serialnumber_id);
+                    if(serialnumbertr.length > 0){
+                        serialnumbertr.remove();
+                    }else{
+                        var scount = parseInt($('#pass_count').attr('scount'));
+                        scount += 1;
+                        $('#pass_count').attr('scount', scount).html(scount);
+                        var waitcount = parseInt($('#mes_printbtn').attr('waitcount'));
+                        $('#mes_printbtn').attr('waitcount', waitcount+1);
+                    }
                     var serialtr = $('<tr></tr>').prependTo($('#pass_list')).html('<td>'+dresult.operate_result+'</td>');
                     serialtr.attr({'id': 'serialnumber_'+dresult.serialnumber_id, 'serialnumberid': dresult.serialnumber_id});
                     serialtr.addClass('aas-waitprint');
-                    var scount = parseInt($('#pass_count').attr('scount'));
-                    scount += 1;
-                    $('#pass_count').attr('scount', scount).html(scount);
-                    var waitcount = parseInt($('#mes_printbtn').attr('waitcount'));
-                    $('#mes_printbtn').attr('waitcount', waitcount+1);
                 }else{
                     $('#check_result_box').removeClass('bg-green').addClass('bg-red');
                     $('#fail_list').append('<tr><td>'+dresult.operate_result+'</td></tr>');
@@ -131,6 +141,7 @@ $(function() {
                 if(customercode==null || customercode==''){
                     custmoercodespan.attr('customercode', dresult.productcode).html(dresult.productcode);
                 }
+                $('#functiontest_list').html('');
                 if(dresult.functiontestlist.length > 0){
                     $.each(dresult.functiontestlist, function(index, record){
                         var lineno = index+1;
@@ -142,6 +153,7 @@ $(function() {
                         $('<td></td>').html(record.operate_equipment).appendTo(functiontesttr);
                     });
                 }
+                $('#rework_list').html('');
                 if(dresult.reworklist.length > 0){
                     $.each(dresult.reworklist, function(index, record){
                         var lineno = index + 1;
@@ -183,7 +195,7 @@ $(function() {
         }
         var serialnumberids = [];
         $.each(serialnumberlist, function(index, serialnumbertr){
-            serialnumberids.push(parseInt(serialnumbertr.attr('serialnumberid')));
+            serialnumberids.push(parseInt($(serialnumbertr).attr('serialnumberid')));
         });
         var printerid = parseInt($('#mes_printer').val());
         if(printerid==0){

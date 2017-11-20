@@ -192,9 +192,6 @@ class AASMESFinalCheckingController(http.Controller):
         if not outputresult['success']:
             values.update({'success': False, 'message': outputresult['message']})
             return values
-        tempvals = workorder.action_consume(workorder.id, workorder.product_id.id)
-        if tempvals['message']:
-            values['message'] = tempvals['message']
         return values
 
 

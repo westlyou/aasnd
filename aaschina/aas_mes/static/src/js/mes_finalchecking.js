@@ -135,9 +135,6 @@ $(function(){
                     layer.msg(dresult.message, {icon: 5});
                     return ;
                 }
-                if(dresult.message){
-                    layer.msg(dresult.message, {icon: 5});
-                }
                 window.location.reload(true);
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
