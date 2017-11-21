@@ -399,10 +399,15 @@ class AASMESWorkticket(models.Model):
             values.update({'success': False, 'message': u'工艺异常，工位的工序和工单的工艺工序冲突，请仔细检查！'})
             return values
         values.update({
-            'workticket_id': workticket.id, 'workticket_name': workticket.name, 'state': TICKETSTATEDICT[workticket.state],
-            'workcenter_id': workcenter.id,'workcenter_name': workcenter.name, 'sequence': workticket.sequence,
-            'input_qty': workticket.input_qty, 'mesline_name': workticket.mesline_name, 'lastworkcenter': workticket.islastworkcenter(),
-            'schedule_name': '' if not workticket.schedule_id else workticket.schedule_id.name
+            'workticket_id': workticket.id, 'workticket_name': workticket.name,
+            'workcenter_id': workcenter.id,'workcenter_name': workcenter.name,
+            'state': TICKETSTATEDICT[workticket.state], 'sequence': workticket.sequence,
+            'input_qty': workticket.input_qty, 'output_qty': workticket.output_qty,
+            'badmode_qty': workcenter.badmode_qty, 'lastworkcenter': workticket.islastworkcenter(),
+            'time_start': fields.Datetime.to_timezone_string(workticket.time_start, 'Asia/Shanghai'),
+            'time_finish': fields.Datetime.to_timezone_string(workticket.time_finish, 'Asia/Shanghai'),
+            'schedule_name': '' if not workticket.schedule_id else workticket.schedule_id.name,
+            'product_code': workticket.product_id.default_code, 'mesline_name': workticket.mesline_name
         })
         return values
 

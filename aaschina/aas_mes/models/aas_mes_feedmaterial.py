@@ -146,30 +146,75 @@ class AASMESFeedmaterial(models.Model):
         if not workstation:
             values.update({'success': False, 'message': u'设备还未绑定工位，请联系相关人员设置！'})
             return values
+        startchar = barcode[0:2]
+        if startchar == 'AT':
+            return self.action_feeding_withcontainer(mesline, workstation, barcode)
+        else:
+            return self.action_feeding_withlabel(mesline, workstation, barcode)
+
+
+    @api.model
+    def action_feeding_withcontainer(self, mesline, workstation, barcode):
+        values = {'success': True, 'message': ''}
+        container = self.env['aas.container'].search([('barcode', '=', barcode)], limit=1)
+        if not container:
+            values.update({'success': False, 'message': u'未搜索到容器，请仔细检查是否是有效的容器条码！'})
+            return values
+        if container.isempty:
+            values.update({'success': False, 'message': u'容器%s里面空空如也，不可以用空容器投料！'% container.name})
+            return values
+        if not mesline.location_production_id or (not mesline.location_material_list or len(mesline.location_material_list) <= 0):
+            values.update({'success': False, 'message': u'产线%s还未设置原料和成品库位！'% mesline.name})
+            return values
+        locationids = [mlocation.location_id.id for mlocation in mesline.location_material_list]
+        locationids.append(mesline.location_production_id.id)
+        locationlist = self.env['stock.location'].search([('id', 'child_of', locationids)])
+        if container.location_id.id not in locationlist.ids:
+            values.update({'success': False, 'message': u'容器%s不在产线%s的线边库下，不可以投料！'% (container.name, mesline.name)})
+            return values
+        for pline in container.product_lines:
+            product_id, product_lot = pline.product_id.id, pline.product_lot.id
+            feeddomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+            feeddomain.extend([('material_id', '=', product_id), ('material_lot', '=', product_lot)])
+            feedmaterial = self.env['aas.mes.feedmaterial'].search(feeddomain, limit=1)
+            if not feedmaterial:
+                self.env['aas.mes.feedmaterial'].create({
+                    'mesline_id': mesline.id, 'workstation_id': workstation.id,
+                    'material_id': product_id, 'material_lot': product_lot
+                })
+            else:
+                feedmaterial.action_refresh_stock()
+        return values
+
+
+
+    @api.model
+    def action_feeding_withlabel(self, mesline, workstation, barcode):
+        values = {'success': True, 'message': ''}
         label = self.env['aas.product.label'].search([('barcode', '=', barcode)], limit=1)
         if not label:
-            values.update({'success': False, 'message': u'物料标签未搜索到，请仔细检查！'})
+            values.update({'success': False, 'message': u'未搜索到标签，请仔细检查是否是有效的标签条码！'})
+            return values
+        if label.state != 'normal':
+            values.update({'success': False, 'message': u'标签状态异常，可能标签已冻结，或是无效标签；请仔细检查！'})
+            return values
+        if label.locked:
+            values.update({'success': False, 'message': u'标签已被单据%s锁定，暂时不可以投料！'% label.locked_order})
             return values
         locationids = [mlocation.location_id.id for mlocation in mesline.location_material_list]
         locationids.append(mesline.location_production_id.id)
         locationlist = self.env['stock.location'].search([('id', 'child_of', locationids)])
         if label.location_id.id not in locationlist.ids:
-            values.update({'success': False, 'message': u'扫描标签异常，非产线%s的标签不可以扫描！'% mesline.name})
+            values.update({'success': False, 'message': u'标签%s不在产线%s的线边库下，不可以投料！'% (label.name, mesline.name)})
             return values
-        material_id, material_lot = label.product_id.id, label.product_lot.id
         feeddomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-        feeddomain.extends([('material_id', '=', material_id), ('material_lot', '=', material_lot)])
+        feeddomain.extend([('material_id', '=', label.product_id.id), ('material_lot', '=', label.product_lot.id)])
         feedmaterial = self.env['aas.mes.feedmaterial'].search(feeddomain, limit=1)
-        if feedmaterial:
+        if not feedmaterial:
+            self.env['aas.mes.feedmaterial'].create({
+                'mesline_id': mesline.id, 'workstation_id': workstation.id,
+                'material_id': label.product_id.id, 'material_lot': label.product_lot.id
+            })
+        else:
             feedmaterial.action_refresh_stock()
-            if float_is_zero(feedmaterial.material_qty, precision_rounding=0.000001):
-                feedmaterial.unlink()
-            else:
-                values.update({'success': False, 'message': u'物料%s的批次%s已经上料，请不要重复操作！'% (label.product_code, label.product_lotname)})
-                return values
-        feedmaterial = self.env['aas.mes.feedmaterial'].create({
-            'mesline_id': mesline.id, 'workstation_id': workstation.id,
-            'material_id': material_id, 'material_lot': material_lot
-        })
-        feedmaterial.action_refresh_stock()
         return values
