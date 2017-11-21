@@ -400,8 +400,9 @@ class AASMESWorkticket(models.Model):
             return values
         values.update({
             'workticket_id': workticket.id, 'workticket_name': workticket.name, 'state': TICKETSTATEDICT[workticket.state],
-            'workcenter_name': workcenter.name, 'sequence': workticket.sequence, 'input_qty': workticket.input_qty, 'mesline_name': workticket.mesline_name,
-            'schedule_name': '' if not workticket.schedule_id else workticket.schedule_id.name, 'lastworkcenter': workticket.islastworkcenter()
+            'workcenter_id': workcenter.id,'workcenter_name': workcenter.name, 'sequence': workticket.sequence,
+            'input_qty': workticket.input_qty, 'mesline_name': workticket.mesline_name, 'lastworkcenter': workticket.islastworkcenter(),
+            'schedule_name': '' if not workticket.schedule_id else workticket.schedule_id.name
         })
         return values
 
