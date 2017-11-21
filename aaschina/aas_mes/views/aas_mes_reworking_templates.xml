@@ -1,268 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <template id="aas_gp12_checking" name="AAS MES GP12 Checking">
-        &lt;!DOCTYPE html&gt;
-        <html>
-            <head>
-                <meta charset="utf-8" />
-                <title>安费诺先进传感器</title>
-                <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
-                <meta name="apple-mobile-web-app-capable" content="yes"/>
-                <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
-                <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
-                <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
-                <link rel="stylesheet" href="/aas_base/static/libs/iCheck/flat/blue.css"/>
-                <link rel="stylesheet" href="/aas_base/static/libs/select2/select2.min.css"/>
-                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
-                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/skins/skin-blue.min.css"/>
-                <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-                <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-                <!--[if lt IE 9]>
-                   <script src="/aas_base/static/libs/html5shiv.min.js"></script>
-                   <script src="/aas_base/static/libs/respond.min.js"></script>
-                <![endif]-->
-            </head>
-            <body class="hold-transition skin-blue layout-top-nav">
-                <div class="wrapper">
-                    <header class="main-header">
-                        <nav class="navbar navbar-static-top">
-                            <div class="container">
-                                <div class="navbar-header">
-                                    <a href="javascript:void(0);" class="navbar-brand">
-                                        <span><b>安费诺先进传感器</b></span>
-                                    </a>
-                                </div>
-
-                                <div class="navbar-custom-menu">
-                                    <ul class="nav navbar-nav">
-                                        <li id="action_delivery" class="notifications-menu">
-                                            <a href="javascript:void(0);"> <i class="fa fa-send"></i> 成品出货 </a>
-                                        </li>
-                                        <li id="action_badmode" class="notifications-menu">
-                                            <a href="javascript:void(0);"> <i class="fa fa-send"></i> 上报不良 </a>
-                                        </li>
-                                        <li class="dropdown notifications-menu">
-                                            <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">
-                                                <i class="fa fa-user"></i> <span t-esc="checker"/>
-                                            </a>
-                                            <ul class="dropdown-menu">
-                                                <li class="header">欢迎您，<t t-esc="checker"/></li>
-                                                <li>
-                                                    <ul class="menu">
-                                                        <li> <a href="/web/session/logout">注销</a> </li>
-                                                    </ul>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </nav>
-
-                    </header>
-
-                    <div class="content-wrapper">
-                        <section class="content-header">
-                            <h1> GP12检测 </h1>
-                            <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;color:red;">
-                                <span id="checkwarning" t-esc="message"/>
-                            </div>
-                        </section>
-                        <section class="content">
-                            <div class="row">
-                                <div class="col-md-2">
-                                    <div id="check_result_box" class="small-box bg-green">
-                                        <div id="check_result" class="inner" style="text-align:center;font-size:24px;font-weight:bold;">
-                                        </div>
-                                        <a href="javascript:void(0);" class="small-box-footer">检测结果</a>
-                                    </div>
-                                    <div class="box box-solid">
-                                        <div class="box-header with-border">
-                                            <h3 class="box-title">基础信息</h3>
-                                        </div>
-                                        <div class="box-body no-padding">
-                                            <ul class="nav nav-pills nav-stacked">
-                                                <li> <a href="javascript:void(0);">产线 <span id="mes_mesline" class="pull-right" t-esc="mesline_name"/></a> </li>
-                                                <li> <a href="javascript:void(0);">工位 <span id="mes_workstation" class="pull-right" t-esc="workstation_name"/></a> </li>
-                                                <li> <a href="javascript:void(0);">操作员 <span id="mes_operator" class="pull-right" employeeid="0"/></a> </li>
-                                                <li> <a href="javascript:void(0);">当前PN <span id="mes_currentpn" class="pull-right" customercode=""/></a> </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                    <div class="box box-solid">
-                                        <div class="box-header with-border">
-                                            <h3 class="box-title">标签信息</h3>
-                                        </div>
-                                        <div class="box-body no-padding">
-                                            <ul class="nav nav-pills nav-stacked">
-                                                <li id="mes_labelqty" qty="90">
-                                                    <a href="javascript:void(0);">
-                                                        数量
-                                                        <span class="form-group pull-right">
-                                                            <label>
-                                                                <input type="radio" name="labelqty" class="flat-blue" checked="checked" qty="90"/> 90
-                                                            </label>
-                                                            <label style="margin-left:10px;">
-                                                                <input type="radio" name="labelqty" class="flat-blue" qty="240"/> 240
-                                                            </label>
-                                                        </span>
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a href="javascript:void(0);">
-                                                        <select id="mes_printer" class="form-control select2" style="width: 100%;"></select>
-                                                    </a>
-                                                </li>
-                                                <li> <a id="mes_label" href="javascript:void(0);">显示当前标签</a></li>
-                                                <li> <button id="mes_printbtn" class="btn btn-block btn-primary" waitcount="0">打印标签</button></li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                    <div class="box box-solid">
-                                        <div class="box-header with-border">
-                                            <h3 class="box-title">员工清单</h3>
-                                        </div>
-                                        <div class="box-body no-padding">
-                                            <ul id="employee_list" class="nav nav-pills nav-stacked">
-                                                <t t-foreach="employeelist" t-as="temployee">
-                                                    <li class="aas-employee" t-attf-id="employee_{{temployee['employee_id']}}"
-                                                        t-att-employeeid="temployee['employee_id']" t-att-employeename="temployee['employee_name']">
-                                                        <a href="javascript:void(0);"> <t t-esc="temployee['employee_name']"/> </a>
-                                                    </li>
-                                                </t>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-10">
-                                    <div class="box box-primary">
-                                        <div class="box-header with-border">
-                                            <h3 class="box-title">当前SN</h3>
-                                            <div class="box-tools pull-right">
-                                                <div style="font-size:22px; font-weight:bold;">
-                                                    <span id="mes_serialnumber" style="color:#72AFD2;"></span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="box-body no-padding">
-                                            <div class="row">
-
-                                                <section class="col-md-4 col-sm-12">
-                                                    <div class="box box-primary">
-                                                        <div class="box-header">
-                                                            <i class="fa fa-list"></i>
-                                                            <h3 class="box-title">合格SN：</h3>
-                                                            <div class="box-tools pull-right">
-                                                                <span id="pass_count" scount="0" style="color:#00C0EF;font-size:30px;"/>
-                                                            </div>
-                                                        </div>
-                                                        <div class="box-body">
-                                                            <div class="table-responsive">
-                                                                <table id="pass_list" class="table no-margin"></table>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </section>
-
-                                                <section class="col-md-8 col-sm-12">
-                                                    <div class="box box-primary">
-                                                        <div class="box-header">
-                                                            <i class="fa fa-list"></i>
-                                                            <h3 class="box-title">Test记录</h3>
-                                                        </div>
-                                                        <div class="box-body">
-                                                            <div class="table-responsive">
-                                                                <table class="table no-margin">
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th>No</th>
-                                                                            <th>测试时间</th>
-                                                                            <th>测试结果</th>
-                                                                            <th>测试人员</th>
-                                                                            <th>测试设备</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody id="functiontest_list"></tbody>
-                                                                </table>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="box box-primary">
-                                                        <div class="box-header">
-                                                            <i class="fa fa-list"></i>
-                                                            <h3 class="box-title">Rework记录</h3>
-                                                        </div>
-                                                        <div class="box-body">
-                                                            <div class="table-responsive">
-                                                                <table class="table no-margin">
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th>No</th>
-                                                                            <th>SN</th>
-                                                                            <th>不良日期</th>
-                                                                            <th>料号</th>
-                                                                            <th>工序</th>
-                                                                            <th>不良模式</th>
-                                                                            <th>作业员</th>
-                                                                            <th>维修状态</th>
-                                                                            <th>维修结果</th>
-                                                                            <th>维修时间</th>
-                                                                            <th>维修人员</th>
-                                                                            <th>IPQC</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody id="rework_list"></tbody>
-                                                                </table>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="box box-danger">
-                                                        <div class="box-header">
-                                                            <i class="fa fa-list"></i>
-                                                            <h3 class="box-title">不合格SN</h3>
-                                                        </div>
-                                                        <div class="box-body">
-                                                            <div class="table-responsive">
-                                                                <table id="fail_list" class="table no-margin">
-                                                                </table>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </section>
-
-
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-                    </div>
-                    <footer class="main-footer">
-                        <div class="container" style="text-align:center;">
-                            <span>
-                                Copyright © 安费诺先进传感器 &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <a href="http://www.miitbeian.gov.cn" target="_blank">苏ICP备16061622</a>
-                            </span>
-                        </div>
-                    </footer>
-                </div>
-                <script src="/aas_base/static/libs/jquery/jquery-2.2.4.min.js"></script>
-                <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
-                <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
-                <script src="/aas_base/static/libs/iCheck/icheck.min.js"></script>
-                <script src="/aas_base/static/libs/select2/select2.min.js"></script>
-                <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
-                <script src="/aas_base/static/libs/layer/layer.js"></script>
-                <script src="/aas_base/static/libs/vscanner.js"></script>
-                <script src="/aas_mes/static/src/js/mes_gp12_checking.js"></script>
-            </body>
-        </html>
-    </template>
-
-    <template id="aas_gp12_rework" name="AAS MES GP12 Rework">
+    <template id="aas_reworking" name="AAS MES Reworking">
         &lt;!DOCTYPE html&gt;
         <html>
             <head>
@@ -296,10 +35,7 @@
 
                                 <div class="navbar-custom-menu">
                                     <ul class="nav navbar-nav">
-                                        <li id="action_back_checking" class="notifications-menu">
-                                            <a href="javascript:void(0);"> <i class="fa fa-undo"></i> 返回检测 </a>
-                                        </li>
-                                        <li id="action_commit_badmode" class="notifications-menu">
+                                        <li id="action_commit" class="notifications-menu">
                                             <a href="javascript:void(0);"> <i class="fa fa-send"></i> 上报不良 </a>
                                         </li>
                                         <li class="dropdown notifications-menu">
@@ -324,10 +60,7 @@
 
                     <div class="content-wrapper">
                         <section class="content-header">
-                            <h1> GP12 <small>上报不良</small> </h1>
-                            <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;color:red;">
-                                <span id="checkwarning" t-esc="message"/>
-                            </div>
+                            <h1> 上报不良 </h1>
                         </section>
                         <section class="content">
                             <div class="row">
@@ -355,14 +88,7 @@
                                         </div>
                                         <div class="box-body">
                                             <div class="row" style="margin-top:10px;">
-                                                <div class="col-md-6">
-                                                    <div class="input-group">
-                                                        <span class="input-group-addon">工位</span>
-                                                        <input id="mes_workstation" type="text" class="form-control"
-                                                           readonly="readonly" t-att-workstationid="workstation_id" t-att-value="workstation_name"/>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
+                                                <div class="col-md-12">
                                                     <div class="input-group">
                                                         <span class="input-group-addon">操作员</span>
                                                         <input id="mes_employee" type="text" class="form-control"  readonly="readonly" employeeid="0"/>
@@ -370,8 +96,11 @@
                                                 </div>
                                             </div>
                                             <div class="row" style="margin-top:10px;">
-                                                <div class="col-md-12">
-                                                    <select id="mes_badmode" class="form-control select2" style="width: 100%;" value="0"></select>
+                                                <div class="col-md-6">
+                                                    <select id="mes_workstation" class="form-control select2" style="width: 100%;"></select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <select id="mes_badmode" class="form-control select2" style="width: 100%;"></select>
                                                 </div>
                                             </div>
                                             <div class="row" style="margin-top:10px;">
@@ -424,12 +153,13 @@
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
-                <script src="/aas_mes/static/src/js/mes_gp12_rework.js"></script>
+                <script src="/aas_mes/static/src/js/mes_reworking.js"></script>
             </body>
         </html>
     </template>
 
-    <template id="aas_gp12_delivery" name="AAS MES GP12 Delivery">
+
+    <template id="aas_repairing" name="AAS MES Repairing">
         &lt;!DOCTYPE html&gt;
         <html>
             <head>
@@ -440,6 +170,7 @@
                 <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/select2/select2.min.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/skins/skin-blue.min.css"/>
                 <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -462,11 +193,8 @@
 
                                 <div class="navbar-custom-menu">
                                     <ul class="nav navbar-nav">
-                                        <li id="action_back_checking" class="notifications-menu">
-                                            <a href="javascript:void(0);"> <i class="fa fa-undo"></i> 返回检测 </a>
-                                        </li>
-                                        <li id="action_dodelivery" class="notifications-menu">
-                                            <a href="javascript:void(0);"> <i class="fa fa-shopping-cart"></i> 确认出货 </a>
+                                        <li id="action_repair" class="notifications-menu">
+                                            <a href="javascript:void(0);"> <i class="fa fa-send"></i> 维修完成 </a>
                                         </li>
                                         <li class="dropdown notifications-menu">
                                             <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">
@@ -490,10 +218,7 @@
 
                     <div class="content-wrapper">
                         <section class="content-header">
-                            <h1> GP12成品出货 </h1>
-                            <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;color:red;">
-                                <span id="checkwarning" t-esc="message"/>
-                            </div>
+                            <h1> 不良维修 </h1>
                         </section>
                         <section class="content">
                             <div class="row">
@@ -504,9 +229,9 @@
                                         </div>
                                         <div class="box-body no-padding">
                                             <ul class="nav nav-pills nav-stacked">
-                                                <li> <a href="javascript:void(0);">产线 <span id="mes_mesline" class="pull-right" t-esc="mesline_name"/></a> </li>
-                                                <li> <a href="javascript:void(0);">工位 <span id="mes_workstation" class="pull-right" t-esc="workstation_name"/></a> </li>
-                                                <li> <a href="javascript:void(0);">出货数量 <span id="mes_totalqty" class="pull-right" qty="0"/></a> </li>
+                                                <li> <a href="javascript:void(0);">维修员工 <span id="mes_employee" class="pull-right" employeeid="0"/></a></li>
+                                                <li> <a href="javascript:void(0);">客户料号 <span id="mes_customerpn" class="pull-right"/></a> </li>
+                                                <li> <a href="javascript:void(0);">内部料号 <span id="mes_internalpn" class="pull-right"/></a> </li>
                                             </ul>
                                         </div>
                                     </div>
@@ -514,27 +239,50 @@
                                 <div class="col-md-9">
                                     <div class="box box-primary">
                                         <div class="box-header with-border">
-                                            <h3 class="box-title">出货清单</h3>
+                                            <h3 class="box-title">当前SN: </h3>
                                             <div class="box-tools pull-right">
                                                 <div style="font-size:22px; font-weight:bold;">
-                                                    <span id="mes_label" style="color:#72AFD2;"></span>
+                                                    <span id="mes_serialnumber" style="color:#72AFD2;" serialnumberid="0"/>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="box-body no-padding">
-                                            <div class="table-responsive">
-                                                <table class="table no-margin">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>标签</th>
-                                                            <th>客户料号</th>
-                                                            <th>内部料号</th>
-                                                            <th>批次</th>
-                                                            <th>数量</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="label_list"></tbody>
-                                                </table>
+                                        <div class="box-body">
+                                            <div class="row" style="margin-top:10px;">
+                                                <div class="col-md-12">
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon">操作结果</span>
+                                                        <input id="mes_result" type="text" class="form-control" value="OK"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row" style="margin-top:10px;">
+                                                <section class="col-md-12">
+                                                    <div class="box box-primary">
+                                                        <div class="box-header">
+                                                            <i class="fa fa-list"></i>
+                                                            <h3 class="box-title">返工记录</h3>
+                                                        </div>
+                                                        <div class="box-body">
+                                                            <div class="table-responsive">
+                                                                <table class="table no-margin">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>No</th>
+                                                                            <th>SN</th>
+                                                                            <th>不良日期</th>
+                                                                            <th>料号</th>
+                                                                            <th>工序</th>
+                                                                            <th>不良模式</th>
+                                                                            <th>作业员</th>
+                                                                            <th>维修状态</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody id="rework_list"></tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </section>
                                             </div>
                                         </div>
                                     </div>
@@ -552,11 +300,163 @@
                 </div>
                 <script src="/aas_base/static/libs/jquery/jquery-2.2.4.min.js"></script>
                 <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
+                <script src="/aas_base/static/libs/select2/select2.min.js"></script>
                 <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
-                <script src="/aas_mes/static/src/js/mes_gp12_delivery.js"></script>
+                <script src="/aas_mes/static/src/js/mes_repairing.js"></script>
+            </body>
+        </html>
+    </template>
+
+    <template id="aas_ipqcchecking" name="AAS MES IPQCChecking">
+        &lt;!DOCTYPE html&gt;
+        <html>
+            <head>
+                <meta charset="utf-8" />
+                <title>安费诺先进传感器</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                <meta name="apple-mobile-web-app-capable" content="yes"/>
+                <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/select2/select2.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/skins/skin-blue.min.css"/>
+                <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+                <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+                <!--[if lt IE 9]>
+                   <script src="/aas_base/static/libs/html5shiv.min.js"></script>
+                   <script src="/aas_base/static/libs/respond.min.js"></script>
+                <![endif]-->
+            </head>
+            <body class="hold-transition skin-blue layout-top-nav">
+                <div class="wrapper">
+                    <header class="main-header">
+                        <nav class="navbar navbar-static-top">
+                            <div class="container">
+                                <div class="navbar-header">
+                                    <a href="javascript:void(0);" class="navbar-brand">
+                                        <span><b>安费诺先进传感器</b></span>
+                                    </a>
+                                </div>
+
+                                <div class="navbar-custom-menu">
+                                    <ul class="nav navbar-nav">
+                                        <li id="action_done" class="notifications-menu">
+                                            <a href="javascript:void(0);"> <i class="fa fa-send"></i> 确认完成 </a>
+                                        </li>
+                                        <li class="dropdown notifications-menu">
+                                            <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fa fa-user"></i> <span t-esc="checker"/>
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                <li class="header">欢迎您，<t t-esc="checker"/></li>
+                                                <li>
+                                                    <ul class="menu">
+                                                        <li> <a href="/web/session/logout">注销</a> </li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </nav>
+
+                    </header>
+
+                    <div class="content-wrapper">
+                        <section class="content-header">
+                            <h1> IPQC确认 </h1>
+                        </section>
+                        <section class="content">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="box box-solid">
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">基础信息</h3>
+                                        </div>
+                                        <div class="box-body no-padding">
+                                            <ul class="nav nav-pills nav-stacked">
+                                                <li> <a href="javascript:void(0);">IPQC员工 <span id="mes_employee" class="pull-right" employeeid="0"/></a></li>
+                                                <li> <a href="javascript:void(0);">客户料号 <span id="mes_customerpn" class="pull-right"/></a> </li>
+                                                <li> <a href="javascript:void(0);">内部料号 <span id="mes_internalpn" class="pull-right"/></a> </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="box box-primary">
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">当前SN: </h3>
+                                            <div class="box-tools pull-right">
+                                                <div style="font-size:22px; font-weight:bold;">
+                                                    <span id="mes_serialnumber" style="color:#72AFD2;" serialnumberid="0"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="box-body">
+                                            <div class="row" style="margin-top:10px;">
+                                                <div class="col-md-12">
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon">操作结果</span>
+                                                        <input id="mes_result" type="text" class="form-control" value="OK"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row" style="margin-top:10px;">
+                                                <section class="col-md-12">
+                                                    <div class="box box-primary">
+                                                        <div class="box-header">
+                                                            <i class="fa fa-list"></i>
+                                                            <h3 class="box-title">返工记录</h3>
+                                                        </div>
+                                                        <div class="box-body">
+                                                            <div class="table-responsive">
+                                                                <table class="table no-margin">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>No</th>
+                                                                            <th>SN</th>
+                                                                            <th>不良日期</th>
+                                                                            <th>料号</th>
+                                                                            <th>工序</th>
+                                                                            <th>不良模式</th>
+                                                                            <th>作业员</th>
+                                                                            <th>维修状态</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody id="rework_list"></tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </section>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="main-footer">
+                        <div class="container" style="text-align:center;">
+                            <span>
+                                Copyright © 安费诺先进传感器 &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <a href="http://www.miitbeian.gov.cn" target="_blank">苏ICP备16061622</a>
+                            </span>
+                        </div>
+                    </footer>
+                </div>
+                <script src="/aas_base/static/libs/jquery/jquery-2.2.4.min.js"></script>
+                <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
+                <script src="/aas_base/static/libs/select2/select2.min.js"></script>
+                <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
+                <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
+                <script src="/aas_base/static/libs/layer/layer.js"></script>
+                <script src="/aas_base/static/libs/vscanner.js"></script>
+                <script src="/aas_mes/static/src/js/mes_ipqcchecking.js"></script>
             </body>
         </html>
     </template>

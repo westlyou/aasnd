@@ -43,12 +43,12 @@
         'views/aas_mes_wirecutting_templates.xml',
         'views/aas_mes_finalchecking_templates.xml',
         'views/aas_mes_rework_view.xml',
+        'views/aas_mes_reworking_templates.xml',
         'views/aas_mes_scrap_view.xml',
         'views/aas_mes_allocation_view.xml',
         'views/aas_mes_allocation_templates.xml',
 
         'oracle/aas_ebs_mainorder_view.xml',
-
         'wechat/views/aas_wechat_mes_template.xml',
         'wechat/views/aas_wechat_mes_feedmaterial_template.xml',
         'wechat/views/aas_wechat_mes_workorder_template.xml'

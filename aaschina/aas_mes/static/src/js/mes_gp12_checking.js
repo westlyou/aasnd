@@ -80,7 +80,7 @@ $(function() {
         }
         var printerid = $('#mes_printer').val();
         if(printerid==null || printerid==''){
-            layer.msg('请先设置好标签打印机，在进行扫描操作！', {icon: 5});
+            layer.msg('请先设置好标签打印机，再进行扫描操作！', {icon: 5});
             return ;
         }
         scanable = false;
@@ -235,6 +235,11 @@ $(function() {
 
     //标签打印，可能未达到自动打印标签的数量
     $('#mes_printbtn').click(function(){
+        var printerid = $('#mes_printer').val();
+        if(printerid==null || printerid==''){
+            layer.msg('请先设置好标签打印机，再进行打印操作！', {icon: 5});
+            return ;
+        }
         var waitcount = parseInt($(this).attr('waitcount'));
         if(waitcount==0){
             layer.msg('当前还无法打印标签', {icon: 5});

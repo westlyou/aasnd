@@ -40,3 +40,16 @@ class AASMESController(http.Controller):
             values['items'] = [{'id': badmode.id, 'text': badmode.name} for badmode in badmodelist]
         values['total_count'] = request.env['aas.mes.badmode'].search_count(search_domain)
         return values
+
+
+    @http.route('/aasmes/workstationlist', type='json', auth="user")
+    def aasmes_workstationlist(self, q=None, page=1, limit=30):
+        values = {'items': [], 'total_count': 0}
+        search_domain = []
+        if q:
+            search_domain.append(('name', 'ilike', q))
+        workstationlist = request.env['aas.mes.workstation'].search(search_domain, offset=(page-1)*limit)
+        if workstationlist and len(workstationlist) > 0:
+            values['items'] = [{'id': workstation.id, 'text': workstation.name} for workstation in workstationlist]
+        values['total_count'] = request.env['aas.mes.workstation'].search_count(search_domain)
+        return values

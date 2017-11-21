@@ -7,7 +7,7 @@
             <field name="model">aas.mes.rework</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree create="false" edit="false" delete="false">
                     <field name="serialnumber_id"/>
                     <field name="internalpn"/>
                     <field name="customerpn"/>
@@ -31,7 +31,7 @@
             <field name="arch" type="xml">
                 <form create="false" edit="false" delete="false">
                     <header>
-                        <field name="state" widget="statusbar" statusbar_visible="commit,repair,ipqc"/>
+                        <field name="state" widget="statusbar" statusbar_visible="commit,repair,ipqc,done"/>
                     </header>
                     <sheet>
                         <group>
