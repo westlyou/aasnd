@@ -1553,12 +1553,16 @@ class Datetime(Field):
 
     @staticmethod
     def to_timezone_time(value, timezone):
+        if not value:
+            return False
         utctime = Datetime.from_string(value)
         temptime = pytz.timezone('UTC').localize(utctime, is_dst=False)
         return temptime.astimezone(pytz.timezone(timezone))
 
     @staticmethod
     def to_timezone_string(value, timezone):
+        if not value:
+            return ''
         utctime = Datetime.from_string(value)
         temptime = pytz.timezone('UTC').localize(utctime, is_dst=False)
         timezone_time = temptime.astimezone(pytz.timezone(timezone))
@@ -1566,6 +1570,8 @@ class Datetime(Field):
 
     @staticmethod
     def to_utc_string(value, timezone):
+        if not value:
+            return ''
         try:
             temptime = pytz.timezone(timezone).localize(value, is_dst=False)
             utctime = temptime.astimezone(pytz.timezone('UTC'))
