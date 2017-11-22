@@ -403,8 +403,9 @@ class AASMESWorkticket(models.Model):
         if float_compare(todo_qty, 0.0, precision_rounding=0.000001) < 0.0:
             todo_qty = 0.0
         values.update({
-            'workticket_id': workticket.id, 'workticket_name': workticket.name,
+            'workorder_id': workorder.id, 'workorder_name': workorder.name,
             'workcenter_id': workcenter.id,'workcenter_name': workcenter.name,
+            'workticket_id': workticket.id, 'workticket_name': workticket.name,
             'state': TICKETSTATEDICT[workticket.state], 'sequence': workticket.sequence,
             'input_qty': workticket.input_qty, 'output_qty': workticket.output_qty, 'badmode_qty': workticket.badmode_qty,
             'actual_qty': actual_qty, 'todo_qty': todo_qty, 'lastworkcenter': workticket.islastworkcenter(),
