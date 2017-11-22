@@ -433,7 +433,7 @@ class AASMESWorkAttendance(models.Model):
             return result
         mesline, workstation = equipment.mesline_id, equipment.workstation_id
         attendancevals = {
-            'employee_id': employee.id, 'euipment_id': equipment.id,
+            'employee_id': employee.id, 'equipment_id': equipment.id,
             'workstation_id': workstation.id, 'mesline_id': mesline.id
         }
         self.env['aas.mes.work.attendance'].create(attendancevals)
