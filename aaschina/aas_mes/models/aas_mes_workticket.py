@@ -432,6 +432,9 @@ class AASMESWorkticket(models.Model):
             values.update({'success': False, 'message': u'当前工位上还没有员工上岗，请先让员工上岗再进行其他操作！'})
             return values
         workticket = self.env['aas.mes.workticket'].browse(workticket_id)
+        if workticket.state == 'producing':
+            values.update({'success': False, 'message': u'当前工票已经开工，请不要重复操作！'})
+            return values
         workticket.action_doing_start()
         return values
 
