@@ -2,7 +2,209 @@
 <odoo>
     <data>
 
-        <menuitem id="menu_aas_product_label_mes"  name="标签" action="aas_wms.action_aas_product_label"
+        <record id="view_tree_aas_product_label_mes" model="ir.ui.view">
+            <field name="name">aas.product.label.mes.tree</field>
+            <field name="model">aas.product.label</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false" labelprint="true" decoration-danger="not qualified">
+                    <field name="name"/>
+                    <field name="product_id"/>
+                    <field name="product_lot"/>
+                    <field name="product_qty"/>
+                    <field name="date_code"/>
+                    <field name="location_id"/>
+                    <field name="onshelf_time"/>
+                    <field name="stock_date"/>
+                    <field name="warranty_date"/>
+                    <field name="offshelf_time"/>
+                    <field name="origin_order"/>
+                    <field name="locked_order"/>
+                    <field name="state"/>
+                    <field name="qualified" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_product_label_mes" model="ir.ui.view">
+            <field name="name">aas.product.label.mes.form</field>
+            <field name="model">aas.product.label</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" edit="false" delete="false" labelprint="true">
+                    <header>
+                        <button name="action_unpack" string="拆包" type="object" class="oe_highlight"
+                                attrs="{'invisible': ['|','|','|',('has_children','=',False),('state','!=','normal'),('locked','=',True),('isproduction','=',True)]}"
+                                groups="stock.group_stock_user,stock.group_stock_manager"/>
+                        <button name="action_split" string="拆分" type="object" class="oe_highlight"
+                                attrs="{'invisible': ['|','|','|',('has_children','=',True), ('state','!=','normal'),('locked','=',True),('isproduction','=',True)]}"
+                                groups="stock.group_stock_user,stock.group_stock_manager"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,normal,frozen,over"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group> <field name="name"/> </group>
+                            <group> <field name="location_id"/> </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="product_id"/>
+                                <field name="product_uom"/>
+                            </group>
+                            <group>
+                                <field name="product_lot"/>
+                                <field name="product_qty"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="stock_date"/>
+                                <field name="warranty_date"/>
+                            </group>
+                            <group>
+                                <field name="onshelf_time"/>
+                                <field name="offshelf_time"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="locked"/>
+                                <field name="qualified"/>
+                                <field name="stocked"/>
+                                <field name="prioritized"/>
+                            </group>
+                            <group>
+                                <field name="locked_order"/>
+                                <field name="origin_id"/>
+                                <field name="parent_id"/>
+                                <field name="pack_user"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group colspan="4">
+                                <field name="date_code"/>
+                                <field name="origin_order"/>
+                                <field name="customer_code"/>
+                                <field name="partner_id"/>
+                                <field name="company_id"/>
+                                <field name="barcode" invisible="1"/>
+                                <field name="has_children" invisible="1"/>
+                                <field name="isproduction" invisible="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="查存卡">
+                                <field name="journal_lines">
+                                    <tree>
+                                        <field name="location_src_id"/>
+                                        <field name="location_dest_id"/>
+                                        <field name="journal_qty"/>
+                                        <field name="balance_qty"/>
+                                        <field name="operate_order"/>
+                                        <field name="record_time"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="location_src_id"/>
+                                                <field name="location_dest_id"/>
+                                                <field name="record_time"/>
+                                            </group>
+                                            <group>
+                                                <field name="journal_qty"/>
+                                                <field name="balance_qty"/>
+                                                <field name="operate_order"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="子标签" attrs="{'invisible':[('has_children','=',False)]}">
+                                <field name="child_lines" readonly="1">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="product_id"/>
+                                        <field name="product_uom"/>
+                                        <field name="product_lot"/>
+                                        <field name="product_qty"/>
+                                        <field name="date_code"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="name"/>
+                                                <field name="product_id"/>
+                                                <field name="product_lot"/>
+                                            </group>
+                                            <group>
+                                                <field name="date_code"/>
+                                                <field name="product_uom"/>
+                                                <field name="product_qty"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_product_label_mes" model="ir.ui.view">
+            <field name="name">aas.product.label.mes.search</field>
+            <field name="model">aas.product.label</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="product_lot" string="批次" filter_domain="[('product_lot','ilike',self)]"/>
+                    <field name="location_id" string="库位" filter_domain="[('location_id','ilike',self)]"/>
+                    <field name="date_code" string="DateCode" filter_domain="[('date_code','ilike',self)]"/>
+                    <field name="parent_id" string="父标签" filter_domain="[('parent_id','ilike',self)]"/>
+                    <field name="origin_id" string="源标签" filter_domain="[('origin_id','ilike',self)]"/>
+                    <field name="partner_id" string="业务伙伴" filter_domain="[('partner_id','ilike',self)]"/>
+                    <field name="locked_order" string="锁定单据" filter_domain="[('locked_order','ilike',self)]"/>
+                    <separator/>
+                    <filter string="正常" domain="[('state','=','normal')]" />
+                    <filter string="冻结" domain="[('state','=','frozen')]" />
+                    <filter string="消亡" domain="[('state','=','over')]" />
+                    <filter string="不合格品" domain="[('qualified','=',False)]" />
+                    <group expand="0" string="分组">
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="批次" context="{'group_by':'product_lot'}"/>
+                        <filter string="库位" context="{'group_by':'location_id'}"/>
+                        <filter string="DateCode" context="{'group_by':'date_code'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_product_label_mes" model="ir.actions.act_window">
+            <field name="name">产品标签</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.product.label</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_product_label_mes"/>
+            <field name="search_view_id" ref="view_search_aas_product_label_mes"/>
+        </record>
+
+        <record id="act_view_tree_aas_product_label_mes" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_product_label_mes"/>
+            <field name="act_window_id" ref="action_aas_product_label_mes"/>
+        </record>
+
+        <record id="act_view_form_aas_product_label_mes" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_product_label_mes"/>
+            <field name="act_window_id" ref="action_aas_product_label_mes"/>
+        </record>
+
+        <menuitem id="menu_aas_product_label_mes"  name="标签" action="action_aas_product_label_mes"
                           parent="menu_aas_mes_resources" sequence="2" groups="group_aas_manufacture_user"/>
 
 

@@ -188,6 +188,32 @@ class AASMESWorkstation(models.Model):
                 equipmentlist.append(equipment.name+'['+equipment.code+']')
         return ','.join(equipmentlist)
 
+    @api.model
+    def get_employeelist(self, equipment_code):
+        """
+        根据设备编码获取设备上的员工信息
+        :param equipment_code:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'employeelist': []}
+        tequipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)
+        if not tequipment:
+            values.update({'success': False, 'message': u'请仔细检查系统是否存在此设备！'})
+            return values
+        if not tequipment.mesline_id or not tequipment.workstation_id:
+            values.update({'success': False, 'message': u'当前设备可能还未设置产线工位！'})
+            return values
+        tempdomain = [('workstation_id', '=', tequipment.workstation_id.id), ('mesline_id', '=', tequipment.mesline_id.id)]
+        tempdomain.append(('equipment_id', '=', tequipment.id))
+        employeelist = self.env['aas.mes.workstation.employee'].search(tempdomain)
+        if employeelist and len(employeelist) > 0:
+            values['employeelist'] = [{
+                'employee_id': temployee.employee_id.id,
+                'employee_name': temployee.employee_id.name, 'employee_code': temployee.employee_id.code
+            } for temployee in employeelist]
+        return values
+
+
 
 
 class AASMESWorkstationEmployee(models.Model):
@@ -196,6 +222,7 @@ class AASMESWorkstationEmployee(models.Model):
 
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'库位', required=True, ondelete='cascade')
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', required=True, ondelete='cascade')
+    equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', ondelete='restrict')
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict')
     action_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
 
@@ -357,7 +384,8 @@ class AASMESWorkAttendance(models.Model):
             self.write(attendvals)
         employee.write(empvals)
         self.env['aas.mes.workstation.employee'].create({
-            'workstation_id': self.workstation_id.id, 'mesline_id': self.mesline_id.id, 'employee_id': self.employee_id.id
+            'workstation_id': self.workstation_id.id, 'mesline_id': self.mesline_id.id,
+            'employee_id': self.employee_id.id, 'equipment_id': False if not self.equipment_id else self.equipment_id.id
         })
 
     @api.one

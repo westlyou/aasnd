@@ -157,7 +157,7 @@ $(function(){
                         return ;
                     }
                     if(dresult.message){
-                        layer.msg(dresult.message, {icon: 5});
+                        layer.msg(dresult.message, {icon: 1});
                     }
                     window.location.reload(true);
                 },

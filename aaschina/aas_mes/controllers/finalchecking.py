@@ -219,4 +219,5 @@ class AASMESFinalCheckingController(http.Controller):
         if not cresult['success']:
             values.update(cresult)
             return values
+        values['message'] = u'结单成功！'
         return values

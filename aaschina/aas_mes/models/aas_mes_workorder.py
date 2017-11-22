@@ -44,6 +44,7 @@ class AASMESWorkorder(models.Model):
     mainorder_id = fields.Many2one(comodel_name='aas.mes.mainorder', string=u'主工单', ondelete='cascade', index=True)
     wireorder_id = fields.Many2one(comodel_name='aas.mes.wireorder', string=u'线材工单', ondelete='cascade', index=True)
     mesline_type = fields.Selection(selection=MESLINETYPE, string=u'产线类型', compute='_compute_mesline', store=True)
+    mesline_name = fields.Char(string=u'产线名称', compute='_compute_mesline', store=True)
     mainorder_name = fields.Char(string=u'主工单', compute='_compute_mainorder', store=True)
     product_code = fields.Char(string=u'产品编码', copy=False)
     workcenter_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'当前工序', ondelete='restrict')
@@ -69,6 +70,7 @@ class AASMESWorkorder(models.Model):
     def _compute_mesline(self):
         for record in self:
             record.mesline_type = record.mesline_id.line_type
+            record.mesline_name = record.mesline_id.name
 
     @api.depends('name')
     def _compute_barcode(self):
@@ -611,13 +613,20 @@ class AASMESWorkorderProduct(models.Model):
             return values
         workorder, companyid = outputrecord.workorder_id, self.env.user.company_id.id
         destlocationid = self.env.ref('stock.location_production').id
+        date_start, date_finish = False, False
+        tempserialdomain = [('outputrecord_id', '=', outputrecord.id)]
+        firstserial = self.env['aas.mes.serialnumber'].search(tempserialdomain, order='output_time asc', limit=1)
+        if firstserial:
+            date_start = firstserial.output_time if not firstserial.lastone_id else firstserial.lastone_id.output_time
+            lastserial = self.env['aas.mes.serialnumber'].search(tempserialdomain, order='output_time desc', limit=1)
+            date_finish = lastserial.output_time
         for tempconsume in consumerecords:
             tracevals = {
                 'mesline_id': tempconsume['mesline_id'], 'product_id': tempconsume['product_id'],
                 'workorder_id': tempconsume['workorder_id'], 'mainorder_id': tempconsume.get('mainorder_id', False),
                 'serialnumbers': tempconsume.get('serialnumbers', False), 'schedule_id': tempconsume.get('schedule_id', False),
                 'product_lot': tempconsume.get('product_lot', False), 'employeelist': tempconsume.get('employeelist', False),
-                'equipmentlist': tempconsume.get('equipmentlist', False)
+                'equipmentlist': tempconsume.get('equipmentlist', False), 'date_start': date_start, 'date_finish': date_finish
             }
             workstation_id, workcenter_id = tempconsume.get('workstation_id', 0), tempconsume.get('workcenter_id', 0)
             if workstation_id and workstation_id > 0:
@@ -752,8 +761,9 @@ class AASMESWorkorderProduct(models.Model):
                     message = (u'工位%s,'% workstation.name) + message
                 values.update({'success': False, 'message': message})
                 return values
+            schedule_id = 0 if not mesline.schedule_id else mesline.schedule_id.id
             employees_equipments = self.env['aas.mes.work.attendance'].action_trace_employees_equipments(mesline.id,
-                workstationvals.get('schedule_id', 0), workstationvals.get('workstation_id', 0), outputrecord.output_date)
+                schedule_id, workstation_id, outputrecord.output_date)
             workstationvals.update({
                 'employeelist': employees_equipments.get('employeelist', False),
                 'equipmentlist': employees_equipments.get('equipmentlist', False)
