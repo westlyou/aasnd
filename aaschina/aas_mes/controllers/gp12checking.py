@@ -189,8 +189,8 @@ class AASMESGP12CheckingController(http.Controller):
         if not serialnumber:
             values.update({'success': False, 'message': u'扫描序列号异常，请仔细检查当前扫描的条码是否是序列号条码！'})
             return values
-        rework = request.env['aas.mes.rework'].search([('serialnumber_id', '=', serialnumber.id), ('repairer_id', '=', False)], limit=1)
-        if rework:
+        rework = request.env['aas.mes.rework'].search([('serialnumber_id', '=', serialnumber.id)], order='id desc', limit=1)
+        if rework and not rework.repairer_id:
             values.update({'success': False, 'message': u'不良已上报还未维修，请不要重复上报！'})
             return values
         values['product_code'] = serialnumber.customer_product_code

@@ -431,7 +431,7 @@ class AASMESWorkticket(models.Model):
         return values
 
     @api.model
-    def action_workticket_finish_onstationclient(self, workticket_id, equipment_id, badmode_lines=[], container_id=False):
+    def action_workticket_finish_onstationclient(self, workticket_id, equipment_id, commit_qty, badmode_lines=[], container_id=False):
         """
         工控工位客户端上报工
         :param workticket_id:
@@ -462,13 +462,13 @@ class AASMESWorkticket(models.Model):
             workticket.write(ticketvals)
         # 验证物料消耗
         workorder = workticket.workorder_id
-        cresult = workorder.action_validate_consume(workorder.id, workticket.product_id.id, workticket.input_qty, workstation.id, workticket.workcenter_id.id)
+        cresult = workorder.action_validate_consume(workorder.id, workticket.product_id.id, commit_qty, workstation.id, workticket.workcenter_id.id)
         if not cresult['success']:
             values.update(cresult)
             return values
         # 消耗物料并产出
         try:
-            workticket.action_doing_finish()
+            workticket.action_doing_commit(commit_qty, badmode_lines, container_id)
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
             return values

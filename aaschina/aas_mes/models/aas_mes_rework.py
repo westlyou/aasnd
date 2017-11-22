@@ -67,8 +67,11 @@ class AASMESRework(models.Model):
         })
         operation = self.env['aas.mes.operation'].search([('serialnumber_id', '=', rework.serialnumber_id.id)], limit=1)
         operation.write({
-            'function_test': False, 'functiontest_record_id': False, 'final_quality_check': False, 'fqccheck_record_id': False,
-            'gp12_check': False, 'gp12_record_id': False, 'commit_badness': True, 'commit_badness_count': operation.commit_badness_count + 1
+            'function_test': False, 'functiontest_record_id': False,
+            'final_quality_check': False, 'fqccheck_record_id': False,
+            'gp12_check': False, 'gp12_record_id': False,
+            'commit_badness': True, 'commit_badness_count': operation.commit_badness_count + 1,
+            'dorework': False, 'ipqc_check': False
         })
         rework.serialnumber_id.write({'qualified': False, 'reworked': True})
 
@@ -88,6 +91,8 @@ class AASMESRework(models.Model):
             'ipqcchecker_id': ipqcchecker_id, 'ipqccheck_note': ipqccheck_note,
             'ipqccheck_time': fields.Datetime.now(), 'state': 'done'
         })
+        operation = self.env['aas.mes.operation'].search([('serialnumber_id', '=', self.serialnumber_id.id)], limit=1)
+        operation.write({'ipqc_check': True, 'ipqc_check_count': operation.ipqc_check_count + 1})
         self.serialnumber_id.write({'qualified': True})
 
 

@@ -130,10 +130,7 @@ class AASMESReworkingController(http.Controller):
         if rework.repairer_id and rework.state != 'repair':
             values.update({'success': False, 'message': u'%s已经维修，请不要重复操作！'% rework.serialnumber_id.name})
             return values
-        rework.write({
-            'repairer_id': repairerid, 'repair_time': fields.Datetime.now(),
-            'repair_note': repairesult, 'state': 'ipqc'
-        })
+        rework.action_repair(repairerid, repairesult)
         return values
 
 
@@ -193,8 +190,5 @@ class AASMESReworkingController(http.Controller):
         if rework.state != 'ipqc':
             values.update({'success': False, 'message': u'%s可能还未维修或已经IPQC确认完成，暂时不需要IPQC确认'% rework.serialnumber_id.name})
             return values
-        rework.write({
-            'ipqcchecker_id': ipqccheckerid, 'ipqccheck_time': fields.Datetime.now(),
-            'ipqccheck_note': checkresult, 'state': 'done'
-        })
+        rework.action_ipqcchecking(ipqccheckerid, checkresult)
         return values
