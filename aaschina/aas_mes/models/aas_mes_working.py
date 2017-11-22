@@ -401,22 +401,25 @@ class AASMESWorkAttendance(models.Model):
             self.employee_id.write({'state': 'leave'})
 
     @api.model
-    def action_workstation_scanning(self, workstation_code, employee_code, equipment_code):
+    def action_workstation_scanning(self, equipment_code, employee_barcode):
         """
         工控工位扫描员工卡
-        :param workstation_code:
-        :param employee_code:
         :param equipment_code:
+        :param employee_barcode:
         :return:
         """
         result = {'success': True, 'message': '', 'action': 'working'}
-        if not employee_code:
-            result.update({'success': False, 'message': u'您确认已经扫描了员工卡了吗？'})
+        if not equipment_code:
+            result.update({'success': False, 'message': u'您确认已经设置了设备编码吗？'})
             return result
-        if not workstation_code:
-            result.update({'success': False, 'message': u'您确认已经配置好工位的编码了吗？'})
+        equipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)
+        if not equipment:
+            result.update({'success': False, 'message': u'设备异常，请仔细检查系统是否存在此设备！'})
             return result
-        employee = self.env['aas.hr.employee'].search([('code', '=', employee_code)], limit=1)
+        if not equipment.mesline_id or not equipment.workstation_id:
+            result.update({'success': False, 'message': u'当前设备可能还未设置产线工位！'})
+            return result
+        employee = self.env['aas.hr.employee'].search([('barcode', '=', employee_barcode)], limit=1)
         if not employee:
             result.update({'success': False, 'message': u'请确认是否有此员工存在，或许当前员已被删除，请仔细检查！'})
             return result
@@ -428,25 +431,11 @@ class AASMESWorkAttendance(models.Model):
             attendance.action_done()
             result.update({'message': message, 'action': 'leave'})
             return result
-        workstation = self.env['aas.mes.workstation'].search([('code', '=', workstation_code)], limit=1)
-        if not workstation:
-            result.update({'success': False, 'message': u'库位异常可能已删除，请仔细检查库位信息！'})
-            return result
-        attendancevals = {'employee_id': employee.id, 'workstation_id': workstation.id}
-        if equipment_code:
-            equipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)
-            if not equipment:
-                result.update({'success': False, 'message': u'设备异常，请仔细检查系统是否存在此设备！'})
-                return result
-            if not equipment.mesline_id or not equipment.workstation_id:
-                result.update({'success': False, 'message': u'设备还没有设置产线工位！'})
-                return result
-            if equipment.workstation_id.id != workstation.id:
-                result.update({'success': False, 'message': u'设备和工位不匹配，请仔细检查！'})
-                return result
-            attendancevals.update({
-                'equipment_id': equipment.id, 'mesline_id': equipment.mesline_id.id
-            })
+        mesline, workstation = equipment.mesline_id, equipment.workstation_id
+        attendancevals = {
+            'employee_id': employee.id, 'euipment_id': equipment.id,
+            'workstation_id': workstation.id, 'mesline_id': mesline.id
+        }
         self.env['aas.mes.work.attendance'].create(attendancevals)
         result['message'] = u"%s,您已经在工位%s上上岗了，加油工作吧！"% (employee.name, workstation.name)
         return result
