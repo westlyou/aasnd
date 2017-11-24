@@ -226,6 +226,7 @@
                 <form create="false" delete="false">
                     <header>
                         <button name="action_picking_list" string="拣货清单" type="object" class="oe_highlight" states="confirm,picking"/>
+                        <button name="action_addprioritizedlots" string="优先批次" type="object" class="oe_highlight" states="confirm,picking"/>
                         <button name="action_picking_confirm" string="确认拣货" type="object" class="oe_highlight"
                                 attrs="{'invisible':['|',('state','not in',['confirm','picking']),('picking_confirm','=',True)]}"/>
                         <button name="action_note" string="发货备注" type="object" class="oe_highlight"

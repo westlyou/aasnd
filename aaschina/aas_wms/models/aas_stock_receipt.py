@@ -357,6 +357,7 @@ class AASStockReceiptLine(models.Model):
             raise UserError(u"请仔细检查，还可能还没有添加上架作业标签！")
         productdict, receiptvals, movedict, operationlines, receiptlabels = {}, {}, {}, [], self.env['aas.stock.receipt.label']
         push_user, push_time, push_date = self.env.user.id, fields.Datetime.now(), fields.Date.today()
+        manreturn = True if self.receipt_type == 'manreturn' else False
         for roperation in operationlist:
             pkey = 'P'+str(roperation.product_id.id)
             if pkey in productdict:
@@ -376,7 +377,7 @@ class AASStockReceiptLine(models.Model):
                     'origin_order': self.origin_order, 'receipt_type': self.receipt_type, 'partner_id': self.receipt_id.partner_id and self.receipt_id.partner_id.id,
                     'receipt_user': self.env.user.id, 'location_src_id': label.location_id.id, 'location_dest_id': roperation.location_id.id, 'product_qty': label.product_qty, 'company_id': self.company_id.id
                 }
-            labelvals = {'locked': False, 'locked_order': False}
+            labelvals = {'locked': False, 'locked_order': False, 'prioritized': manreturn}
             labelvals.update({'onshelf_time': push_time, 'onshelf_date': push_date, 'location_id': roperation.location_id.id})
             label.write(labelvals)
             receiptlabels |= roperation.rlabel_id

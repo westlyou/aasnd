@@ -261,7 +261,7 @@ class AASMESWorkcenterBadmodeWizard(models.TransientModel):
     _name = 'aas.mes.workcenter.badmode.wizard'
     _description = 'AAS MES Workcenter Badmode Wizard'
 
-    workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='restrict')
+    workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='cascade')
     badmode_lines = fields.One2many(comodel_name='aas.mes.workcenter.badmode.line.wizard', inverse_name='wizard_id', string=u'不良模式清单')
 
     @api.one

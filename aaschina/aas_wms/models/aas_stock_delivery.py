@@ -338,7 +338,6 @@ class AASStockDeliveryLine(models.Model):
         excludelabelids = deliveryline.action_building_picking_list(picking_qty, prioritizedlabels)
         # 优先批次，添加优先处理的批次
         if float_compare(picking_qty, 0.0, precision_rounding=0.000001) > 0 and prioritized_lots:
-            print 'lots: '+ str(prioritized_lots)
             prioritizedlotsdomain, prioritizedlotslabels = [], []
             prioritizedlots = self.env['stock.production.lot'].search([('product_id', '=', deliveryline.product_id.id), ('name', 'in', prioritized_lots.split(','))])
             if prioritizedlots and len(prioritizedlots) > 0:
@@ -440,6 +439,30 @@ class AASStockDeliveryLine(models.Model):
             'view_type': 'form',
             'view_mode': 'form',
             'res_model': 'aas.stock.delivery.note.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
+    @api.multi
+    def action_addprioritizedlots(self):
+        """
+        添加拣货优先批次
+        :return:
+        """
+        self.ensure_one()
+        wizard = self.env['aas.stock.picking.prioritizedlot.wizard'].create({
+            'deliveryline_id': self.id, 'product_id': self.product_id.id
+        })
+        view_form = self.env.ref('aas_wms.view_form_aas_stock_picking_prioritizedlot_wizard')
+        return {
+            'name': u"拣货优先批次",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.stock.picking.prioritizedlot.wizard',
             'views': [(view_form.id, 'form')],
             'view_id': view_form.id,
             'target': 'new',
@@ -726,3 +749,29 @@ class AASStockDeliveryNote(models.Model):
     action_user = fields.Many2one(comodel_name='res.users', string=u'备注用户', default=lambda self: self.env.user)
     action_time = fields.Datetime(string=u'时间', default=fields.Datetime.now, copy=False)
     action_note = fields.Text(string=u'备注内容')
+
+
+
+# 向导
+
+class AASStockPickingPrioritizedlotWizard(models.TransientModel):
+    _name = 'aas.stock.picking.prioritizedlot.wizard'
+    _description = 'AAS Stock Picking Prioritizedlot Wizard'
+
+    deliveryline_id = fields.Many2one(comodel_name='aas.stock.delivery.line', string=u'发货单', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    lot_lines = fields.One2many(comodel_name='aas.stock.picking.prioritizedlot.line.wizard', inverse_name='wizard_id', string=u'批次明细')
+
+    @api.one
+    def action_done(self):
+        if not self.lot_lines and len(self.lot_lines) > 0:
+            raise UserError(u'您还未添加批次信息！')
+        prioritizedlots = ','.join([productlot.product_lot.name for productlot in self.lot_lines])
+        self.env['aas.stock.delivery.line'].action_pickinglist(self.deliveryline_id, prioritizedlots)
+
+class AASStockPickingPrioritizedlotLineWizard(models.TransientModel):
+    _name = 'aas.stock.picking.prioritizedlot.line.wizard'
+    _description = 'AAS Stock Picking Prioritizedlot Line Wizard'
+
+    wizard_id = fields.Many2one(comodel_name='aas.stock.picking.prioritizedlot.wizard', string='Wizard', ondelete='cascade')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
