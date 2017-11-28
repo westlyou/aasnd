@@ -104,33 +104,37 @@ class AASMESOperationRecord(models.Model):
 
 
     @api.model
-    def action_functiontest(self, serialnumber, employee_code, equipment_code, operation_pass=False, operate_result=False):
+    def action_functiontest(self, equipment_code, serialnumber, operation_pass=False, operate_result=False):
         """
         添加功能测试记录
-        :param serialnumber:
-        :param employee_code:
         :param equipment_code:
+        :param serialnumber:
         :param operation_pass:
         :param operate_result:
         :return:
         """
         result = {'success': True, 'message': ''}
-        toperation = self.env['aas.mes.operation'].search([('serialnumber_name', '=', serialnumber)], limit=1)
-        functiontestvals = {'operation_id': toperation.id, 'operate_type': 'functiontest'}
-        employee = self.env['aas.hr.employee'].search([('code', '=', employee_code)], limit=1)
-        if not employee:
-            result.update({'success': False, 'message': u'当前员工未搜索到，请仔细检查系统中是否存在此员工！'})
-            return result
-        functiontestvals['employee_id'] = employee.id
         equipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)
         if not equipment:
             result.update({'success': False, 'message': u'设备不存在或已经被删除，请仔细检查！'})
             return result
-        functiontestvals['equipment_id'] = equipment.id
-        functiontestvals.update({
+        if not equipment.mesline_id or not equipment.workstation_id:
+            result.update({'success': False, 'message': u'设备还未设置产线或工位！'})
+            return result
+        mesline, workstation = equipment.mesline_id, equipment.workstation_id
+        employeelist = self.env['aas.mes.workstation.employee'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
+        if not employeelist or len(employeelist) <= 0:
+            result.update({'success': False, 'message': u'当前工位上还没有员工上岗，请先扫描员工卡上岗再继续其他操作！'})
+            return result
+        temployee = employeelist[0].employee_id
+        toperation = self.env['aas.mes.operation'].search([('serialnumber_name', '=', serialnumber)], limit=1)
+        functiontestvals = {
+            'operation_id': toperation.id, 'operate_type': 'functiontest',
+            'employee_id': temployee.id, 'equipment_id': equipment.id,
             'operation_pass': operation_pass, 'operate_result': operate_result
-        })
-        self.env['aas.mes.operation.record'].create(functiontestvals)
+        }
+        functiontest = self.env['aas.mes.operation.record'].create(functiontestvals)
+        toperation.write({'function_test': True, 'functiontest_record_id': functiontest.id})
         return result
 
 
