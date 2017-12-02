@@ -197,7 +197,7 @@ class AASMESRoutingWizard(models.TransientModel):
     routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺', required=True, ondelete='cascade')
     name = fields.Char(string=u'名称')
     note = fields.Text(string=u'描述')
-    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='cascade')
     wizard_lines = fields.One2many(comodel_name='aas.mes.routing.line.wizard', inverse_name='wizard_id', string=u'工艺工序')
 
     @api.multi
@@ -244,8 +244,8 @@ class AASMESRoutingLineWizard(models.TransientModel):
     name = fields.Char(string=u'名称')
     sequence = fields.Integer(string=u'序号')
     note = fields.Text(string=u'描述')
-    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
-    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='cascade')
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='cascade')
     badmode_lines = fields.One2many(comodel_name='aas.mes.routing.line.badmode.wizard', inverse_name='rline_id', string=u'不良模式')
 
 
@@ -254,7 +254,7 @@ class AASMESRoutingLineBadmodeWizard(models.TransientModel):
     _description = 'AAS MES Routing Line Badmode Wizard'
 
     rline_id = fields.Many2one(comodel_name='aas.mes.routing.line.wizard', string=u'工序', ondelete='cascade')
-    badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')
+    badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='cascade')
 
 
 class AASMESWorkcenterBadmodeWizard(models.TransientModel):
@@ -277,4 +277,4 @@ class AASMESWorkcenterBadmodeLineWizard(models.TransientModel):
     _description = 'AAS MES Workcenter Badmode Line Wizard'
 
     wizard_id = fields.Many2one(comodel_name='aas.mes.workcenter.badmode.wizard', string='Wizard', ondelete='cascade')
-    badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')
+    badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='cascade')

@@ -17,14 +17,6 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-
-class ProductTemplate(models.Model):
-    _inherit = 'product.template'
-
-    customer_product_code = fields.Char(string=u'客户料号', copy=False, help=u'产品在客户方的料号')
-
-
-
 class AASHREmployee(models.Model):
     _inherit = 'aas.hr.employee'
 

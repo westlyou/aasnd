@@ -507,6 +507,7 @@ class AASStockDeliveryOperation(models.Model):
     check_user = fields.Many2one(comodel_name='res.users', string=u'确认人', ondelete='restrict')
     check_time = fields.Datetime(string=u'确认时间')
     deliver_done = fields.Boolean(string=u'是否发货', default=False, copy=False)
+    delivery_type = fields.Selection(selection=DELIVERY_TYPE, string=u'发货类型')
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
 
@@ -559,6 +560,7 @@ class AASStockDeliveryOperation(models.Model):
 
     @api.one
     def action_after_create(self):
+        self.write({'delivery_type': self.delivery_id.delivery_type})
         if self.delivery_id.delivery_type != 'purchase' and self.label_id.locked:
             raise UserError(u'%被单据%s锁定，您无法使用此标签；如确定使用此标签请联系相关人员释放锁定！'% (self.label_id.name, self.label_id.locked_order))
         dline = self.delivery_line
@@ -568,7 +570,6 @@ class AASStockDeliveryOperation(models.Model):
         if dline.state != 'picking':
             lineval['state'] = 'picking'
         dline.write(lineval)
-        _logger.info('delivery_line time: '+fields.Datetime.now())
         if self.delivery_id.state != 'picking':
             self.delivery_id.write({'state': 'picking'})
         # 锁定标签
@@ -638,13 +639,13 @@ class AASStockDeliveryMove(models.Model):
     origin_order = fields.Char(string=u'来源单据', copy=False)
     delivery_note = fields.Text(string=u'备注')
     delivery_type = fields.Selection(selection=DELIVERY_TYPE, string=u'发货类型')
-    delivery_date = fields.Date(string=u'收货日期', default=fields.Date.today)
-    delivery_time = fields.Datetime(string=u'收货时间', default=fields.Datetime.now)
+    delivery_date = fields.Date(string=u'发货日期', default=fields.Date.today)
+    delivery_time = fields.Datetime(string=u'发货时间', default=fields.Datetime.now)
     partner_id = fields.Many2one(comodel_name='res.partner', string=u'业务伙伴', ondelete='restrict')
-    delivery_user = fields.Many2one(comodel_name='res.users', string=u'收货员工', ondelete='restrict')
+    delivery_user = fields.Many2one(comodel_name='res.users', string=u'发货员工', ondelete='restrict')
     location_src_id = fields.Many2one(comodel_name='stock.location', string=u'来源库位', ondelete='restrict')
     location_dest_id = fields.Many2one(comodel_name='stock.location', string=u'目标库位', ondelete='restrict')
-    product_qty = fields.Float(string=u'收货数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    product_qty = fields.Float(string=u'发货数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
 

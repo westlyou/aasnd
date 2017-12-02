@@ -531,7 +531,7 @@ class AASMESWorkticketCommitWizard(models.TransientModel):
 
 
     workticket_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'工票', ondelete='cascade')
-    workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='restrict')
+    workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='cascade')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位')
     waiting_qty = fields.Float(string=u'待产数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     commit_qty = fields.Float(string=u'报工数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
@@ -569,7 +569,7 @@ class AASMESWorkticketBadmodeWizard(models.TransientModel):
     _description = 'AAS MES Workticket Badmode Wizard'
 
     wizard_id = fields.Many2one(comodel_name='aas.mes.workticket.commit.wizard', string=u'完工向导', ondelete='cascade')
-    badmode_id = fields.Many2one(comodel_name='aas.mes.routing.badmode', string=u'不良模式', ondelete='restrict')
+    badmode_id = fields.Many2one(comodel_name='aas.mes.routing.badmode', string=u'不良模式', ondelete='cascade')
     badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
 
     _sql_constraints = [
