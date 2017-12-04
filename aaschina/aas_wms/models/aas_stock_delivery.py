@@ -546,6 +546,8 @@ class AASStockDeliveryOperation(models.Model):
         if roperations and len(roperations) > 0:
             raise UserError(u'当前标签已在收货作业中，请在收货作业还未结束时不要使用此标签！')
         label, dline = self.env['aas.product.label'].browse(vals.get('label_id')), False
+        if label.parent_id:
+            raise UserError(u'标签%s还存在父级标签，不可以直接发货；如果确定需要此标签，请先将父级标签%s拆包！'% (label.name, label.parent_id.name))
         if vals.get('delivery_line') and not vals.get('delivery_id'):
             dline = self.env['aas.stock.delivery.line'].browse(vals.get('delivery_line'))
             vals.update({'delivery_id': dline.delivery_id.id})
