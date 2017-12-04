@@ -264,11 +264,11 @@ class AASMESBOMWizard(models.TransientModel):
     _description = 'AAS MES BOM Wizard'
 
     bom_id = fields.Many2one(comodel_name='aas.mes.bom', string='BOM', ondelete='cascade')
-    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
-    product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='cascade')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
-    routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺', ondelete='restrict')
-    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
+    routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺', ondelete='cascade')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='cascade')
     wizard_lines = fields.One2many(comodel_name='aas.mes.bom.workcenter.wizard', inverse_name='wizard_id', string=u'明细清单')
 
     @api.onchange('product_id')
@@ -342,11 +342,11 @@ class AASMESBOMWorkcenterWizard(models.TransientModel):
     _description = 'AAS MES BOM Workcenter Wizard'
 
     wizard_id = fields.Many2one(comodel_name='aas.mes.bom.wizard', string=u'向导', ondelete='cascade')
-    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', required=True, ondelete='restrict')
-    product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', required=True, ondelete='cascade')
+    product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='cascade')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
-    routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺', ondelete='restrict')
-    workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工艺工序', ondelete='restrict')
+    routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺', ondelete='cascade')
+    workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工艺工序', ondelete='cascade')
 
     @api.onchange('product_id')
     def action_change_product(self):

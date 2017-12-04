@@ -22,8 +22,8 @@ class AASMESEmployeeAllocateMESLineWizard(models.TransientModel):
     _name = 'aas.mes.employee.allocate.mesline.wizard'
     _description = 'AAS MES Employee Allocate MESLine Wizard'
 
-    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict')
-    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
+    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='cascade')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='cascade')
 
     @api.one
     def action_done(self):
@@ -38,7 +38,7 @@ class AASMESLineAllocateWizard(models.TransientModel):
     _name = 'aas.mes.line.allocate.wizard'
     _description = 'AAS MES Line Allocate Wizard'
 
-    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='cascade')
     employee_lines = fields.One2many(comodel_name='aas.mes.line.employee.allocate.wizard', inverse_name='wizard_id', string=u'员工清单')
 
     @api.one
@@ -54,7 +54,7 @@ class AASMESLineEmployeeAllocateWizard(models.TransientModel):
     _description = 'AAS MES Line Employee Allocate Wizard'
 
     wizard_id = fields.Many2one(comodel_name='aas.mes.line.allocate.wizard', string='Wizard', ondelete='cascade')
-    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict')
+    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='cascade')
 
     _sql_constraints = [
         ('uniq_employee', 'unique (wizard_id, employee_id)', u'请不要重复添加同一个员工！')

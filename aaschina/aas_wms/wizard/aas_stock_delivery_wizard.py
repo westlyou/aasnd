@@ -70,12 +70,12 @@ class AASStockDeliveryLabelLineWizard(models.TransientModel):
 
     wizard_id = fields.Many2one(comodel_name='aas.stock.delivery.label.wizard', string=u'标签向导', ondelete='cascade')
     operation_id = fields.Many2one(comodel_name='aas.stock.delivery.operation', string=u'作业标签', ondelete='cascade')
-    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict')
-    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
-    product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
-    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='cascade')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位',  ondelete='restrict')
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位',  ondelete='cascade')
     origin_order = fields.Char(string=u'来源单据')
 
     _sql_constraints = [

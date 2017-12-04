@@ -471,7 +471,7 @@ class AASMESScheduleEmployeeLineWizard(models.TransientModel):
     _description = 'AAS MES Schedule Employee Line Wizard'
 
     wizard_id = fields.Many2one(comodel_name='aas.mes.schedule.employee.wizard', string=u'员工调整', ondelete='cascade')
-    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict')
+    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='cascade')
     employee_code = fields.Char(string=u'员工工号')
 
     _sql_constraints = [

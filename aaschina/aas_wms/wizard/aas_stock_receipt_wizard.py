@@ -366,7 +366,7 @@ class AASStockReceiptLabelDelWizard(models.TransientModel):
     rlabel_id = fields.Many2one(comodel_name='aas.stock.receipt.label', string=u'标签')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位')
-    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'))
     location_id = fields.Many2one(comodel_name='stock.location', string=u'库位')
 

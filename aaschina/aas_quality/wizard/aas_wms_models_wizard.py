@@ -23,7 +23,7 @@ class AASMultiReceiptQualityWizard(models.TransientModel):
     _name = 'aas.multi.receipt.quality.wizard'
     _description = 'AAS Multi Receipt Quality Wizard'
 
-    partner_id = fields.Many2one(comodel_name='res.partner', string=u'业务伙伴', ondelete='restrict')
+    partner_id = fields.Many2one(comodel_name='res.partner', string=u'业务伙伴', ondelete='cascade')
     receipt_lines = fields.One2many(comodel_name='aas.multi.receipt.quality.line.wizard', inverse_name='wizard_id', string=u'收货明细')
 
     @api.one

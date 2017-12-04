@@ -22,9 +22,9 @@ class AASProductLabelSplitWizard(models.TransientModel):
     _name = 'aas.product.label.split.wizard'
     _description = 'AAS Product Label Split Wizard'
 
-    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict')
-    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
-    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'))
     label_qty = fields.Float(string=u'每标签数量', digits=dp.get_precision('Product Unit of Measure'))
     label_count = fields.Integer(string=u'标签个数')
@@ -46,10 +46,10 @@ class AASProductLabelMergeWizard(models.TransientModel):
     _name = 'aas.product.label.merge.wizard'
     _description = 'AAS Product Label Merge Wizard'
 
-    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
-    product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
-    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
-    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='restrict')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='cascade')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='cascade')
     merge_lines = fields.One2many(comodel_name='aas.product.label.merge.line.wizard', inverse_name='merge_id', string=u'合并明细')
 
     @api.onchange('product_id')
@@ -94,11 +94,11 @@ class AASProductLabelMergeLineWizard(models.TransientModel):
     _description = 'AAS Product Label Merge Line Wizard'
 
     merge_id = fields.Many2one(comodel_name='aas.product.label.merge.wizard', string=u'合并', ondelete='cascade')
-    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict')
-    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
-    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'))
-    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='restrict')
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='cascade')
 
 
     @api.onchange('label_id')

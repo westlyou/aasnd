@@ -24,9 +24,9 @@ class AASQualityRejectionWizard(models.TransientModel):
     _description = 'AAS Quality Rejection Wizard'
 
     quality_id = fields.Many2one(comodel_name='aas.quality.order', string=u'质检单', ondelete='cascade')
-    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
-    product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
-    partner_id = fields.Many2one(comodel_name='res.partner', string=u'业务伙伴', ondelete='restrict')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='cascade')
+    partner_id = fields.Many2one(comodel_name='res.partner', string=u'业务伙伴', ondelete='cascade')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     plot_lines = fields.One2many(comodel_name='aas.quality.rejection.lot.wizard', inverse_name='wizard_id', string=u'批次明细')
     label_lines = fields.One2many(comodel_name='aas.quality.rejection.label.wizard', inverse_name='wizard_id', string=u'标签明细')
@@ -105,7 +105,7 @@ class AASQualityRejectionLotWizard(models.TransientModel):
     _description = 'AAS Quality Rejection Lot Wizard'
 
     wizard_id = fields.Many2one(comodel_name='aas.quality.rejection.wizard', string=u'向导', ondelete='cascade')
-    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
     product_qty = fields.Float(string=u'批次数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     label_qty = fields.Float(string=u'每包数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     origin_order = fields.Char(string=u'来源单据', copy=False)
@@ -120,7 +120,7 @@ class AASQualityRejectionLabelWizard(models.TransientModel):
     _description = 'AAS Quality Rejection Label Wizard'
 
     wizard_id = fields.Many2one(comodel_name='aas.quality.rejection.wizard', string=u'向导', ondelete='cascade')
-    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
     label_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     origin_order = fields.Char(string=u'来源单据', copy=False)
     commit_id = fields.Integer(string=u'报检单据ID')

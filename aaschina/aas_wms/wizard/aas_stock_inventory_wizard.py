@@ -24,8 +24,8 @@ class AASStockInventoryAddlabelWizard(models.TransientModel):
 
     inventory_id = fields.Many2one(comodel_name='aas.stock.inventory', string=u'盘点单', ondelete='cascade')
     inventory_location = fields.Many2one(comodel_name='stock.location', string=u'盘点库位', ondelete='set null')
-    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
-    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='restrict')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='cascade')
     product_lot = fields.Char(string=u'批次')
     systemstock = fields.Boolean(string=u'系统库存', default=False, copy=False)
 

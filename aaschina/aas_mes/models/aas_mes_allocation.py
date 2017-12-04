@@ -178,7 +178,7 @@ class AASMESAllocationWizard(models.TransientModel):
     _description = 'AAS MES Allocation Wizard'
 
     allocation_id = fields.Many2one(comodel_name='aas.mes.allocation', string=u'调拨', ondelete='cascade')
-    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='cascade')
     container_lines = fields.One2many(comodel_name='aas.mes.allocation.container.wizard', inverse_name='wizard_id', string=u'容器明细')
     label_lines= fields.One2many(comodel_name='aas.mes.allocation.label.wizard', inverse_name='wizard_id', string=u'标签明细')
 
@@ -230,7 +230,7 @@ class AASMESAllocationContainerWizard(models.TransientModel):
     _description = 'AAS MES Allocation Container Wizard'
 
     wizard_id = fields.Many2one(comodel_name='aas.mes.allocation.wizard', string='Wizard', ondelete='cascade')
-    container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict')
+    container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='cascade')
     container_context = fields.Text(string=u'容器内容')
 
     _sql_constraints = [
@@ -259,11 +259,11 @@ class AASMESAllocationLabelWizard(models.TransientModel):
     _description = 'AAS MES Allocation Label Wizard'
 
     wizard_id = fields.Many2one(comodel_name='aas.mes.allocation.wizard', string='Wizard', ondelete='cascade')
-    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict')
-    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
-    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='restrict')
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='cascade')
 
     _sql_constraints = [
         ('uniq_label', 'unique (wizard_id, label_id)', u'请不要重复添加同一个标签！')

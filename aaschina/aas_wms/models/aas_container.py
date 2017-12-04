@@ -296,9 +296,9 @@ class AASContainerMoveWizard(models.TransientModel):
     _name = 'aas.container.move.wizard'
     _description = 'AAS Container Move Wizard'
 
-    container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict')
-    location_src_id = fields.Many2one(comodel_name='stock.location', string=u'来源库位', ondelete='restrict')
-    location_dest_id = fields.Many2one(comodel_name='stock.location', string=u'目标库位', ondelete='restrict')
+    container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='cascade')
+    location_src_id = fields.Many2one(comodel_name='stock.location', string=u'来源库位', ondelete='cascade')
+    location_dest_id = fields.Many2one(comodel_name='stock.location', string=u'目标库位', ondelete='cascade')
     move_note = fields.Text(string=u'备注')
 
     @api.one
@@ -311,7 +311,7 @@ class AASContainerAdjustWizard(models.TransientModel):
     _name = 'aas.container.adjust.wizard'
     _description = 'AAS Container Adjust Wizard'
 
-    container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict')
+    container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='cascade')
     adjust_note = fields.Text(string=u'备注')
     adjust_lines = fields.One2many(comodel_name='aas.container.adjust.line.wizard', inverse_name='wizard_id', string=u'调整明细')
 
@@ -349,10 +349,10 @@ class AASContainerAdjustLineWizard(models.TransientModel):
     _name = 'aas.container.adjust.line.wizard'
     _description = 'AAS Container Adjust Line Wizard'
 
-    wizard_id = fields.Many2one(comodel_name='aas.container.adjust.wizard', string=u'调整单', ondelete='restrict')
-    line_id = fields.Many2one(comodel_name='aas.container.product', string=u'容器库存', ondelete='restrict')
-    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
-    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    wizard_id = fields.Many2one(comodel_name='aas.container.adjust.wizard', string=u'调整单', ondelete='cascade')
+    line_id = fields.Many2one(comodel_name='aas.container.product', string=u'容器库存', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
     stock_qty = fields.Float(string=u'库存数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     temp_qty = fields.Float(string=u'未入库数', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
 
