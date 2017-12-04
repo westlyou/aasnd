@@ -102,8 +102,8 @@ class AASProductLabel(models.Model):
             raise UserError(u'当前标签不是包裹，不可以拆包！')
         if self.parent_id:
             raise UserError(u'当前包裹不是最外层包裹，不可以直接拆包，需要从最外层开始层层拆包！')
-        self.write({'state': 'over', 'product_qty': 0.0, 'date_code': False, 'origin_order': False})
         self.child_lines.write({'parent_id': False})
+        self.write({'state': 'over', 'product_qty': 0.0, 'date_code': False, 'origin_order': False})
 
 
     @api.multi
