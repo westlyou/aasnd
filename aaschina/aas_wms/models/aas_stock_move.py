@@ -30,6 +30,7 @@ class AASStockMove(models.Model):
     location_id = fields.Many2one(comodel_name='stock.location', string=u'目标库位', ondelete='restrict')
     state = fields.Selection(selection=[('draft', u'草稿'), ('confirm', u'确认'), ('done', u'完成')], string=u'状态', default='draft', copy=False)
     note = fields.Text(string=u'备注')
+    move_time = fields.Datetime(string=u'调拨时间', copy=False)
 
     move_lines = fields.One2many(comodel_name='aas.stock.move.line', inverse_name='move_id', string=u'调拨明细')
     move_labels = fields.One2many(comodel_name='aas.stock.move.label', inverse_name='move_id', string=u'调拨标签')
@@ -51,13 +52,13 @@ class AASStockMove(models.Model):
         for mlabel in self.move_labels:
             mkey = 'P-'+str(mlabel.product_id.id)+'-'+str(mlabel.product_lot.id)
             if mkey in productdict:
-                productdict[mkey]['product_qty'] += mlabel.product_qty
+                productdict[mkey]['product_qty'] += mlabel.label_id.product_qty
             else:
                 productdict[mkey] = {
                     'product_id': mlabel.product_id.id,
                     'product_uom': mlabel.product_uom.id,
                     'product_lot': mlabel.product_lot.id,
-                    'product_qty': mlabel.product_qty
+                    'product_qty': mlabel.label_id.product_qty
                 }
         mlines = [(0, 0, mval) for mkey, mval in productdict.items()]
         self.write({'move_lines': mlines, 'state': 'confirm'})
@@ -76,11 +77,11 @@ class AASStockMove(models.Model):
             templabels |= mlabel.label_id
             mkey = 'P-'+str(mlabel.product_id.id)+'-'+str(mlabel.product_lot.id)+'-'+str(mlabel.location_id.id)
             if mkey in movedict:
-                movedict[mkey]['product_uom_qty'] += mlabel.product_qty
+                movedict[mkey]['product_uom_qty'] += mlabel.label_id.product_qty
             else:
                 movedict[mkey] = {
                     'name': self.name, 'product_id': mlabel.product_id.id, 'product_uom': mlabel.product_uom.id,
-                    'create_date': currenttime, 'restrict_lot_id': mlabel.product_lot.id, 'product_uom_qty': mlabel.product_qty,
+                    'create_date': currenttime, 'restrict_lot_id': mlabel.product_lot.id, 'product_uom_qty': mlabel.label_id.product_qty,
                     'location_id': mlabel.location_id.id, 'location_dest_id': self.location_id.id, 'company_id': company_id
                 }
         movelist = self.env['stock.move']
@@ -89,8 +90,8 @@ class AASStockMove(models.Model):
             self.env['aas.receive.deliver'].action_receive(mval['product_id'], mval['location_dest_id'], mval['restrict_lot_id'], mval['product_uom_qty'])
             self.env['aas.receive.deliver'].action_deliver(mval['product_id'], mval['location_id'], mval['restrict_lot_id'], mval['product_uom_qty'])
         movelist.action_done()
-        templabels.write({'location_id': self.location_id.id})
-        self.write({'state': 'done'})
+        templabels.write({'location_id': self.location_id.id, 'locked': False, 'locked_order': False})
+        self.write({'state': 'done', 'move_time': fields.Datetime.now()})
 
     @api.multi
     def unlink(self):
@@ -146,4 +147,16 @@ class AASStockMoveLabel(models.Model):
     @api.model
     def create(self, vals):
         self.action_before_create(vals)
-        return super(AASStockMoveLabel, self).create(vals)
+        record = super(AASStockMoveLabel, self).create(vals)
+        # 调拨单锁定标签
+        record.label_id.write({'locked': True, 'locked_order': record.move_id.name})
+        return record
+
+    @api.multi
+    def unlink(self):
+        labelist = self.env['aas.product.label']
+        for record in self:
+            labelist |= record.label_id
+        result = super(AASStockMoveLabel, self).unlink()
+        labelist.write({'locked': False, 'locked_order': False})
+        return result
