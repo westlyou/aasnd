@@ -13,6 +13,7 @@
     'website': 'http://www.zhiq.info',
     'depends': ['aas_base'],
     'data': [
+        'security/ir.model.access.csv',
         'views/aas_redis_view.xml'
     ],
     'qweb':[],
