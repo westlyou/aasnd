@@ -464,10 +464,6 @@ class AASMESWorkticket(models.Model):
                 return values
             else:
                 ticketvals['container_id'] = container_id
-        if badmode_lines and len(badmode_lines) > 0:
-            ticketvals['badmode_lines'] = [(0, 0, badmode) for badmode in badmode_lines]
-        if ticketvals and len(ticketvals) > 0:
-            workticket.write(ticketvals)
         # 验证物料消耗
         workorder = workticket.workorder_id
         cresult = workorder.action_validate_consume(workorder.id, workticket.product_id.id, commit_qty, workstation.id, workticket.workcenter_id.id)
