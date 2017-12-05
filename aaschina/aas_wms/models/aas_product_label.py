@@ -156,11 +156,11 @@ class AASProductLabel(models.Model):
                 break
             if float_compare(temp_qty, label_qty, precision_rounding=0.000001) < 0.0:
                 tlabel_qty = temp_qty
-            self.copy({'state': self.state,'origin_id': self.id, 'product_qty': tlabel_qty})
+            self.copy({'state': self.state, 'origin_id': self.id, 'product_qty': tlabel_qty})
             temp_qty -= tlabel_qty
         selfvals = {'product_qty': temp_qty}
         if float_compare(temp_qty, 0.0, precision_rounding=0.000001) <= 0.0:
-            selfvals.update({'state': 'over'})
+            selfvals.update({'state': 'over', 'product_qty': 0.0})
         self.write(selfvals)
 
     @api.model

@@ -294,7 +294,7 @@ class AASMESWorkticket(models.Model):
                 'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id
             })
             stockdomain = [('container_id', '=', self.container_id.id), ('product_id', '=', product.id)]
-            stockdomain.extend([('product_lot', '=', product_lot.id), ('label_id', '=', False)])
+            stockdomain.append(('product_lot', '=', product_lot.id))
             containerstock = self.env['aas.container.product'].search(stockdomain, limit=1)
             if not containerstock:
                 containerstock = self.env['aas.container.product'].create({
