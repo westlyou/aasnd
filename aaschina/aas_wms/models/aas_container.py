@@ -95,9 +95,8 @@ class AASContainer(models.Model):
         adjustvals = {'container_id': self.id}
         if self.product_lines and len(self.product_lines) > 0:
             adjustvals['adjust_lines'] = [(0, 0, {
-                'line_id': pline.id, 'product_id': pline.product_id.id, 'product_lot': pline.product_lot.id,
-                'temp_qty': pline.temp_qty, 'stock_qty': pline.stock_qty,
-                'label_id': False if not pline.label_id else pline.label_id.id
+                'line_id': pline.id, 'product_id': pline.product_id.id,
+                'product_lot': pline.product_lot.id, 'temp_qty': pline.temp_qty, 'stock_qty': pline.stock_qty
             }) for pline in self.product_lines]
         wizard = self.env['aas.container.adjust.wizard'].create(adjustvals)
         view_form = self.env.ref('aas_wms.view_form_aas_container_adjust_wizard')
