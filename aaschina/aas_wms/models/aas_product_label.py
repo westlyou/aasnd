@@ -274,7 +274,13 @@ class AASProductLabel(models.Model):
                 parentlabel.write({'product_qty': sum([tchild.product_qty for tchild in parentlabel.child_lines])})
 
     @api.model
-    def action_merge_labels(self, labels, location):
+    def action_merge_labels(self, labels, location, singleton=True):
+        """标签合并；singleton为True时新生成一个标签，来源标签自动消亡；False时生成的新标签是来源标签的父标签
+        :param labels:
+        :param location:
+        :param singleton:
+        :return:
+        """
         if not labels or len(labels) <= 0:
             raise UserError(u'请先添加需要合并的标签！')
         if not location:
@@ -318,9 +324,12 @@ class AASProductLabel(models.Model):
         if len(originorders) > 0:
             labelvals['origin_order'] = ','.join(list(set(originorders)))
         parentlabel = firstlabel.copy(labelvals)
-        labellines.write({'parent_id': parentlabel.id})
-        if labelmoving and len(labelmoving) > 0:
-            labelmoving.write({'location_id': location_id})
+        if singleton:
+            labellines.with_context({'operate_order': parentlabel.name}).write({'product_qty': 0.0, 'state': 'over'})
+        else:
+            labellines.write({'parent_id': parentlabel.id})
+            if labelmoving and len(labelmoving) > 0:
+                labelmoving.write({'location_id': location_id})
         if movevals and len(movevals) > 0:
             movelist = self.env['stock.move']
             for mkey, mval in movevals.items():
