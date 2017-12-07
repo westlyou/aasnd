@@ -26,19 +26,16 @@ class AASMESBadmode(models.Model):
     name = fields.Char(string=u'名称', required=True, copy=False)
     code = fields.Char(string=u'编码', copy=False)
     note = fields.Text(string=u'描述')
-    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
-    mesline_name = fields.Char(string=u'产线名称', compute="_compute_mesline_name", store=True)
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
+    workstation_name = fields.Char(string=u'工位名称', compute="_compute_workstation_name", store=True)
 
     _sql_constraints = [
-        ('uniq_name', 'unique (mesline_id, name)', u'同一产线的不良模式名称不能重复！'),
+        ('uniq_name', 'unique (workstation_id, name)', u'同一工位的不良模式名称不能重复！'),
         ('uniq_code', 'unique (code)', u'不良模式的编码不可以重复！')
     ]
 
-    @api.depends('mesline_id')
-    def _compute_mesline_name(self):
+    @api.depends('workstation_id')
+    def _compute_workstation_name(self):
         for record in self:
-            if record.mesline_id:
-                record.mesline_name = record.mesline_id.name
-            else:
-                record.mesline_name = False
+            record.workstation_name = False if not record.workstation_id else record.workstation_id.name
 

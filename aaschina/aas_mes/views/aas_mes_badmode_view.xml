@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <tree>
                     <field name="code"/>
-                    <field name="mesline_id"/>
+                    <field name="workstation_id"/>
                     <field name="name"/>
                     <field name="note"/>
                 </tree>
@@ -28,7 +28,7 @@
                             <group> <field name="code" required="1"/> </group>
                         </group>
                         <group>
-                            <group> <field name="mesline_id" options="{'no_create':true,'no_open':true}"/> </group>
+                            <group> <field name="workstation_id" options="{'no_create':true,'no_open':true}"/> </group>
                             <group> <field name="note"/> </group>
                         </group>
                     </sheet>
@@ -43,10 +43,10 @@
                 <search>
                     <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
                     <field name="code" string="编码" filter_domain="[('code','ilike',self)]"/>
-                    <field name="mesline_id" string="产线" filter_domain="[('mesline_id','ilike',self)]"/>
+                    <field name="workstation_id" string="工位" filter_domain="[('workstation_id','ilike',self)]"/>
                     <separator/>
                     <group expand="0" string="分组">
-                        <filter string="产线" context="{'group_by':'mesline_id'}"/>
+                        <filter string="工位" context="{'group_by':'workstation_id'}"/>
                     </group>
                 </search>
             </field>

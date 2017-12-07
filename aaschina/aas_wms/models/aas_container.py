@@ -316,7 +316,9 @@ class AASContainerAdjustWizard(models.TransientModel):
 
     @api.one
     def action_done(self):
-        lineids, productlines = [], []
+        lineids, productlines, movevallist = [], [], []
+        productionlocation = self.env.ref('stock.location_production').id
+        containerlocation = self.container_id.stock_location_id.id
         if self.adjust_lines and len(self.adjust_lines) > 0:
             for tadjust in self.adjust_lines:
                 if tadjust.line_id:
@@ -324,6 +326,17 @@ class AASContainerAdjustWizard(models.TransientModel):
                     tval = {}
                     if float_compare(tadjust.stock_qty, tadjust.line_id.stock_qty, precision_rounding=0.000001) != 0.0:
                         tval['stock_qty'] = tadjust.stock_qty
+                        moveval = {
+                            'name': self.container_id.name, 'product_id': tadjust.product_id.id, 'product_uom': tadjust.product_id.uom_id.id,
+                            'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id, 'restrict_lot_id': tadjust.product_lot.id
+                        }
+                        if float_compare(tadjust.stock_qty, tadjust.line_id.stock_qty, precision_rounding=0.000001) > 0.0:
+                            moveval['product_uom_qty'] = tadjust.stock_qty - tadjust.line_id.stock_qty
+                            moveval.update({'location_id': productionlocation, 'location_dest_id': containerlocation})
+                        else:
+                            moveval['product_uom_qty'] = tadjust.line_id.stock_qty - tadjust.stock_qty
+                            moveval.update({'location_id': containerlocation, 'location_dest_id': productionlocation})
+                        movevallist.append(moveval)
                     if float_compare(tadjust.temp_qty, tadjust.line_id.temp_qty, precision_rounding=0.000001) != 0.0:
                         tval['temp_qty'] = tadjust.temp_qty
                     if tval and len(tval) > 0:
@@ -333,12 +346,24 @@ class AASContainerAdjustWizard(models.TransientModel):
                             'product_id': tadjust.product_id.id, 'stock_qty': tadjust.stock_qty,
                             'product_lot': tadjust.product_lot.id, 'temp_qty': tadjust.temp_qty
                         }))
+                    if float_compare(tadjust.stock_qty, 0.0, precision_rounding=0.000001) > 0.0:
+                        movevallist.append({
+                            'name': self.container_id.name, 'product_id': tadjust.product_id.id, 'product_uom': tadjust.product_id.uom_id.id,
+                            'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id, 'restrict_lot_id': tadjust.product_lot.id,
+                            'product_uom_qty': tadjust.stock_qty, 'location_id': productionlocation, 'location_dest_id': containerlocation
+                        })
         if self.container_id.product_lines and len(self.container_id.product_lines) > 0:
             for pline in self.container_id.product_lines:
                 if pline.id not in lineids:
                     productlines.append((2, pline.id, False))
         if productlines and len(productlines) > 0:
             self.container_id.write({'product_lines': productlines})
+        if movevallist and len(movevallist) > 0:
+            movelist = self.env['stock.move']
+            for tempmove in movevallist:
+                movelist |= self.env['stock.move'].create(tempmove)
+            movelist.action_done()
+
 
 
 
