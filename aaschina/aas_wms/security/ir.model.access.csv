@@ -59,6 +59,7 @@ access_aas_container_move_stock_user,aas.container.move stock_user,model_aas_con
 access_aas_container_move_stock_manager,aas.container.move stock_manager,model_aas_container_move,stock.group_stock_manager,1,1,1,1
 access_aas_container_product_stock_user,aas.container.product stock_user,model_aas_container_product,stock.group_stock_user,1,1,1,1
 access_aas_container_product_stock_manager,aas.container.product stock_manager,model_aas_container_product,stock.group_stock_manager,1,1,1,1
+access_aas_stock_adjust_stock_manager,aas.stock.adjust stock_manager,model_aas_stock_adjust,stock.group_stock_manager,1,1,1,1
 
 
 

@@ -125,6 +125,10 @@ class AASStockMoveLabel(models.Model):
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     location_id = fields.Many2one(comodel_name='stock.location', string=u'来源库位', ondelete='restrict')
 
+    _sql_constraints = [
+        ('uniq_label', 'unique (move_id, label_id)', u'请不要重复添加同一个标签！')
+    ]
+
     @api.onchange('label_id')
     def action_change_label(self):
         if self.label_id:

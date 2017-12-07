@@ -32,3 +32,4 @@ import aas_stock_delivery
 import aas_stock_inventory
 import aas_stock_move
 import aas_container
+import aas_stock_adjust

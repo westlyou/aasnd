@@ -33,6 +33,7 @@
         'views/aas_stock_move_view.xml',
         'views/aas_container_view.xml',
         'views/aas_wms_delivery_templates.xml',
+        'views/aas_stock_adjust_view.xml',
 
         'oracle/aas_stock_purchase_view.xml',
         'oracle/aas_stock_sales_view.xml',
