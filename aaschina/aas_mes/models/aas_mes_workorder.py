@@ -822,7 +822,8 @@ class AASMESWorkorderConsume(models.Model):
             values['consumelist'] = [{
                 'product_id': tconsume.product_id.id, 'product_code': tconsume.product_id.default_code,
                 'material_id': tconsume.material_id.id, 'material_code': tconsume.material_id.default_code,
-                'consume_unit': tconsume.consume_unit, 'input_qty': tconsume.input_qty, 'consume_qty': tconsume.consume_qty
+                'consume_unit': tconsume.consume_unit, 'input_qty': tconsume.input_qty,
+                'consume_qty': tconsume.consume_qty, 'leave_qty': tconsume.leave_qty
             } for tconsume in consumelist]
         return values
 
