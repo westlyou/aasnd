@@ -811,6 +811,22 @@ class AASMESWorkorderConsume(models.Model):
         for record in self:
             record.leave_qty = record.input_qty - record.consume_qty
 
+    @api.model
+    def loading_consumelist_onclient(self, workorder_id, workcenter_id=False):
+        values = {'success': True, 'message': '', 'consumelist': []}
+        temdomain = [('workorder_id', '=', workorder_id)]
+        if workcenter_id:
+            temdomain.append(('workcenter_id', '=', workcenter_id))
+        consumelist = self.env['aas.mes.workorder.consume'].search(temdomain)
+        if consumelist and len(consumelist) > 0:
+            values['consumelist'] = [{
+                'product_id': tconsume.product_id.id, 'product_code': tconsume.product_id.default_code,
+                'material_id': tconsume.material_id.id, 'material_code': tconsume.material_id.default_code,
+                'consume_unit': tconsume.consume_unit, 'input_qty': tconsume.input_qty, 'consume_qty': tconsume.consume_qty
+            } for tconsume in consumelist]
+        return values
+
+
 
 
 ################################## 向导 #################################
