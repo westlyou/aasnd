@@ -139,6 +139,52 @@ class Location(models.Model):
         values['records'] = records
         return values
 
+    @api.multi
+    def action_stocklist(self):
+        self.ensure_one()
+        quantlist = self.env['stock.quant'].search([('location_id', 'child_of', self.id), ('qty', '!=', 0.0)])
+        if not quantlist or len(quantlist) <= 0:
+            raise UserError(u'当前库位下还未存放任何物品！')
+        quantidsstr = ','.join([str(qid) for qid in quantlist.ids])
+        view_tree = self.env.ref('aas_wms.view_tree_stock_quant_location')
+        view_form = self.env.ref('aas_wms.view_form_stock_quant_location')
+        return {
+            'name': u"库存清单",
+            'type': 'ir.actions.act_window',
+            'view_mode': 'tree,form',
+            'res_model': 'stock.quant',
+            'views': [(view_tree.id, 'tree'), (view_form.id, 'form')],
+            'target': 'self',
+            'context': self.env.context,
+            'domain': "[('id','in',("+quantidsstr+"))]"
+        }
+
+
+
+
+    @api.multi
+    def action_popup_wizard(self):
+        """
+        向导，触发此方法弹出向导并进行业务处理
+        :return:
+        """
+        self.ensure_one()
+        wizard = self.env['wizard.name'].create({})
+        view_form = self.env.ref('moudle_name.view_name')
+        return {
+            'name': u"向导名称",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'wizard.name',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
+
 class ProductionLot(models.Model):
     _inherit = 'stock.production.lot'
 

@@ -25,6 +25,7 @@ ORDERSTATES = [('draft', u'草稿'), ('confirm', u'确认'), ('producing', u'生
 class AASMESWorkorder(models.Model):
     _name = 'aas.mes.workorder'
     _description = 'AAS MES Work Order'
+    _order = 'id desc'
 
     name = fields.Char(string=u'名称', required=True, copy=False, index=True)
     barcode = fields.Char(string=u'条码', compute='_compute_barcode', store=True, index=True)
@@ -65,6 +66,12 @@ class AASMESWorkorder(models.Model):
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'子工单名称不可以重复！')
     ]
+
+    @api.model
+    def default_get(self, fields_list):
+        defaults = super(AASMESWorkorder,self).default_get(fields_list)
+        defaults['name'] = fields.Datetime.to_timezone_time(fields.Datetime.now(), 'Asia/Shanghai').strftime('%Y%m%d%H%M%S')
+        return defaults
 
     @api.depends('mesline_id')
     def _compute_mesline(self):

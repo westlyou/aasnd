@@ -29,15 +29,37 @@ class AASProductLabelSplitWizard(models.TransientModel):
     label_qty = fields.Float(string=u'每标签数量', digits=dp.get_precision('Product Unit of Measure'))
     label_count = fields.Integer(string=u'标签个数')
 
-    @api.one
+    @api.multi
     def action_done(self):
+        self.ensure_one()
         if float_compare(self.label_qty, 0.0, precision_rounding=0.000001) <= 0.0:
             raise UserError(u'每标签数量必须是一个正数！')
         if self.label_count and self.label_count < 0:
             raise UserError(u'标签数量必须是一个正整数！')
         if float_compare(self.label_qty, self.product_qty, precision_rounding=0.000001) >= 0.0:
             raise UserError(u'每标签的数量不能大于等于标签总数量！')
-        self.label_id.action_dosplit(self.label_qty, self.label_count)
+        tlabel, labelidsstr = self.label_id, ''
+        tlabel.action_dosplit(self.label_qty, self.label_count)
+        if tlabel.origin_lines and len(tlabel.origin_lines) > 0:
+            labelidsstr = ','.join([str(labelid) for labelid in tlabel.origin_lines.ids])
+        if float_compare(tlabel.product_qty, 0.0, precision_rounding=0.000001) > 0.0:
+            if labelidsstr:
+                labelidsstr += ',' + str(tlabel.id)
+            else:
+                labelidsstr = str(tlabel.id)
+        view_tree = self.env.ref('aas_wms.view_tree_aas_product_label')
+        view_form = self.env.ref('aas_wms.view_form_aas_product_label')
+        return {
+            'name': u"标签拆分清单",
+            'type': 'ir.actions.act_window',
+            'view_mode': 'tree,form',
+            'res_model': 'aas.product.label',
+            'views': [(view_tree.id, 'tree'), (view_form.id, 'form')],
+            'target': 'self',
+            'context': self.env.context,
+            'domain': "[('id','in',("+labelidsstr+"))]"
+        }
+
 
 
 

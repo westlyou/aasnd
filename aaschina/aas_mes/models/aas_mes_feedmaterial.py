@@ -25,7 +25,6 @@ class AASMESFeedmaterial(models.Model):
     _rec_name = 'material_id'
     _order = 'feed_time asc'
 
-
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
     material_id = fields.Many2one(comodel_name='product.product', string=u'原料', ondelete='restrict')
