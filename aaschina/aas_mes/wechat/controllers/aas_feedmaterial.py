@@ -117,8 +117,9 @@ class AASFeedmaterialWechatController(http.Controller):
             locationids.append(mteriallocation.location_id.id)
         locationlist = request.env['stock.location'].search([('id', 'child_of', locationids)])
         if materialcontainer.stock_location_id.id not in locationlist.ids:
-            values.update({'success': False, 'message': u'请不要扫描非[%s]产线的物料！'% mesline.name})
-            return values
+            # 容器不在当前产线自动调拨
+            materiallocation = mesline.location_material_list[0].location_id
+            materialcontainer.write({'location_id': materiallocation.id})
         productdict = {}
         if materialcontainer.product_lines and len(materialcontainer.product_lines) > 0:
             for pline in materialcontainer.product_lines:
@@ -151,4 +152,5 @@ class AASFeedmaterialWechatController(http.Controller):
                         'material_lot': tempfeed.material_lot.name,
                         'material_qty': tempfeed.material_qty
                     })
+            values['materiallist'] = materiallist
         return values

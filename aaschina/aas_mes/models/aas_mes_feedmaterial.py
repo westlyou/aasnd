@@ -169,8 +169,9 @@ class AASMESFeedmaterial(models.Model):
         locationids.append(mesline.location_production_id.id)
         locationlist = self.env['stock.location'].search([('id', 'child_of', locationids)])
         if container.location_id.id not in locationlist.ids:
-            values.update({'success': False, 'message': u'容器%s不在产线%s的线边库下，不可以投料！'% (container.name, mesline.name)})
-            return values
+            # 容器不在当前产线自动调拨
+            materiallocation = mesline.location_material_list[0].location_id
+            container.write({'location_id': materiallocation.id})
         for pline in container.product_lines:
             product_id, product_lot = pline.product_id.id, pline.product_lot.id
             feeddomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
