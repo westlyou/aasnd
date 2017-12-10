@@ -177,7 +177,7 @@ class AASMESBOMWorkcenter(models.Model):
     bom_line_id = fields.Many2one(comodel_name='aas.mes.bom.line', string='BOMLine', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', required=True, ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
-    product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
+    product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺', ondelete='restrict')
     workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工艺工序', ondelete='restrict')
 
@@ -234,7 +234,13 @@ class AASMESBOMWorkcenter(models.Model):
     def write(self, vals):
         if vals.get('product_id', False):
             raise UserError(u'产品信息不可以修改！')
-        return super(AASMESBOMWorkcenter, self).write(vals)
+        result = super(AASMESBOMWorkcenter, self).write(vals)
+        if vals.get('product_qty', False):
+            for record in self:
+                bomline = record.bom_line_id
+                bomlineqty = sum([tworkcenter.product_qty for tworkcenter in bomline.workcenter_lines])
+                bomline.write({'product_qty': bomlineqty})
+        return result
 
     @api.multi
     def unlink(self):
@@ -253,6 +259,7 @@ class AASMESBOMWorkcenter(models.Model):
                 bomline.unlink()
             else:
                 bomline.write({'product_qty': product_qty})
+        return result
 
 
 

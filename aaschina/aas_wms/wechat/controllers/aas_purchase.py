@@ -87,23 +87,28 @@ class AASPurchaseWechatController(http.Controller):
     def aas_wechat_wms_purchasereceiptdone(self, purchaseid, receiptlines):
         values = {'success': True, 'message': ''}
         purchase_order = request.env['aas.stock.purchase.order'].browse(purchaseid)
-        purchase_receipt = request.env['aas.stock.receipt'].create({
+        receipt_lines, purchaselines, receiptdict = [], [], {}
+        for rline in receiptlines:
+            receipt_lines.append((0, 0, rline))
+            pkey = 'P'+str(rline['product_id'])
+            if pkey not in receiptdict:
+                receiptdict[pkey] = rline.product_qty
+            else:
+                receiptdict[pkey] += rline.product_qty
+        for oline in purchase_order.order_lines:
+            pkey = 'P'+str(oline.product_id.id)
+            if pkey in receiptdict:
+                tempqty, doingqty = receiptdict[pkey], oline.doing_qty+receiptdict[pkey]
+                receiptableqty = oline.product_qty + oline.rejected_qty - oline.receipt_qty - oline.doing_qty
+                if float_compare(receiptableqty, tempqty, precision_rounding=0.000001) < 0.0:
+                    values.update({'success': False, 'message': u'%s收货数量可能已超过订单可收货数量，请仔细检查！'% oline.product_id.default_code})
+                    return values
+                purchaselines.append((1, oline.id, {'doing_qty': doingqty}))
+        request.env['aas.stock.receipt'].create({
             'partner_id': purchase_order.partner_id.id,
             'receipt_type': 'purchase',
             'receipt_user': request.env.user.id,
             'receipt_lines': [(0, 0, rline) for rline in receiptlines]
         })
-        values['receiptid'] = purchase_receipt.id
-        productdict = {}
-        for rline in purchase_receipt.receipt_lines:
-            pkey = 'P_'+str(rline.product_id.id)
-            if pkey not in productdict:
-                productdict[pkey] = rline.product_qty
-            else:
-                productdict[pkey] += rline.product_qty
-        for oline in purchase_order.order_lines:
-            pkey = 'P_'+str(oline.product_id.id)
-            if pkey in productdict:
-                oline.write({'doing_qty': oline.doing_qty+productdict[pkey]})
         return values
 

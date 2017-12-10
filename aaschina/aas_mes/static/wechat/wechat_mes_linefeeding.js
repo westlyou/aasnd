@@ -174,7 +174,7 @@ mui.ready(function(){
                 mui.swipeoutClose(feedingli);
                 return ;
             }
-            var feeding_id = parseInt(li.getAttribute('feedingid'));
+            var feeding_id = parseInt(feedingli.getAttribute('feedingid'));
             var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
             var feeding_delmask = aas_feeding_loading();
             mui.ajax('/aaswechat/wms/deliverydeloperation',{
