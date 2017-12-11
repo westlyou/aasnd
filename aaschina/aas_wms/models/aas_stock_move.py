@@ -101,6 +101,25 @@ class AASStockMove(models.Model):
         return super(AASStockMove, self).unlink()
 
 
+    @api.multi
+    def action_batchmove(self):
+        self.ensure_one()
+        wizard = self.env['aas.stock.move.location.wizard'].create({'smove_id': self.id})
+        view_form = self.env.ref('aas_wms.view_form_aas_stock_move_location_wizard')
+        return {
+            'name': u"库位调拨",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.stock.move.location.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
+
 
 class AASStockMoveLine(models.Model):
     _name = 'aas.stock.move.line'
@@ -164,3 +183,32 @@ class AASStockMoveLabel(models.Model):
         result = super(AASStockMoveLabel, self).unlink()
         labelist.write({'locked': False, 'locked_order': False})
         return result
+
+
+########################向导###############################
+
+# 库位批量调拨
+class AASStockMoveLocationWizard(models.TransientModel):
+    _name = 'aas.stock.move.location.wizard'
+    _description = 'AAS Stock Move Location Wizard'
+
+    smove_id = fields.Many2one(comodel_name='aas.stock.move', string=u'调拨', ondelete='cascade', required=True)
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
+
+    @api.one
+    def action_done(self):
+        tempdomain = [('location_id', '=', self.location_id.id), ('state', '=', 'normal'), ('locked', '=', False)]
+        tempdomain.append(('parent_id', '=', False))
+        if self.product_id:
+            tempdomain.append(('product_id', '=', self.product_id.id))
+        if self.product_lot:
+            tempdomain.append(('product_lot', '=', self.product_lot.id))
+        labellist = self.env['aas.product.label'].search(tempdomain)
+        if not labellist or len(labellist) <= 0:
+            raise UserError(u'当前库位下，没有满足条件的标签可以调拨')
+        operationlines = []
+        for tlabel in labellist:
+           operationlines.append((0, 0, {'label_id': tlabel.id}))
+        self.smove_id.write({'move_labels': operationlines})
