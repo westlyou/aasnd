@@ -104,11 +104,15 @@ class AASPurchaseWechatController(http.Controller):
                     values.update({'success': False, 'message': u'%s收货数量可能已超过订单可收货数量，请仔细检查！'% oline.product_id.default_code})
                     return values
                 purchaselines.append((1, oline.id, {'doing_qty': doingqty}))
-        request.env['aas.stock.receipt'].create({
+        if purchaselines and len(purchaselines) > 0:
+            # 更新doing_qty
+            purchase_order.write({'order_lines': purchaselines})
+        receipt = request.env['aas.stock.receipt'].create({
             'partner_id': purchase_order.partner_id.id,
             'receipt_type': 'purchase',
             'receipt_user': request.env.user.id,
             'receipt_lines': [(0, 0, rline) for rline in receiptlines]
         })
+        values['receiptid'] = receipt.id
         return values
 
