@@ -356,7 +356,9 @@ class AASDeliveryWechatController(http.Controller):
         deliveryvals['delivery_lines'] = [(0, 0, dval) for dkey, dval in dlinesdict.items()]
         try:
             delivery = request.env['aas.stock.delivery'].create(deliveryvals)
+            delivery.action_confirm()
             delivery.write({'operation_lines': operationlines})
+            delivery.action_picking_confirm()
             delivery.action_deliver_done()
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
