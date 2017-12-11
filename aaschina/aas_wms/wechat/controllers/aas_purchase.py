@@ -92,9 +92,9 @@ class AASPurchaseWechatController(http.Controller):
             receipt_lines.append((0, 0, rline))
             pkey = 'P'+str(rline['product_id'])
             if pkey not in receiptdict:
-                receiptdict[pkey] = rline.product_qty
+                receiptdict[pkey] = rline['product_qty']
             else:
-                receiptdict[pkey] += rline.product_qty
+                receiptdict[pkey] += rline['product_qty']
         for oline in purchase_order.order_lines:
             pkey = 'P'+str(oline.product_id.id)
             if pkey in receiptdict:
