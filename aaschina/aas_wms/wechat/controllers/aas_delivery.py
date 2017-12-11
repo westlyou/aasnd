@@ -336,28 +336,47 @@ class AASDeliveryWechatController(http.Controller):
     def aas_wechat_wms_deliverypurchasedone(self, partnerid, purchaseorder, labelids):
         values = {'success': True, 'message': ''}
         deliveryvals = {
-            'partner_id': partnerid, 'state': 'picking', 'delivery_type': 'purchase',
+            'partner_id': partnerid, 'delivery_type': 'purchase',
             'origin_order': purchaseorder, 'pick_user': request.env.user.id
         }
         supplier_location = request.env.ref('stock.stock_location_suppliers')
         deliveryvals['location_id'] = supplier_location.id
         labellist = request.env['aas.product.label'].browse(labelids)
-        dlinesdict, operationlines = {}, []
+        dlinesdict = {}
         for tlabel in labellist:
             pkey = 'P'+str(tlabel.product_id.id)
             if pkey in dlinesdict:
                 dlinesdict[pkey]['product_qty'] += tlabel.product_qty
             else:
                 dlinesdict[pkey] = {
-                    'product_id': tlabel.product_id.id, 'product_uom': tlabel.product_uom.id, 'product_qty': tlabel.product_qty,
-                    'state': 'picking', 'delivery_type': 'purchase', 'picking_confirm': True
+                    'product_id': tlabel.product_id.id, 'product_uom': tlabel.product_uom.id, 'product_qty': tlabel.product_qty
                 }
-            operationlines.append((0, 0, {'label_id': tlabel.id}))
         deliveryvals['delivery_lines'] = [(0, 0, dval) for dkey, dval in dlinesdict.items()]
         try:
             delivery = request.env['aas.stock.delivery'].create(deliveryvals)
             delivery.action_confirm()
-            delivery.write({'operation_lines': operationlines})
+            listdict, dlinedict = {}, {}
+            for dline in delivery.delivery_lines:
+                pkey = 'P-'+str(dline.product_id.id)
+                dlinedict[pkey] = dline.id
+            for tlabel in labellist:
+                pkey = 'P-'+str(tlabel.product_id.id)
+                lkey = pkey+'-'+str(tlabel.product_lot.id)+'-'+str(tlabel.location_id.id)
+                if lkey not in listdict:
+                    deliverylineid = dlinedict[pkey]
+                    listdict[lkey] = {
+                        'product_id': tlabel.product_id.id, 'product_uom': tlabel.product_uom.id, 'delivery_line': deliverylineid,
+                        'product_lot': tlabel.product_lot.id, 'location_id': tlabel.location_id.id, 'product_qty': tlabel.product_qty
+                    }
+                else:
+                    listdict[lkey]['product_qty'] += tlabel.product_qty
+            delivery.write({'picking_list': [(0, 0, dlist) for dlist in listdict.values()]})
+            operationlist = []
+            for tlabel in labellist:
+                pkey = 'P-'+str(tlabel.product_id.id)
+                lineid = False if pkey not in dlinedict else dlinedict[pkey]
+                operationlist.append((0, 0, {'label_id': tlabel.id, 'delivery_line': lineid}))
+            delivery.write({'operation_lines': operationlist})
             delivery.action_picking_confirm()
             delivery.action_deliver_done()
         except UserError, ue:
