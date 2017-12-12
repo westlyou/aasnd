@@ -230,7 +230,6 @@ mui.ready(function(){
     document.getElementById('action_finish').addEventListener('tap', function(){
         mui.confirm('您确认现在就报工吗？', '生产报工', ['确认', '取消'], function(e) {
             if(e.index!=0){
-                mui.swipeoutClose(li);
                 return ;
             }
             action_commit();

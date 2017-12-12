@@ -103,6 +103,12 @@ class AASMESMainorder(models.Model):
             else:
                 self.actual_qty = self.product_qty / self.product_id.product_yield
 
+    @api.model
+    def default_get(self, fields_list):
+        defaults = super(AASMESMainorder,self).default_get(fields_list)
+        defaults['name'] = fields.Datetime.to_timezone_time(fields.Datetime.now(), 'Asia/Shanghai').strftime('%Y%m%d%H%M%S')
+        return defaults
+
 
     @api.model
     def create(self, vals):

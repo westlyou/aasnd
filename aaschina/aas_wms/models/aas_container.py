@@ -217,10 +217,13 @@ class AASContainer(models.Model):
         values.update({'printer': printer.name, 'serverurl': printer.serverurl})
         field_list = [fline.field_name for fline in printer.field_lines]
         if ids and len(ids) > 0:
-            locationdomain = [('id', 'in', ids)]
+            tempdomain = [('id', 'in', ids)]
         else:
-            locationdomain = domain
-        records = self.search_read(domain=locationdomain, fields=field_list)
+            tempdomain = domain
+        if not tempdomain or len(tempdomain) <= 0:
+            values.update({'success': False, 'message': u'您可能选中了所有记录或未选中任何记录，请先设置好需要打印的记录！'})
+            return values
+        records = self.search_read(domain=tempdomain, fields=field_list)
         if not records or len(records) <= 0:
             values.update({'success': False, 'message': u'未搜索到需要打印的容器！'})
             return values
