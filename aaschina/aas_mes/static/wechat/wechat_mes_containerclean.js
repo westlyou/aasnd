@@ -71,13 +71,13 @@ mui.ready(function(){
         var containerhtml = "<a class='mui-navigate-right' href='#'> " +
                 "<div class='mui-table'> " +
                     "<div class='mui-table-cell mui-col-xs-4 mui-text-left'>" +
-                        "<div class='mui-ellipsis'>"+data.container_name+"</div>" +
+                        "<div>"+data.container_name+"</div>" +
                     "</div>"+
                     "<div class='mui-table-cell mui-col-xs-4 mui-text-center'>" +
-                        "<div class='mui-ellipsis'>"+data.container_alias+"</div>" +
+                        "<div>"+data.container_alias+"</div>" +
                     "</div>"+
                     "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>" +
-                        "<div class='mui-ellipsis'>"+data.container_location+"</div>" +
+                        "<div>"+data.container_location+"</div>" +
                     "</div>"+
                 "</div> " +
             "</a>";
@@ -87,13 +87,13 @@ mui.ready(function(){
                 containerhtml += "<li class='mui-table-view-cell'>" +
                         "<div class='mui-table'> " +
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-left'>" +
-                                "<div class='mui-ellipsis'>"+record.product_code+"</div>" +
+                                "<div>"+record.product_code+"</div>" +
                             "</div>"+
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-center'>" +
-                                "<div class='mui-ellipsis'>"+record.product_lot+"</div>" +
+                                "<div>"+record.product_lot+"</div>" +
                             "</div>"+
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>" +
-                                "<div class='mui-ellipsis'>"+record.product_qty+"</div>" +
+                                "<div>"+record.product_qty+"</div>" +
                             "</div>"+
                         "</div> "+
                 "</li>";

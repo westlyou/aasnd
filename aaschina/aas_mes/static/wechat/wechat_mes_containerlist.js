@@ -48,13 +48,13 @@ function pulluprefresh() {
                     li.innerHTML = "<a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>" +
                         "<div class='mui-table'> " +
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-left'> " +
-                                "<div class='mui-ellipsis'>  " + tcontainer.name + " </div> " +
+                                "<div>  " + tcontainer.name + " </div> " +
                             "</div> " +
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-center'> " +
-                                "<div class='mui-ellipsis'>  " + tcontainer.alias + " </div> " +
+                                "<div>  " + tcontainer.alias + " </div> " +
                             "</div> " +
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-right'> " +
-                                "<div >  " + tcontainer.location + " </div> " +
+                                "<div>" + tcontainer.location + "</div> " +
                             "</div> " +
                         "</div>" +
                         "</a>";
@@ -140,13 +140,13 @@ mui.ready(function() {
                     li.innerHTML = "<a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>" +
                         "<div class='mui-table'>" +
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-left'>" +
-                                "<div class='mui-ellipsis'>"+tcontainer.name+"</div>" +
+                                "<div>"+tcontainer.name+"</div>" +
                             "</div>"+
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-center'>" +
-                                "<div class='mui-ellipsis'>"+tcontainer.alias+"</div>" +
+                                "<div>"+tcontainer.alias+"</div>" +
                             "</div>"+
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>" +
-                                "<div class='mui-ellipsis'>"+tcontainer.location+"</div>" +
+                                "<div>"+tcontainer.location+"</div>" +
                             "</div>"+
                         "</div>"+
                         "</a>";
