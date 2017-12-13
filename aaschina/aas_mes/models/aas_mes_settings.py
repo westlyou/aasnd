@@ -31,6 +31,8 @@ class AASMESSettings(models.TransientModel):
                                         help=u'最长在岗工时，满足此工时表明已完成正常工时和加班工时')
     default_worktime_standard = fields.Float(string=u'标准工时', default=8.0, default_model='aas.mes.settings',
                                              help=u'正常工作时数，超过则即为加班；默认为8小时')
+    default_worktime_advance = fields.Float(string=u'提前工时', default=0.5, default_model='aas.mes.settings',
+                                            help=u'提前班次开始时间段，在此时间段都默认为接下来的班次')
 
 
     @api.one
@@ -42,6 +44,9 @@ class AASMESSettings(models.TransientModel):
         if not self.default_worktime_max and \
                         float_compare(self.default_worktime_max, 0.0, precision_rounding=0.000001) < 0.0:
             raise ValidationError(u"最长工时数不可以小于零！")
+        if not self.default_worktime_advance and \
+                        float_compare(self.default_worktime_advance, 0.0, precision_rounding=0.000001) < 0.0:
+            raise ValidationError(u"提前工时数不可以小于零！")
         if not self.default_worktime_standard and \
                         float_compare(self.default_worktime_standard, 0.0, precision_rounding=0.000001) < 0.0:
             raise ValidationError(u"标准工时数不可以小于零！")

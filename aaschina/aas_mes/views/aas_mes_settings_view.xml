@@ -12,9 +12,10 @@
                         <button string="取消" type="object" name="cancel" class="oe_link"/>
                     </header>
                     <group string="工时信息" name="worktime">
-                        <field name="default_worktime_standard"/>
-                        <field name="default_worktime_min"/>
-                        <field name="default_worktime_max"/>
+                        <field name="default_worktime_standard" widget="float_time"/>
+                        <field name="default_worktime_min" widget="float_time"/>
+                        <field name="default_worktime_max" widget="float_time"/>
+                        <field name="default_worktime_advance" widget="float_time"/>
                     </group>
                 </form>
             </field>
