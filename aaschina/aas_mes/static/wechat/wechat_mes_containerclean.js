@@ -72,10 +72,10 @@ mui.ready(function(){
                 "<div class='mui-table'> " +
                     "<div class='mui-table-cell mui-col-xs-4 mui-text-left'>" +
                         "<div class='mui-ellipsis'>"+data.container_name+"</div>" +
-                    "/div>"+
+                    "</div>"+
                     "<div class='mui-table-cell mui-col-xs-4 mui-text-center'>" +
                         "<div class='mui-ellipsis'>"+data.container_alias+"</div>" +
-                    "/div>"+
+                    "</div>"+
                     "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>" +
                         "<div class='mui-ellipsis'>"+data.container_location+"</div>" +
                     "</div>"+
@@ -88,10 +88,10 @@ mui.ready(function(){
                         "<div class='mui-table'> " +
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-left'>" +
                                 "<div class='mui-ellipsis'>"+record.product_code+"</div>" +
-                            "/div>"+
+                            "</div>"+
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-center'>" +
                                 "<div class='mui-ellipsis'>"+record.product_lot+"</div>" +
-                            "/div>"+
+                            "</div>"+
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>" +
                                 "<div class='mui-ellipsis'>"+record.product_qty+"</div>" +
                             "</div>"+
