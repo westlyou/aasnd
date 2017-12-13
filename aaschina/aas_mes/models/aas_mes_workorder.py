@@ -589,12 +589,11 @@ class AASMESWorkorder(models.Model):
             return values
         vdvalues = self.action_validate_consume(workorder_id, product_id, output_qty, workstation_id)
         if not vdvalues.get('success', False):
-            values.update({'message': vdvalues['message']})
+            values.update(vdvalues)
         else:
             csvalues = self.action_consume(workorder_id, product_id)
             if not csvalues.get('success', False):
-                values.update({'success': False, 'message': csvalues['message']})
-                return values
+                values.update(csvalues)
         return values
 
 
