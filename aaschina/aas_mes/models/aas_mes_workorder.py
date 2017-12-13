@@ -538,8 +538,8 @@ class AASMESWorkorder(models.Model):
                 pkey = 'P-'+str(tempbom.product_id.id)
                 productdict[pkey] = {
                     'product_id': tempbom.product_id.id, 'product_code': tempbom.product_id.default_code,
-                    'input_qty': (tempbom.product_qty / tempbom.bom_id.product_qty) * workorder.input_qty,
-                    'output_qty': 0.0, 'badmode_qty': 0.0, 'actual_qty': 0.0, 'todo_qty': 0.0, 'materiallist': []
+                    'input_qty': (tempbom.product_qty / tempbom.bom_id.product_qty) * workorder.input_qty, 'output_qty': 0.0,
+                    'badmode_qty': 0.0, 'actual_qty': 0.0, 'todo_qty': 0.0, 'materiallist': [], 'weld_count': tempbom.product_id.weld_count
                 }
         # 获取虚拟件消耗明细
         materialdomain = [('workorder_id', '=', workorder.id), ('workcenter_id', '=', workcenter.id)]
