@@ -141,10 +141,10 @@ mui.ready(function() {
                         "<div class='mui-table'>" +
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-left'>" +
                                 "<div class='mui-ellipsis'>"+tcontainer.name+"</div>" +
-                            "/div>"+
+                            "</div>"+
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-center'>" +
                                 "<div class='mui-ellipsis'>"+tcontainer.alias+"</div>" +
-                            "/div>"+
+                            "</div>"+
                             "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>" +
                                 "<div class='mui-ellipsis'>"+tcontainer.location+"</div>" +
                             "</div>"+
