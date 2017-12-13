@@ -417,14 +417,15 @@ class AASMESWorkorder(models.Model):
         :return:
         """
         values = {'success': True, 'message': '', 'tracelist':[]}
+        outputmodel = self.env['aas.mes.workorder.product']
         outputdomain = [('workorder_id', '=', workorder_id), ('product_id', '=', product_id)]
         outputdomain.append(('waiting_qty', '>', 0.0))
-        outputlist = self.env['aas.mes.workorder.product'].search(outputdomain)
+        outputlist = outputmodel.search(outputdomain)
         if outputlist and len(outputlist) > 0:
             meslineids  = []
             for output in outputlist:
                 meslineids.append(output.mesline_id.id)
-                result = output.action_output_consume(output)
+                result = outputmodel.action_output_consume(output)
                 if result['tracelist'] and len(result['tracelist']) > 0:
                     values['tracelist'].extend(result['tracelist'])
                 if not result['success']:
