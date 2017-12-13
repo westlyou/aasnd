@@ -330,8 +330,7 @@ class AASMESWorkorder(models.Model):
 
     @api.model
     def action_output(self, workorder_id, product_id, output_qty, container_id=None, serialnumber=None):
-        """
-        工单产出
+        """工单产出
         :param workorder_id:
         :param product_id:
         :param output_qty:
@@ -573,6 +572,28 @@ class AASMESWorkorder(models.Model):
             tval['actual_qty'] = temp_qty
             tval['todo_qty'] = tval['input_qty'] - temp_qty
             values['virtuallist'].append(tval)
+        return values
+
+    @api.model
+    def action_vtproduct_output(self, workstation_id, workorder_id, product_id, output_qty):
+        """虚拟件半成品产出
+        :param workstation_id:
+        :param workorder_id:
+        :param product_id:
+        :param output_qty:
+        :return:
+        """
+        values = self.action_output(self, workorder_id, product_id, output_qty)
+        if not values.get('success', False):
+            return values
+        vdvalues = self.action_validate_consume(workorder_id, product_id, output_qty, workstation_id)
+        if not vdvalues.get('success', False):
+            values.update({'message': vdvalues['message']})
+        else:
+            csvalues = self.action_consume(workorder_id, product_id)
+            if not csvalues.get('success', False):
+                values.update({'success': False, 'message': csvalues['message']})
+                return values
         return values
 
 
