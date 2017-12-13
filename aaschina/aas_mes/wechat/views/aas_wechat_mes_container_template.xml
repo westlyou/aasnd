@@ -171,7 +171,7 @@
                 <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
                 <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.picker.min.js"></script>
                 <script type="text/javascript" src="/aas_base/static/wechat/jquery-2.2.4.min.js"></script>
-                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_mes_containerdetail.js"></script>
+                <script type="text/javascript" src="/aas_mes/static/wechat/wechat_mes_containerdetail.js"></script>
             </html>
         </template>
 
@@ -222,7 +222,7 @@
                 </body>
                 <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
                 <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
-                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_mes_containerclean.js"></script>
+                <script type="text/javascript" src="/aas_mes/static/wechat/wechat_mes_containerclean.js"></script>
             </html>
         </template>
 
