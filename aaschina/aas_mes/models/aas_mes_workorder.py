@@ -417,14 +417,15 @@ class AASMESWorkorder(models.Model):
         :return:
         """
         values = {'success': True, 'message': '', 'tracelist':[]}
+        outputmodel = self.env['aas.mes.workorder.product']
         outputdomain = [('workorder_id', '=', workorder_id), ('product_id', '=', product_id)]
         outputdomain.append(('waiting_qty', '>', 0.0))
-        outputlist = self.env['aas.mes.workorder.product'].search(outputdomain)
+        outputlist = outputmodel.search(outputdomain)
         if outputlist and len(outputlist) > 0:
             meslineids  = []
             for output in outputlist:
                 meslineids.append(output.mesline_id.id)
-                result = output.action_output_consume(output)
+                result = outputmodel.action_output_consume(output)
                 if result['tracelist'] and len(result['tracelist']) > 0:
                     values['tracelist'].extend(result['tracelist'])
                 if not result['success']:
@@ -583,17 +584,20 @@ class AASMESWorkorder(models.Model):
         :param output_qty:
         :return:
         """
-        values = self.action_output(workorder_id, product_id, output_qty)
-        if not values.get('success', False):
+        values = {'success': True, 'message': ''}
+        opvalues = self.action_output(workorder_id, product_id, output_qty)
+        if not opvalues.get('success', False):
+            values.update({'success': False, 'message': opvalues['message']})
             return values
+        else:
+            values.update({'success': True, 'message': opvalues['message']})
         vdvalues = self.action_validate_consume(workorder_id, product_id, output_qty, workstation_id)
         if not vdvalues.get('success', False):
-            values.update({'message': vdvalues['message']})
+            values.update(vdvalues)
         else:
             csvalues = self.action_consume(workorder_id, product_id)
             if not csvalues.get('success', False):
-                values.update({'success': False, 'message': csvalues['message']})
-                return values
+                values.update(csvalues)
         return values
 
 
