@@ -359,6 +359,11 @@ class AASContainerAdjustWizard(models.TransientModel):
             for pline in self.container_id.product_lines:
                 if pline.id not in lineids:
                     productlines.append((2, pline.id, False))
+                    movevallist.append({
+                        'name': self.container_id.name, 'product_id': pline.product_id.id, 'product_uom': pline.product_id.uom_id.id,
+                        'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id, 'restrict_lot_id': pline.product_lot.id,
+                        'product_uom_qty': pline.stock_qty, 'location_id': containerlocation, 'location_dest_id': productionlocation
+                    })
         if productlines and len(productlines) > 0:
             self.container_id.write({'product_lines': productlines})
         if movevallist and len(movevallist) > 0:

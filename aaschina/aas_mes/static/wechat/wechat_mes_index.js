@@ -58,4 +58,9 @@ mui.ready(function(){
         });
     });
 
+    //生产容器
+    document.getElementById('container').addEventListener('tap', function(){
+        mui.openWindow({'url': '/aaswechat/mes/container', 'id': 'workcontainer'});
+    });
+
 });

@@ -52,7 +52,8 @@
         'oracle/aas_ebs_mainorder_view.xml',
         'wechat/views/aas_wechat_mes_template.xml',
         'wechat/views/aas_wechat_mes_feedmaterial_template.xml',
-        'wechat/views/aas_wechat_mes_workorder_template.xml'
+        'wechat/views/aas_wechat_mes_workorder_template.xml',
+        'wechat/views/aas_wechat_mes_container_template.xml'
     ],
     'qweb':[],
     'installable': True,

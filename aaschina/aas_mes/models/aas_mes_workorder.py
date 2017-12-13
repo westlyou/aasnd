@@ -517,7 +517,7 @@ class AASMESWorkorder(models.Model):
             return values
         values.update({
             'workorder_id': workorder.id, 'workorder_name': workorder.name, 'product_id': workorder.product_id.id,
-            'product_code': workorder.product_id.default_code, 'input_qty': workorder.input_qty
+            'product_code': workorder.product_id.default_code, 'input_qty': workorder.input_qty, 'virtuallist': []
         })
         routing = workorder.routing_id
         if not routing:
@@ -527,27 +527,52 @@ class AASMESWorkorder(models.Model):
         if not workcenter:
             values.update({'success': False, 'message': u'工位%s上未设置相应工序，请仔细检查！'% workcenter.name})
             return values
+        # 获取BOM上虚拟件信息
+        productdict = {}
+        bomdomain = [('bom_id', '=', workorder.aas_bom_id.id), ('workcenter_id', '=', workcenter.id)]
+        bomworkcenters = self.env['aas.bom.workcenter'].search([bomdomain])
+        if bomworkcenters and len(bomworkcenters):
+            for tempbom in bomworkcenters:
+                if not tempbom.product_id.virtual_material:
+                    continue
+                pkey = 'P-'+str(tempbom.product_id.id)
+                productdict[pkey] = {
+                    'product_id': tempbom.product_id.id, 'product_code': tempbom.product_id.default_code,
+                    'input_qty': (tempbom.product_qty / tempbom.bom_id.product_qty) * workorder.input_qty,
+                    'output_qty': 0.0, 'badmode_qty': 0.0, 'actual_qty': 0.0, 'todo_qty': 0.0, 'materiallist': []
+                }
+        # 获取虚拟件消耗明细
         materialdomain = [('workorder_id', '=', workorder.id), ('workcenter_id', '=', workcenter.id)]
         materialdomain.append(('product_id', '!=', workorder.product_id.id))
-        materiallist = self.env['aas.mes.workorder.consume'].search(materialdomain)
-        if materiallist and len(materiallist) > 0:
-            productdict = {}
-            for cmaterial in materiallist:
-                pkey = 'P-'+str(cmaterial.product_id.id)
-                materialval = {
-                    'input_qty': cmaterial.input_qty, 'consume_qty': cmaterial.consume_qty,
-                    'material_id': cmaterial.material_id.id, 'material_code': cmaterial.material_id.default_code
-                }
-                if pkey not in productdict:
-                    cproduct = cmaterial.product_id
-                    productdict[pkey] = {'product_id': cproduct.id, 'product_code': cproduct.default_code, 'output_qty': 0.0}
-                    productdict[pkey]['materiallist'] = [materialval]
-                    outputlist = self.env['aas.mes.workorder.product'].search([('workorder_id', '=', workorder.id), ('product_id', '=', cproduct.id)])
-                    if outputlist and len(outputlist) > 0:
-                        productdict[pkey]['output_qty'] = sum([output.total_qty for output in outputlist])
+        consumelist = self.env['aas.mes.workorder.consume'].search(materialdomain)
+        if consumelist and len(consumelist) > 0:
+            for tconsume in consumelist:
+                pkey = 'P-'+str(tconsume.product_id.id)
+                if pkey in productdict:
+                    productdict[pkey]['materiallist'].append({
+                        'product_id': productdict[pkey]['product_id'], 'product_code': productdict[pkey]['product_code'],
+                        'material_id': tconsume.material_id.id, 'material_code': tconsume.material_id.default_code,
+                        'consume_unit': tconsume.consume_unit, 'input_qty': tconsume.input_qty,
+                        'consume_qty': tconsume.consume_qty, 'leave_qty': tconsume.leave_qty
+                    })
+        # 获取虚拟件产出
+        outputdict = {}
+        outputlist = self.env['aas.mes.workorder.product'].search([('product_id', '!=', workorder.product_id.id)])
+        if outputlist and len(outputlist) > 0:
+            for tempout in outputlist:
+                pkey = 'P-'+str(tempout.product_id.id)
+                if pkey in outputdict:
+                    outputdict[pkey] += tempout.total_qty
                 else:
-                    productdict[pkey]['materiallist'].append(materialval)
-            values['materiallist'] = productdict.values()
+                    outputdict[pkey] = tempout.total_qty
+        for tkey, tval in productdict.items():
+            temp_qty = tval['output_qty']
+            if tkey in outputdict:
+                temp_qty = outputdict[tkey]
+            tval['output_qty'] = temp_qty
+            tval['actual_qty'] = temp_qty
+            tval['todo_qty'] = tval['input_qty'] - temp_qty
+            values['virtuallist'].append(tval)
         return values
 
 

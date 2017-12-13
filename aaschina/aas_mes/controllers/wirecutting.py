@@ -223,7 +223,7 @@ class AASMESWireCuttingController(http.Controller):
         values['mesline_name'] = lineuser.mesline_id.name
         if lineuser.mesrole != 'wirecutter':
             values.update({'success': False, 'message': u'当前登录账号还未授权切线'})
-            return request.render('aas_mes.aas_wirecutting', values)
+            return values
         workstation = lineuser.workstation_id
         if not workstation:
             values.update({'success': False, 'message': u'当前登录账号还未绑定切线工位！'})
