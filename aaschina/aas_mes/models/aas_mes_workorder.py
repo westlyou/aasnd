@@ -583,7 +583,7 @@ class AASMESWorkorder(models.Model):
         :param output_qty:
         :return:
         """
-        values = self.action_output(self, workorder_id, product_id, output_qty)
+        values = self.action_output(workorder_id, product_id, output_qty)
         if not values.get('success', False):
             return values
         vdvalues = self.action_validate_consume(workorder_id, product_id, output_qty, workstation_id)
