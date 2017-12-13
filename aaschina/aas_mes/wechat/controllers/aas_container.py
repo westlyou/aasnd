@@ -28,6 +28,7 @@ class AASContainerController(http.Controller):
                 'cid': container.id, 'name': container.name,
                 'alias': container.alias, 'location': container.location_id.name
             } for container in containerlist]
+            values['containerindex'] = len(containerlist)
         return request.render('aas_mes.wechat_mes_container', values)
 
 

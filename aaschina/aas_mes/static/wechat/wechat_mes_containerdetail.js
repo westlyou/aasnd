@@ -92,6 +92,15 @@ mui.ready(function(){
     //清理容器
     document.getElementById('clean_container').addEventListener('tap', function(){
         mui('#container_detail_buttons').popover('toggle');
+        mui.confirm('确认清理当前容器的库存清单？', '清理容器', ['确认', '取消'], function(e) {
+            if (e.index != 0) {
+                return;
+            }
+            action_clean();
+        });
+    });
+
+    function action_clean(){
         var containerid = parseInt(document.getElementById('container_detail_pullrefresh').getAttribute('containerid'));
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         mui.ajax('/aaswechat/mes/containerclean', {
@@ -108,6 +117,6 @@ mui.ready(function(){
             },
             error: function (xhr, type, errorThrown) { console.log(type);}
         });
-    });
+    }
 
 });

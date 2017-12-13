@@ -65,6 +65,12 @@ mui.ready(function(){
     });
 
     function initscancontainer(data){
+        var liid = 'C'+data.container_id;
+        var templi = document.getElementById(liid);
+        if(templi!=undefined && (templi.getAttribute('containerid')==data.container_id)){
+            mui.toast('容器已扫描，请不要重复操作！');
+            return ;
+        }
         var containerlist = document.getElementById('containerlist');
         var li = document.createElement('li');
         li.className = 'aas-container mui-table-view-cell mui-collapse';
@@ -99,9 +105,18 @@ mui.ready(function(){
                 "</li>";
             });
         }
+        containerhtml += "<li class='mui-table-view-cell'> " +
+            "<div class='mui-table'> " +
+                "<div class='mui-table-cell mui-col-xs-12 mui-text-center'>" +
+                    "<button type='button' class='aas-container-del mui-btn mui-btn-danger mui-btn-block mui-btn-outlined' style='padding:8px 0;'>" +
+                        "<span class='mui-icon mui-icon-trash'></span>删除" +
+                    "</button>" +
+                "</div>" +
+            "</div></li>";
         containerhtml += "</ul></div>";
         li.innerHTML = containerhtml;
         li.setAttribute('containerid', data.container_id);
+        li.setAttribute('id', liid);
         containerlist.appendChild(li);
     }
 
@@ -143,6 +158,12 @@ mui.ready(function(){
             error: function (xhr, type, errorThrown) { console.log(type);}
         });
     }
+
+
+    mui('#containerlist').on('tap', 'button.aas-container-del', function(event){
+        var templi = this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
+        document.getElementById('containerlist').removeChild(templi);
+    });
 
 
 
