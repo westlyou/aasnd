@@ -47,6 +47,7 @@
         'views/aas_mes_scrap_view.xml',
         'views/aas_mes_allocation_view.xml',
         'views/aas_mes_allocation_templates.xml',
+        'views/aas_mes_attendance_view.xml',
         'views/aas_mes_settings_view.xml',
 
         'oracle/aas_ebs_mainorder_view.xml',
