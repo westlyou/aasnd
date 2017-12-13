@@ -530,7 +530,7 @@ class AASMESWorkorder(models.Model):
         # 获取BOM上虚拟件信息
         productdict = {}
         bomdomain = [('bom_id', '=', workorder.aas_bom_id.id), ('workcenter_id', '=', workcenter.id)]
-        bomworkcenters = self.env['aas.bom.workcenter'].search([bomdomain])
+        bomworkcenters = self.env['aas.mes.bom.workcenter'].search([bomdomain])
         if bomworkcenters and len(bomworkcenters):
             for tempbom in bomworkcenters:
                 if not tempbom.product_id.virtual_material:
