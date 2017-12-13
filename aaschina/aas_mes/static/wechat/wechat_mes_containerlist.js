@@ -160,7 +160,7 @@ mui.ready(function() {
 
     //清理容器
     document.getElementById('clean_container').addEventListener('tap', function(){
-        mui.alert('敬请期待！');
+        mui.openWindow({'url': '/aaswechat/mes/cleancontainers', 'id': 'cleancontainers'});
     });
 
 });
