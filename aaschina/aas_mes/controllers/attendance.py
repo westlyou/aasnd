@@ -37,12 +37,14 @@ class AASMESAttendanceController(http.Controller):
             for wline in workstationlines:
                 station = wline.workstation_id
                 stationitem = {'station_id': station.id, 'station_name': station.name, 'station_type': station.station_type, 'employees': []}
-                if not station.employee_lines or len(station.employee_lines) <= 0:
+                employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', station.id)]
+                employeelist = request.env['aas.mes.workstation.employee'].search(employeedomain)
+                if not employeelist or len(employeelist) <= 0:
                     employeelen = 0
                 else:
-                    employeelen = len(station.employee_lines)
+                    employeelen = len(employeelist)
                 if employeelen > 0:
-                    stationitem['employees'] = [{'employee_name': temployee.employee_id.name, 'employee_code': temployee.employee_id.code} for temployee in station.employee_lines]
+                    stationitem['employees'] = [{'employee_name': temployee.employee_id.name, 'employee_code': temployee.employee_id.code} for temployee in employeelist]
                 if employeelen < 2:
                     for index in range(0, 2-employeelen):
                         stationitem['employees'].append({'employee_name': '', 'employee_code': ''})
@@ -105,15 +107,21 @@ class AASMESAttendanceController(http.Controller):
         if not lineuser:
             values.update({'success': False, 'message': u'请确认，当前用户可能已经不是生产考勤员了！'})
             return values
-        workstationlines = request.env['aas.mes.line.workstation'].search([('mesline_id', '=', lineuser.mesline_id.id)])
+        mesline = lineuser.mesline_id
+        workstationlines = request.env['aas.mes.line.workstation'].search([('mesline_id', '=', mesline.id)])
         if workstationlines and len(workstationlines) > 0:
             stationlist = []
             for wline in workstationlines:
                 station = wline.workstation_id
                 stationitem = {'station_id': station.id, 'station_name': station.name, 'station_type': station.station_type, 'employees': []}
-                employeelen = 0 if not station.employee_lines or len(station.employee_lines) <= 0 else len(station.employee_lines)
+                employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', station.id)]
+                employeelist = request.env['aas.mes.workstation.employee'].search(employeedomain)
+                if not employeelist or len(employeelist) <= 0:
+                    employeelen = 0
+                else:
+                    employeelen = len(employeelist)
                 if employeelen > 0:
-                    stationitem['employees'] = [{'employee_name': temployee.employee_id.name, 'employee_code': temployee.employee_id.code} for temployee in station.employee_lines]
+                    stationitem['employees'] = [{'employee_name': temployee.employee_id.name, 'employee_code': temployee.employee_id.code} for temployee in employeelist]
                 if employeelen < 2:
                     for index in range(0, 2-employeelen):
                         stationitem['employees'].append({'employee_name': '', 'employee_code': ''})
