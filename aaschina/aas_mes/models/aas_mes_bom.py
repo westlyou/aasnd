@@ -57,8 +57,13 @@ class AASMESBOM(models.Model):
 
     @api.onchange('routing_id')
     def action_change_routing(self):
-        self.workcenter_lines = False
-        self.bom_lines = False
+        if self.workcenter_lines and len(self.workcenter_lines) > 0:
+            if self.routing_id:
+                for wcline in self.workcenter_lines:
+                    wcline.routing_id, wcline.workcenter_id = self.routing_id.id, False
+            else:
+                for wcline in self.workcenter_lines:
+                    wcline.routing_id, wcline.workcenter_id = False, False
 
     @api.model
     def action_checking_version(self):
