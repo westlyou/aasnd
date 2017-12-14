@@ -658,11 +658,9 @@ class AASMESWorkorderProduct(models.Model):
 
     @api.model
     def action_output_consume(self, outputrecord):
-        """
-        产出物料消耗
+        """产出物料消耗
         :return:
         """
-        self.ensure_one()
         values = {'success': True, 'message': '', 'tracelist': []}
         buildresult = self.action_build_consumerecords(outputrecord)
         if not buildresult['success']:
