@@ -343,9 +343,12 @@ class AASMESWorkorder(models.Model):
         if not workorder.aas_bom_id:
             result.update({'success': False, 'message': u'工单未设置BOM清单，请仔细检查！'})
             return result
+        if workorder.state == 'draft':
+            result.update({'success': False, 'message': u'工单还未确认，请先确认工单才可以继续生产！'})
+            return result
         if product_id != workorder.product_id.id:
-            tempdomain = [('bom_id', '=', workorder.aas_bom_id.id), ('product_id', '=', product_id)]
-            if self.env['aas.mes.bom.line'].search_count(tempdomain) <= 0:
+            tempdomain = [('workorder_id', '=', workorder.id), ('product_id', '=', product_id)]
+            if self.env['aas.mes.workorder.consume'].search_count(tempdomain) <= 0:
                 result.update({'success': False, 'message': u'成品产出异常，可能不是当前工单产物！'})
                 return result
         if not workorder.mesline_id.workdate:
@@ -655,11 +658,9 @@ class AASMESWorkorderProduct(models.Model):
 
     @api.model
     def action_output_consume(self, outputrecord):
-        """
-        产出物料消耗
+        """产出物料消耗
         :return:
         """
-        self.ensure_one()
         values = {'success': True, 'message': '', 'tracelist': []}
         buildresult = self.action_build_consumerecords(outputrecord)
         if not buildresult['success']:

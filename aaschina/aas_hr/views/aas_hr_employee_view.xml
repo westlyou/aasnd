@@ -115,7 +115,7 @@
                     <filter string="离开" domain="[('state','=','leave')]" />
                     <filter string="事假" domain="[('state','=','atop')]" />
                     <filter string="休假" domain="[('state','=','vacation')]" />
-                    <filter string="离职" domain="[('state','=','demission')]" />
+                    <filter string="离职" domain="[('active','=',False)]" />
                     <group expand="0" string="分组">
                         <filter string="状态" context="{'group_by':'state'}"/>
                         <filter string="性别" context="{'group_by':'gender'}"/>

@@ -145,8 +145,7 @@ class AASMESFeedmaterial(models.Model):
         if not workstation:
             values.update({'success': False, 'message': u'设备还未绑定工位，请联系相关人员设置！'})
             return values
-        startchar = barcode[0:2]
-        if startchar == 'AT':
+        if barcode.startswith('AT'):
             return self.action_feeding_withcontainer(mesline, workstation, barcode)
         else:
             return self.action_feeding_withlabel(mesline, workstation, barcode)
