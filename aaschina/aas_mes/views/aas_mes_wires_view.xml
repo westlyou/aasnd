@@ -198,6 +198,9 @@
                                     </tree>
                                     <form>
                                         <group>
+                                            <group> <field name="name"/> </group>
+                                        </group>
+                                        <group>
                                             <group>
                                                 <field name="product_id"/>
                                                 <field name="input_qty"/>
