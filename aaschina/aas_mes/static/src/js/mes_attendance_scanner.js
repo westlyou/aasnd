@@ -7,12 +7,7 @@ $(function() {
         var station = $(this);
         var stationid = station.attr('stationid');
         var stationname = station.attr('stationname');
-        $('#cstation').attr('stationid', stationid);
-        $('#cstation').html(stationname);
-        var employeeid = parseInt($('#cemployee').attr('employeeid'));
-        if(employeeid>0){
-            action_working();
-        }
+        $('#cstation').attr('stationid', stationid).html(stationname);
     });
 
     //员工牌扫描
@@ -27,6 +22,10 @@ $(function() {
             return ;
         }
         var scanparams = {'barcode': barcode};
+        var cstationid = parseInt($('#cstation').attr('stationid'));
+        if(cstationid > 0){
+            scanparams['stationid'] = cstationid;
+        }
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
             url: '/aasmes/attendance/actionscan',
@@ -39,66 +38,18 @@ $(function() {
                     layer.msg(dresult.message, {icon: 5});
                     return ;
                 }
+                $('#cemployee').attr('employeeid', dresult.employee_id).html(dresult.employee_name);
                 if(dresult.message!='' && dresult.message!=null){
                     // 显示信息后刷新页面！
                     layer.msg(dresult.message, {icon: 1}, function(){
                         window.location.reload(true);
                     });
                     return ;
-                }
-                $('#cemployee').attr('employeeid', dresult.employee_id);
-                $('#cemployee').html(dresult.employee_name);
-                var stationid = parseInt($('#cstation').attr('stationid'));
-                if(stationid<=0){
-                    layer.msg('员工卡已扫描，请选择工位即可上岗！', {icon: 1});
-                    return ;
-                }else{
-                    action_working();
                 }
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
         });
     });
-
-    //上岗
-    function action_working(){
-        if (!scanable){
-            layer.msg('操作正在处理，请稍后！', {icon: 5});
-            return ;
-        }
-        var stationid = parseInt($('#cstation').attr('stationid'));
-        var employeeid = parseInt($('#cemployee').attr('employeeid'));
-        if(stationid <=0 || employeeid <= 0){
-            layer.msg('请确认您是否已经选择了工位和扫描员工卡！', {icon: 5});
-            return ;
-        }
-        var actionparams = {'employeeid': employeeid, 'stationid': stationid};
-        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
-        $.ajax({
-            url: '/aasmes/attendance/actionworking',
-            headers:{'Content-Type':'application/json'},
-            type: 'post', timeout:10000, dataType: 'json',
-            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: actionparams, id: access_id}),
-            success:function(data){
-                scanable = true;
-                var dresult = data.result;
-                if(!dresult.success){
-                    layer.msg(dresult.message, {icon: 5});
-                    return ;
-                }
-                if(dresult.message!='' && dresult.message!=null){
-                    // 显示信息后刷新页面！
-                    layer.msg(dresult.message, {icon: 1}, function(){
-                        window.location.reload(true);
-                    });
-                }
-            },
-            error:function(xhr,type,errorThrown){
-                scanable = true;
-                console.log(type);
-            }
-        });
-    }
 
     function refreshstations(){
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);

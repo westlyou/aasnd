@@ -137,6 +137,37 @@ class AASMESLine(models.Model):
             # 清理上一个班次员工上岗信息
             self.action_clear_employees(self.id)
 
+    @api.model
+    def loading_nextschedule(self, mesline):
+        """加载下一个班次信息
+        :param mesline:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'schedule': False}
+        if not mesline.schedule_lines or len(mesline.schedule_lines) <= 0:
+            values.update({'success': False, 'message': u'产线%s还未设置班次，请联系管理员设置班次信息！'% mesline.name})
+            return values
+        if not mesline.workdate:
+            mesline.action_refresh_schedule()
+        tschedule = mesline.schedule_lines[0]
+        if mesline.schedule_id:
+            tdomain = [('mesline_id', '=', mesline.id), ('sequence', '>', mesline.schedule_id.sequence)]
+            ntschedule = self.env['aas.mes.schedule'].search(tdomain, limit=1)
+            if ntschedule:
+                values['schedule'] = {
+                    'workdate': mesline.workdate,
+                    'actual_start': ntschedule.actual_start, 'actual_finish': ntschedule.actual_finish
+                }
+                return values
+        tempstart = fields.Datetime.from_string(tschedule.actual_start) + timedelta(days=1)
+        tempfinish = fields.Datetime.from_string(tschedule.actual_finish) + timedelta(days=1)
+        values['schedule'] = {
+            'actual_start': fields.Datetime.to_string(tempstart),
+            'actual_finish': fields.Datetime.to_string(tempfinish),
+            'workdate': fields.Datetime.to_timezone_string(tempstart, 'Asia/Shanghai')[0:10]
+        }
+        return values
+
 
     @api.model
     def action_clear_feeding(self, mesline_id):
@@ -159,12 +190,16 @@ class AASMESLine(models.Model):
         :param mesline_id:
         :return:
         """
-        attendancelist = self.env['aas.mes.work.attendance'].search([('mesline_id', '=', mesline_id), ('attend_done', '=', False)])
-        if not attendancelist or len(attendancelist) <= 0:
-            return True
-        for attendance in attendancelist:
-            attendance.action_done()
-        return True
+        tempdomain = [('mesline_id', '=', mesline_id), ('attend_done', '=', False)]
+        attendancelist = self.env['aas.mes.work.attendance'].search(tempdomain)
+        if attendancelist and len(attendancelist) > 0:
+            attendancelist.action_done()
+        # 更新并分割出勤明细
+        attendancelines = self.env['aas.mes.work.attendance.line'].search(tempdomain)
+        if attendancelines and len(attendancelines) > 0:
+            attendancelines.action_split()
+
+
 
 
 #产线原料库位

@@ -73,18 +73,9 @@ class AASMESWireCuttingController(http.Controller):
             values.update({'success': False, 'message': u'当前登录账号还未绑定下线工位'})
             return values
         values.update({'employee_id': employee.id, 'employee_name': employee.name+'['+employee.code+']'})
-        attendancedomain = [('employee_id', '=', employee.id), ('attend_done', '=', False)]
-        mesattendance = request.env['aas.mes.work.attendance'].search(attendancedomain, limit=1)
-        if mesattendance:
-            mesattendance.action_done()
-            values['action'] = 'leave'
-            values.update({'success': True, 'message': u'亲，您已离岗了哦！'})
-        else:
-            attendancevals = {'employee_id': employee.id, 'mesline_id': mesline.id, 'workstation_id': workstation.id}
-            if equipment_id:
-                attendancevals['equipment_id'] = equipment_id
-            request.env['aas.mes.work.attendance'].create(attendancevals)
-            values['message'] = u'亲，您已上岗！努力工作吧，加油！'
+        equipment = False if not equipment_id else request.env['aas.equipment.equipment'].browse(equipment_id)
+        avalues = request.env['aas.mes.work.attendance'].action_scanning(employee, mesline, workstation, equipment)
+        values.update(avalues)
         return values
 
     @http.route('/aasmes/wirecutting/scanequipment', type='json', auth="user")

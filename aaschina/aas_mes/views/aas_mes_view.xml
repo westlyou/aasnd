@@ -16,6 +16,9 @@
         <menuitem id="menu_aas_mes_resources"  name="生产资源" parent="menu_aas_mes" sequence="4"
                   groups="group_aas_manufacture_user"/>
 
+        <menuitem id="menu_aas_mes_attendance"  name="员工出勤" parent="menu_aas_mes" sequence="5"
+                  groups="group_aas_manufacture_user"/>
+
         <menuitem id="menu_aas_stock_report"  name="库存报表" parent="menu_aas_mes" sequence="20"
                   groups="group_aas_manufacture_user"/>
 

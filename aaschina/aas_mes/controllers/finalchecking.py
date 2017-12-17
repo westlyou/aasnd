@@ -74,20 +74,8 @@ class AASMESFinalCheckingController(http.Controller):
             values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位'})
             return values
         values.update({'employee_id': employee.id, 'employee_name': employee.name, 'employee_code': employee.code})
-        attendancedomain = [('employee_id', '=', employee.id), ('attend_done', '=', False)]
-        mesattendance = request.env['aas.mes.work.attendance'].search(attendancedomain, limit=1)
-        if mesattendance:
-            mesattendance.action_done()
-            values['action'] = 'leave'
-            values.update({'success': True, 'message': u'亲，您已离岗了哦！'})
-        else:
-            attendancevals = {'employee_id': employee.id, 'mesline_id': mesline.id, 'workstation_id': workstation.id}
-            equipmentdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-            tequipment = request.env['aas.mes.workstation.equipment'].search(equipmentdomain, limit=1)
-            if tequipment:
-                attendancevals['equipment_id'] = tequipment.equipment_id.id
-            request.env['aas.mes.work.attendance'].create(attendancevals)
-            values['message'] = u'亲，您已上岗！努力工作吧，加油！'
+        avalues = request.env['aas.mes.work.attendance'].action_scanning(employee, mesline, workstation)
+        values.update(avalues)
         return values
 
 

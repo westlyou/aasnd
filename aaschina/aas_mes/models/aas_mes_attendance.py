@@ -26,37 +26,140 @@ class AASMESWorkAttendance(models.Model):
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict', index=True)
     employee_name = fields.Char(string=u'员工名称', copy=False)
     employee_code = fields.Char(string=u'员工工号', copy=False)
-    equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', ondelete='restrict', index=True)
-    equipment_name = fields.Char(string=u'设备名称', copy=False)
-    equipment_code = fields.Char(string=u'设备编码', copy=False)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict', index=True)
     mesline_name = fields.Char(string=u'产线名称', copy=False)
-    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', ondelete='restrict')
-    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict', index=True)
-    workstation_name = fields.Char(string=u'工位名称', copy=False)
-    attendance_date = fields.Char(string=u'在岗日期', compute='_compute_attendance_date', store=True)
+    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', ondelete='restrict', index=True)
+    schedule_name = fields.Char(string=u'班次名称', copy=False)
+    attendance_date = fields.Char(string=u'在岗日期')
     attendance_start = fields.Datetime(string=u'上岗时间', default=fields.Datetime.now, copy=False)
     attendance_finish = fields.Datetime(string=u'离岗时间', copy=False)
-    attendance_hours = fields.Float(string=u'工时', compute='_compute_attendance_hours', store=True)
+    attend_hours = fields.Float(string=u'总工时', default=0.0, copy=False)
+    overtime_hours = fields.Float(string=u'加班工时', default=0.0, copy=False)
     attend_done = fields.Boolean(string=u'是否结束', default=False, copy=False)
+    leave_id = fields.Many2one(comodel_name='aas.mes.work.attendance.leave', string=u'离岗原因', ondelete='restrict')
+    worktime_min = fields.Float(string=u'最短工时')
+    worktime_max = fields.Float(string=u'最长工时')
+    worktime_standard = fields.Float(string=u'标准工时')
+    worktime_advance = fields.Float(string=u'提前工时')
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='restrict', index=True,
+                                 default=lambda self: self.env.user.company_id)
 
-    @api.depends('attendance_start', 'attendance_finish')
-    def _compute_attendance_hours(self):
-        for record in self:
-            record.attendance_hours = 0.0
-            if record.attendance_start and record.attendance_finish:
-                temptimes = fields.Datetime.from_string(record.attendance_finish) - fields.Datetime.from_string(record.attendance_start)
-                record.attendance_hours = temptimes.total_seconds() / 3600.00
+    attend_lines = fields.One2many(comodel_name='aas.mes.work.attendance.line', inverse_name='attendance_id', string=u'出勤明细')
 
 
-    @api.depends('attendance_start')
-    def _compute_attendance_date(self):
-        for record in self:
-            if record.attendance_start:
-                tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
-                record.attendance_date = fields.Datetime.to_timezone_string(record.attendance_start, tz_name)[0:10]
+
+    @api.model
+    def action_scanning(self, employee, mesline, workstation=None, equipment=None):
+        """扫描上下岗
+        :param employee:
+        :param mesline:
+        :param worstation:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'action': 'working'}
+        tempdomain = [('employee_id', '=', employee.id), ('mesline_id', '=', mesline.id), ('attend_done', '=', False)]
+        tattendance = self.env['aas.mes.work.attendance'].search(tempdomain, limit=1)
+        if tattendance:
+            linedomain = [('attendance_id', '=', tattendance.id), ('attend_done', '=', False)]
+            if workstation:
+                attenddomain = [('workstation_id', '=', workstation.id)]
+                attenddomain += linedomain
+                if self.env['aas.mes.work.attendance.line'].search_count(attenddomain) <= 0:
+                    tvalues = self.action_attend(employee, mesline, workstation, tattendance, equipment=equipment)
+                    values.update({'message': u'您已经在%s上岗，祝您工作愉快！'% workstation.name})
+                    if not tvalues.get('success', False):
+                        values.update(tvalues)
+                        return values
+                else:
+                    attendancelines = self.env['aas.mes.work.attendance.line'].search(linedomain)
+                    attendancelines.action_done()
+                    values['action'] = 'leave'
+                    return values
             else:
-                record.attendance_date = False
+                attendancelines = self.env['aas.mes.work.attendance.line'].search(linedomain)
+                if attendancelines and len(attendancelines) > 0:
+                    attendancelines.action_done()
+                    values['action'] = 'leave'
+                    return values
+                else:
+                    values.update({'success': False, 'message': u'您还未选择上岗工位！'})
+                    return values
+        elif not workstation:
+            values.update({'success': False, 'message': u'您还未选择上岗工位！'})
+            return values
+        else:
+            tvalues = self.action_attend(employee, mesline, workstation, equipment=equipment)
+            values.update({'message': u'您已经在%s上岗，祝您工作愉快！'% workstation.name})
+            if not tvalues.get('success', False):
+                values.update(tvalues)
+                return values
+        return values
+
+
+
+    @api.model
+    def action_attend(self, employee, mesline, workstation, attendance=None, equipment=None):
+        values = {'success': True, 'message': ''}
+        if attendance and (employee.id != attendance.employee_id.id or mesline.id != attendance.mesline_id.id):
+            values = {'success': False, 'message': u'出勤记录异常，请仔细检查！'}
+            return values
+        if not attendance:
+            tvalues = self.action_addattendance(employee, mesline)
+            if not tvalues.get('success', False):
+                values.update(tvalues)
+                return values
+            attendance = tvalues['attendance']
+        linedomain = [('attendance_id', '=', attendance.id), ('employee_id', '=', employee.id)]
+        linedomain.extend([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
+        linedomain.append(('attend_done', '=', False))
+        if self.env['aas.mes.work.attendance.line'].search_count(linedomain) <= 0:
+            self.env['aas.mes.work.attendance.line'].create({
+                'attendance_id': attendance.id, 'employee_id': employee.id,
+                'mesline_id': mesline.id, 'workstation_id': workstation.id,
+                'equipment_id': False if not equipment else equipment.id
+            })
+        return values
+
+
+    @api.model
+    def action_addattendance(self, employee, mesline):
+        """添加出勤
+        :param employee:
+        :param mesline:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'attendance': False}
+        attendancevals = {
+            'employee_id': employee.id, 'employee_name': employee.name,
+            'mesline_id': mesline.id, 'mesline_name': mesline.name
+        }
+        worktime_min = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'worktime_min')
+        worktime_max = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'worktime_max')
+        worktime_advance = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'worktime_advance')
+        worktime_standard = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'worktime_standard')
+        attendancevals.update({
+            'worktime_min': worktime_min, 'worktime_max': worktime_max,
+            'worktime_advance': worktime_advance, 'worktime_standard': worktime_standard
+        })
+        if not mesline.schedule_lines and len(mesline.schedule_lines) <= 0:
+            values.update({'success': False, 'message': u'产线%s还未设置班次，请联系管理员设置班次信息！'})
+            return values
+        if not mesline.workdate:
+            mesline.sudo().action_refresh_schedule()
+        timestart = fields.Datetime.now()
+        attendancevals.update({'attendance_start': timestart, 'attendance_date': mesline.workdate})
+        if mesline.schedule_id:
+            attendancevals.update({'schedule_id': mesline.schedule_id.id, 'schedule_name': mesline.schedule_id.name})
+        nextvalues = self.env['aas.mes.line'].loading_nextschedule(mesline)
+        if not nextvalues.get('success', False):
+            values.update(nextvalues)
+            return values
+        nextschedule = nextvalues['schedule']
+        temptimes = fields.Datetime.from_string(nextschedule['actual_start']) - fields.Datetime.from_string(timestart)
+        if (temptimes.total_seconds() / 3600.00) <= worktime_advance:
+            attendancevals.update({'attendance_start': nextschedule['actual_start'], 'attendance_date': nextschedule['workdate']})
+        values['attendance'] = self.env['aas.mes.work.attendance'].create(attendancevals)
+        return values
 
 
 
@@ -99,110 +202,171 @@ class AASMESWorkAttendance(models.Model):
         return tracevals
 
 
-    @api.model
-    def create(self, vals):
-        record = super(AASMESWorkAttendance, self).create(vals)
-        record.action_after_create()
-        return record
-
-    @api.one
-    def action_after_create(self):
-        empvals, employee = {'state': 'working'}, self.employee_id
-        attendvals = {'employee_name': employee.name, 'employee_code': employee.code}
-        if self.equipment_id:
-            attendvals.update({'equipment_name': self.equipment_id.name, 'equipment_code': self.equipment_id.code})
-        if self.mesline_id:
-            attendvals['mesline_name'] = self.mesline_id.name
-            if self.mesline_id.schedule_id:
-                attendvals['schedule_id'] = self.mesline_id.schedule_id.id
-                empvals['schedule_id'] = self.mesline_id.schedule_id.id
-            empvals['mesline_id'] = self.mesline_id.id
-        if self.workstation_id:
-            attendvals['workstation_name'] = self.workstation_id.name
-        if attendvals and len(attendvals) > 0:
-            self.write(attendvals)
-        employee.write(empvals)
-        self.env['aas.mes.workstation.employee'].create({
-            'workstation_id': self.workstation_id.id, 'mesline_id': self.mesline_id.id,
-            'employee_id': self.employee_id.id, 'equipment_id': False if not self.equipment_id else self.equipment_id.id
-        })
-
-    @api.one
+    @api.multi
     def action_done(self):
-        self.write({'attendance_finish': fields.Datetime.now(), 'attend_done': True})
-        employeedomain = [('workstation_id', '=', self.workstation_id.id), ('employee_id', '=', self.employee_id.id)]
-        employeedomain.append(('mesline_id', '=', self.mesline_id.id))
-        workstation_employees = self.env['aas.mes.workstation.employee'].search(employeedomain)
-        if workstation_employees and len(workstation_employees) > 0:
-            workstation_employees.unlink()
-        attendancecount = self.env['aas.mes.work.attendance'].search_count([('employee_id', '=', self.employee_id.id), ('attend_done', '=', False)])
-        if attendancecount <= 0:
-            self.employee_id.write({'state': 'leave'})
+        currentstr = fields.Datetime.now()
+        currenttime = fields.Datetime.from_string(currentstr)
+        for record in self:
+            starttime = fields.Datetime.from_string(record.attendance_start)
+            if ((currenttime - starttime).total_seconds() / 3600) <= record.worktime_max:
+                continue
+            linedomain = [('attendance_id', '=', record.id), ('attend_done', '=', False)]
+            templines = self.env['aas.mes.work.attendance.line'].search(linedomain)
+            if templines and len(templines) > 0:
+                templines.action_done()
+            attendancevals = {'attend_done': True}
+            if not record.attendance_finish:
+                finishtime = currenttime
+                attendancevals['attendance_finish'] = currentstr
+            else:
+                finishtime = fields.Datetime.from_string(record.attendance_finish)
+            totaltime = (finishtime - starttime).total_seconds() / 3600
+            attendancevals['attend_hours'] = totaltime
+            if float_compare(totaltime, record.worktime_standard, precision_rounding=0.000001) > 0.0:
+                attendancevals['overtime_hours'] = totaltime - record.worktime_standard
+            record.write(attendancevals)
 
     @api.model
     def action_workstation_scanning(self, equipment_code, employee_barcode):
-        """
-        工控工位扫描员工卡
+        """工控工位扫描员工卡
         :param equipment_code:
         :param employee_barcode:
         :return:
         """
-        result = {'success': True, 'message': '', 'action': 'working'}
+        values = {'success': True, 'message': '', 'action': 'working'}
         if not equipment_code:
-            result.update({'success': False, 'message': u'您确认已经设置了设备编码吗？'})
-            return result
+            values.update({'success': False, 'message': u'您确认已经设置了设备编码吗？'})
+            return values
         equipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)
         if not equipment:
-            result.update({'success': False, 'message': u'设备异常，请仔细检查系统是否存在此设备！'})
-            return result
+            values.update({'success': False, 'message': u'设备异常，请仔细检查系统是否存在此设备！'})
+            return values
         if not equipment.mesline_id or not equipment.workstation_id:
-            result.update({'success': False, 'message': u'当前设备可能还未设置产线工位！'})
-            return result
+            values.update({'success': False, 'message': u'当前设备可能还未设置产线工位！'})
+            return values
         employee = self.env['aas.hr.employee'].search([('barcode', '=', employee_barcode)], limit=1)
         if not employee:
-            result.update({'success': False, 'message': u'请确认是否有此员工存在，或许当前员已被删除，请仔细检查！'})
-            return result
-        result.update({'employee_name': employee.name, 'employee_code': employee.code})
-        attendance_domain = [('employee_id', '=', employee.id), ('attend_done', '=', False)]
-        attendance = self.env['aas.mes.work.attendance'].search(attendance_domain, limit=1)
-        if attendance:
-            message = u"%s,您已经离开工位%s"% (attendance.employee_name, attendance.workstation_name)
-            attendance.action_done()
-            result.update({'message': message, 'action': 'leave'})
-            return result
+            values.update({'success': False, 'message': u'请确认是否有此员工存在，或许当前员已被删除，请仔细检查！'})
+            return values
         mesline, workstation = equipment.mesline_id, equipment.workstation_id
-        attendancevals = {
-            'employee_id': employee.id, 'equipment_id': equipment.id,
-            'workstation_id': workstation.id, 'mesline_id': mesline.id
-        }
-        self.env['aas.mes.work.attendance'].create(attendancevals)
-        result['message'] = u"%s,您已经在工位%s上上岗了，加油工作吧！"% (employee.name, workstation.name)
-        return result
+        values = self.action_scanning(employee, mesline, workstation, equipment)
+        if not values.get('success', False):
+            return values
+        values.update({'employee_name': employee.name, 'employee_code': employee.code})
+        return values
 
 # 出勤明细
 class AASMESWorkAttendanceLine(models.Model):
     _name = 'aas.mes.work.attendance.line'
     _description = 'AAS MES Attendance Line'
+    _rec_name = 'employee_id'
+    _order = 'id desc'
 
-    attendance_id = fields.Many2one(comodel_name='aas.mes.work.attendance', string=u'出勤', ondelete='cascade')
-    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
-    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict')
-    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
-    equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', ondelete='restrict')
+    attendance_id = fields.Many2one(comodel_name='aas.mes.work.attendance', string=u'出勤', ondelete='cascade', index=True)
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict', index=True)
+    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', ondelete='restrict', index=True)
+    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict', index=True)
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict', index=True)
+    equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', ondelete='restrict', index=True)
+    attendance_date = fields.Char(string=u'在岗日期', copy=False)
     attendance_start = fields.Datetime(string=u'开始时间', default=fields.Datetime.now)
     attendance_finish = fields.Datetime(string=u'结束时间')
-    attendance_time = fields.Float(string=u'在岗工时', compute='_compute_attendance_time', store=True)
+    attend_done = fields.Boolean(string=u'出勤结束', default=False, copy=False)
+    attend_hours = fields.Float(string=u'在岗工时', compute='_compute_attend_hours', store=True)
     leave_id = fields.Many2one(comodel_name='aas.mes.work.attendance.leave', string=u'离开原因', ondelete='restrict')
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='restrict', default=lambda self:self.env.user.company_id)
 
     @api.depends('attendance_start', 'attendance_finish')
-    def _compute_attendance_time(self):
+    def _compute_attend_hours(self):
         for record in self:
             if record.attendance_start and record.attendance_finish:
                 temptimes = fields.Datetime.from_string(record.attendance_finish) - fields.Datetime.from_string(record.attendance_start)
-                record.attendance_time = temptimes.total_seconds() / 3600.00
+                record.attend_hours = temptimes.total_seconds() / 3600.00
             else:
-                record.attendance_time = 0.0
+                record.attend_hours = 0.0
+
+    @api.model
+    def create(self, vals):
+        record = super(AASMESWorkAttendanceLine, self).create(vals)
+        record.action_after_create()
+        return record
+
+    @api.one
+    def action_after_create(self):
+        linevals = {}
+        if self.mesline_id.schedule_id:
+            linevals['schedule_id'] = self.mesline_id.schedule_id.id
+        if self.mesline_id.workdate:
+            linevals['attendance_date'] = self.mesline_id.workdate
+        if linevals and len(linevals) > 0:
+            self.write(linevals)
+        self.env['aas.mes.workstation.employee'].create({
+            'mesline_id': self.mesline_id.id, 'workstation_id': self.workstation_id.id,
+            'employee_id': self.employee_id.id,
+            'equipment_id': False if not self.equipment_id else self.equipment_id.id
+        })
+        self.employee_id.write({'state': 'working'})
+        if self.attendance_id:
+            self.attendance_id.write({'attendance_finish': False, 'leave_id': False})
+
+
+    @api.multi
+    def action_done(self, leaveid=None):
+        """出勤结束
+        :param leaveid:
+        :return:
+        """
+        employeeids, attendanceids = [], []
+        for record in self:
+            if record.employee_id.id not in employeeids:
+                employeeids.append(record.employee_id.id)
+            if record.attendance_id and record.attendance_id.id not in attendanceids:
+                attendanceids.append(record.attendance_id.id)
+        currenttime = fields.Datetime.now()
+        attendancevals = {'attendance_finish': currenttime, 'attend_done': True}
+        if leaveid:
+            attendancevals['leave_id'] = leaveid
+        self.write(attendancevals)
+        if attendanceids and len(attendanceids) > 0:
+            attendancelist = self.env['aas.mes.work.attendance'].browse(attendanceids)
+            attendancelist.write({
+                'attendance_finish': currenttime, 'leave_id': False if not leaveid else leaveid
+            })
+        wsemployees = self.env['aas.mes.workstation.employee'].search([('employee_id', 'in', employeeids)])
+        if wsemployees and len(wsemployees) > 0:
+            wsemployees.unlink()
+        employeelist = self.env['aas.hr.employee'].browse(employeeids)
+        employeelist.write({'state': 'leave'})
+
+
+    @api.multi
+    def action_split(self):
+        """
+        出勤记录分割
+        :return:
+        """
+        for record in self:
+            if record.attend_done:
+                continue
+            attendancevals, mesline, workdate = {}, record.mesline_id, record.attendance_date
+            oldscheduleid = False if not record.schedule_id else record.schedule_id.id
+            if mesline.workdate != workdate:
+                attendancevals['attendance_date'] = mesline.workdate
+            newscheduleid = False if not mesline.schedule_id else mesline.schedule_id.id
+            if newscheduleid != oldscheduleid:
+                attendancevals['schedule_id'] = newscheduleid
+            if attendancevals and len(attendancevals) > 0:
+                attendancevals.update({
+                    'attendance_id': record.attendance_id.id, 'mesline_id': mesline.id,
+                    'employee_id': record.employee_id.id, 'workstation_id': record.workstation_id.id,
+                    'company_id': record.company_id.id,
+                    'equipment_id': False if not record.equipment_id else record.equipment_id.id
+                })
+                record.action_done()
+                self.env['aas.mes.work.attendance.line'].create(attendancevals)
+
+
+
 
 
 # 员工出勤离开原因

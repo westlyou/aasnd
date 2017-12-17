@@ -67,23 +67,8 @@ class AASMESGP12CheckingController(http.Controller):
             values.update({'success': False, 'message': u'员工卡扫描异常，请检查系统中是否存在该员工！'})
             return values
         values.update({'employee_id': employee.id, 'employee_name': employee.name})
-        attendancedomain = [('employee_id', '=', employee.id), ('attend_done', '=', False)]
-        mesattendance = request.env['aas.mes.work.attendance'].search(attendancedomain, limit=1)
-        if mesattendance:
-            mesattendance.action_done()
-            values.update({'action': 'leave', 'message': u'亲，您已离岗了哦！'})
-        else:
-            attendancevals = {'employee_id': employee.id, 'mesline_id': mesline.id, 'workstation_id': workstation.id}
-            equipmentdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-            tequipment = request.env['aas.mes.workstation.equipment'].search(equipmentdomain, limit=1)
-            if tequipment:
-                attendancevals['equipment_id'] = tequipment.equipment_id.id
-            try:
-                request.env['aas.mes.work.attendance'].create(attendancevals)
-            except ValidationError, ve:
-                values.update({'success': False, 'message': ve.name})
-                return values
-            values['message'] = u'亲，您已上岗！努力工作吧，加油！'
+        avalues = request.env['aas.mes.work.attendance'].action_scanning(employee, mesline, workstation)
+        values.update(avalues)
         return values
 
 
