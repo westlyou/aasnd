@@ -84,10 +84,6 @@ access_aas_mes_routing_manufacture_user,aas.mes.routing manufacture_user,model_a
 access_aas_mes_routing_mes_technologist,aas.mes.routing mes_technologist,model_aas_mes_routing,group_aas_mes_technologist,1,1,1,1
 access_aas_mes_routing_line_manufacture_user,aas.mes.routing.line manufacture_user,model_aas_mes_routing_line,group_aas_manufacture_user,1,0,0,0
 access_aas_mes_routing_line_mes_technologist,aas.mes.routing.line mes_technologist,model_aas_mes_routing_line,group_aas_mes_technologist,1,1,1,1
-
-access_aas_mes_routing_badmode_user,aas.mes.routing.badmode user,model_aas_mes_routing_badmode,base.group_user,1,1,0,0
-access_aas_mes_routing_badmode_manufacture_user,aas.mes.routing.badmode manufacture_user,model_aas_mes_routing_badmode,group_aas_manufacture_user,1,1,0,0
-access_aas_mes_routing_badmode_mes_technologist,aas.mes.routing.badmode mes_technologist,model_aas_mes_routing_badmode,group_aas_mes_technologist,1,1,1,1
 access_aas_mes_badmode_manufacture_user,aas.mes.badmode manufacture_user,model_aas_mes_badmode,group_aas_manufacture_user,1,0,0,0
 access_aas_mes_badmode_mes_technologist,aas.mes.badmode mes_technologist,model_aas_mes_badmode,group_aas_mes_technologist,1,1,1,1
 

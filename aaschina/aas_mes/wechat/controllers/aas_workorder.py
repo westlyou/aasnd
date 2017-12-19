@@ -129,10 +129,14 @@ class AASWorkorderWechatController(http.Controller):
     @http.route('/aaswechat/mes/workticket/badmodelist', type='json', auth="user")
     def aas_wechat_mes_workticket_badmodelist(self, workticketid):
         values = {'success': True, 'message': ''}
-        workticket = request.env['aas.mes.workticket'].browse(workticketid);
-        badmode_lines = workticket.workcenter_id.badmode_lines
+        workticket = request.env['aas.mes.workticket'].browse(workticketid)
+        workstation = workticket.workcenter_id.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前工序还未设置工位！'})
+            return values
+        badmode_lines = workstation.badmode_lines
         if not badmode_lines or len(badmode_lines) <= 0:
-            values.update({'success': False, 'message': u'工序%s还未设置不良模式，请联系工艺设置！'% workticket.workcenter_id.name})
+            values.update({'success': False, 'message': u'工位%s还未设置不良模式，请联系工艺设置！'% workstation.name})
             return values
         values['badmodelist'] = [{
             'value': str(badmode.badmode_id.id), 'text': badmode.badmode_id.name

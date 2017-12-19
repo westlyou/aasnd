@@ -114,6 +114,7 @@ class AASMESWorkstation(models.Model):
 
     employee_lines = fields.One2many(comodel_name='aas.mes.workstation.employee', inverse_name='workstation_id', string=u'员工清单')
     equipment_lines = fields.One2many(comodel_name='aas.mes.workstation.equipment', inverse_name='workstation_id', string=u'设备清单')
+    badmode_lines = fields.One2many(comodel_name='aas.mes.badmode', inverse_name='workstation_id', string=u'不良模式')
 
     _sql_constraints = [
         ('uniq_code', 'unique (code)', u'工位编码不可以重复！')
