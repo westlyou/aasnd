@@ -60,6 +60,7 @@ class AASMESWorkAttendance(models.Model):
         tempdomain = [('employee_id', '=', employee.id), ('mesline_id', '=', mesline.id), ('attend_done', '=', False)]
         tattendance = self.env['aas.mes.work.attendance'].search(tempdomain, limit=1)
         if tattendance:
+            values.update({'attendance_id': tattendance.id})
             linedomain = [('attendance_id', '=', tattendance.id), ('attend_done', '=', False)]
             if workstation:
                 attenddomain = [('workstation_id', '=', workstation.id)]
@@ -93,6 +94,7 @@ class AASMESWorkAttendance(models.Model):
             if not tvalues.get('success', False):
                 values.update(tvalues)
                 return values
+            values['attendance_id'] = tvalues['attendance_id']
         return values
 
 
@@ -109,6 +111,7 @@ class AASMESWorkAttendance(models.Model):
                 values.update(tvalues)
                 return values
             attendance = tvalues['attendance']
+        values.update({'attendance_id': attendance.id})
         linedomain = [('attendance_id', '=', attendance.id), ('employee_id', '=', employee.id)]
         linedomain.extend([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
         linedomain.append(('attend_done', '=', False))
@@ -142,7 +145,7 @@ class AASMESWorkAttendance(models.Model):
             'worktime_advance': worktime_advance, 'worktime_standard': worktime_standard
         })
         if not mesline.schedule_lines and len(mesline.schedule_lines) <= 0:
-            values.update({'success': False, 'message': u'产线%s还未设置班次，请联系管理员设置班次信息！'})
+            values.update({'success': False, 'message': u'产线%s还未设置班次，请联系管理员设置班次信息！'% mesline.name})
             return values
         if not mesline.workdate:
             mesline.sudo().action_refresh_schedule()
@@ -204,6 +207,9 @@ class AASMESWorkAttendance(models.Model):
 
     @api.multi
     def action_done(self):
+        """完成出勤，更闹心相关信息
+        :return:
+        """
         currentstr = fields.Datetime.now()
         currenttime = fields.Datetime.from_string(currentstr)
         for record in self:
@@ -220,10 +226,32 @@ class AASMESWorkAttendance(models.Model):
                 attendancevals['attendance_finish'] = currentstr
             else:
                 finishtime = fields.Datetime.from_string(record.attendance_finish)
-            totaltime = (finishtime - starttime).total_seconds() / 3600
+            totaltime = (finishtime - starttime).total_seconds() / 3600.0
             attendancevals['attend_hours'] = totaltime
-            if float_compare(totaltime, record.worktime_standard, precision_rounding=0.000001) > 0.0:
-                attendancevals['overtime_hours'] = totaltime - record.worktime_standard
+            overtime = totaltime - record.worktime_standard
+            if float_compare(overtime, 0.0, precision_rounding=0.000001) > 0.0:
+                attendancevals['overtime_hours'] = overtime
+            # 更新工作日和班次信息
+            if record.attend_lines and len(record.attend_lines) > 0:
+                linedict = {}
+                for aline in record.attend_lines:
+                    if not aline.schedule_id:
+                        continue
+                    akey = aline.attendance_date + '-' + str(aline.schedule_id.id)
+                    if akey not in linedict:
+                        linedict[akey] = {
+                            'attendance_date': aline.attendance_date,
+                            'schedule_id': aline.schedule_id.id, 'attend_hours': aline.attend_hours
+                        }
+                    else:
+                        linedict[akey]['attend_hours'] += aline.attend_hours
+                if linedict and len(linedict) > 0:
+                    workdate, schedule_id, thours = False, False, 0.0
+                    for lkey, lval in linedict.items():
+                        if float_compare(lval['attend_hours'], thours, precision_rounding=0.000001) > 0.0:
+                            thours = lval['attend_hours']
+                            workdate, schedule_id = lval['attendance_date'], lval['schedule_id']
+                    attendancevals.update({'attendance_date': workdate, 'schedule_id': schedule_id})
             record.write(attendancevals)
 
     @api.model

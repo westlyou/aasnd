@@ -41,6 +41,7 @@ $(function(){
                     $('#finalchecking_employees').append(templi);
                 }else{
                     $('#employee_'+dresult.employee_id).remove();
+                    action_leave(dresult.attendance_id);
                 }
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
@@ -165,5 +166,72 @@ $(function(){
             });
         }, function(){});
     });
+
+    function action_leave(attendanceid){
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        $.ajax({
+            url: '/aasmes/attendance/loadingleavelist',
+            headers:{'Content-Type':'application/json'},
+            type: 'post', timeout:10000, dataType: 'json',
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {}, id: access_id}),
+            success:function(data){
+                var dresult = data.result;
+                if(!dresult.success){
+                    layer.msg(dresult.message, {icon: 5});
+                    return ;
+                }
+                if(dresult.leavelist.length > 0){
+                    initleavelisthtml(attendanceid, dresult.leavelist);
+                }else{
+                    layer.msg('您已离岗！', {icon: 1});
+                }
+            },
+            error:function(xhr,type,errorThrown){
+                console.log(type);
+            }
+        });
+    }
+
+    function initleavelisthtml(attendanceid, leavelist){
+        var tcontent = '<div class="row" style="margin-top: 10px;clear: both;zoom: 1; padding:0px 20px;">';
+        $.each(leavelist, function(index, tleave){
+            tcontent += '<div class="col-md-4">';
+            tcontent += '<a href="javascript:void(0);" class="btn btn-block btn-success aas-leave" ';
+            tcontent += 'style="margin-top:10px;margin-bottom:10px; height:100px; line-height:100px; font-size:25px; padding:0;" ';
+            tcontent += 'leaveid='+tleave.leave_id+'>'+tleave.leave_name+'</a>';
+            tcontent += '</div>';
+        });
+        tcontent += '</div>';
+        var lindex = layer.open({
+            type: 1,
+            closeBtn: 0,
+            skin: 'layui-layer-rim',
+            title: '请在下面选择您的离岗原因',
+            area: ['980px', '560px'],
+            content: tcontent
+        });
+        $('.aas-leave').click(function(){
+            var self = $(this);
+            var leaveid = parseInt(self.attr('leaveid'));
+            var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+            var lparams = {'attendanceid': attendanceid, 'leaveid': leaveid};
+            $.ajax({
+                url: '/aasmes/attendance/actionleave',
+                headers:{'Content-Type':'application/json'},
+                type: 'post', timeout:10000, dataType: 'json',
+                data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: lparams, id: access_id}),
+                success:function(data){
+                    var dresult = data.result;
+                    if(!dresult.success){
+                        layer.msg(dresult.message, {icon: 5});
+                        return ;
+                    }
+                    layer.close(lindex);
+                },
+                error:function(xhr,type,errorThrown){ console.log(type); }
+            });
+
+        });
+    }
 
 });

@@ -161,10 +161,9 @@ class AASMESLine(models.Model):
                 return values
         tempstart = fields.Datetime.from_string(tschedule.actual_start) + timedelta(days=1)
         tempfinish = fields.Datetime.from_string(tschedule.actual_finish) + timedelta(days=1)
+        actual_start, actual_finish = fields.Datetime.to_string(tempstart), fields.Datetime.to_string(tempfinish)
         values['schedule'] = {
-            'actual_start': fields.Datetime.to_string(tempstart),
-            'actual_finish': fields.Datetime.to_string(tempfinish),
-            'workdate': fields.Datetime.to_timezone_string(tempstart, 'Asia/Shanghai')[0:10]
+            'actual_start': actual_start, 'actual_finish': actual_finish, 'workdate': actual_start[0:10]
         }
         return values
 

@@ -129,7 +129,7 @@
         </record>
 
         <menuitem id="menu_aas_mes_work_attendance_attendance"  name="员工出勤" action="action_aas_mes_work_attendance"
-                          parent="menu_aas_mes_attendance" sequence="1" groups="aas_mes.group_aas_manufacture_user,aas_mes.group_aas_manufacture_foreman"/>
+                          parent="menu_aas_mes_employee" sequence="2" groups="aas_mes.group_aas_manufacture_user,aas_mes.group_aas_manufacture_foreman"/>
 
 
         <record id="view_tree_aas_mes_work_attendance_line" model="ir.ui.view">
@@ -146,7 +146,7 @@
                     <field name="equipment_id"/>
                     <field name="attendance_start"/>
                     <field name="attendance_finish"/>
-                    <field name="attend_hours"/>
+                    <field name="attend_hours" widget="float_time"/>
                     <field name="leave_id"/>
                 </tree>
             </field>
@@ -229,7 +229,7 @@
         </record>
 
         <menuitem id="menu_aas_mes_work_attendance_line"  name="出勤明细" action="action_aas_mes_work_attendance_line"
-                          parent="menu_aas_mes_attendance" sequence="2" groups="aas_mes.group_aas_manufacture_user,aas_mes.group_aas_manufacture_foreman"/>
+                          parent="menu_aas_mes_employee" sequence="3" groups="aas_mes.group_aas_manufacture_user,aas_mes.group_aas_manufacture_foreman"/>
 
 
         <record id="view_tree_aas_mes_work_attendance_leave" model="ir.ui.view">
@@ -306,7 +306,7 @@
         </record>
 
         <menuitem id="menu_aas_mes_work_attendance_leave"  name="离岗原因" action="action_aas_mes_work_attendance_leave"
-                          parent="menu_aas_mes_attendance" sequence="3" groups="aas_mes.group_aas_manufacture_foreman"/>
+                          parent="menu_aas_mes_employee" sequence="4" groups="aas_mes.group_aas_manufacture_foreman"/>
 
 
     </data>

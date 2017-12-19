@@ -74,7 +74,7 @@ class AASMESAttendanceController(http.Controller):
             if not workstation:
                 values.update({'success': False, 'message': u'工位异常，请仔细检查！'})
                 return values
-        avalues = request.env['aas.mes.attendance'].action_scanning(employee, mesline, workstation)
+        avalues = request.env['aas.mes.work.attendance'].action_scanning(employee, mesline, workstation)
         values.update(avalues)
         return values
 
@@ -107,4 +107,24 @@ class AASMESAttendanceController(http.Controller):
                         stationitem['employees'].append({'employee_name': '', 'employee_code': ''})
                 stationlist.append(stationitem)
             values['workstations'] = stationlist
+        return values
+
+    @http.route('/aasmes/attendance/loadingleavelist', type='json', auth="user")
+    def aasmes_attendance_loadingleavelist(self):
+        values = {'success': True, 'message': '', 'leavelist': []}
+        leavelist = request.env['aas.mes.work.attendance.leave'].search([])
+        if leavelist and len(leavelist) > 0:
+            values['leavelist'] = [{'leave_id': tleave.id, 'leave_name': tleave.name} for tleave in leavelist]
+        return values
+
+
+    @http.route('/aasmes/attendance/actionleave', type='json', auth="user")
+    def aasmes_attendance_actionleave(self, attendanceid, leaveid):
+        print attendanceid, leaveid
+        values = {'success': True, 'message': ''}
+        attendance = request.env['aas.mes.work.attendance'].browse(attendanceid)
+        attendance.write({'leave_id': leaveid})
+        attendlines = request.env['aas.mes.work.attendance.line'].search([('attendance_id', '=', attendanceid), ('leave_id', '=', False)])
+        if attendlines and len(attendlines) > 0:
+            attendlines.write({'leave_id': leaveid})
         return values
