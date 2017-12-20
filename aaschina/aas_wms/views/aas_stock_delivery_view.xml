@@ -142,5 +142,38 @@
             </field>
         </record>
 
+        <record id="view_form_aas_stock_picking_prioritizedlabel_wizard" model="ir.ui.view">
+            <field name="name">aas.stock.picking.prioritizedlabel.wizard</field>
+            <field name="model">aas.stock.picking.prioritizedlabel.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="product_id" readonly="1"/>
+                            <field name="deliveryline_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="标签明细">
+                            <field name="label_lines">
+                                <tree editable="bottom">
+                                    <field name="label_id" required="1" options="{'no_create':true}"
+                                           domain="[('product_id','=',parent.product_id),('state','=','normal'),
+                                           ('locked','=',False),('parent_id','=',False),('isproduction','=',False)]"/>
+                                    <field name="product_lot" readonly="1"/>
+                                    <field name="product_qty" readonly="1"/>
+                                    <field name="location_id" readonly="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
     </data>
 </odoo>

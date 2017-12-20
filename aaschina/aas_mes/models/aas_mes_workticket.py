@@ -407,6 +407,8 @@ class AASMESWorkticket(models.Model):
             'workcenter_id': workcenter.id,'workcenter_name': workcenter.name,
             'workticket_id': workticket.id, 'workticket_name': workticket.name,
             'state': TICKETSTATEDICT[workticket.state], 'sequence': workticket.sequence,
+            'mainorder_id': 0 if not workorder.mainorder_id else workorder.mainorder_id.id,
+            'mainorder_name': '' if not workorder.mainorder_id else  workorder.mainorder_id.name,
             'input_qty': workticket.input_qty, 'output_qty': workticket.output_qty, 'badmode_qty': workticket.badmode_qty,
             'actual_qty': actual_qty, 'todo_qty': todo_qty, 'lastworkcenter': workticket.islastworkcenter(),
             'schedule_name': '' if not workticket.schedule_id else workticket.schedule_id.name,

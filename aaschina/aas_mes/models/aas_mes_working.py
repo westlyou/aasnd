@@ -215,6 +215,21 @@ class AASMESWorkstation(models.Model):
         return values
 
 
+    @api.model
+    def action_loading_badmodelist(self, workcenter_id):
+        values = {'success': True, 'message': '', 'badmodelist': []}
+        workcenter = self.env['aas.mes.routing.line'].browse(workcenter_id)
+        workstation = workcenter.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'工序%s还未设置工位！'% workcenter.name})
+            return values
+        if not workstation.badmode_lines or len(workstation.badmode_lines) <= 0:
+            values.update({'success': False, 'message': u'工位%s还未设置不良模式！'% workstation.name})
+            return values
+        values['badmodelist'] = [{'badmode_id': badmode.id, 'badmode_name': badmode.name} for badmode in workstation.badmode_lines]
+        return values
+
+
 
 
 class AASMESWorkstationEmployee(models.Model):

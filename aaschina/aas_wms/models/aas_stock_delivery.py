@@ -320,7 +320,7 @@ class AASStockDeliveryLine(models.Model):
         return label_ids
 
     @api.model
-    def action_pickinglist(self, deliveryline, prioritized_lots=None):
+    def action_pickinglist(self, deliveryline, prioritizedlotids=None):
         deliveryline.action_clear_list()
         picking_qty, excludelabelids = deliveryline.product_qty - deliveryline.delivery_qty, []
         if float_compare(picking_qty, 0.0, precision_rounding=0.000001) <= 0.0:
@@ -337,14 +337,11 @@ class AASStockDeliveryLine(models.Model):
         prioritizedlabels = self.env['aas.product.label'].search(prioritizedomain, order=labelorder)
         excludelabelids = deliveryline.action_building_picking_list(picking_qty, prioritizedlabels)
         # 优先批次，添加优先处理的批次
-        if float_compare(picking_qty, 0.0, precision_rounding=0.000001) > 0 and prioritized_lots:
-            prioritizedlotsdomain, prioritizedlotslabels = [], []
-            prioritizedlots = self.env['stock.production.lot'].search([('product_id', '=', deliveryline.product_id.id), ('name', 'in', prioritized_lots.split(','))])
-            if prioritizedlots and len(prioritizedlots) > 0:
-                prioritizedlotsdomain = labeldomain + [('product_lot', 'in', prioritizedlots.ids)]
-                if excludelabelids and len(excludelabelids) > 0:
-                    prioritizedlotsdomain += [('id', 'not in', excludelabelids)]
-                prioritizedlotslabels = self.env['aas.product.label'].search(prioritizedlotsdomain, order=labelorder)
+        if float_compare(picking_qty, 0.0, precision_rounding=0.000001) > 0 and (prioritizedlotids and len(prioritizedlotids) > 0):
+            prioritizedlotsdomain = labeldomain + [('product_lot', 'in', prioritizedlotids)]
+            if excludelabelids and len(excludelabelids) > 0:
+                prioritizedlotsdomain += [('id', 'not in', excludelabelids)]
+            prioritizedlotslabels = self.env['aas.product.label'].search(prioritizedlotsdomain, order=labelorder)
             excludelabelids += deliveryline.action_building_picking_list(picking_qty, prioritizedlotslabels)
         # 正常条件下，先进先出原则
         if float_compare(picking_qty, 0.0, precision_rounding=0.000001) > 0:
@@ -471,6 +468,31 @@ class AASStockDeliveryLine(models.Model):
         }
 
 
+    @api.multi
+    def action_addprioritizedlabels(self):
+        """
+        添加拣货优先批次
+        :return:
+        """
+        self.ensure_one()
+        wizard = self.env['aas.stock.picking.prioritizedlabel.wizard'].create({
+            'deliveryline_id': self.id, 'product_id': self.product_id.id
+        })
+        view_form = self.env.ref('aas_wms.view_form_aas_stock_picking_prioritizedlabel_wizard')
+        return {
+            'name': u"拣货优先标签",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.stock.picking.prioritizedlabel.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
+
 
 
 class AASStockPickingList(models.Model):
@@ -508,6 +530,7 @@ class AASStockDeliveryOperation(models.Model):
     check_time = fields.Datetime(string=u'确认时间')
     deliver_done = fields.Boolean(string=u'是否发货', default=False, copy=False)
     delivery_type = fields.Selection(selection=DELIVERY_TYPE, string=u'发货类型')
+    prioritized = fields.Boolean(string=u'优先标签', default=False, copy=False)
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
 
 
@@ -519,6 +542,8 @@ class AASStockDeliveryOperation(models.Model):
     @api.constrains('delivery_id', 'label_id')
     def action_check_operation(self):
         if self.delivery_id.delivery_type == 'purchase':
+            return True
+        if self.prioritized:
             return True
         product_id, location_id, product_lot = self.label_id.product_id, self.label_id.location_id, self.label_id.product_lot
         listdomain = [('product_id', '=', product_id.id), ('product_lot', '=', product_lot.id)]
@@ -757,6 +782,7 @@ class AASStockDeliveryNote(models.Model):
 
 # 向导
 
+# 添加优先批次
 class AASStockPickingPrioritizedlotWizard(models.TransientModel):
     _name = 'aas.stock.picking.prioritizedlot.wizard'
     _description = 'AAS Stock Picking Prioritizedlot Wizard'
@@ -769,7 +795,7 @@ class AASStockPickingPrioritizedlotWizard(models.TransientModel):
     def action_done(self):
         if not self.lot_lines and len(self.lot_lines) > 0:
             raise UserError(u'您还未添加批次信息！')
-        prioritizedlots = ','.join([productlot.product_lot.name for productlot in self.lot_lines])
+        prioritizedlots = [productlot.product_lot.id for productlot in self.lot_lines]
         self.env['aas.stock.delivery.line'].action_pickinglist(self.deliveryline_id, prioritizedlots)
 
 class AASStockPickingPrioritizedlotLineWizard(models.TransientModel):
@@ -778,3 +804,46 @@ class AASStockPickingPrioritizedlotLineWizard(models.TransientModel):
 
     wizard_id = fields.Many2one(comodel_name='aas.stock.picking.prioritizedlot.wizard', string='Wizard', ondelete='cascade')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
+
+
+# 添加优先标签
+class AASStockPickingPrioritizedlabelWizard(models.TransientModel):
+    _name = 'aas.stock.picking.prioritizedlabel.wizard'
+    _description = 'AAS Stock Picking Prioritizedlabel Wizard'
+
+    deliveryline_id = fields.Many2one(comodel_name='aas.stock.delivery.line', string=u'发货单', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    label_lines = fields.One2many(comodel_name='aas.stock.picking.prioritizedlabel.line.wizard', inverse_name='wizard_id', string=u'标签明细')
+
+    @api.one
+    def action_done(self):
+        if not self.label_lines and len(self.label_lines) > 0:
+            raise UserError(u'您还未添加优先标签明细！')
+        self.deliveryline_id.write({
+            'operation_lines': [(0, 0, {
+                'label_id': tlabel.label_id.id, 'prioritized': True
+            }) for tlabel in self.label_lines]
+        })
+
+class AASStockPickingPrioritizedlabelLineWizard(models.TransientModel):
+    _name = 'aas.stock.picking.prioritizedlabel.line.wizard'
+    _description = 'AAS Stock Picking Prioritizedlabel Line Wizard'
+
+    wizard_id = fields.Many2one(comodel_name='aas.stock.picking.prioritizedlabel.wizard', string='Wizard', ondelete='cascade')
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='cascade')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
+    product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='cascade')
+
+
+    @api.onchange('label_id')
+    def change_label(self):
+        label = self.label_id
+        if label:
+            self.location_id = label.location_id.id
+            self.product_lot, self.product_qty = label.product_lot.id, label.product_qty
+        else:
+            self.product_lot, self.product_qty, self.location_id = False, 0.0, False
+
+
+
