@@ -114,7 +114,7 @@ mui.ready(function(){
             }
             var operation_id = parseInt(li.getAttribute('operationid'));
             var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
-            var delivery_delmask = aas_delivery_line_detail_loading();
+            var delivery_delmask = aas_delivery_detail_loading();
             mui.ajax('/aaswechat/wms/deliverydeloperation',{
                 data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {'operation_id': operation_id}, id: access_id }),
                 dataType:'json', type:'post', timeout:10000,
@@ -127,6 +127,7 @@ mui.ready(function(){
                         mui.toast(dresult.message);
                         return ;
                     }
+                    document.getElementById('delivery_operations').removeChild(li);
                     window.location.reload(true);
                 },
                 error:function(xhr,type,errorThrown){
@@ -207,7 +208,7 @@ mui.ready(function(){
         });
     });
 
-    //确认拣货
+    //执行发货
     var delivery_pickdone_flag = false;
     document.getElementById('action_delivery_done').addEventListener('tap', function(){
         if (delivery_pickdone_flag){

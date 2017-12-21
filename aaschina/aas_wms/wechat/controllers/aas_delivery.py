@@ -482,7 +482,7 @@ class AASDeliveryWechatController(http.Controller):
             values.update({'dlineid': dlineid, 'product_code': deliveryline.product_id.default_code})
             picklist = request.env['aas.stock.picking.list'].search([('delivery_line', '=', dlineid), ('location_id', '=', stocklocation.id)])
         if not picklist or len(picklist) <= 0:
-            values.update({'success': False, 'message': u'当前可能还未生成拣货清单，请先生成拣货清单再拣货！'})
+            values.update({'success': False, 'message': u'当前可能还未生成拣货清单，或者扫描的库位不在拣货清单列表中！'})
             return request.render('aas_wms.wechat_wms_message', values)
         tlabelids = []
         if operationlist and len(operationlist) > 0:
