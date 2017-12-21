@@ -242,4 +242,21 @@ mui.ready(function(){
     });
 
 
+    //库位扫描
+    document.getElementById('action_scan_location').addEventListener('tap', function(){
+        wx.scanQRCode({
+            needResult: 1,
+            desc: '扫描库位',
+            scanType: ["qrCode"],
+            success: function (result) {
+                var deliveryid = parseInt(document.getElementById('delivery_detail_pullrefresh').getAttribute('deliveryid'));
+                var barcode = result.resultStr;
+                var deliverylineidstr = deliveryid+'-0';
+                mui.openWindow({'url': '/aaswechat/wms/deliverylocation/'+barcode+'/'+deliverylineidstr, 'id': 'deliverylocation'});
+            },
+            fail: function(result){  mui.toast(result.errMsg); }
+        });
+    });
+
+
 });

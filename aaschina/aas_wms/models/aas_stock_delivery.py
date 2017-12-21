@@ -573,10 +573,10 @@ class AASStockDeliveryOperation(models.Model):
         label, dline = self.env['aas.product.label'].browse(vals.get('label_id')), False
         if label.parent_id:
             raise UserError(u'标签%s还存在父级标签，不可以直接发货；如果确定需要此标签，请先将父级标签%s拆包！'% (label.name, label.parent_id.name))
-        if vals.get('delivery_line') and not vals.get('delivery_id'):
+        if vals.get('delivery_line', False) and not vals.get('delivery_id', False):
             dline = self.env['aas.stock.delivery.line'].browse(vals.get('delivery_line'))
             vals.update({'delivery_id': dline.delivery_id.id})
-        elif vals.get('delivery_id') and not vals.get('delivery_line'):
+        elif vals.get('delivery_id', False) and not vals.get('delivery_line', False):
             dline = self.env['aas.stock.delivery.line'].search([('delivery_id', '=', vals.get('delivery_id')), ('product_id', '=', label.product_id.id)], limit=1)
             vals.update({'delivery_line': dline.id})
         vals.update({

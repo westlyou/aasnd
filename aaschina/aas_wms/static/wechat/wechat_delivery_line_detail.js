@@ -111,6 +111,23 @@ mui.ready(function(){
     });
 
 
+    //库位扫描
+    document.getElementById('action_scan_location').addEventListener('tap', function(){
+        wx.scanQRCode({
+            needResult: 1,
+            desc: '扫描库位',
+            scanType: ["qrCode"],
+            success: function (result) {
+                var deliverylineid = parseInt(document.getElementById('delivery_line_detail_pullrefresh').getAttribute('lineid'));
+                var barcode = result.resultStr;
+                var deliverylineidstr = '0-'+deliverylineid;
+                mui.openWindow({'url': '/aaswechat/wms/deliverylocation/'+barcode+'/'+deliverylineidstr, 'id': 'deliverylocation'});
+            },
+            fail: function(result){  mui.toast(result.errMsg); }
+        });
+    });
+
+
     //计算拣货清单
     var delivery_picking_flag = false;
     document.getElementById('action_picking_list').addEventListener('tap', function(){

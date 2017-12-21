@@ -96,6 +96,34 @@
             </html>
         </template>
 
+        <template id="wechat_wms_message" name="Wechat WMS Message">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/iconfont/iconfont.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+                        <h1 class="mui-title"> 警告信息 </h1>
+                    </header>
+                    <div class="mui-content mui-scroll-wrapper" style="height:100%;">
+                        <div style="with:100%;height:100%;text-align:center;padding-top:48%;color:red;">
+                            <span t-esc="message"/>
+                        </div>
+                    </div>
+                </body>
+                <script src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+            </html>
+        </template>
+
 
     </data>
 </odoo>

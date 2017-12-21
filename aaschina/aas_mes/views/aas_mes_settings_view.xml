@@ -17,6 +17,9 @@
                         <field name="default_worktime_max" widget="float_time"/>
                         <field name="default_worktime_advance" widget="float_time"/>
                     </group>
+                    <group string="结单方式" name="closeorder">
+                        <field name="default_closeorder_method" widget="radio"/>
+                    </group>
                 </form>
             </field>
         </record>

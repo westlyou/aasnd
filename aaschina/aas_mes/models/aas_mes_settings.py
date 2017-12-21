@@ -34,6 +34,9 @@ class AASMESSettings(models.TransientModel):
     default_worktime_advance = fields.Float(string=u'提前工时', default=0.5, default_model='aas.mes.settings',
                                             help=u'提前班次开始时间段，在此时间段都默认为接下来的班次')
 
+    default_closeorder_method = fields.Selection(selection=[('total', u'实做总数与计划数相同即可结单'), ('equal', u'合格品数与计划数相同才可结单')],
+                                                 string=u'结单方式', default='equal', copy=False, default_model='aas.mes.settings')
+
 
     @api.one
     @api.constrains('default_worktime_min', 'default_worktime_max', 'default_worktime_standard')
