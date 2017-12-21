@@ -29,6 +29,7 @@
         'views/aas_mes_badmode_view.xml',
         'views/aas_mes_routing_view.xml',
         'views/aas_mes_bom_view.xml',
+        'views/aas_mes_workstation_view.xml',
         'views/aas_mes_mainorder_view.xml',
         'views/aas_mes_workorder_view.xml',
         'views/aas_mes_wires_view.xml',

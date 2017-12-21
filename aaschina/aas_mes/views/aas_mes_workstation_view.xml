@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_mes_workstation" model="ir.ui.view">
+            <field name="name">aas.mes.workstation.tree</field>
+            <field name="model">aas.mes.workstation</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="station_type"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_workstation" model="ir.ui.view">
+            <field name="name">aas.mes.workstation.form</field>
+            <field name="model">aas.mes.workstation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group colspan="4">
+                                <field name="name" required="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="code" required="1"/>
+                            </group>
+                            <group>
+                                <field name="station_type" required="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="员工清单">
+                                <field name="employee_lines" readonly="1">
+                                    <tree editable="bottom">
+                                        <field name="mesline_id"/>
+                                        <field name="employee_id"/>
+                                        <field name="action_time"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="mesline_id"/>
+                                                <field name="employee_id"/>
+                                                <field name="action_time"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="设备清单">
+                                <field name="equipment_lines" readonly="1">
+                                    <tree editable="bottom">
+                                        <field name="mesline_id"/>
+                                        <field name="equipment_id"/>
+                                        <field name="action_time"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="mesline_id"/>
+                                                <field name="equipment_id"/>
+                                                <field name="action_time"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="不良模式">
+                                <field name="badmode_lines">
+                                    <tree editable="bottom">
+                                        <field name="name" required="1"/>
+                                        <field name="code" required="1"/>
+                                        <field name="note"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group> <field name="name" required="1"/> </group>
+                                            <group> <field name="code" required="1"/> </group>
+                                        </group>
+                                        <group>
+                                            <group colspan="4"> <field name="note"/> </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_workstation" model="ir.ui.view">
+            <field name="name">aas.mes.workstation.search</field>
+            <field name="model">aas.mes.workstation</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="code" string="编码" filter_domain="[('code','ilike',self)]"/>
+                    <separator/>
+                    <filter string="扫描工位" domain="[('station_type','=','scanner')]"/>
+                    <filter string="工控工位" domain="[('station_type','=','controller')]"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_workstation" model="ir.actions.act_window">
+            <field name="name">生产工位</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.workstation</field>
+            <field name="limit">50</field>
+            <field name="view_mode">kanban,form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_workstation"/>
+            <field name="search_view_id" ref="view_search_aas_mes_workstation"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加生产工位</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_mes_workstation" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_workstation"/>
+            <field name="act_window_id" ref="action_aas_mes_workstation"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_workstation" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_workstation"/>
+            <field name="act_window_id" ref="action_aas_mes_workstation"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_workstation"  name="工位" action="action_aas_mes_workstation"
+                          parent="menu_aas_mes_resources" sequence="7" groups="group_aas_manufacture_foreman"/>
+
+    </data>
+</odoo>

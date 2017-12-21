@@ -284,3 +284,60 @@ class AASMESLineEmployee(models.Model):
     action_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
     action_user = fields.Many2one(comodel_name='res.users', string=u'操作人', ondelete='restrict', default=lambda self: self.env.user)
 
+
+
+# 生产班次表
+class AASMESSchedule(models.Model):
+    _name = 'aas.mes.schedule'
+    _description = 'AAS MES Schedule'
+    _order = 'mesline_id,sequence'
+
+    name = fields.Char(string=u'名称')
+    sequence = fields.Integer(string=u'序号')
+    work_start = fields.Float(string=u'开始时间', default=0.0)
+    work_finish = fields.Float(string=u'结束时间', default=0.0)
+    actual_start = fields.Datetime(string=u'实际开始时间', copy=False)
+    actual_finish = fields.Datetime(string=u'实际结束时间', copy=False)
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
+    state = fields.Selection(selection=[('working', u'生产'), ('break', u'休息')], string=u'状态', default='break')
+    _sql_constraints = [
+        ('uniq_name', 'unique (mesline_id, name)', u'同一产线的名称不能重复！'),
+        ('uniq_sequence', 'unique (mesline_id, sequence)', u'同一产线的序号不能重复！')
+    ]
+
+    @api.one
+    @api.constrains('work_start', 'work_finish', 'sequence')
+    def action_check_schedule(self):
+        if float_compare(self.work_start, 0.0, precision_rounding=0.0001) < 0.0 or float_compare(self.work_start, 24.0, precision_rounding=0.0001) >= 0.0:
+            raise ValidationError(u'班次开始时间只能在24小时以内！')
+        if float_compare(self.work_finish, 0.0, precision_rounding=0.0001) < 0.0 or float_compare(self.work_finish, 24.0, precision_rounding=0.0001) >= 0.0:
+            raise ValidationError(u'班次结束时间只能在24小时以内！')
+        if float_compare(self.work_start, self.work_finish, precision_rounding=0.000001) == 0.0:
+            raise ValidationError(u'无效设置，开始时间和结束时间不可以相同！')
+        if float_compare(self.work_start, self.work_finish, precision_rounding=0.000001) > 0:
+            scheduledomain = [('mesline_id', '=', self.mesline_id.id), ('sequence', '>', self.sequence)]
+            schedulecount = self.env['aas.mes.schedule'].search_count(scheduledomain)
+            if schedulecount > 0:
+                raise ValidationError(u'无效设置，同一个产线只有最后一个班次的时间区间可以跨天！')
+        prevdomain = [('mesline_id', '=', self.mesline_id.id), ('sequence', '<', self.sequence)]
+        prevschedule = self.env['aas.mes.schedule'].search(prevdomain, order='sequence desc', limit=1)
+        if prevschedule and float_compare(prevschedule.work_finish, self.work_start, precision_rounding=0.000001) > 0.0:
+            raise ValidationError(u'无效设置，当前班次的开始时间不能小于上一个班次的结束时间！')
+        nextdomain = [('mesline_id', '=', self.mesline_id.id), ('sequence', '>', self.sequence)]
+        nextschedule = self.env['aas.mes.schedule'].search(nextdomain, order='sequence', limit=1)
+        if nextschedule and float_compare(self.work_finish, nextschedule.work_start, precision_rounding=0.000001) > 0.0:
+            raise ValidationError(u'无效设置，当前班次的结束时间不能大于下一个班次的开始时间！')
+
+    @api.multi
+    def unlink(self):
+        meslineids, meslines = []
+        for record in self:
+            if record.mesline_id.id not in meslineids:
+                meslines.append(record.mesline_id)
+                meslineids.append(record.mesline_id.id)
+        result = super(AASMESSchedule, self).unlink()
+        for mesline in meslines:
+            schedulecount = self.env['aas.mes.schedule'].search_count([('mesline_id', '=', mesline.id)])
+            if schedulecount <= 0:
+                raise UserError(u'产线%s下至少要保留一个班次！'% mesline.name)
+        return result
