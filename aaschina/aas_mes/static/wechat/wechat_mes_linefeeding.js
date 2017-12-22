@@ -177,7 +177,7 @@ mui.ready(function(){
             var feeding_id = parseInt(feedingli.getAttribute('feedingid'));
             var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
             var feeding_delmask = aas_feeding_loading();
-            mui.ajax('/aaswechat/wms/deliverydeloperation',{
+            mui.ajax('/aaswechat/mes/feeding/materialdel',{
                 data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {'feeding_id': feeding_id}, id: access_id }),
                 dataType:'json', type:'post', timeout:30000,
                 headers:{'Content-Type':'application/json'},
@@ -197,6 +197,40 @@ mui.ready(function(){
                     feeding_delmask.close();
                 }
             });
+        });
+    });
+
+    //刷新上料库存信息
+    var feeding_refresh_flag = false;
+    document.getElementById('action_refresh_stock').addEventListener('tap', function(){
+        if(feeding_refresh_flag){
+            mui.toast('操作正在处理，请耐心等待！');
+            return ;
+        }
+        feeding_refresh_flag = true;
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        var meslineid = parseInt(document.getElementById('linefeeding_pullrefresh').getAttribute('meslineid'));
+        var tempparams = {'meslineid': meslineid};
+        var feeding_refreshmask = aas_feeding_loading();
+        mui.ajax('/aaswechat/mes/feeding/refreshstock',{
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: tempparams, id: access_id }),
+            dataType:'json', type:'post', timeout:30000,
+            headers:{'Content-Type':'application/json'},
+            success:function(data){
+                var dresult = data.result;
+                feeding_refresh_flag = false;
+                feeding_refreshmask.close();
+                if (!dresult.success){
+                    mui.toast(dresult.message);
+                    return ;
+                }
+                window.location.reload(true);
+            },
+            error:function(xhr,type,errorThrown){
+                console.log(type);
+                feeding_refresh_flag = false;
+                feeding_refreshmask.close();
+            }
         });
     });
 

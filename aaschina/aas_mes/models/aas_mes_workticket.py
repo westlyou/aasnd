@@ -271,8 +271,7 @@ class AASMESWorkticket(models.Model):
             trace.write({'materiallist': ','.join(materiallist)})
         workorder.write({'consume_lines': consumelines})
         # 刷新上料记录库存
-        feeddomain = [('workstation_id', '=', workstation.id), ('mesline_id', '=', self.mesline_id.id)]
-        feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
+        feedmateriallist = self.env['aas.mes.feedmaterial'].search([('mesline_id', '=', self.mesline_id.id)])
         if feedmateriallist and len(feedmateriallist) > 0:
             for feedmaterial in feedmateriallist:
                 feedmaterial.action_refresh_stock()

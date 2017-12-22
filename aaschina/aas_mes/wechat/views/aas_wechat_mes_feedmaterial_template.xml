@@ -18,9 +18,10 @@
                 <body>
                     <header class="mui-bar mui-bar-nav">
                         <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+                        <a class="mui-icon mui-icon-bars mui-pull-right" style="color: #0870d9;" href="#feeding_list_buttons"></a>
                         <h1 class="mui-title"> 产线上料 </h1>
                     </header>
-                    <div id="linefeeding_pullrefresh" class="mui-content mui-scroll-wrapper">
+                    <div id="linefeeding_pullrefresh" class="mui-content mui-scroll-wrapper" t-att-meslineid="meslineid">
                         <div class="mui-scroll">
                             <t t-foreach="workstationlist" t-as="wkstation">
                                 <div class="mui-card">
@@ -55,6 +56,14 @@
                                 </div>
                             </t>
                         </div>
+                    </div>
+                    <div id="feeding_list_buttons" class="mui-popover mui-popover-action mui-popover-bottom">
+                        <ul class="mui-table-view">
+                            <li class="mui-table-view-cell"> <a id="action_refresh_stock" href="javascript:;">刷新库存</a></li>
+                        </ul>
+                        <ul class="mui-table-view">
+                            <li class="mui-table-view-cell"> <a href="#feeding_list_buttons"><b>取消</b></a> </li>
+                        </ul>
                     </div>
                 </body>
                 <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>

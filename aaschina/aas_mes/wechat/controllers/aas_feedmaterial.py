@@ -21,7 +21,7 @@ class AASFeedmaterialWechatController(http.Controller):
 
     @http.route('/aaswechat/mes/linefeeding', type='http', auth='user')
     def aas_wechat_mes_linefeeding(self):
-        values = {'success': True, 'message': ''}
+        values = {'success': True, 'message': '', 'meslineid': '0'}
         loginuser = request.env.user
         feeddomain = [('lineuser_id', '=', loginuser.id), ('mesrole', '=', 'feeder')]
         linefeeder = request.env['aas.mes.lineusers'].search(feeddomain, limit=1)
@@ -29,6 +29,7 @@ class AASFeedmaterialWechatController(http.Controller):
             values.update({'success': False, 'message': u'当前登录用户可能还不是上料员，请仔细检查！'})
             return request.render('aas_mes.wechat_mes_message', values)
         mesline = linefeeder.mesline_id
+        values['meslineid'] = mesline.id
         workstations = request.env['aas.mes.line.workstation'].search([('mesline_id', '=', mesline.id)], order='sequence')
         if not workstations or len(workstations) <= 0:
             values.update({'success': False, 'message': u'产线%s还未设置工位，请先设置工位，再进行上料操作！'})
@@ -153,4 +154,28 @@ class AASFeedmaterialWechatController(http.Controller):
                         'material_qty': tempfeed.material_qty
                     })
             values['materiallist'] = materiallist
+        return values
+
+
+    @http.route('/aasmes/mes/feeding/materialdel', type='json', auth="user")
+    def aas_wechat_mes_feeding_materialdel(self, feeding_id):
+        values = {'success': True, 'message': ''}
+        try:
+            request.env['aas.mes.feedmaterial'].browse(feeding_id).unlink()
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
+        except ValidationError, ve:
+            values.update({'success': False, 'message': ve.name})
+            return values
+        return values
+
+
+    @http.route('/aasmes/mes/feeding/refreshstock', type='json', auth="user")
+    def aas_wechat_mes_feeding_refreshstock(self, meslineid):
+        values = {'success': True, 'message': ''}
+        feedinglist = request.env['aas.mes.feedmaterial'].search([('mesline_id', '=', meslineid)])
+        if feedinglist and len(feedinglist) > 0:
+            for feeding in feedinglist:
+                feeding.action_refresh_stock()
         return values
