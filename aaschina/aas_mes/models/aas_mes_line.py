@@ -119,7 +119,7 @@ class AASMESLine(models.Model):
     def action_refresh(self):
         self.action_refresh_schedule()
         currenttime = fields.Datetime.now()
-        searchdomain = [('actual_start', '<=', currenttime), ('actual_finish', '>=', currenttime)]
+        searchdomain = [('actual_start', '<=', currenttime), ('actual_finish', '>', currenttime)]
         searchdomain.append(('mesline_id', '=', self.id))
         schedule = self.env['aas.mes.schedule'].search(searchdomain, limit=1)
         if not schedule or not self.schedule_id or schedule.id != self.schedule_id.id:

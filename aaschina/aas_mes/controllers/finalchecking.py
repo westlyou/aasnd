@@ -12,6 +12,7 @@ import werkzeug
 
 from odoo import http, fields
 from odoo.http import request
+from odoo.tools.float_utils import float_compare, float_is_zero
 from odoo.exceptions import AccessDenied, UserError, ValidationError
 
 logger = logging.getLogger(__name__)
@@ -207,5 +208,15 @@ class AASMESFinalCheckingController(http.Controller):
         if not cresult['success']:
             values.update(cresult)
             return values
+        # 根据结单方式判断什么时候自动结单
+        closeorder = request.env['ir.values'].sudo().get_default('aas.mes.settings', 'closeorder_method')
+        if closeorder == 'equal':
+            if float_compare(workorder.output_qty, workorder.input_qty, precision_rounding=0.000001) >= 0.0:
+                workorder.action_done()
+        else:
+            # total
+            total_qty = workorder.output_qty + workorder.scrap_qty
+            if float_compare(total_qty, workorder.input_qty, precision_rounding=0.000001) >= 0.0:
+                workorder.action_done()
         values['message'] = u'结单成功！'
         return values

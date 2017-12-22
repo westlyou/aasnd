@@ -305,8 +305,15 @@ class AASMESWorkticket(models.Model):
                 containerstock.write({'temp_qty': containerstock.temp_qty+output_qty})
             containerstock.action_stock(output_qty)
         trace.write({'product_lot': product_lot.id, 'product_lot_name': product_lot.name})
-        if float_compare(self.output_qty + self.badmode_qty, self.input_qty, precision_rounding=0.000001) < 0.0:
-            return
+        # 根据结单方式判断什么时候自动结单
+        closeorder = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'closeorder_method')
+        if closeorder == 'equal':
+            if float_compare(self.output_qty, self.input_qty, precision_rounding=0.000001) < 0.0:
+                return
+        else:  # total
+            total_qty = self.output_qty + self.badmode_qty
+            if float_compare(total_qty, self.input_qty, precision_rounding=0.000001) < 0.0:
+                return
         self.write({'state': 'done'})
         workorder, currentworkcenter = self.workorder_id, self.workcenter_id
         domain = [('routing_id', '=', self.routing_id.id), ('sequence', '>', currentworkcenter.sequence)]

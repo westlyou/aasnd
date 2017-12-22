@@ -260,9 +260,16 @@ class AASMESWireOrder(models.Model):
         if not csresult['success']:
             values.update(csresult)
             return values
-        if float_compare(workorder.output_qty, workorder.input_qty, precision_rounding=0.000001) >= 0.0:
-            currenttime = fields.Datetime.now()
-            workorder.write({'produce_finish': currenttime, 'time_finish': currenttime, 'state': 'done'})
+        # 根据结单方式判断什么时候自动结单
+        closeorder = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'closeorder_method')
+        if closeorder == 'equal':
+            if float_compare(workorder.output_qty, workorder.input_qty, precision_rounding=0.000001) >= 0.0:
+                workorder.action_done()
+        else:
+            # total
+            total_qty = workorder.output_qty + workorder.scrap_qty
+            if float_compare(total_qty, workorder.input_qty, precision_rounding=0.000001) >= 0.0:
+                workorder.action_done()
         wireorder = workorder.wireorder_id
         if wireorder.state not in ['producing', 'done']:
             wireorder.write({'state': 'producing', 'produce_start': fields.Datetime.now()})
