@@ -328,11 +328,13 @@ class AASMESWorkAttendanceLine(models.Model):
             linevals['attendance_date'] = self.mesline_id.workdate
         if linevals and len(linevals) > 0:
             self.write(linevals)
-        self.env['aas.mes.workstation.employee'].create({
-            'mesline_id': self.mesline_id.id, 'workstation_id': self.workstation_id.id,
-            'employee_id': self.employee_id.id,
-            'equipment_id': False if not self.equipment_id else self.equipment_id.id
-        })
+        tempdomain = [('mesline_id', '=', self.mesline_id.id), ('workstation_id', '=', self.workstation_id.id), ('employee_id', '=', self.employee_id.id)]
+        if self.env['aas.mes.workstation.employee'].search_count(tempdomain) <= 0:
+            self.env['aas.mes.workstation.employee'].create({
+                'mesline_id': self.mesline_id.id, 'workstation_id': self.workstation_id.id,
+                'employee_id': self.employee_id.id,
+                'equipment_id': False if not self.equipment_id else self.equipment_id.id
+            })
         self.employee_id.write({'state': 'working'})
         if self.attendance_id:
             self.attendance_id.write({'attendance_finish': False, 'leave_id': False})
