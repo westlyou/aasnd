@@ -134,13 +134,13 @@ class AASWorkorderWechatController(http.Controller):
         if not workstation:
             values.update({'success': False, 'message': u'当前工序还未设置工位！'})
             return values
-        badmode_lines = workstation.badmode_lines
-        if not badmode_lines or len(badmode_lines) <= 0:
+        badmodelist = request.env['aas.mes.workstation'].get_badmode_list(workstation.id)
+        if not badmodelist or len(badmodelist) <= 0:
             values.update({'success': False, 'message': u'工位%s还未设置不良模式，请联系工艺设置！'% workstation.name})
             return values
         values['badmodelist'] = [{
-            'value': str(badmode.badmode_id.id), 'text': badmode.badmode_id.name
-        } for badmode in badmode_lines]
+            'value': str(badmode.id), 'text': badmode.name+'['+badmode.code+']'
+        } for badmode in badmodelist]
         return values
 
 

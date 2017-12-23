@@ -34,10 +34,10 @@ class AASMESController(http.Controller):
         values = {'items': [], 'total_count': 0}
         search_domain = []
         if q:
-            search_domain.append(('name', 'ilike', q))
+            search_domain += ['|', ('name', 'ilike', q), ('code', 'ilike', q)]
         badmodelist = request.env['aas.mes.badmode'].search(search_domain, offset=(page-1)*limit)
         if badmodelist and len(badmodelist) > 0:
-            values['items'] = [{'id': badmode.id, 'text': badmode.name} for badmode in badmodelist]
+            values['items'] = [{'id': badmode.id, 'text': badmode.name+'['+badmode.code+']'} for badmode in badmodelist]
         values['total_count'] = request.env['aas.mes.badmode'].search_count(search_domain)
         return values
 
