@@ -39,3 +39,16 @@ class AASMESBadmode(models.Model):
         for record in self:
             record.workstation_name = False if not record.workstation_id else record.workstation_id.name
 
+    @api.model
+    def action_loading_badmodelist(self, workstation_id, included=True):
+        """获取工位不良模式清单
+        :param workstation_id:
+        :param included: 包含通用不良模式，即未设置工位的不良模式
+        :return:
+        """
+        tempdomain = [('workstation_id', '=', workstation_id)]
+        if included:
+            tempdomain = ['|', ('workstation_id', '=', workstation_id), ('workstation_id', '=', False)]
+        badmodelist = self.env['aas.mes.badmode'].search(tempdomain)
+        return badmodelist
+

@@ -135,10 +135,13 @@ class AASMESWorkstation(models.Model):
         if not workstation:
             values.update({'success': False, 'message': u'请仔细检查是否存在此工位！'})
             return values
-        if not workstation.badmode_lines or len(workstation.badmode_lines) <= 0:
-            values.update({'success': False, 'message': u'工位%s还未设置不良模式！'% workstation.name})
+        badmodelist = self.env['aas.mes.badmode'].action_loading_badmodelist(workstation.id)
+        if not badmodelist or len(badmodelist) <= 0:
+            values.update({'success': False, 'message': u'当前可能还未设置不良模式！'})
             return values
-        values['badmodelist'] = [{'badmode_id': badmode.id, 'badmode_name': badmode.name} for badmode in workstation.badmode_lines]
+        values['badmodelist'] = [{
+            'badmode_id': badmode.id, 'badmode_name': badmode.name, 'badmode_code': badmode.code
+        } for badmode in badmodelist]
         return values
 
 
