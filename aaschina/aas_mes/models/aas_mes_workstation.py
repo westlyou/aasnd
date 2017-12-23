@@ -137,7 +137,7 @@ class AASMESWorkstation(models.Model):
 
 
     @api.model
-    def action_loading_badmodelist(self, equipment_code, included=True):
+    def action_loading_badmodelist(self, equipment_code, included=False):
         values = {'success': True, 'message': '', 'badmodelist': []}
         tequipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)
         if not tequipment.mesline_id or not tequipment.workstation_id:
