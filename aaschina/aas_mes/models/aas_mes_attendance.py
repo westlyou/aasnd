@@ -187,10 +187,10 @@ class AASMESWorkAttendance(models.Model):
             tracingdomain.append(('attendance_date', '=', attendance_date))
         if not tracingdomain or len(attendance_date) <= 0:
             return tracevals
-        attendances = self.env['aas.mes.work.attendance'].search(tracingdomain)
-        if attendances and len(tracingdomain) > 0:
+        attendancelines = self.env['aas.mes.work.attendance.line'].search(tracingdomain)
+        if attendancelines and len(attendancelines) > 0:
             employeeids, employees, equipmentids, equipments = [], [], [], []
-            for attendance in attendances:
+            for attendance in attendancelines:
                 temployee, tequipment = attendance.employee_id, attendance.equipment_id
                 if temployee and temployee.id not in employeeids:
                     employeeids.append(temployee.id)

@@ -102,6 +102,7 @@ WIREORDERSTATES = [('draft', u'草稿'), ('wait', u'等待'), ('producing', u'�
 class AASMESWireOrder(models.Model):
     _name = 'aas.mes.wireorder'
     _description = 'AAS MES Wire Order'
+    _order = 'id desc'
 
     name = fields.Char(string=u'名称', copy=False)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
