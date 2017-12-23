@@ -88,8 +88,3 @@ class AASStockAdjust(models.Model):
         tempmove = self.env['stock.move'].create(movevals)
         tempmove.action_done()
         self.write({'state': 'done'})
-        # 更新收发汇总
-        if tempmove.location_dest_id.usage == 'internal':
-            self.env['aas.receive.deliver'].action_receive(movevals['product_id'], movevals['location_dest_id'], movevals['restrict_lot_id'], movevals['product_uom_qty'])
-        if tempmove.location_id.usage == 'internal':
-            self.env['aas.receive.deliver'].action_deliver(movevals['product_id'], movevals['location_id'], movevals['restrict_lot_id'], movevals['product_uom_qty'])

@@ -15,6 +15,7 @@ _logger = logging.getLogger(__name__)
 class AASReceiveDeliver(models.Model):
     _name = 'aas.receive.deliver'
     _description = u'收发汇总'
+    _order = 'action_year desc,action_month desc'
 
     name = fields.Char(string=u'名称')
     action_year = fields.Integer(string=u"年份")
@@ -45,7 +46,7 @@ class AASReceiveDeliver(models.Model):
     def action_receive(self, product_id, location_id, product_lot, receive_qty, action_year=None, action_month=None):
         templocation = self.env['stock.location'].browse(location_id)
         if templocation.usage != 'internal':
-            raise UserError(u'非内部库位无需汇总！')
+            return False
         company_id = self.env.user.company_id.id
         if not action_year or not action_month:
             action_year, action_month = self.action_check_year_month()
@@ -75,7 +76,7 @@ class AASReceiveDeliver(models.Model):
     def action_deliver(self, product_id, location_id, product_lot, deliver_qty, action_year=None, action_month=None):
         templocation = self.env['stock.location'].browse(location_id)
         if templocation.usage != 'internal':
-            raise UserError(u'非内部库位无需汇总！')
+            return False
         company_id = self.env.user.company_id.id
         if not action_year or not action_month:
             today = date.today()

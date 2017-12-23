@@ -161,30 +161,6 @@ class Location(models.Model):
 
 
 
-
-    @api.multi
-    def action_popup_wizard(self):
-        """
-        向导，触发此方法弹出向导并进行业务处理
-        :return:
-        """
-        self.ensure_one()
-        wizard = self.env['wizard.name'].create({})
-        view_form = self.env.ref('moudle_name.view_name')
-        return {
-            'name': u"向导名称",
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'wizard.name',
-            'views': [(view_form.id, 'form')],
-            'view_id': view_form.id,
-            'target': 'new',
-            'res_id': wizard.id,
-            'context': self.env.context
-        }
-
-
 class ProductionLot(models.Model):
     _inherit = 'stock.production.lot'
 
@@ -289,3 +265,26 @@ class StockSettings(models.TransientModel):
         for name, groups, implied_group in classified['group']:
             if name in check_group_fields:
                 groups.write({'implied_ids': [(4, implied_group.id)]})
+
+
+class StockMove(models.Model):
+    _inherit = 'stock.move'
+
+    @api.multi
+    def action_done(self):
+        result = super(StockMove, self).action_done()
+        ardmodel = self.env['aas.receive.deliver'].sudo()
+        for record in self:
+            product_lot = record.restrict_lot_id
+            if not product_lot:
+                continue
+            # 更新收发汇总
+            product_id, product_qty = record.product_id.id, record.product_uom_qty
+            locationdestid, locationsrcid = record.location_dest_id.id, record.location_id.id
+            if record.location_dest_id.usage == 'internal':
+                ardmodel.action_receive(product_id, locationdestid, product_lot.id, product_qty)
+            if record.location_id.usage == 'internal':
+                ardmodel.action_deliver(product_id, locationsrcid, product_lot.id, product_qty)
+        return result
+
+

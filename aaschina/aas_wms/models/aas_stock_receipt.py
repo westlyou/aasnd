@@ -574,21 +574,8 @@ class AASStockReceiptMove(models.Model):
     @api.model
     def create(self, vals):
         record = super(AASStockReceiptMove, self).create(vals)
-        record.action_receive_deliver()
         record.action_stock_move()
         return record
-
-    @api.one
-    def action_receive_deliver(self):
-        """
-        更新收发汇总表
-        :return:
-        """
-        if self.location_src_id.usage == 'internal':
-            self.env['aas.receive.deliver'].action_deliver(self.product_id.id, self.location_src_id.id, self.product_lot.id, self.product_qty)
-        if self.location_dest_id.usage == 'internal':
-            self.env['aas.receive.deliver'].action_receive(self.product_id.id, self.location_dest_id.id, self.product_lot.id, self.product_qty)
-
 
     @api.one
     def action_stock_move(self):

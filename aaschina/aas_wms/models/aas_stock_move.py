@@ -88,8 +88,6 @@ class AASStockMove(models.Model):
         movelist = self.env['stock.move']
         for mkey, mval in movedict.items():
             movelist |= self.env['stock.move'].create(mval)
-            self.env['aas.receive.deliver'].action_receive(mval['product_id'], mval['location_dest_id'], mval['restrict_lot_id'], mval['product_uom_qty'])
-            self.env['aas.receive.deliver'].action_deliver(mval['product_id'], mval['location_id'], mval['restrict_lot_id'], mval['product_uom_qty'])
         movelist.action_done()
         templabels.write({'location_id': self.location_id.id, 'locked': False, 'locked_order': False})
         self.write({'state': 'done', 'move_time': fields.Datetime.now()})
