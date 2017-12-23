@@ -26,29 +26,9 @@ class AASMESBadmode(models.Model):
     name = fields.Char(string=u'名称', required=True, copy=False)
     code = fields.Char(string=u'编码', copy=False)
     note = fields.Text(string=u'描述')
-    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
-    workstation_name = fields.Char(string=u'工位名称', compute="_compute_workstation_name", store=True)
+    universal = fields.Boolean(string=u'通用的', default=True, copy=False)
 
     _sql_constraints = [
-        ('uniq_name', 'unique (workstation_id, name)', u'同一工位的不良模式名称不能重复！'),
         ('uniq_code', 'unique (code)', u'不良模式的编码不可以重复！')
     ]
-
-    @api.depends('workstation_id')
-    def _compute_workstation_name(self):
-        for record in self:
-            record.workstation_name = False if not record.workstation_id else record.workstation_id.name
-
-    @api.model
-    def action_loading_badmodelist(self, workstation_id, included=True):
-        """获取工位不良模式清单
-        :param workstation_id:
-        :param included: 包含通用不良模式，即未设置工位的不良模式
-        :return:
-        """
-        tempdomain = [('workstation_id', '=', workstation_id)]
-        if included:
-            tempdomain = ['|', ('workstation_id', '=', workstation_id), ('workstation_id', '=', False)]
-        badmodelist = self.env['aas.mes.badmode'].search(tempdomain)
-        return badmodelist
 

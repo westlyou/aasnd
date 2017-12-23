@@ -30,7 +30,7 @@ class AASMESWorkstation(models.Model):
 
     employee_lines = fields.One2many(comodel_name='aas.mes.workstation.employee', inverse_name='workstation_id', string=u'员工清单')
     equipment_lines = fields.One2many(comodel_name='aas.mes.workstation.equipment', inverse_name='workstation_id', string=u'设备清单')
-    badmode_lines = fields.One2many(comodel_name='aas.mes.badmode', inverse_name='workstation_id', string=u'不良模式')
+    badmode_lines = fields.One2many(comodel_name='aas.mes.workstation.badmode', inverse_name='workstation_id', string=u'不良模式')
 
     _sql_constraints = [
         ('uniq_code', 'unique (code)', u'工位编码不可以重复！')
@@ -123,9 +123,21 @@ class AASMESWorkstation(models.Model):
             } for temployee in employeelist]
         return values
 
+    @api.model
+    def get_badmode_list(self, workstation_id, included=True):
+        badmodelist = []
+        workstation_badmodes = self.env['aas.mes.workstation.badmode'].search([('workstation_id', '=', workstation_id)])
+        if workstation_badmodes and len(workstation_badmodes) > 0:
+            badmodelist += [tbadmode.badmode_id for tbadmode in workstation_badmodes]
+        if included:
+            commonbadmodes = self.env['aas.mes.badmode'].search([('universal', '=', True)])
+            if commonbadmodes and len(commonbadmodes) > 0:
+                badmodelist += [badmode for badmode in commonbadmodes]
+        return badmodelist
+
 
     @api.model
-    def action_loading_badmodelist(self, equipment_code):
+    def action_loading_badmodelist(self, equipment_code, included=True):
         values = {'success': True, 'message': '', 'badmodelist': []}
         tequipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)
         if not tequipment.mesline_id or not tequipment.workstation_id:
@@ -135,7 +147,7 @@ class AASMESWorkstation(models.Model):
         if not workstation:
             values.update({'success': False, 'message': u'请仔细检查是否存在此工位！'})
             return values
-        badmodelist = self.env['aas.mes.badmode'].action_loading_badmodelist(workstation.id)
+        badmodelist = self.get_badmode_list(workstation.id, included)
         if not badmodelist or len(badmodelist) <= 0:
             values.update({'success': False, 'message': u'当前可能还未设置不良模式！'})
             return values
@@ -147,11 +159,14 @@ class AASMESWorkstation(models.Model):
 
 
 
+
+
+
 class AASMESWorkstationEmployee(models.Model):
     _name = 'aas.mes.workstation.employee'
     _description = 'AAS MES Workstation Employee'
 
-    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'库位', required=True, ondelete='cascade')
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', required=True, ondelete='cascade')
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', required=True, ondelete='cascade')
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', ondelete='restrict')
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict')
@@ -168,7 +183,7 @@ class AASMESWorkstationEquipment(models.Model):
     _name = 'aas.mes.workstation.equipment'
     _description = 'AAS MES Workstation Equipment'
 
-    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'库位', required=True, ondelete='cascade')
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', required=True, ondelete='cascade')
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', required=True, ondelete='cascade')
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', ondelete='restrict')
     action_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
@@ -177,3 +192,55 @@ class AASMESWorkstationEquipment(models.Model):
     _sql_constraints = [
         ('uniq_equipment', 'unique (workstation_id, mesline_id, equipment_id)', u'请不要重复添加同一个设备！')
     ]
+
+
+class AASMESWorkstationBadmode(models.Model):
+    _name = 'aas.mes.workstation.badmode'
+    _description = 'AAS MES Workstation Badmode'
+
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', required=True, ondelete='cascade')
+    badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')
+    badmode_code = fields.Char(string=u'编码', copy=False)
+    operate_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
+    operater_id = fields.Many2one(comodel_name='res.users', string=u'操作员', ondelete='restrict', default=lambda self: self.env.user)
+
+    _sql_constraints = [
+        ('uniq_badmode', 'unique (workstation_id, badmode_id)', u'请不要重复添加同一个不良模式！')
+    ]
+
+    @api.onchange('badmode_id')
+    def change_badmode(self):
+        if not self.badmode_id:
+            self.badmode_code = False
+        else:
+            self.badmode_code = self.badmode_id.code
+
+    @api.model
+    def create(self, vals):
+        record = super(AASMESWorkstationBadmode, self).create(vals)
+        record.action_after_create()
+        return record
+
+
+    @api.one
+    def action_after_create(self):
+        self.write({'badmode_code': self.badmode_id.code})
+        if self.badmode_id.universal:
+            self.badmode_id.write({'universal': False})
+
+
+    @api.multi
+    def unlink(self):
+        badmodeids = []
+        for record in self:
+            if record.badmode_id.id not in badmodeids:
+                badmodeids.append(record.badmode_id.id)
+        result = super(AASMESWorkstationBadmode, self).unlink()
+        for badmodeid in badmodeids:
+            if self.env['aas.mes.workstation.badmode'].search_count([('badmode_id', '=', badmodeid)]) <= 0:
+                badmode = self.env['aas.mes.badmode'].browse(badmodeid)
+                badmode.write({'universal': True})
+        return result
+
+
+

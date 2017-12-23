@@ -207,7 +207,7 @@ class AASMESWorkAttendance(models.Model):
 
     @api.multi
     def action_done(self):
-        """完成出勤，更闹心相关信息
+        """完成出勤，更新相关信息
         :return:
         """
         currentstr = fields.Datetime.now()
