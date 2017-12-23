@@ -31,6 +31,7 @@ class AASStockMove(models.Model):
     state = fields.Selection(selection=[('draft', u'草稿'), ('confirm', u'确认'), ('done', u'完成')], string=u'状态', default='draft', copy=False)
     note = fields.Text(string=u'备注')
     move_time = fields.Datetime(string=u'调拨时间', copy=False)
+    mover_id = fields.Many2one(comodel_name='res.users', string=u'调拨员工', ondelete='restrict', default= lambda self: self.env.user)
 
     move_lines = fields.One2many(comodel_name='aas.stock.move.line', inverse_name='move_id', string=u'调拨明细')
     move_labels = fields.One2many(comodel_name='aas.stock.move.label', inverse_name='move_id', string=u'调拨标签')
