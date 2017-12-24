@@ -520,7 +520,9 @@ class AASMESWorkorder(models.Model):
             return values
         values.update({
             'workorder_id': workorder.id, 'workorder_name': workorder.name, 'product_id': workorder.product_id.id,
-            'product_code': workorder.product_id.default_code, 'input_qty': workorder.input_qty, 'virtuallist': []
+            'product_code': workorder.product_id.default_code, 'input_qty': workorder.input_qty, 'virtuallist': [],
+            'mainorder_id': 0 if not workorder.mainorder_id else workorder.mainorder_id.id,
+            'mainorder_name': '' if not workorder.mainorder_id else workorder.mainorder_id.name
         })
         routing = workorder.routing_id
         if not routing:
