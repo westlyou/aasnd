@@ -133,7 +133,7 @@ class AASMESLine(models.Model):
                 schedule.write({'state': 'working'})
             self.write(ordervals)
             # 清理上一个班次用料
-            self.action_clear_feeding(self.id)
+            #self.action_clear_feeding(self.id)
             # 清理上一个班次员工上岗信息
             self.action_clear_employees(self.id)
 
