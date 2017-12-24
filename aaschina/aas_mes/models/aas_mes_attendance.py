@@ -165,46 +165,6 @@ class AASMESWorkAttendance(models.Model):
         return values
 
 
-
-    @api.model
-    def action_trace_employees_equipments(self, mesline_id, schedule_id, workstation_id, attendance_date):
-        """
-        获取相应日期的产线班次上指定工位的员工和设备信息
-        :param mesline_id:
-        :param schedule_id:
-        :param workstation_id:
-        :param attendance_date:
-        :return:
-        """
-        tracingdomain, tracevals = [], {'employeelist': '', 'equipmentlist': ''}
-        if mesline_id:
-            tracingdomain.append(('mesline_id', '=', mesline_id))
-        if schedule_id:
-            tracingdomain.append(('schedule_id', '=', schedule_id))
-        if workstation_id:
-            tracingdomain.append(('workstation_id', '=', workstation_id))
-        if attendance_date:
-            tracingdomain.append(('attendance_date', '=', attendance_date))
-        if not tracingdomain or len(attendance_date) <= 0:
-            return tracevals
-        attendancelines = self.env['aas.mes.work.attendance.line'].search(tracingdomain)
-        if attendancelines and len(attendancelines) > 0:
-            employeeids, employees, equipmentids, equipments = [], [], [], []
-            for attendance in attendancelines:
-                temployee, tequipment = attendance.employee_id, attendance.equipment_id
-                if temployee and temployee.id not in employeeids:
-                    employeeids.append(temployee.id)
-                    employees.append(attendance.employee_name+'['+attendance.employee_code+']')
-                if tequipment and tequipment.id not in equipmentids:
-                    equipmentids.append(tequipment.id)
-                    equipments.append(attendance.equipment_name+'['+attendance.equipment_code+']')
-            if employees and len(employees) > 0:
-                tracevals['employeelist'] = ','.join(employees)
-            if equipments and len(equipments) > 0:
-                tracevals['equipmentlist'] = ','.join(equipments)
-        return tracevals
-
-
     @api.multi
     def action_done(self):
         """完成出勤，更新相关信息
@@ -282,6 +242,48 @@ class AASMESWorkAttendance(models.Model):
             return values
         values.update({'employee_name': employee.name, 'employee_code': employee.code})
         return values
+
+
+    @api.model
+    def action_trace_employees_equipments(self, mesline_id, schedule_id, workstation_id, attendance_date):
+        """
+        获取相应日期的产线班次上指定工位的员工和设备信息
+        :param mesline_id:
+        :param schedule_id:
+        :param workstation_id:
+        :param attendance_date:
+        :return:
+        """
+        tracingdomain, tracevals = [], {'employeelist': '', 'equipmentlist': ''}
+        if mesline_id:
+            tracingdomain.append(('mesline_id', '=', mesline_id))
+        if schedule_id:
+            tracingdomain.append(('schedule_id', '=', schedule_id))
+        if workstation_id:
+            tracingdomain.append(('workstation_id', '=', workstation_id))
+        if attendance_date:
+            tracingdomain.append(('attendance_date', '=', attendance_date))
+        if not tracingdomain or len(attendance_date) <= 0:
+            return tracevals
+        attendancelines = self.env['aas.mes.work.attendance.line'].search(tracingdomain)
+        if attendancelines and len(attendancelines) > 0:
+            employeeids, employees, equipmentids, equipments = [], [], [], []
+            for attendance in attendancelines:
+                temployee, tequipment = attendance.employee_id, attendance.equipment_id
+                if temployee and temployee.id not in employeeids:
+                    employeeids.append(temployee.id)
+                    employees.append(temployee.name+'['+temployee.code+']')
+                if tequipment and tequipment.id not in equipmentids:
+                    equipmentids.append(tequipment.id)
+                    equipments.append(tequipment.name+'['+tequipment.code+']')
+            if employees and len(employees) > 0:
+                tracevals['employeelist'] = ','.join(employees)
+            if equipments and len(equipments) > 0:
+                tracevals['equipmentlist'] = ','.join(equipments)
+        return tracevals
+
+
+
 
 # 出勤明细
 class AASMESWorkAttendanceLine(models.Model):
