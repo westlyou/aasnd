@@ -65,10 +65,8 @@ $(function(){
                 }
                 $('#checkwarning').html('');
                 $('#operationlist').html('');
-                $('#ctserialnumber').html(dresult.serialnumber);
-                $('#action_confirm').attr({
-                    'checkval': dresult.checkval, 'operationid': dresult.operationid
-                });
+                $('#ctserialnumber').html(dresult.serialnumber).attr('serialnumber', barcode);
+                $('#informationlist').attr({'checkval': dresult.checkval, 'operationid': dresult.operationid});
                 if(dresult.message){
                     $('#checkwarning').html(dresult.message);
                 }
@@ -79,6 +77,10 @@ $(function(){
                 }
                 $('#customercode').html(dresult.customer_code);
                 $('#internalcode').html(dresult.internal_code);
+                if(dresult.checkval=='waiting'){
+                    action_confirm();
+                    return ;
+                }
                 $.each(dresult.recordlist, function(index, record){
                     var operationtr = $('<tr></tr>');
                     if(record.result){
@@ -93,13 +95,34 @@ $(function(){
                     $('<td></td>').html(record.operation_time).appendTo(operationtr);
                     $('#operationlist').append(operationtr);
                 });
+                if(dresult.reworklist.length<=0){
+                    return ;
+                }
+                $.each(dresult.reworklist, function(index, record){
+                    var reworktr = $('<tr></tr>');
+                    $('<td></td>').html(index+1).appendTo(reworktr);
+                    $('<td></td>').html(record.badmode_name).appendTo(reworktr);
+                    $('<td></td>').html(record.badmode_date).appendTo(reworktr);
+                    $('<td></td>').html(record.commiter).appendTo(reworktr);
+                    $('<td></td>').html(record.commit_time).appendTo(reworktr);
+                    $('<td></td>').html(record.repairer).appendTo(reworktr);
+                    $('<td></td>').html(record.repair_time).appendTo(reworktr);
+                    $('<td></td>').html(record.ipqcchecker).appendTo(reworktr);
+                    $('<td></td>').html(record.ipqccheck_time).appendTo(reworktr);
+                    $('<td></td>').html(record.state).appendTo(reworktr);
+                    $('#reworklist').append(reworktr);
+                });
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
         });
     }
 
     //终检确认
-    $('#action_confirm').click(function(){
+    /*$('#action_confirm').click(function(){
+        action_confirm();
+    });*/
+
+    function action_confirm(){
         var workorderid = parseInt($('#mes_workorder').attr('workorderid'));
         if(workorderid==0){
             layer.msg('当前产线还未分配工单，暂不可以操作！', {icon: 5});
@@ -110,12 +133,12 @@ $(function(){
             layer.msg('当前工位上没有员工，不可以确认操作，请先扫描工牌上岗！', {icon: 5});
             return ;
         }
-        var operationid = parseInt($(this).attr('operationid'));
+        var operationid = parseInt($('#informationlist').attr('operationid'));
         if(operationid==0){
             layer.msg('您还没有扫描条码，暂不可以操作！', {icon: 5});
             return ;
         }
-        var checkval = $(this).attr('checkval');
+        var checkval = $('#informationlist').attr('checkval');
         if(checkval=='forbidden'){
             layer.msg('请仔细检查是否还有操作未完成！', {icon: 5});
             return ;
@@ -136,11 +159,16 @@ $(function(){
                     layer.msg(dresult.message, {icon: 5});
                     return ;
                 }
-                window.location.reload(true);
+                var serialnumber = $('#ctserialnumber').attr('serialnumber');
+                if(serialnumber == 0 || serialnumber == '0'){
+                    window.location.reload(true);
+                }else{
+                    action_scanserialnumber(serialnumber);
+                }
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
         });
-    });
+    }
 
     $('#action_consume').click(function(){
         layer.confirm('您确认是要操作班次结单？', {'btn': ['确定', '取消']}, function(index){

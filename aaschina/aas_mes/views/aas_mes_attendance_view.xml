@@ -26,7 +26,7 @@
             <field name="model">aas.mes.work.attendance</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form create="false" edit="false" delete="false">
+                <form create="false" delete="false">
                     <sheet>
                         <group>
                             <group>
@@ -44,7 +44,7 @@
                             <group>
                                 <field name="attend_hours" widget="float_time"/>
                                 <field name="overtime_hours" widget="float_time"/>
-                                <field name="leave_id"/>
+                                <field name="leave_id" readonly="1"/>
                             </group>
                         </group>
                         <notebook>

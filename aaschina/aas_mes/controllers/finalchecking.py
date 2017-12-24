@@ -17,6 +17,8 @@ from odoo.exceptions import AccessDenied, UserError, ValidationError
 
 logger = logging.getLogger(__name__)
 
+REWORKSTATEDICT = {'commit': u'不良上报', 'repair': u'返工维修', 'ipqc': u'IPQC确认', 'done': u'完成'}
+
 class AASMESFinalCheckingController(http.Controller):
 
     @http.route('/aasmes/finalchecking', type='http', auth="user")
@@ -41,14 +43,17 @@ class AASMESFinalCheckingController(http.Controller):
             return request.render('aas_mes.aas_finalchecking', values)
         values.update({'workorder_id': mesline.workorder_id.id, 'workorder_name': mesline.workorder_id.name})
         values['workstation_name'] = workstation.name
-        if workstation.employee_lines and len(workstation.employee_lines) > 0:
+        wkdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        employees = request.env['aas.mes.workstation.employee'].search(wkdomain)
+        if employees and len(employees) > 0:
             values['employeelist'] = [{
                 'employee_id': wemployee.employee_id.id,
                 'employee_name': wemployee.employee_id.name,
                 'employee_code': wemployee.employee_id.code
-            } for wemployee in workstation.employee_lines]
-        if workstation.equipment_lines and len(workstation.equipment_lines) > 0:
-            values['equipmentlist'] = [wequipment.equipment_id.code for wequipment in workstation.equipment_lines]
+            } for wemployee in employees]
+        equipments = request.env['aas.mes.workstation.equipment'].search(wkdomain)
+        if equipments and len(equipments) > 0:
+            values['equipmentlist'] = [wequipment.equipment_id.code for wequipment in equipments]
         return request.render('aas_mes.aas_finalchecking', values)
 
 
@@ -82,7 +87,7 @@ class AASMESFinalCheckingController(http.Controller):
 
     @http.route('/aasmes/finalchecking/scanserialnumber', type='json', auth="user")
     def aasmes_finalchecking_scanserialnumber(self, barcode):
-        values = {'success': True, 'message': '', 'serialnumber': barcode}
+        values = {'success': True, 'message': '', 'serialnumber': barcode, 'recordlist': [], 'reworklist': []}
         tempoperation = request.env['aas.mes.operation'].search([('serialnumber_name', '=', barcode)], limit=1)
         if not tempoperation:
             values.update({'success': False, 'message': u'请仔细检查您扫描的是否是序列号条码！'})
@@ -143,6 +148,19 @@ class AASMESFinalCheckingController(http.Controller):
             if couldcheck:
                 values['checkval'] = 'waiting'
         values['recordlist'] = recordlist
+        if serialnumber.rework_lines and len(serialnumber.rework_lines) > 0:
+            values['reworklist'] = [{
+                'badmode_name': rework.badmode_id.name+'['+rework.badmode_id.code+']', 'badmode_date': rework.badmode_date,
+                'commiter': '' if not rework.commiter_id else rework.commiter_id.name,
+                'commit_time': '' if not rework.commit_time else fields.Datetime.to_timezone_string(rework.commit_time, 'Asia/Shanghai'),
+                'repairer': '' if not rework.repairer_id else rework.repairer_id.name,
+                'repair_time': '' if not rework.repair_time else fields.Datetime.to_timezone_string(rework.repair_time, 'Asia/Shanghai'),
+                'ipqcchecker': '' if not rework.ipqcchecker_id else rework.ipqcchecker_id.name,
+                'ipqccheck_time': '' if not rework.ipqccheck_time else fields.Datetime.to_timezone_string(rework.ipqccheck_time, 'Asia/Shanghai'),
+                'state': REWORKSTATEDICT[rework.state]
+            } for rework in serialnumber.rework_lines]
+
+
         return values
 
 
@@ -167,20 +185,10 @@ class AASMESFinalCheckingController(http.Controller):
             values.update({'success': False, 'message': u'当前产线信息变化，请先刷新页面再继续操作！'})
             return values
         tempoperation = request.env['aas.mes.operation'].browse(operationid)
-        tempemployee, tempequipment = False, False
-        if workstation.employee_lines and len(workstation.employee_lines) > 0:
-            tempemployee = workstation.employee_lines[0].employee_id.id
-        if workstation.equipment_lines and len(workstation.equipment_lines) > 0:
-            tempequipment = workstation.equipment_lines[0].equipment_id.id
-        operationrecord = request.env['aas.mes.operation.record'].create({
-            'operation_id': operationid, 'employee_id': tempemployee, 'equipment_id': tempequipment,
-            'operator_id': request.env.user.id, 'operation_pass': True, 'operate_result': 'Pass', 'operate_type': 'fqc'
-        })
-        tempoperation.write({'fqccheck_record_id': operationrecord.id})
-        outputresult = workorder.action_output(workorder.id, workorder.product_id.id, 1, serialnumber=tempoperation.serialnumber_name)
-        if not outputresult['success']:
-            values.update({'success': False, 'message': outputresult['message']})
-            return values
+        tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, mesline, workstation,
+                                                                             tempoperation.serialnumber_name)
+        if not tvalues.get('success', False):
+            return tvalues
         return values
 
 

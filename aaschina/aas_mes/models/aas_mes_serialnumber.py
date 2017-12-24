@@ -51,6 +51,8 @@ class AASMESSerialnumber(models.Model):
     traced = fields.Boolean(string=u'已被追溯关联', default=False, copy=False)
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', index=True, ondelete='restrict')
 
+    rework_lines = fields.One2many(comodel_name='aas.mes.rework', inverse_name='serialnumber_id', string=u'返工清单')
+
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'序列号的名称不可以重复！')
     ]
@@ -98,4 +100,8 @@ class AASMESSerialnumber(models.Model):
 
     @api.one
     def action_functiontest(self):
-        self.env['aas.mes.operation.record'].action_functiontest(self.name, 'NC00000001', 'ND20160021', True, 'PASS')
+        toperation = self.env['aas.mes.operation'].search([('serialnumber_id', '=', self.id)], limit=1)
+        trecord = self.env['aas.mes.operation.record'].create({
+            'operation_id': toperation.id, 'operate_result': 'PASS', 'operate_type': 'functiontest'
+        })
+        toperation.write({'function_test': True, 'functiontest_record_id': trecord.id})

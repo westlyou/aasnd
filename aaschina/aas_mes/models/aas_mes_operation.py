@@ -24,7 +24,7 @@ class AASMESOperation(models.Model):
     _rec_name = 'serialnumber_id'
 
     serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', required=True, ondelete='restrict', index=True)
-    serialnumber_name = fields.Char(string=u'序列名称', copy=False)
+    serialnumber_name = fields.Char(string=u'序列名称', copy=False, index=True)
     barcode_create = fields.Boolean(string=u'生成条码', default=False, copy=False)
     barcode_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'生成条码记录')
     embed_piece = fields.Boolean(string=u'置入连接片', default=False, copy=False)
@@ -46,10 +46,12 @@ class AASMESOperation(models.Model):
 
     @api.model
     def create(self, vals):
-        if vals.get('serialnumber_id', False) and (not vals.get('serialnumber_name', False)):
-            serialnumber = self.env['aas.mes.serialnumber'].browse(vals.get('serialnumber_id'))
-            vals['serialnumber_name'] = serialnumber.name
-        return super(AASMESOperation, self).create(vals)
+        record = super(AASMESOperation, self).create(vals)
+        serialnumber = record.serialnumber_id
+        record.write({'serialnumber_name': serialnumber.name})
+        if serialnumber.state == 'draft':
+            serialnumber.write({'state': 'normal'})
+        return record
 
 
 
