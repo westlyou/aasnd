@@ -51,7 +51,7 @@ class AASFeedmaterialWechatController(http.Controller):
         return request.render('aas_mes.wechat_mes_linefeeding', values)
 
 
-    @http.route('/aasmes/mes/feeding/materialscan', type='json', auth="user")
+    @http.route('/aaswechat/mes/feeding/materialscan', type='json', auth="user")
     def aas_wechat_mes_feeding_materialscan(self, barcode, workstationid):
         values = {'success': True, 'message': ''}
         loginuser = request.env.user
@@ -95,7 +95,7 @@ class AASFeedmaterialWechatController(http.Controller):
         })
         return values
 
-    @http.route('/aasmes/mes/feeding/containerscan', type='json', auth="user")
+    @http.route('/aaswechat/mes/feeding/containerscan', type='json', auth="user")
     def aas_wechat_mes_feeding_containerscan(self, barcode, workstationid):
         values = {'success': True, 'message': '', 'materiallist': []}
         loginuser = request.env.user
@@ -157,7 +157,7 @@ class AASFeedmaterialWechatController(http.Controller):
         return values
 
 
-    @http.route('/aasmes/mes/feeding/materialdel', type='json', auth="user")
+    @http.route('/aaswechat/mes/feeding/materialdel', type='json', auth="user")
     def aas_wechat_mes_feeding_materialdel(self, feeding_id):
         values = {'success': True, 'message': ''}
         try:
@@ -171,7 +171,7 @@ class AASFeedmaterialWechatController(http.Controller):
         return values
 
 
-    @http.route('/aasmes/mes/feeding/refreshstock', type='json', auth="user")
+    @http.route('/aaswechat/mes/feeding/refreshstock', type='json', auth="user")
     def aas_wechat_mes_feeding_refreshstock(self, meslineid):
         values = {'success': True, 'message': ''}
         feedinglist = request.env['aas.mes.feedmaterial'].search([('mesline_id', '=', meslineid)])

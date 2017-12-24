@@ -79,7 +79,7 @@ mui.ready(function(){
         var scanparams = {'barcode': barcode, 'workstationid': workstationid};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         var scanmask = aas_feeding_loading();
-        mui.ajax('/aasmes/mes/feeding/materialscan',{
+        mui.ajax('/aaswechat/mes/feeding/materialscan',{
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scanparams, id: access_id }),
             dataType:'json', type:'post', timeout:10000,
             headers:{'Content-Type':'application/json'},
@@ -118,7 +118,7 @@ mui.ready(function(){
         var scanparams = {'barcode': barcode, 'workstationid': workstationid};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         var scanmask = aas_feeding_loading();
-        mui.ajax('/aasmes/mes/feeding/containerscan',{
+        mui.ajax('/aaswechat/mes/feeding/containerscan',{
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scanparams, id: access_id }),
             dataType:'json', type:'post', timeout:10000,
             headers:{'Content-Type':'application/json'},

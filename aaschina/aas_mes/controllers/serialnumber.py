@@ -26,9 +26,17 @@ class AASMESSerialnumberController(http.Controller):
             'serial_supplier': '2', 'serial_extend': '0', 'serial_type': '8', 'lastserialnumber': ''
         }
         isocalendar = fields.Datetime.to_timezone_time(fields.Datetime.now(), 'Asia/Shanghai').isocalendar()
-        values['serial_year'] = str(isocalendar[0])[2:]
-        values['serial_week'] = str(100+isocalendar[1])[1:]
-        values['serial_weekday'] = str(isocalendar[2])
+        year, weeknumber, weekday = isocalendar[0], isocalendar[1], isocalendar[2]
+        if weekday == 7:
+            weekday = 0
+            if weeknumber == 52:
+                weeknumber = 1
+                year += 1
+            else:
+                weeknumber += 1
+        values['serial_year'] = str(year)[2:]
+        values['serial_week'] = str(100+weeknumber)[1:]
+        values['serial_weekday'] = str(weekday)
         login = request.env.user
         values['checker'] = login.name
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', login.id)], limit=1)
