@@ -43,6 +43,8 @@ class AASMESOperation(models.Model):
     ipqc_check = fields.Boolean(string='IPQC', default=False, copy=False)
     ipqc_check_count = fields.Integer(string=u'IPQC测试次数', default=0, copy=False)
 
+    record_lines = fields.One2many(comodel_name='aas.mes.operation.record', inverse_name='operation_id', string=u'记录清单')
+
 
     @api.model
     def create(self, vals):

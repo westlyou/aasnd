@@ -31,6 +31,7 @@
                 <form create="false" edit="false" labelprint="true">
                     <header>
                         <!--<button name="action_functiontest" type="object" string="功能测试" class="oe_highlight"/>-->
+                        <button name="action_show_operationlist" type="object" string="显示操作记录" class="oe_highlight"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,normal,rework,shipped"/>
                     </header>
 
@@ -158,6 +159,72 @@
 
         <menuitem id="menu_aas_mes_serialnumber"  name="序列号" action="action_aas_mes_serialnumber"
                   parent="menu_aas_mes_resources" sequence="9" groups="aas_mes.group_aas_manufacture_user"/>
+
+
+        <record id="view_form_aas_mes_operation" model="ir.ui.view">
+            <field name="name">aas.mes.operation.form</field>
+            <field name="model">aas.mes.operation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" edit="false" delete="false">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="barcode_create" readonly="1"/>
+                                <field name="final_quality_check" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="function_test" readonly="1"/>
+                                <field name="gp12_check" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="commit_badness" readonly="1"/>
+                                <field name="dorework" readonly="1"/>
+                                <field name="ipqc_check" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="commit_badness_count" readonly="1"/>
+                                <field name="dorework_count" readonly="1"/>
+                                <field name="ipqc_check_count" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="记录清单">
+                                <field name="record_lines" readonly="1">
+                                    <tree>
+                                        <field name="employee_id"/>
+                                        <field name="operate_time"/>
+                                        <field name="equipment_id"/>
+                                        <field name="operate_type"/>
+                                        <field name="operation_pass"/>
+                                        <field name="operate_result"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group> <field name="serialnumber"/> </group>
+                                        </group>
+                                        <group>
+                                            <group>
+                                                <field name="employee_id"/>
+                                                <field name="operate_time"/>
+                                                <field name="equipment_id"/>
+                                            </group>
+                                            <group>
+                                                <field name="operate_type"/>
+                                                <field name="operation_pass"/>
+                                                <field name="operate_result"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
 
     </data>
 </odoo>

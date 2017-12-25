@@ -105,3 +105,26 @@ class AASMESSerialnumber(models.Model):
             'operation_id': toperation.id, 'operate_result': 'PASS', 'operate_type': 'functiontest'
         })
         toperation.write({'function_test': True, 'functiontest_record_id': trecord.id})
+
+
+    @api.multi
+    def action_show_operationlist(self):
+        """
+        显示操作记录
+        :return:
+        """
+        self.ensure_one()
+        operation = self.env['aas.mes.operation'].search([('serialnumber_id', '=', self.id)], limit=1)
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_operation')
+        return {
+            'name': u"操作记录",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.mes.operation',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'self',
+            'res_id': operation.id,
+            'context': self.env.context
+        }
