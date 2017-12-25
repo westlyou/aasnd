@@ -156,15 +156,17 @@ class AASMESLine(models.Model):
             ntschedule = self.env['aas.mes.schedule'].search(tdomain, limit=1)
             if ntschedule:
                 values['schedule'] = {
-                    'workdate': mesline.workdate,
+                    'workdate': mesline.workdate, 'schedule_id': ntschedule.id,
                     'actual_start': ntschedule.actual_start, 'actual_finish': ntschedule.actual_finish
                 }
                 return values
         tempstart = fields.Datetime.from_string(tschedule.actual_start) + timedelta(days=1)
         tempfinish = fields.Datetime.from_string(tschedule.actual_finish) + timedelta(days=1)
         actual_start, actual_finish = fields.Datetime.to_string(tempstart), fields.Datetime.to_string(tempfinish)
+        chinastarttime = fields.Datetime.to_timezone_string(actual_start, 'Asia/Shanghai')
         values['schedule'] = {
-            'actual_start': actual_start, 'actual_finish': actual_finish, 'workdate': actual_start[0:10]
+            'workdate': chinastarttime[0:10], 'schedule_id': tschedule.id,
+            'actual_start': actual_start, 'actual_finish': actual_finish
         }
         return values
 

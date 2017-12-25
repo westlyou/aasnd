@@ -57,6 +57,12 @@ class AASMESWorkAttendance(models.Model):
         :return:
         """
         values = {'success': True, 'message': '', 'action': 'working'}
+        #切换产线，自动结束之前产线的出勤记录
+        tlinedomain = [('employee_id', '=', employee.id), ('attend_done', '=', False), ('mesline_id', '!=', mesline.id)]
+        attendancelines = self.env['aas.mes.work.attendance.line'].search(tlinedomain)
+        if attendancelines and len(attendancelines) > 0:
+            attendancelines.action_done()
+        # 更新出勤记录
         tempdomain = [('employee_id', '=', employee.id), ('mesline_id', '=', mesline.id), ('attend_done', '=', False)]
         tattendance = self.env['aas.mes.work.attendance'].search(tempdomain, limit=1)
         if tattendance:
@@ -117,9 +123,8 @@ class AASMESWorkAttendance(models.Model):
         linedomain.append(('attend_done', '=', False))
         if self.env['aas.mes.work.attendance.line'].search_count(linedomain) <= 0:
             self.env['aas.mes.work.attendance.line'].create({
-                'attendance_id': attendance.id, 'employee_id': employee.id,
-                'mesline_id': mesline.id, 'workstation_id': workstation.id,
-                'equipment_id': False if not equipment else equipment.id
+                'attendance_id': attendance.id, 'employee_id': employee.id, 'mesline_id': mesline.id,
+                'workstation_id': workstation.id, 'equipment_id': False if not equipment else equipment.id
             })
         return values
 
@@ -159,8 +164,11 @@ class AASMESWorkAttendance(models.Model):
             return values
         nextschedule = nextvalues['schedule']
         temptimes = fields.Datetime.from_string(nextschedule['actual_start']) - fields.Datetime.from_string(timestart)
-        if (temptimes.total_seconds() / 3600.00) <= worktime_advance:
-            attendancevals.update({'attendance_start': nextschedule['actual_start'], 'attendance_date': nextschedule['workdate']})
+        if float_compare((temptimes.total_seconds() / 3600.00), worktime_advance, precision_rounding=0.000001) <= 0.0:
+            attendancevals.update({
+                'schedule_id': nextschedule['schedule_id'],
+                'attendance_start': nextschedule['actual_start'], 'attendance_date': nextschedule['workdate']
+            })
         values['attendance'] = self.env['aas.mes.work.attendance'].create(attendancevals)
         return values
 
@@ -343,9 +351,8 @@ class AASMESWorkAttendanceLine(models.Model):
 
 
     @api.multi
-    def action_done(self, leaveid=None):
+    def action_done(self):
         """出勤结束
-        :param leaveid:
         :return:
         """
         employeeids, attendanceids = [], []
@@ -356,14 +363,10 @@ class AASMESWorkAttendanceLine(models.Model):
                 attendanceids.append(record.attendance_id.id)
         currenttime = fields.Datetime.now()
         attendancevals = {'attendance_finish': currenttime, 'attend_done': True}
-        if leaveid:
-            attendancevals['leave_id'] = leaveid
         self.write(attendancevals)
         if attendanceids and len(attendanceids) > 0:
             attendancelist = self.env['aas.mes.work.attendance'].browse(attendanceids)
-            attendancelist.write({
-                'attendance_finish': currenttime, 'leave_id': False if not leaveid else leaveid
-            })
+            attendancelist.write({'attendance_finish': currenttime})
         wsemployees = self.env['aas.mes.workstation.employee'].search([('employee_id', 'in', employeeids)])
         if wsemployees and len(wsemployees) > 0:
             wsemployees.unlink()
