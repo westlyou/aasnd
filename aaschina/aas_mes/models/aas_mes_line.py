@@ -123,9 +123,10 @@ class AASMESLine(models.Model):
         searchdomain.append(('mesline_id', '=', self.id))
         schedule = self.env['aas.mes.schedule'].search(searchdomain, limit=1)
         if not schedule or not self.schedule_id or schedule.id != self.schedule_id.id:
-            if self.workorder_id and self.workorder_id.isproducing:
-                self.workorder_id.write({'isproducing': False})
-            ordervals = {'workorder_id': False, 'schedule_id': False}
+            # if self.workorder_id and self.workorder_id.isproducing:
+            #     self.workorder_id.write({'isproducing': False})
+            # ordervals = {'workorder_id': False, 'schedule_id': False}
+            ordervals = {'schedule_id': False}
             if self.schedule_id:
                 self.schedule_id.write({'state': 'break'})
             if schedule:
