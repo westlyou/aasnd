@@ -59,9 +59,9 @@ class AASMESWorkAttendance(models.Model):
         values = {'success': True, 'message': '', 'action': 'working'}
         #切换产线，自动结束之前产线的出勤记录
         tlinedomain = [('employee_id', '=', employee.id), ('attend_done', '=', False), ('mesline_id', '!=', mesline.id)]
-        attendancelines = self.env['aas.mes.work.attendance.line'].search(tlinedomain)
-        if attendancelines and len(attendancelines) > 0:
-            attendancelines.action_done()
+        tattendancelines = self.env['aas.mes.work.attendance.line'].search(tlinedomain)
+        if tattendancelines and len(tattendancelines) > 0:
+            tattendancelines.action_done()
         # 更新出勤记录
         tempdomain = [('employee_id', '=', employee.id), ('mesline_id', '=', mesline.id), ('attend_done', '=', False)]
         tattendance = self.env['aas.mes.work.attendance'].search(tempdomain, limit=1)
