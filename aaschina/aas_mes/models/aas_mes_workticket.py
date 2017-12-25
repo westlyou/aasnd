@@ -128,6 +128,9 @@ class AASMESWorkticket(models.Model):
         routing_id, sequence = self.workcenter_id.routing_id.id, self.workcenter_id.sequence
         if self.env['aas.mes.routing.line'].search_count([('routing_id', '=', routing_id), ('sequence', '>', sequence)]) <= 0:
             wizardvals['need_container'] = True
+        badmodelist = workstation.get_badmode_list(workstation.id)
+        if badmodelist and len(badmodelist) > 0:
+            wizardvals['badmode_lines'] = [(0, 0, {'badmode_id': badmode.id}) for badmode in badmodelist]
         wizard = self.env['aas.mes.workticket.commit.wizard'].create(wizardvals)
         view_form = self.env.ref('aas_mes.view_form_aas_mes_workticket_commit_wizard')
         return {
@@ -556,6 +559,8 @@ class AASMESWorkticketCommitWizard(models.TransientModel):
         badmode_qty, badmode_lines = 0.0, []
         if self.badmode_lines and len(self.badmode_lines) > 0:
             for bline in self.badmode_lines:
+                if float_compare(bline.badmode_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+                    continue
                 badmode_qty += bline.badmode_qty
                 badmode = bline.badmode_id.badmode_id
                 badmode_lines.append({'badmode_id': badmode.id, 'badmode_qty': bline.badmode_qty})
@@ -573,7 +578,7 @@ class AASMESWorkticketBadmodeWizard(models.TransientModel):
     _description = 'AAS MES Workticket Badmode Wizard'
 
     wizard_id = fields.Many2one(comodel_name='aas.mes.workticket.commit.wizard', string=u'完工向导', ondelete='cascade')
-    badmode_id = fields.Many2one(comodel_name='aas.mes.routing.badmode', string=u'不良模式', ondelete='cascade')
+    badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='cascade')
     badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
 
     _sql_constraints = [
@@ -583,8 +588,8 @@ class AASMESWorkticketBadmodeWizard(models.TransientModel):
     @api.one
     @api.constrains('badmode_qty')
     def action_check_badmode_qty(self):
-        if not self.badmode_qty or float_compare(self.badmode_qty, 0.0, precision_rounding=0.000001) <= 0.0:
-            raise ValidationError(u'不良数量必须是大于0的数！')
+        if not self.badmode_qty or float_compare(self.badmode_qty, 0.0, precision_rounding=0.000001) < 0.0:
+            raise ValidationError(u'不良数量不能小于零的数！')
 
 
 

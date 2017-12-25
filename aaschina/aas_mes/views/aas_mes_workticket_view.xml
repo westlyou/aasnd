@@ -189,9 +189,8 @@
                     <notebook>
                         <page string="不良模式">
                             <field name="badmode_lines">
-                                <tree editable="bottom">
-                                    <field name="badmode_id" options="{'no_create':true}" required="1"
-                                            domain="[('workcenter_id','=',parent.workcenter_id)]"/>
+                                <tree editable="bottom" create="false">
+                                    <field name="badmode_id" readonly="1"/>
                                     <field name="badmode_qty" required="1"/>
                                 </tree>
                             </field>
