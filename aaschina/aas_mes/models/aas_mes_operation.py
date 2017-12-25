@@ -66,6 +66,7 @@ class AASMESOperationRecord(models.Model):
     _description = 'AAS MES Operation Record'
 
     operation_id = fields.Many2one(comodel_name='aas.mes.operation', string=u'操作记录', ondelete='cascade')
+    serialnumber = fields.Char(string=u'序列号', copy=False)
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
     operate_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
     operator_id = fields.Many2one(comodel_name='res.users', string=u'操作用户', ondelete='restrict', default=lambda self: self.env.user)
@@ -86,6 +87,8 @@ class AASMESOperationRecord(models.Model):
     @api.one
     def action_after_create(self):
         serialnumber = self.operation_id.serialnumber_id
+        if not self.serialnumber:
+            self.write({'serialnumber': serialnumber.name})
         operationvals = {}
         if self.operate_type == 'newbarcode':
             operationvals.update({'barcode_create': True, 'barcode_record_id': self.id})
@@ -133,10 +136,9 @@ class AASMESOperationRecord(models.Model):
         functiontestvals = {
             'operation_id': toperation.id, 'operate_type': 'functiontest',
             'employee_id': temployee.id, 'equipment_id': equipment.id,
-            'operation_pass': operation_pass, 'operate_result': operate_result
+            'operation_pass': operation_pass, 'operate_result': operate_result, 'serialnumber': serialnumber
         }
-        functiontest = self.env['aas.mes.operation.record'].create(functiontestvals)
-        toperation.write({'function_test': True, 'functiontest_record_id': functiontest.id})
+        self.env['aas.mes.operation.record'].create(functiontestvals)
         return result
 
 
