@@ -175,6 +175,28 @@ class AASEquipmentEquipment(models.Model):
         """
         return self.env['aas.mes.workstation'].action_loading_badmodelist(equipment_code)
 
+    @api.model
+    def action_loading_workstationlist(self):
+        """获取产线工位清单
+        :return:
+        """
+        return self.env['aas.mes.line'].action_loading_workstationlist()
+
+    def action_setequipment_workstation(self, equipment_code, mesline_id, workstation_id):
+        """更新设备产线和工位
+        :param equipment_code:
+        :param mesline_id:
+        :param workstation_id:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        tequipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)
+        if not tequipment:
+            values.update({'success': False, 'message': u'系统未获取到相应设备，请仔细检查设备编码是否正确！'})
+            return values
+        tequipment.write({'mesline_id': mesline_id, 'workstation_id': workstation_id})
+        return values
+
 
 #######################向导#################################
 

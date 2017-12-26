@@ -201,6 +201,27 @@ class AASMESLine(models.Model):
         if attendancelines and len(attendancelines) > 0:
             attendancelines.action_split()
 
+    @api.model
+    def action_loading_workstationlist(self):
+        """获取产线工位清单
+        :return:
+        """
+        values = {'success': True, 'message': '', 'records': []}
+        meslines = self.env['aas.mes.line'].search([])
+        if not meslines or len(meslines) <= 0:
+            values.update({'success': False, 'message': u'当前还未设置产线信息，请联系管理员设置产线信息！'})
+            return values
+        for mesline in meslines:
+            record = {'mesline_id': mesline.id, 'mesline_name': mesline.name, 'stationlist': []}
+            if mesline.workstation_lines and len(mesline.workstation_lines) > 0:
+                record['stationlist'] = [{
+                    'workstation_id': tstation.workstation_id.id,
+                    'workstation_name': tstation.workstation_id.name,
+                    'workstation_code': tstation.workstation_id.code
+                } for tstation in mesline.workstation_lines]
+            values['records'].append(record)
+        return values
+
 
 
 

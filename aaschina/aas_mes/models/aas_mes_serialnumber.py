@@ -23,6 +23,7 @@ SERIALSTATES = [('draft', u'草稿'), ('normal', u'正常'), ('rework', u'返工
 class AASMESSerialnumber(models.Model):
     _name = 'aas.mes.serialnumber'
     _description = 'AAS MES Serialnumber'
+    _order = 'id desc'
 
     name = fields.Char(string=u'名称', required=True, copy=False)
     regular_code = fields.Char(string=u'规则编码', copy=False)

@@ -901,7 +901,10 @@ class AASMESWorkorderConsume(models.Model):
     @api.depends('input_qty', 'consume_qty')
     def _compute_leave_qty(self):
         for record in self:
-            record.leave_qty = record.input_qty - record.consume_qty
+            leave_qty = record.input_qty - record.consume_qty
+            if float_compare(leave_qty, 0.0, precision_rounding=0.000001) < 0.0:
+                leave_qty = 0.0
+            record.leave_qty = leave_qty
 
     @api.model
     def loading_consumelist_onclient(self, workorder_id, workcenter_id=False):
