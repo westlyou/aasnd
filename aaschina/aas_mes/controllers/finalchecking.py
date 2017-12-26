@@ -38,8 +38,11 @@ class AASMESFinalCheckingController(http.Controller):
             values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位！'})
             return request.render('aas_mes.aas_finalchecking', values)
         values.update({'mesline_name': mesline.name, 'workstation_name': workstation.name})
-        if not mesline.workorder_id:
+        workorder = mesline.workorder_id
+        if not workorder:
             values.update({'workorder_id': '0', 'workorder_name': ''})
+        else:
+            values.update({'workorder_id': workorder.id, 'workorder_name': workorder.name})
         values['workstation_name'] = workstation.name
         wkdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
         employees = request.env['aas.mes.workstation.employee'].search(wkdomain)

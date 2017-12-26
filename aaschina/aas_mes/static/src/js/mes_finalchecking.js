@@ -78,6 +78,7 @@ $(function(){
                 $('#customercode').html(dresult.customer_code);
                 $('#internalcode').html(dresult.internal_code);
                 if(dresult.recordlist.length > 0){
+                    $('#operationlist').html('');
                     $.each(dresult.recordlist, function(index, record){
                         var operationtr = $('<tr></tr>');
                         if(record.result){
@@ -94,6 +95,7 @@ $(function(){
                     });
                 }
                 if(dresult.reworklist.length > 0){
+                    $('#reworklist').html('');
                     $.each(dresult.reworklist, function(index, record){
                         var reworktr = $('<tr></tr>');
                         $('<td></td>').html(index+1).appendTo(reworktr);
@@ -124,7 +126,7 @@ $(function(){
     //返工确认
     function action_reworkconfirm(badmode){
         var warnmessage = '返工不良模式：'+badmode+'， 是否确认PASS？';
-        layer.confirm(warnmessage, {'btn': ['确定', '取消']}, function(index){
+        layer.confirm(warnmessage, {'btn': ['确认', '取消']}, function(index){
             layer.close(index);
             var operationid = parseInt($('#informationlist').attr('operationid'));
             if(operationid==0){
