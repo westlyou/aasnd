@@ -141,14 +141,16 @@ class AASStockReceipt(models.Model):
         if self.receipt_lines and len(self.receipt_lines) > 0:
             receiptvals['receipt_lines'] = [(1, rline.id, {'state': 'cancel'}) for rline in self.receipt_lines]
         if self.move_lines and len(self.move_lines) > 0:
-            mlines = [(0, 0, {
-                'product_id': mline.product_id.id, 'product_uom': mline.product_uom.id, 'product_lot': mline.product_lot.id,
-                'origin_order': mline.origin_order, 'receipt_type': mline.receipt_type, 'partner_id': mline.partner_id and mline.partner_id.id,
-                'receipt_user': self.env.user.id, 'product_qty': mline.product_qty, 'receipt_note': u'取消收货',
+            receiptvals['move_lines'] = [(0, 0, {
+                'product_id': mline.product_id.id, 'product_uom': mline.product_uom.id,
+                'product_lot': mline.product_lot.id, 'origin_order': mline.origin_order,
+                'receipt_type': mline.receipt_type, 'receipt_user': self.env.user.id,
+                'product_qty': mline.product_qty, 'receipt_note': u'取消收货',
+                'partner_id': False if not mline.partner_id else mline.partner_id.id,
                 'location_src_id': mline.location_dest_id.id, 'location_dest_id': mline.location_src_id.id
             }) for mline in self.move_lines]
-            receiptvals['move_lines'] = mlines
         self.write(receiptvals)
+        return True
 
 
 

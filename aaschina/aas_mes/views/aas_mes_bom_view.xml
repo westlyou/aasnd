@@ -156,6 +156,38 @@
                           parent="menu_aas_mes_settings" sequence="2" groups="group_aas_mes_technologist"/>
 
 
+
+
+        <record id="action_aas_mes_bom_wms" model="ir.actions.act_window">
+            <field name="name">物料清单</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.bom</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_bom"/>
+            <field name="search_view_id" ref="view_search_aas_mes_bom"/>
+        </record>
+
+        <record id="act_view_tree_aas_mes_bom_wms" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_bom"/>
+            <field name="act_window_id" ref="action_aas_mes_bom_wms"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_bom_wms" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_bom"/>
+            <field name="act_window_id" ref="action_aas_mes_bom_wms"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_bom_wms"  name="物料清单" action="action_aas_mes_bom_wms"
+                          parent="stock.menu_aas_stock_inventory" sequence="20" groups="stock.group_stock_user"/>
+
+
+
+
         <!-- 向导 -->
         <record id="view_form_aas_mes_bom_wizard" model="ir.ui.view">
             <field name="name">aas.mes.bom.wizard</field>

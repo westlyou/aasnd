@@ -89,6 +89,14 @@ access_aas_mes_routing_line_mes_technologist,aas.mes.routing.line mes_technologi
 access_aas_mes_badmode_manufacture_user,aas.mes.badmode manufacture_user,model_aas_mes_badmode,group_aas_manufacture_user,1,0,0,0
 access_aas_mes_badmode_mes_technologist,aas.mes.badmode mes_technologist,model_aas_mes_badmode,group_aas_mes_technologist,1,1,1,1
 
+access_aas_mes_bom_stock_user,aas.mes.bom stock_user,model_aas_mes_bom,stock.group_stock_user,1,0,0,0
+access_aas_mes_bom_stock_manager,aas.mes.bom stock_manager,model_aas_mes_bom,stock.group_stock_manager,1,0,0,0
+access_aas_mes_bom_line_stock_user,aas.mes.bom.line stock_user,model_aas_mes_bom_line,stock.group_stock_user,1,0,0,0
+access_aas_mes_bom_line_stock_manager,aas.mes.bom.line stock_manager,model_aas_mes_bom_line,stock.group_stock_manager,1,0,0,0
+access_aas_mes_bom_workcenter_stock_user,aas.mes.bom.workcenter stock_user,model_aas_mes_bom_workcenter,stock.group_stock_user,1,0,0,0
+access_aas_mes_bom_workcenter_stock_manager,aas.mes.bom.workcenter stock_manager,model_aas_mes_bom_workcenter,stock.group_stock_manager,1,0,0,0
+
+
 
 access_aas_mes_mainorder_manufacture_user,aas.mes.mainorder manufacture_user,model_aas_mes_mainorder,group_aas_manufacture_user,1,1,0,0
 access_aas_mes_mainorder_manufacture_planner,aas.mes.mainorder manufacture_planner,model_aas_mes_mainorder,group_aas_manufacture_planner,1,1,1,1

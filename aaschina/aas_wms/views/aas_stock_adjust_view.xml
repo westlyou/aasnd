@@ -109,7 +109,7 @@
         </record>
 
         <menuitem id="menu_aas_stock_adjust"  name="库存调整" action="action_aas_stock_adjust"
-                  parent="stock.menu_aas_stock_inventory" sequence="10" groups="stock.group_stock_manager"/>
+                  parent="menu_stock_itoperator" sequence="1"/>
 
     </data>
 </odoo>

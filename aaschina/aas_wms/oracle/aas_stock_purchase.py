@@ -72,6 +72,10 @@ class AASStockPurchaseOrder(models.Model):
         for record in self:
             record.receiptable = any([rline.receiptable for rline in record.order_lines])
 
+    _sql_constraints = [
+        ('uniq_name', 'unique (name)', u'采购收货订单号不可以重复！')
+    ]
+
 
     @api.model
     def action_import_order(self, order_number):
@@ -148,7 +152,7 @@ class AASStockPurchaseOrder(models.Model):
                         'last_update_date': ebsline.last_update_date,
                         'created_by': ebsline.created_by,
                         'last_updated_by': ebsline.last_updated_by,
-                        'order_name': ebsline.order_name,
+                        'order_name': self.name,
                         'partner_id': ebsline.partner_id.id
                     }
         if self.order_lines and len(self.order_lines) > 0:
@@ -398,6 +402,10 @@ class AASStockReceipt(models.Model):
     @api.one
     def action_cancel(self):
         if self.receipt_type == 'purchase':
+            if self.state == 'done':
+                raise UserError(u'收货单%s已完成，请不要取消！'% self.name)
+            if self.state == 'cancel':
+                return True
             # 采购收货单取消之后要更新采购订单明细的已收货数量或处理中的数量
             for rline in self.receipt_lines:
                 if not rline.origin_order or rline.state == 'cancel':
@@ -416,7 +424,7 @@ class AASStockReceipt(models.Model):
                     if float_compare(temp_qty, 0.0, precision_rounding=0.000001) < 0.0:
                         temp_qty = 0.0
                     purchaseline.write({'receipt_qty': temp_qty})
-        super(AASStockReceipt, self).action_cancel()
+        return super(AASStockReceipt, self).action_cancel()
 
 
 
@@ -451,23 +459,26 @@ class AASStockReceiptLine(models.Model):
             purchaseline = self.env['aas.stock.purchase.order.line'].search(linedomain, limit=1)
             if not purchaseline:
                 continue
-            purchaseorder, pkey = record.order_id, 'P'+str(record.order_id.id)
-            if pkey in purchasedict:
-                if record.state == 'draft':
-                    purchasedict[pkey]['lines'].append((1, purchaseline.id, {'doing_qty': purchaseline.doing_qty-record.product_qty}))
-                else:
-                    purchasedict[pkey]['lines'].append((1, purchaseline.id, {'receipt_qty': purchaseline.receipt_qty-record.product_qty}))
+            pkey = 'PL'+str(purchaseline.id)
+            if pkey not in purchasedict:
+                purchasedict[pkey] = {
+                    'purchaseline': purchaseline,
+                    'doing_qty': purchaseline.doing_qty, 'receipt_qty': purchaseline.receipt_qty
+                }
+            if record.state == 'draft':
+                purchasedict[pkey]['doing_qty'] -= record.product_qty
             else:
-                if record.state == 'draft':
-                    purchasedict[pkey] = {'order': purchaseorder, 'lines':[(1, purchaseline.id, {'doing_qty': purchaseline.doing_qty-record.product_qty})]}
-                else:
-                    purchasedict[pkey] = {'order': purchaseorder, 'lines': [(1, purchaseline.id, {'receipt_qty': purchaseline.receipt_qty-record.product_qty})]}
+                purchasedict[pkey]['receipt_qty'] -= record.product_qty
         result = super(AASStockReceiptLine, self).unlink()
         if purchasedict and len(purchasedict) > 0:
             # 采购收货单删除时需要清理采购订单明细上的已收数量或处理中数量
             for pkey, pval in purchasedict.items():
-                purchaseorder, purchaselines = pval['order'], pval['lines']
-                purchaseorder.write({'order_lines': purchaselines})
+                purchaseline, doing_qty, receipt_qty = pval['purchaseline'], pval['doing_qty'], pval['receipt_qty']
+                if float_compare(doing_qty, 0.0, precision_rounding=0.000001) < 0.0:
+                    doing_qty = 0.0
+                if float_compare(receipt_qty, 0.0, precision_rounding=0.000001) < 0.0:
+                    receipt_qty = 0.0
+                purchaseline.write({'doing_qty': doing_qty, 'receipt_qty': receipt_qty})
         return result
 
 

@@ -156,5 +156,8 @@
             </field>
         </record>
 
+
+        <menuitem id="menu_stock_itoperator" name="WMS维护" parent="stock.menu_stock_root" sequence="50" groups="base.group_no_one"/>
+
     </data>
 </odoo>

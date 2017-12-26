@@ -191,6 +191,9 @@
                     <field name="aas_bom_id" string="BOM" filter_domain="[('aas_bom_id','ilike',self)]"/>
                     <field name="routing_id" string="工艺" filter_domain="[('routing_id','ilike',self)]"/>
                     <field name="creator_id" string="创建人" filter_domain="[('creator_id','ilike',self)]"/>
+                    <field name="wireorder_id" string="线材工单" filter_domain="[('wireorder_id','ilike',self)]"/>
+                    <separator/>
+                    <filter name="nowireorder" string="非线材工单" domain="[('wireorder_id', '=', False)]"/>
                     <separator/>
                     <group expand="0" string="分组">
                         <filter string="产线" context="{'group_by':'mesline_id'}"/>
@@ -211,6 +214,7 @@
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="view_tree_aas_mes_workorder"/>
             <field name="search_view_id" ref="view_search_aas_mes_workorder"/>
+            <field name="context">{'search_default_nowireorder': 1}</field>
             <field name="help" type="html">
                 <p class="oe_view_nocontent_create"> 单击添加工单</p>
             </field>
