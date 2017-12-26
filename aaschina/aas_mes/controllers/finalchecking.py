@@ -39,21 +39,21 @@ class AASMESFinalCheckingController(http.Controller):
             return request.render('aas_mes.aas_finalchecking', values)
         values.update({'mesline_name': mesline.name, 'workstation_name': workstation.name})
         if not mesline.workorder_id:
-            values.update({'success': False, 'message': u'当前产线还未指定生产工单，请联系领班分配生产工单！'})
-            return request.render('aas_mes.aas_finalchecking', values)
-        values.update({'workorder_id': mesline.workorder_id.id, 'workorder_name': mesline.workorder_id.name})
+            values.update({'workorder_id': '0', 'workorder_name': ''})
         values['workstation_name'] = workstation.name
         wkdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
         employees = request.env['aas.mes.workstation.employee'].search(wkdomain)
         if employees and len(employees) > 0:
             values['employeelist'] = [{
                 'employee_id': wemployee.employee_id.id,
-                'employee_name': wemployee.employee_id.name,
-                'employee_code': wemployee.employee_id.code
+                'employee_name': wemployee.employee_id.name, 'employee_code': wemployee.employee_id.code
             } for wemployee in employees]
         equipments = request.env['aas.mes.workstation.equipment'].search(wkdomain)
         if equipments and len(equipments) > 0:
-            values['equipmentlist'] = [wequipment.equipment_id.code for wequipment in equipments]
+            values['equipmentlist'] = [{
+                'equipment_id': wequipment.equipment_id.id,
+                'equipment_name': wequipment.equipment_id.name, 'equipment_code': wequipment.equipment_id.code
+            } for wequipment in equipments]
         return request.render('aas_mes.aas_finalchecking', values)
 
 
@@ -92,6 +92,7 @@ class AASMESFinalCheckingController(http.Controller):
         if not tempoperation:
             values.update({'success': False, 'message': u'请仔细检查您扫描的是否是序列号条码！'})
             return values
+        values['badmode_name'] = ''
         serialnumber = tempoperation.serialnumber_id
         values.update({
             'rework': serialnumber.reworked, 'internal_code': serialnumber.internal_product_code,
@@ -159,11 +160,28 @@ class AASMESFinalCheckingController(http.Controller):
                 'ipqccheck_time': '' if not rework.ipqccheck_time else fields.Datetime.to_timezone_string(rework.ipqccheck_time, 'Asia/Shanghai'),
                 'state': REWORKSTATEDICT[rework.state]
             } for rework in serialnumber.rework_lines]
-
-
+            currentrework = serialnumber.rework_lines[0]
+            values['badmode_name'] = currentrework.badmode_id.name
         return values
 
-
+    @http.route('/aasmes/finalchecking/reworkconfirm', type='json', auth="user")
+    def aasmes_finalchecking_reworkconfirm(self, operationid):
+        values = {'success': True, 'message': ''}
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        values['mesline_name'] = lineuser.mesline_id.name
+        if lineuser.mesrole != 'fqcchecker':
+            values.update({'success': False, 'message': u'当前登录账号还未授权终检'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位！'})
+            return values
+        tempoperation = request.env['aas.mes.operation'].browse(operationid)
+        tempoperation.action_finalcheck(mesline, workstation)
+        return values
 
     @http.route('/aasmes/finalchecking/actionconfirm', type='json', auth="user")
     def aasmes_finalchecking_actionconfirm(self, workorderid, operationid):

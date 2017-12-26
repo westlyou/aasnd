@@ -647,18 +647,7 @@ class AASMESWorkorder(models.Model):
         toperation = self.env['aas.mes.operation'].search([('serialnumber_name', '=', serialnumber)], limit=1)
         if not toperation:
             return values
-        employeeid, equipmentid = False, False
-        employees = self.env['aas.mes.workstation.employee'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
-        if employees and len(employees) > 0:
-            employeeid = employees[0].employee_id.id
-        equipments = self.env['aas.mes.workstation.equipment'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
-        if equipments and len(equipments) > 0:
-            equipmentid = equipments[0].equipment_id.id
-        operationrecord = self.env['aas.mes.operation.record'].create({
-            'operation_id': toperation.id, 'employee_id': employeeid, 'equipment_id': equipmentid,
-            'operator_id': self.env.user.id, 'operation_pass': True, 'operate_result': 'Pass', 'operate_type': 'fqc'
-        })
-        toperation.write({'fqccheck_record_id': operationrecord.id})
+        toperation.action_finalcheck(mesline, workstation)
         return values
 
 

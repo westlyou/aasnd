@@ -77,44 +77,91 @@ $(function(){
                 }
                 $('#customercode').html(dresult.customer_code);
                 $('#internalcode').html(dresult.internal_code);
+                if(dresult.recordlist.length > 0){
+                    $.each(dresult.recordlist, function(index, record){
+                        var operationtr = $('<tr></tr>');
+                        if(record.result){
+                            $('<td></td>').html('<i class="fa fa-check text-green"></i>').appendTo(operationtr);
+                        }else{
+                            $('<td></td>').html('<i class="fa fa-exclamation text-red"></i>').appendTo(operationtr);
+                        }
+                        $('<td></td>').html(record.sequence).appendTo(operationtr);
+                        $('<td></td>').html(record.operation_name).appendTo(operationtr);
+                        $('<td></td>').html(record.equipment_code).appendTo(operationtr);
+                        $('<td></td>').html(record.employee_name).appendTo(operationtr);
+                        $('<td></td>').html(record.operation_time).appendTo(operationtr);
+                        $('#operationlist').append(operationtr);
+                    });
+                }
+                if(dresult.reworklist.length > 0){
+                    $.each(dresult.reworklist, function(index, record){
+                        var reworktr = $('<tr></tr>');
+                        $('<td></td>').html(index+1).appendTo(reworktr);
+                        $('<td></td>').html(record.badmode_name).appendTo(reworktr);
+                        $('<td></td>').html(record.badmode_date).appendTo(reworktr);
+                        $('<td></td>').html(record.commiter).appendTo(reworktr);
+                        $('<td></td>').html(record.commit_time).appendTo(reworktr);
+                        $('<td></td>').html(record.repairer).appendTo(reworktr);
+                        $('<td></td>').html(record.repair_time).appendTo(reworktr);
+                        $('<td></td>').html(record.ipqcchecker).appendTo(reworktr);
+                        $('<td></td>').html(record.ipqccheck_time).appendTo(reworktr);
+                        $('<td></td>').html(record.state).appendTo(reworktr);
+                        $('#reworklist').append(reworktr);
+                    });
+                }
                 if(dresult.checkval=='waiting'){
-                    action_confirm();
-                    return ;
-                }
-                $.each(dresult.recordlist, function(index, record){
-                    var operationtr = $('<tr></tr>');
-                    if(record.result){
-                        $('<td></td>').html('<i class="fa fa-check text-green"></i>').appendTo(operationtr);
+                    if(dresult.rework){
+                        action_reworkconfirm(dresult.badmode_name);
                     }else{
-                        $('<td></td>').html('<i class="fa fa-exclamation text-red"></i>').appendTo(operationtr);
+                        action_confirm();
                     }
-                    $('<td></td>').html(record.sequence).appendTo(operationtr);
-                    $('<td></td>').html(record.operation_name).appendTo(operationtr);
-                    $('<td></td>').html(record.equipment_code).appendTo(operationtr);
-                    $('<td></td>').html(record.employee_name).appendTo(operationtr);
-                    $('<td></td>').html(record.operation_time).appendTo(operationtr);
-                    $('#operationlist').append(operationtr);
-                });
-                if(dresult.reworklist.length<=0){
-                    return ;
                 }
-                $.each(dresult.reworklist, function(index, record){
-                    var reworktr = $('<tr></tr>');
-                    $('<td></td>').html(index+1).appendTo(reworktr);
-                    $('<td></td>').html(record.badmode_name).appendTo(reworktr);
-                    $('<td></td>').html(record.badmode_date).appendTo(reworktr);
-                    $('<td></td>').html(record.commiter).appendTo(reworktr);
-                    $('<td></td>').html(record.commit_time).appendTo(reworktr);
-                    $('<td></td>').html(record.repairer).appendTo(reworktr);
-                    $('<td></td>').html(record.repair_time).appendTo(reworktr);
-                    $('<td></td>').html(record.ipqcchecker).appendTo(reworktr);
-                    $('<td></td>').html(record.ipqccheck_time).appendTo(reworktr);
-                    $('<td></td>').html(record.state).appendTo(reworktr);
-                    $('#reworklist').append(reworktr);
-                });
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
         });
+    }
+
+    //返工确认
+    function action_reworkconfirm(badmode){
+        var warnmessage = '返工不良模式：'+badmode+'， 是否确认PASS？';
+        layer.confirm(warnmessage, {'btn': ['确定', '取消']}, function(index){
+            layer.close(index);
+            var operationid = parseInt($('#informationlist').attr('operationid'));
+            if(operationid==0){
+                layer.msg('您还没有扫描条码，暂不可以操作！', {icon: 5});
+                return ;
+            }
+            var checkval = $('#informationlist').attr('checkval');
+            if(checkval=='forbidden'){
+                layer.msg('请仔细检查是否还有操作未完成！', {icon: 5});
+                return ;
+            }else if(checkval=='done'){
+                layer.msg('当前条码已经确认，请不要重复操作！', {icon: 5});
+                return ;
+            }
+            var confirmparams = {'operationid': operationid};
+            var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+            $.ajax({
+                url: '/aasmes/finalchecking/reworkconfirm',
+                headers:{'Content-Type':'application/json'},
+                type: 'post', timeout:10000, dataType: 'json',
+                data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: confirmparams, id: access_id}),
+                success:function(data){
+                    var dresult = data.result;
+                    if(!dresult.success){
+                        layer.msg(dresult.message, {icon: 5});
+                        return ;
+                    }
+                    var serialnumber = $('#ctserialnumber').attr('serialnumber');
+                    if(serialnumber == 0 || serialnumber == '0'){
+                        window.location.reload(true);
+                    }else{
+                        action_scanserialnumber(serialnumber);
+                    }
+                },
+                error:function(xhr,type,errorThrown){ console.log(type);}
+            });
+        }, function(){});
     }
 
     //终检确认

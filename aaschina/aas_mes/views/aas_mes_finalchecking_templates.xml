@@ -107,7 +107,10 @@
                                             <ul class="nav nav-pills nav-stacked">
                                                 <t t-foreach="equipmentlist" t-as="tequipment">
                                                     <li>
-                                                        <a href="javascript:void(0);"> <t t-esc="tequipment"/> </a>
+                                                        <a href="javascript:void(0);">
+                                                            <t t-esc="tequipment['equipment_name']"/>
+                                                            <span class="pull-right" t-esc="tequipment['equipment_code']"/>
+                                                        </a>
                                                     </li>
                                                 </t>
                                             </ul>

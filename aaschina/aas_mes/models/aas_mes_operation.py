@@ -55,6 +55,20 @@ class AASMESOperation(models.Model):
             serialnumber.write({'state': 'normal'})
         return record
 
+    @api.one
+    def action_finalcheck(self, mesline, workstation):
+        employeeid, equipmentid = False, False
+        employees = self.env['aas.mes.workstation.employee'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
+        if employees and len(employees) > 0:
+            employeeid = employees[0].employee_id.id
+        equipments = self.env['aas.mes.workstation.equipment'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
+        if equipments and len(equipments) > 0:
+            equipmentid = equipments[0].equipment_id.id
+        self.env['aas.mes.operation.record'].create({
+            'operation_id': self.id, 'employee_id': employeeid, 'equipment_id': equipmentid,
+            'operator_id': self.env.user.id, 'operation_pass': True, 'operate_result': 'Pass', 'operate_type': 'fqc'
+        })
+
 
 
 OPERATELIST = [('newbarcode', u'生成条码'), ('embedpiece', u'置入连接片'), ('functiontest', u'隔离板测试'),
@@ -101,7 +115,7 @@ class AASMESOperationRecord(models.Model):
             if serialnumber.state == 'draft':
                 serialnumber.write({'state': 'normal'})
         elif self.operate_type == 'fqc':
-            operationvals.update({'final_quality_check': True, 'fqccheckt_record_id': self.id})
+            operationvals.update({'final_quality_check': True, 'fqccheck_record_id': self.id})
         elif self.operate_type == 'gp12':
             operationvals.update({'gp12_check': True, 'gp12_record_id': self.id})
         if operationvals and len(operationvals) > 0:

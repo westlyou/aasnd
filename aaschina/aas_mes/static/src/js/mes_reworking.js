@@ -108,19 +108,15 @@ $(function(){
             url: '/aasmes/badmodelist',
             headers:{'Content-Type':'application/json'},
             data: function(params){
-                var sparams =  {
-                    'q': params.term || '', 'page': params.page || 1
-                };
-                return JSON.stringify({ jsonrpc: "2.0", method: 'call', params: sparams, id: Math.floor(Math.random() * 1000 * 1000 * 1000) })
+                var sparams =  {'q': params.term || '', 'page': params.page || 1};
+                return JSON.stringify({ jsonrpc: "2.0", method: 'call', params: sparams, id: Math.floor(Math.random() * 1000 * 1000 * 1000) });
             },
             processResults: function (data, params) {
                 params.page = params.page || 1;
                 var dresult = data.result;
                 return {
                     results: dresult.items,
-                    pagination: {
-                        more: (params.page * 30) < dresult.total_count
-                    }
+                    pagination: {more: (params.page * 30) < dresult.total_count}
                 };
             }
         }
@@ -138,16 +134,14 @@ $(function(){
                 var sparams =  {
                     'q': params.term || '', 'page': params.page || 1
                 };
-                return JSON.stringify({ jsonrpc: "2.0", method: 'call', params: sparams, id: Math.floor(Math.random() * 1000 * 1000 * 1000) })
+                return JSON.stringify({ jsonrpc: "2.0", method: 'call', params: sparams, id: Math.floor(Math.random() * 1000 * 1000 * 1000) });
             },
             processResults: function (data, params) {
                 params.page = params.page || 1;
                 var dresult = data.result;
                 return {
                     results: dresult.items,
-                    pagination: {
-                        more: (params.page * 30) < dresult.total_count
-                    }
+                    pagination: {more: (params.page * 30) < dresult.total_count}
                 };
             }
         }
