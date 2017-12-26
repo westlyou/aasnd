@@ -155,6 +155,8 @@ class AASMESOperationRecord(models.Model):
             'operation_pass': operation_pass, 'operate_result': operate_result, 'serialnumber': serialnumber
         }
         self.env['aas.mes.operation.record'].create(functiontestvals)
+        if not operation_pass:
+            toperation.write({'function_test': False, 'functiontest_record_id': False})
         return result
 
 
