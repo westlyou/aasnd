@@ -107,6 +107,14 @@ class AASMESWorkAttendance(models.Model):
 
     @api.model
     def action_attend(self, employee, mesline, workstation, attendance=None, equipment=None):
+        """更新出勤信息，添加出勤明细
+        :param employee:
+        :param mesline:
+        :param workstation:
+        :param attendance:
+        :param equipment:
+        :return:
+        """
         values = {'success': True, 'message': ''}
         if attendance and (employee.id != attendance.employee_id.id or mesline.id != attendance.mesline_id.id):
             values = {'success': False, 'message': u'出勤记录异常，请仔细检查！'}
@@ -118,10 +126,11 @@ class AASMESWorkAttendance(models.Model):
                 return values
             attendance = tvalues['attendance']
         values.update({'attendance_id': attendance.id})
-        linedomain = [('attendance_id', '=', attendance.id), ('employee_id', '=', employee.id)]
-        linedomain.extend([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
-        linedomain.append(('attend_done', '=', False))
-        if self.env['aas.mes.work.attendance.line'].search_count(linedomain) <= 0:
+        alinedomain = [
+            ('attendance_id', '=', attendance.id), ('employee_id', '=', employee.id),
+            ('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id), ('attend_done', '=', False)
+        ]
+        if self.env['aas.mes.work.attendance.line'].search_count(alinedomain) <= 0:
             self.env['aas.mes.work.attendance.line'].create({
                 'attendance_id': attendance.id, 'employee_id': employee.id, 'mesline_id': mesline.id,
                 'workstation_id': workstation.id, 'equipment_id': False if not equipment else equipment.id

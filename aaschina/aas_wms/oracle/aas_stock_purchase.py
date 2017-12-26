@@ -153,7 +153,7 @@ class AASStockPurchaseOrder(models.Model):
                         'created_by': ebsline.created_by,
                         'last_updated_by': ebsline.last_updated_by,
                         'order_name': self.name,
-                        'partner_id': ebsline.partner_id.id
+                        'partner_id': False if not self.partner_id else self.partner_id.id
                     }
         if self.order_lines and len(self.order_lines) > 0:
             for aasline in self.order_lines:
