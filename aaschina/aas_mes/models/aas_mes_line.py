@@ -133,10 +133,11 @@ class AASMESLine(models.Model):
                 ordervals['schedule_id'] = schedule.id
                 schedule.write({'state': 'working'})
             self.write(ordervals)
-            # 清理上一个班次用料
-            #self.action_clear_feeding(self.id)
             # 清理上一个班次员工上岗信息
             self.action_clear_employees(self.id)
+            # 刷新上料信息
+            self.action_refreshandclear_feeding(self.id)
+
 
     @api.model
     def loading_nextschedule(self, mesline):
@@ -172,16 +173,16 @@ class AASMESLine(models.Model):
 
 
     @api.model
-    def action_clear_feeding(self, mesline_id):
+    def action_refreshandclear_feeding(self, mesline_id):
         """
-        清除当前产线的上料记录
+        刷新并清理当前产线的上料记录
         :param mesline_id:
         :return:
         """
         feedmateriallist = self.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline_id)])
         if not feedmateriallist or len(feedmateriallist) <= 0:
             return True
-        feedmateriallist.unlink()
+        feedmateriallist.action_freshandclear()
         return True
 
 

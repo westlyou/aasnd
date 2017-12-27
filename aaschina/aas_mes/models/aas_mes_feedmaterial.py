@@ -240,3 +240,17 @@ class AASMESFeedmaterial(models.Model):
         else:
             feedmaterial.action_refresh_stock()
         return values
+
+
+    @api.multi
+    def action_freshandclear(self):
+        """刷新上料库存信息；若是库存小于等于零，则清理掉
+        :return:
+        """
+        todellist = self.env['aas.mes.feedmaterial']
+        for record in self:
+            record.action_refresh_stock()
+            if float_compare(record.material_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+                todellist |= record
+        if todellist and len(todellist) > 0:
+            todellist.unlink()
