@@ -62,10 +62,14 @@ class AASMESWorkAttendance(models.Model):
         tattendancelines = self.env['aas.mes.work.attendance.line'].search(tlinedomain)
         if tattendancelines and len(tattendancelines) > 0:
             tattendancelines.action_done()
-
         # 更新出勤记录
         tempdomain = [('employee_id', '=', employee.id), ('mesline_id', '=', mesline.id), ('attend_done', '=', False)]
         tattendance = self.env['aas.mes.work.attendance'].search(tempdomain, limit=1)
+        if tattendance:
+            # 检测在岗时间是否达到最大工时，达到最大工时就关闭此出勤记录
+            tattendance.action_done()
+            if tattendance.attend_done:
+                tattendance = False
         if tattendance:
             values.update({'attendance_id': tattendance.id})
             linedomain = [('attendance_id', '=', tattendance.id), ('attend_done', '=', False)]
@@ -192,7 +196,9 @@ class AASMESWorkAttendance(models.Model):
         currenttime = fields.Datetime.from_string(currentstr)
         for record in self:
             starttime = fields.Datetime.from_string(record.attendance_start)
-            if not donedirectly and (((currenttime - starttime).total_seconds() / 3600) <= record.worktime_max):
+            timeinterval = (currenttime - starttime).total_seconds() / 3600.0
+            unfinished = float_compare(timeinterval, record.worktime_max, precision_rounding=0.000001) < 0.0
+            if not donedirectly and unfinished:
                 continue
             linedomain = [('attendance_id', '=', record.id), ('attend_done', '=', False)]
             templines = self.env['aas.mes.work.attendance.line'].search(linedomain)
@@ -209,28 +215,31 @@ class AASMESWorkAttendance(models.Model):
             overtime = totaltime - record.worktime_standard
             if float_compare(overtime, 0.0, precision_rounding=0.000001) > 0.0:
                 attendancevals['overtime_hours'] = overtime
-            # 更新工作日和班次信息
-            if record.attend_lines and len(record.attend_lines) > 0:
-                linedict = {}
-                for aline in record.attend_lines:
-                    if not aline.schedule_id:
-                        continue
-                    akey = aline.attendance_date + '-' + str(aline.schedule_id.id)
-                    if akey not in linedict:
-                        linedict[akey] = {
-                            'attendance_date': aline.attendance_date,
-                            'schedule_id': aline.schedule_id.id, 'attend_hours': aline.attend_hours
-                        }
-                    else:
-                        linedict[akey]['attend_hours'] += aline.attend_hours
-                if linedict and len(linedict) > 0:
-                    workdate, schedule_id, thours = False, False, 0.0
-                    for lkey, lval in linedict.items():
-                        if float_compare(lval['attend_hours'], thours, precision_rounding=0.000001) > 0.0:
-                            thours = lval['attend_hours']
-                            workdate, schedule_id = lval['attendance_date'], lval['schedule_id']
-                    attendancevals.update({'attendance_date': workdate, 'schedule_id': schedule_id})
             record.write(attendancevals)
+            if not record.attend_lines or len(record.attend_lines) <= 0:
+                continue
+            # 关闭出勤明细
+            record.attend_lines.action_done()
+            # 更新工作日和班次信息
+            linedict = {}
+            for aline in record.attend_lines:
+                if not aline.schedule_id:
+                    continue
+                akey = aline.attendance_date + '-' + str(aline.schedule_id.id)
+                if akey not in linedict:
+                    linedict[akey] = {
+                        'attendance_date': aline.attendance_date,
+                        'schedule_id': aline.schedule_id.id, 'attend_hours': aline.attend_hours
+                    }
+                else:
+                    linedict[akey]['attend_hours'] += aline.attend_hours
+            if linedict and len(linedict) > 0:
+                workdate, schedule_id, thours = False, False, 0.0
+                for lkey, lval in linedict.items():
+                    if float_compare(lval['attend_hours'], thours, precision_rounding=0.000001) > 0.0:
+                        thours = lval['attend_hours']
+                        workdate, schedule_id = lval['attendance_date'], lval['schedule_id']
+                record.update({'attendance_date': workdate, 'schedule_id': schedule_id})
 
     @api.model
     def action_workstation_scanning(self, equipment_code, employee_barcode):
@@ -247,14 +256,14 @@ class AASMESWorkAttendance(models.Model):
         if not equipment:
             values.update({'success': False, 'message': u'设备异常，请仔细检查系统是否存在此设备！'})
             return values
-        if not equipment.mesline_id or not equipment.workstation_id:
-            values.update({'success': False, 'message': u'当前设备可能还未设置产线工位！'})
+        mesline, workstation = equipment.mesline_id, equipment.workstation_id
+        if not mesline or not workstation:
+            values.update({'success': False, 'message': u'当前设备可能还未设置产线工位，请仔细检查！'})
             return values
         employee = self.env['aas.hr.employee'].search([('barcode', '=', employee_barcode)], limit=1)
         if not employee:
             values.update({'success': False, 'message': u'请确认是否有此员工存在，或许当前员已被删除，请仔细检查！'})
             return values
-        mesline, workstation = equipment.mesline_id, equipment.workstation_id
         values = self.action_scanning(employee, mesline, workstation, equipment)
         if not values.get('success', False):
             return values
@@ -365,23 +374,28 @@ class AASMESWorkAttendanceLine(models.Model):
         """出勤结束
         :return:
         """
-        employeeids, attendanceids = [], []
+        employeeids, attendanceids, attendlines = [], [], self.env['aas.mes.work.attendance.line']
         for record in self:
+            if record.attend_done:
+                continue
+            attendlines |= record
             if record.employee_id.id not in employeeids:
                 employeeids.append(record.employee_id.id)
             if record.attendance_id and record.attendance_id.id not in attendanceids:
                 attendanceids.append(record.attendance_id.id)
         currenttime = fields.Datetime.now()
         attendancevals = {'attendance_finish': currenttime, 'attend_done': True}
-        self.write(attendancevals)
+        if attendlines and len(attendlines) > 0:
+            attendlines.write(attendancevals)
         if attendanceids and len(attendanceids) > 0:
             attendancelist = self.env['aas.mes.work.attendance'].browse(attendanceids)
             attendancelist.write({'attendance_finish': currenttime})
-        wsemployees = self.env['aas.mes.workstation.employee'].search([('employee_id', 'in', employeeids)])
-        if wsemployees and len(wsemployees) > 0:
-            wsemployees.unlink()
-        employeelist = self.env['aas.hr.employee'].browse(employeeids)
-        employeelist.write({'state': 'leave'})
+        if employeeids and len(employeeids) > 0:
+            wsemployees = self.env['aas.mes.workstation.employee'].search([('employee_id', 'in', employeeids)])
+            if wsemployees and len(wsemployees) > 0:
+                wsemployees.unlink()
+            employeelist = self.env['aas.hr.employee'].browse(employeeids)
+            employeelist.write({'state': 'leave'})
 
 
     @api.multi

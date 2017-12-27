@@ -164,13 +164,10 @@ class AASWorkorderWechatController(http.Controller):
         if not cresult['success']:
             values.update(cresult)
             return values
-        ticketvals = {'output_qty': workticket.output_qty + commit_qty}
         if workticket.islastworkcenter():
             if not container_id:
                 values.update({'success': False, 'message': u'当前工序未最后一道工序成品产出需要指定容器，请先扫描容器条码！'})
                 return values
-            else:
-                ticketvals['container_id'] = container_id
         try:
             workticket.action_doing_commit(commit_qty, badmode_lines, container_id)
         except UserError, ue:

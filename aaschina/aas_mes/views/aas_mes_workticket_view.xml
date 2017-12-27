@@ -152,7 +152,7 @@
                         </group>
                     </group>
                     <group>
-                        <group> <field name="input_qty" required="1"/> </group>
+                        <group> <field name="input_qty" readonly="1"/> </group>
                     </group>
                     <footer>
                         <button name="action_done" string="确认" type="object" class="btn-primary"/>

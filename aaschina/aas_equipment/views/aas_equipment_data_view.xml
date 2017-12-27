@@ -30,9 +30,9 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form create="false" edit="false" delete="false">
-                    <header>
+                    <!--<header>
                         <button name="action_push_data" string="推送数据" type="object" class="oe_highlight"/>
-                    </header>
+                    </header>-->
                     <sheet>
                         <group>
                             <group>

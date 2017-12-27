@@ -466,11 +466,13 @@ class AASMESWorkorder(models.Model):
             consumedict, feedmaterialdict = {}, {}
             for tempconsume in consumelist:
                 pkey = 'P-'+str(tempconsume.material_id.id)
+                consume_qty = tempconsume.consume_unit * product_qty
                 if pkey not in consumedict:
-                    consumedict[pkey] = {'code': tempconsume.material_id.default_code, 'qty': tempconsume.consume_unit * product_qty}
+                    consumedict[pkey] = {'code': tempconsume.material_id.default_code, 'qty': consume_qty}
                 else:
-                    consumedict[pkey]['qty'] += tempconsume.consume_unit * product_qty
-            feedmateriallist = self.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation_id)])
+                    consumedict[pkey]['qty'] += consume_qty
+            feeddomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation_id)]
+            feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
             if not feedmateriallist or len(feedmateriallist) <= 0:
                 values.update({'success': False, 'message': u'工位%s还未上料，请联系上料员上料！'% workstation.name})
                 return values
@@ -489,7 +491,8 @@ class AASMESWorkorder(models.Model):
                 if float_compare(feed_qty, consume_qty, precision_rounding=0.000001) < 0.0:
                     lesslist.append(cval['code'])
             if nonelist and len(nonelist) > 0:
-                values.update({'success': False, 'message': '原料%s未投料；'% ','.join(nonelist)})
+                values['success'] = False
+                values['message'] = '原料%s未投料；'% ','.join(nonelist)
             if lesslist and len(lesslist) > 0:
                 values['success'] = False
                 values['message'] = values['message'] + ('原料%s投料不足'% ','.join(lesslist))

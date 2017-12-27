@@ -43,12 +43,12 @@ class AASMESFeedmaterial(models.Model):
     @api.model
     def get_material_qty(self, record):
         material_qty = 0.0
-        domain = [('product_id', '=', record.material_id.id), ('lot_id', '=', record.material_lot.id)]
-        location_ids = [record.mesline_id.location_production_id.id]
-        for mlocation in record.mesline_id.location_material_list:
-            location_ids.append(mlocation.location_id.id)
-        domain.append(('location_id', 'child_of', location_ids))
-        quants = self.env['stock.quant'].search(domain)
+        material, materialot, mesline = record.material_id, record.material_lot, record.mesline_id
+        materialdomain = [('product_id', '=', material.id), ('lot_id', '=', materialot.id)]
+        locationids = [mesline.location_production_id.id]
+        locationids += [mlocation.location_id.id for mlocation in mesline.location_material_list]
+        materialdomain.append(('location_id', 'child_of', locationids))
+        quants = self.env['stock.quant'].search(materialdomain)
         if quants and len(quants) > 0:
             material_qty = sum([quant.qty for quant in quants])
         if float_compare(record.material_qty, material_qty, precision_rounding=0.000001) != 0.0:
@@ -62,17 +62,16 @@ class AASMESFeedmaterial(models.Model):
 
     @api.multi
     def action_checking_quants(self):
-        """
-        整理库存份
+        """整理库存份
         :return:
         """
         self.ensure_one()
-        domain = [('product_id', '=', self.material_id.id), ('lot_id', '=', self.material_lot.id)]
-        location_ids = [self.mesline_id.location_production_id.id]
-        for mlocation in self.mesline_id.location_material_list:
-            location_ids.append(mlocation.location_id.id)
-        domain.append(('location_id', 'in', location_ids))
-        quants = self.env['stock.quant'].search(domain)
+        mesline, material, mtlot = self.mesline_id, self.material_id, self.material_lot
+        quantdomain = [('product_id', '=', material.id), ('lot_id', '=', mtlot.id)]
+        locationids = [mesline.location_production_id.id]
+        locationids += [mlocation.location_id.id for mlocation in mesline.location_material_list]
+        quantdomain += [('location_id', 'child_of', locationids)]
+        quants = self.env['stock.quant'].search(quantdomain)
         if quants and len(quants) > 0:
             temp_qty = sum([quant.qty for quant in quants])
             if not float_is_zero(self.material_qty-temp_qty, precision_rounding=0.000001):
@@ -98,7 +97,7 @@ class AASMESFeedmaterial(models.Model):
 
 
     @api.model
-    def get_workstation_materiallist(self, equipment_code):
+    def get_workstation_materiallist(self, equipment_code, withlots=False):
         """
         根据设备获取相应产线工位的上料清单
         :param equipment_code:
@@ -115,11 +114,35 @@ class AASMESFeedmaterial(models.Model):
         feeddomain = [('mesline_id', '=', equipment.mesline_id.id), ('workstation_id', '=', equipment.workstation_id.id)]
         feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
         if feedmateriallist and len(feedmateriallist) > 0:
-            values['materiallist'] = [{
-                'material_id': feedmaterial.material_id.id, 'material_code': feedmaterial.material_id.default_code,
-                'materiallot_id': feedmaterial.material_lot.id, 'materiallot_name': feedmaterial.material_lot.name,
-                'material_qty': feedmaterial.material_qty
-            } for feedmaterial in feedmateriallist]
+            if withlots:
+                values['materiallist'] = [{
+                    'material_id': feedmaterial.material_id.id, 'material_code': feedmaterial.material_id.default_code,
+                    'materiallot_id': feedmaterial.material_lot.id, 'materiallot_name': feedmaterial.material_lot.name,
+                    'material_qty': feedmaterial.material_qty
+                } for feedmaterial in feedmateriallist]
+            else:
+                materialdict = {}
+                for feedmaterial in feedmateriallist:
+                    mkey = 'M'+str(feedmaterial.material_id.id)
+                    if mkey not in materialdict:
+                        materialdict[mkey] = {
+                            'material_id': feedmaterial.material_id.id,
+                            'material_qty': feedmaterial.material_qty,
+                            'materiallots': [feedmaterial.material_lot.name],
+                            'material_code': feedmaterial.material_id.default_code
+                        }
+                    else:
+                        materialdict[mkey]['material_qty'] += feedmaterial.material_qty
+                        if feedmaterial.material_lot.name not in materialdict[mkey]['materiallots']:
+                            materialdict[mkey]['materiallots'].append(feedmaterial.material_lot.name)
+                tmateriallist = []
+                for tmaterial in materialdict.values():
+                    tmateriallist.append({
+                        'material_id': tmaterial['material_id'], 'material_qty': tmaterial['material_qty'],
+                        'materiallot_id': 0, 'materiallot_name': ','.join(tmaterial['materiallots']),
+                        'material_code': tmaterial['material_code']
+                    })
+                values['materiallist'] = tmateriallist
         return values
 
     @api.model

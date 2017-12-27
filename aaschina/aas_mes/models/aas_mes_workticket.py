@@ -207,7 +207,9 @@ class AASMESWorkticket(models.Model):
         product, workstation = self.product_id, workcenter.workstation_id
         if not workstation:
             raise UserError(u'还未设置工位，请先设置工序工位！')
-        consumedomain = [('workorder_id', '=', workorder.id), ('workcenter_id', '=', workcenter.id), ('product_id', '=', product.id)]
+        consumedomain = [
+            ('workorder_id', '=', workorder.id), ('workcenter_id', '=', workcenter.id), ('product_id', '=', product.id)
+        ]
         consumelist = self.env['aas.mes.workorder.consume'].search(consumedomain)
         if not consumelist or len(consumelist) <= 0:
             return
@@ -215,7 +217,8 @@ class AASMESWorkticket(models.Model):
         movevallist, consumelines, materiallist, movelist = [], [], [], self.env['stock.move']
         for tempconsume in consumelist:
             want_qty, material = tempconsume.consume_unit * commit_qty, tempconsume.material_id
-            feeddomain = [('workstation_id', '=', workstation.id), ('material_id', '=', material.id), ('mesline_id', '=', self.mesline_id.id)]
+            feeddomain = [('mesline_id', '=', self.mesline_id.id)]
+            feeddomain += [('workstation_id', '=', workstation.id), ('material_id', '=', material.id)]
             feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
             if not feedmateriallist or len(feedmateriallist) <= 0:
                 raise UserError(u'当前工位上原料%s还没投料，请先投料再继续操作！'% material.default_code)
@@ -228,13 +231,16 @@ class AASMESWorkticket(models.Model):
                 if quants and len(quants) > 0:
                     for quant in quants:
                         qkey = 'Q-'+str(quant.location_id.id)+'-'+str(quant.lot_id.id)
+                        product, quantlot = quant.product_id, quant.lot_id
                         if qkey in quantdict:
                             quantdict[qkey]['product_qty'] += quant.qty
                         else:
                             quantdict[qkey] = {
-                                'material_id': quant.product_id.id, 'material_uom': quant.product_id.uom_id.id,
-                                'location_id': quant.location_id.id, 'product_lot': quant.lot_id.id, 'product_qty': quant.qty,
-                                'material_code': quant.product_id.default_code, 'lot_name': quant.lot_id.name
+                                'material_id': product.id,
+                                'material_uom': product.uom_id.id,
+                                'material_code': product.default_code,
+                                'product_lot': quantlot.id, 'lot_name': quantlot.name,
+                                'product_qty': quant.qty, 'location_id': quant.location_id.id
                             }
             if float_compare(quant_qty, want_qty, precision_rounding=0.000001) < 0.0:
                 raise UserError(u'当前工位上原料%s投料不足，请先继续投料再进行其他操作！'% material.default_code)
@@ -527,7 +533,7 @@ class AASMESWorkticketStartWizard(models.TransientModel):
     def action_done(self):
         if not self.input_qty or float_compare(self.input_qty, 0.0, precision_rounding=0.000001) <= 0.0:
             raise UserError(u'投入数量必须是一个大于0的数！')
-        self.workticket_id.action_doing_start(self.input_qty)
+        self.workticket_id.action_doing_start()
 
 
 
@@ -588,7 +594,7 @@ class AASMESWorkticketBadmodeWizard(models.TransientModel):
     @api.one
     @api.constrains('badmode_qty')
     def action_check_badmode_qty(self):
-        if not self.badmode_qty or float_compare(self.badmode_qty, 0.0, precision_rounding=0.000001) < 0.0:
+        if self.badmode_qty and float_compare(self.badmode_qty, 0.0, precision_rounding=0.000001) < 0.0:
             raise ValidationError(u'不良数量不能小于零的数！')
 
 

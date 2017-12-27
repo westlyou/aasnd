@@ -182,6 +182,7 @@ class AASEquipmentEquipment(models.Model):
         """
         return self.env['aas.mes.line'].action_loading_workstationlist()
 
+    @api.model
     def action_setequipment_workstation(self, equipment_code, mesline_id, workstation_id):
         """更新设备产线和工位
         :param equipment_code:
