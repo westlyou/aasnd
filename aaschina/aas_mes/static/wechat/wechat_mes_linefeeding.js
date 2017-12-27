@@ -49,7 +49,7 @@ mui.ready(function(){
     }
 
     var feeding_flag = false;
-    mui('div.mui-scroll').on('tap', 'a.aas-feeding', function(event){
+    mui('div.mui-scroll').on('tap', 'button.aas-feeding', function(event){
         if (feeding_flag){
             mui.toast('上料操作正在执行，请耐心等待！');
             return ;
