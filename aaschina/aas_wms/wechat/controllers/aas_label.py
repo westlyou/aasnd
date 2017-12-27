@@ -230,3 +230,55 @@ class AASLabelWechatController(http.Controller):
             return values
         return values
 
+
+
+    @http.route('/aaswechat/wms/product/stocklist/<int:productid>', type='http', auth="user")
+    def aas_wechat_wms_product_stocklist(self, productid):
+        values = {'product_id': productid, 'stock_qty': 0.0, 'lotlist': []}
+        product = request.env['product.product'].browse(productid)
+        values['product_code'] = product.default_code
+        labeldomain = [('product_id', '=', productid), ('stocked', '=', True), ('state', 'in', ['normal', 'frozen'])]
+        labeldomain += [('isproduction', '=', False), ('parent_id', '=', False)]
+        labelist = request.env['aas.product.label'].search(labeldomain)
+        if labelist and len(labelist) > 0:
+            lotdict = {}
+            for tlabel in labelist:
+                values['stock_qty'] += tlabel.product_qty
+                lkey = 'L-'+str(tlabel.product_lot.id)+'-'+str(tlabel.location_id.id)
+                if lkey not in lotdict:
+                    lotdict[lkey] = {
+                        'product_qty': tlabel.product_qty,
+                        'lot_id': tlabel.product_lot.id, 'lot_name': tlabel.product_lot.name,
+                        'location_id': tlabel.location_id.id, 'location_name': tlabel.location_id.name
+                    }
+                else:
+                    lotdict[lkey]['product_qty'] += tlabel.product_qty
+            values['lotlist'] = lotdict.values()
+        return request.render('aas_wms.wechat_wms_product_stock_list', values)
+
+
+    @http.route('/aaswechat/wms/product/stocklabels/<string:locationlot>', type='http', auth="user")
+    def aas_wechat_wms_product_stocklabels(self, locationlot):
+        values = {'stock_qty': 0.0, 'labelist': []}
+        params = locationlot.split('-')
+        location_id, lot_id = int(params[0]), int(params[1])
+        productlot = request.env['stock.production.lot'].browse(lot_id)
+        location = request.env['stock.location'].browse(location_id)
+        product = productlot.product_id
+        values.update({
+            'product_id': product.id, 'product_code': product.default_code,
+            'location_id': location_id, 'location_name': location.name,
+            'lot_id': productlot.id, 'lot_name': productlot.name
+        })
+        labeldomain = [('product_id', '=', product.id), ('stocked', '=', True), ('state', 'in', ['normal', 'frozen'])]
+        labeldomain += [('isproduction', '=', False), ('parent_id', '=', False)]
+        labeldomain += [('location_id', '=', location_id), ('product_lot', '=', lot_id)]
+        labelist = request.env['aas.product.label'].search(labeldomain)
+        if labelist and len(labelist) > 0:
+            for tlabel in labelist:
+                values['stock_qty'] += tlabel.product_qty
+                values['labelist'].append({
+                    'label_id': tlabel.id, 'label_name': tlabel.name, 'product_qty': tlabel.product_qty
+                })
+        return request.render('aas_wms.wechat_wms_product_stock_labels', values)
+

@@ -138,6 +138,7 @@ mui.ready(function(){
     //查看库存
     document.getElementById('showstocklist').addEventListener('tap',function(){
         var productid = document.getElementById('showstocklist').getAttribute('productid');
+        mui.openWindow({'url': '/aaswechat/wms/product/stocklist/'+productid, 'id': 'productstocklist'});
     });
 
 });

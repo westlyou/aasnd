@@ -48,7 +48,7 @@ function pulluprefresh(){
                     li.innerHTML = "<a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>" +
                             "<div class='mui-table'> " +
                                 "<div class='mui-table-cell mui-col-xs-8 mui-text-left'> " +
-                                    "<div class='mui-ellipsis'>  "+label.product_name+" </div> " +
+                                    "<div class='mui-ellipsis'>  "+label.product_code+" </div> " +
                                     "<div class='mui-ellipsis'>  "+label.product_lot+" </div> " +
                                 "</div> " +
                                 "<div class='mui-table-cell mui-col-xs-4 mui-text-right'> " +
