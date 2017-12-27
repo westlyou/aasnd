@@ -97,7 +97,7 @@ class AASLabelWechatController(http.Controller):
             values['stock_date'] = stock_date[0:10]
         if warranty_date:
             values['warranty_date'] = warranty_date[0:10]
-        values.update({'stock_qty': label.product_id.qty_available, 'origin_order': label.origin_order})
+        values.update({'product_id': label.product_id.id, 'origin_order': label.origin_order})
         values.update({'journal_lines': [], 'split_lines': [], 'child_lines': []})
         if label.journal_lines and len(label.journal_lines) > 0:
             values['journal_lines'] = [{

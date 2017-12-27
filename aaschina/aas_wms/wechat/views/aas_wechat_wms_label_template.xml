@@ -145,10 +145,10 @@
                                     <span class="mui-pull-left">业务伙伴</span>
                                     <span class="mui-pull-right"><t t-esc="partner_name"/></span>
                                 </li>
-                                <li id="stock_qty" class="mui-table-view-cell">
+                                <li id="showstocklist" class="mui-table-view-cell" t-att-productid="product_id">
                                     <a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>
-                                        <span class="mui-pull-left">库存数量</span>
-                                        <span class="mui-pull-right"><t t-esc="stock_qty"/></span>
+                                        <span class="mui-pull-left">产品库存</span>
+                                        <span class="mui-pull-right">单击查看</span>
                                     </a>
                                 </li>
                             </ul>

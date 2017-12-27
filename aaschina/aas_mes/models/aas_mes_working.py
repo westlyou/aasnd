@@ -22,6 +22,15 @@ class AASEquipmentEquipment(models.Model):
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
 
+    @api.one
+    def doset_mesline_workstation(self, mesline_id, workstation_id):
+        equipmentrecords = self.env['aas.mes.workstation.equipment'].search([('equipment_id', '=', self.id)])
+        if equipmentrecords and len(equipmentrecords) > 0:
+            equipmentrecords.unlink()
+        self.env['aas.mes.workstation.equipment'].create({
+            'workstation_id': workstation_id, 'mesline_id': mesline_id, 'equipment_id': self.id
+        })
+        self.write({'mesline_id': mesline_id, 'workstation_id': workstation_id})
 
     @api.multi
     def action_mesline_workstation(self):
@@ -195,7 +204,7 @@ class AASEquipmentEquipment(models.Model):
         if not tequipment:
             values.update({'success': False, 'message': u'系统未获取到相应设备，请仔细检查设备编码是否正确！'})
             return values
-        tequipment.write({'mesline_id': mesline_id, 'workstation_id': workstation_id})
+        tequipment.doset_mesline_workstation(mesline_id, workstation_id)
         return values
 
 

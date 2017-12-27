@@ -213,7 +213,10 @@ class AASMESLine(models.Model):
             values.update({'success': False, 'message': u'当前还未设置产线信息，请联系管理员设置产线信息！'})
             return values
         for mesline in meslines:
-            record = {'mesline_id': mesline.id, 'mesline_name': mesline.name, 'stationlist': []}
+            record = {
+                'mesline_id': mesline.id, 'mesline_name': mesline.name,
+                'mesline_type': mesline.line_type, 'stationlist': []
+            }
             if mesline.workstation_lines and len(mesline.workstation_lines) > 0:
                 record['stationlist'] = [{
                     'workstation_id': tstation.workstation_id.id,

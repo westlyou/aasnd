@@ -22,8 +22,8 @@ mui.init({
 mui.ready(function(){
 
     mui('.mui-popover-bottom').on('tap', '#split_label', function(){
-        var label_id = document.body.querySelector('#label_detail_pullrefresh').getAttribute('labelid');
-        window.location.replace('/aaswechat/wms/labelsplit/'+label_id);
+        var labelid = document.getElementById('label_detail_pullrefresh').getAttribute('labelid');
+        window.location.replace('/aaswechat/wms/labelsplit/'+labelid);
     });
 
     mui('.mui-popover-bottom').on('tap', '#frozen_label', function(){
@@ -133,6 +133,11 @@ mui.ready(function(){
             },
             error:function(xhr,type,errorThrown){ console.log(type); }
         });
+    });
+
+    //查看库存
+    document.getElementById('showstocklist').addEventListener('tap',function(){
+        var productid = document.getElementById('showstocklist').getAttribute('productid');
     });
 
 });
