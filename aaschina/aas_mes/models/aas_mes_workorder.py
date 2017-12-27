@@ -60,7 +60,7 @@ class AASMESWorkorder(models.Model):
     scrap_qty = fields.Float(string=u'报废数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
 
     workticket_lines = fields.One2many(comodel_name='aas.mes.workticket', inverse_name='workorder_id', string=u'工票明细')
-    product_lines = fields.One2many(comodel_name='aas.mes.workorder.product', inverse_name='workorder_id', string=u'成品明细')
+    product_lines = fields.One2many(comodel_name='aas.mes.workorder.product', inverse_name='workorder_id', string=u'产出明细')
     consume_lines = fields.One2many(comodel_name='aas.mes.workorder.consume', inverse_name='workorder_id', string=u'消耗明细')
 
     _sql_constraints = [
@@ -609,9 +609,35 @@ class AASMESWorkorder(models.Model):
             values.update(csvalues)
         return values
 
+    @api.model
+    def action_flowingline_output(self, workorder, mesline, workstation, serialnumber):
+        """流水线产出
+        :param workorder:
+        :param mesline:
+        :param workstation:
+        :param serialnumber:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        outputresult = workorder.action_output(workorder.id, workorder.product_id.id, 1, serialnumber=serialnumber)
+        if not outputresult.get('success', False):
+            values.update({'success': False, 'message': outputresult.get('message', '')})
+            return values
+        toperation = self.env['aas.mes.operation'].search([('serialnumber_name', '=', serialnumber)], limit=1)
+        if not toperation:
+            return values
+        toperation.action_finalcheck(mesline, workstation)
+        return values
+
 
     @api.model
     def action_print_label(self, printer_id, ids=[], domain=[]):
+        """打印工单二维码
+        :param printer_id:
+        :param ids:
+        :param domain:
+        :return:
+        """
         values = {'success': True, 'message': ''}
         printer = self.env['aas.label.printer'].browse(printer_id)
         if not printer.field_lines or len(printer.field_lines) <= 0:
@@ -634,31 +660,7 @@ class AASMESWorkorder(models.Model):
         return values
 
 
-    @api.model
-    def action_flowingline_output(self, workorder, mesline, workstation, serialnumber):
-        """流水线产出
-        :param workorder:
-        :param mesline:
-        :param workstation:
-        :param serialnumber:
-        :return:
-        """
-        values = {'success': True, 'message': ''}
-        outputresult = workorder.action_output(workorder.id, workorder.product_id.id, 1, serialnumber=serialnumber)
-        if not outputresult.get('success', False):
-            values.update({'success': False, 'message': outputresult.get('message', '')})
-            return values
-        toperation = self.env['aas.mes.operation'].search([('serialnumber_name', '=', serialnumber)], limit=1)
-        if not toperation:
-            return values
-        toperation.action_finalcheck(mesline, workstation)
-        return values
-
-
-
-
-
-# 工单产出
+# 工单产出明细
 class AASMESWorkorderProduct(models.Model):
     _name = 'aas.mes.workorder.product'
     _description = 'AAS MES Work Order Product'

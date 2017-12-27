@@ -33,7 +33,7 @@
                 <form create="false" edit="false" delete="false">
                     <header>
                         <button name="action_start" type="object" states="waiting" string="生产开工" class="oe_highlight"/>
-                        <button name="action_commit" type="object" states="producing" string="生产完工" class="oe_highlight"/>
+                        <button name="action_commit" type="object" states="producing" string="生产报工" class="oe_highlight"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,waiting,producing,pause,done"/>
                     </header>
                     <sheet>

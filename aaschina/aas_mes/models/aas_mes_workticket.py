@@ -288,7 +288,6 @@ class AASMESWorkticket(models.Model):
 
     @api.one
     def action_after_commit(self, trace, output_qty):
-        self.write({'time_finish': fields.Datetime.now()})
         workorder, mesline, product = self.workorder_id, self.workorder_id.mesline_id, self.product_id
         if not mesline.workdate:
             mesline.action_refresh_schedule()
@@ -322,7 +321,7 @@ class AASMESWorkticket(models.Model):
             total_qty = self.output_qty + self.badmode_qty
             if float_compare(total_qty, self.input_qty, precision_rounding=0.000001) < 0.0:
                 return
-        self.write({'state': 'done'})
+        self.write({'state': 'done', 'time_finish': fields.Datetime.now()})
         workorder, currentworkcenter = self.workorder_id, self.workcenter_id
         domain = [('routing_id', '=', self.routing_id.id), ('sequence', '>', currentworkcenter.sequence)]
         nextworkcenter = self.env['aas.mes.routing.line'].search(domain, order='sequence', limit=1)

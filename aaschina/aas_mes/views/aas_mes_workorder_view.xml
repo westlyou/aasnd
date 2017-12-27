@@ -89,6 +89,7 @@
                                         <field name="product_qty"/>
                                         <field name="waiting_qty"/>
                                         <field name="output_date"/>
+                                        <field name="container_id"/>
                                     </tree>
                                     <form>
                                         <group>
@@ -102,6 +103,9 @@
                                                 <field name="product_qty"/>
                                                 <field name="waiting_qty"/>
                                             </group>
+                                        </group>
+                                        <group>
+                                            <group> <field name="container_id"/> </group>
                                         </group>
                                     </form>
                                 </field>
