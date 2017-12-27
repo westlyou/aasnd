@@ -562,7 +562,8 @@ class AASMESWorkorder(models.Model):
                     })
         # 获取虚拟件产出
         outputdict = {}
-        outputlist = self.env['aas.mes.workorder.product'].search([('product_id', '!=', workorder.product_id.id)])
+        outputdomain = [('workorder_id', '=', workorder.id), ('product_id', '!=', workorder.product_id.id)]
+        outputlist = self.env['aas.mes.workorder.product'].search(outputdomain)
         if outputlist and len(outputlist) > 0:
             for tempout in outputlist:
                 pkey = 'P-'+str(tempout.product_id.id)

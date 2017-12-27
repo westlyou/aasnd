@@ -62,6 +62,7 @@ class AASMESWorkAttendance(models.Model):
         tattendancelines = self.env['aas.mes.work.attendance.line'].search(tlinedomain)
         if tattendancelines and len(tattendancelines) > 0:
             tattendancelines.action_done()
+
         # 更新出勤记录
         tempdomain = [('employee_id', '=', employee.id), ('mesline_id', '=', mesline.id), ('attend_done', '=', False)]
         tattendance = self.env['aas.mes.work.attendance'].search(tempdomain, limit=1)
@@ -183,7 +184,7 @@ class AASMESWorkAttendance(models.Model):
 
 
     @api.multi
-    def action_done(self):
+    def action_done(self, donedirectly=False):
         """完成出勤，更新相关信息
         :return:
         """
@@ -191,7 +192,7 @@ class AASMESWorkAttendance(models.Model):
         currenttime = fields.Datetime.from_string(currentstr)
         for record in self:
             starttime = fields.Datetime.from_string(record.attendance_start)
-            if ((currenttime - starttime).total_seconds() / 3600) <= record.worktime_max:
+            if not donedirectly and (((currenttime - starttime).total_seconds() / 3600) <= record.worktime_max):
                 continue
             linedomain = [('attendance_id', '=', record.id), ('attend_done', '=', False)]
             templines = self.env['aas.mes.work.attendance.line'].search(linedomain)
