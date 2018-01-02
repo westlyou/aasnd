@@ -143,25 +143,28 @@ class AASReceiptWechatController(http.Controller):
         if not receiptline:
             values.update({'success': False, 'message': u'请仔细检查收货明细可能被删除了！'})
             return values
-        label = request.env['aas.product.label'].search([('barcode', '=', barcode), ('product_id', '=', receiptline.product_id.id)], limit=1)
+        tdomain = [('barcode', '=', barcode), ('product_id', '=', receiptline.product_id.id)]
+        label = request.env['aas.product.label'].search(tdomain, limit=1)
         if not label:
             values.update({'success': False, 'message': u'无效标签， 请仔细检查是否标签已删除！'})
             return values
         if label.state != 'normal':
             values.update({'success': False, 'message': u'标签状态异常，不可以扫描上架，请仔细检查！'})
             return values
-        receiptlabel = request.env['aas.stock.receipt.label'].search([('line_id', '=', lineid), ('label_id', '=', label.id)], limit=1)
+        ldomain = [('line_id', '=', lineid), ('label_id', '=', label.id)]
+        receiptlabel = request.env['aas.stock.receipt.label'].search(ldomain, limit=1)
         if not receiptlabel:
             values.update({'success': False, 'message': u'无效标签， 当前标签不在上架范围内！'})
             return values
-        receiptoperation = request.env['aas.stock.receipt.operation'].search([('line_id', '=', lineid), ('rlabel_id', '=', receiptlabel.id)], limit=1)
+        odomain = [('line_id', '=', lineid), ('rlabel_id', '=', receiptlabel.id)]
+        receiptoperation = request.env['aas.stock.receipt.operation'].search(odomain, limit=1)
         if receiptoperation:
             values.update({'success': False, 'message': u'标签已作业，请不要重复操作！'})
             return values
         if label.qualified and receiptline.push_location.mrblocation:
             values.update({'success': False, 'message': u'合格品请不要放在MRB库位上！'})
             return values
-        elif not label.qualified and not receiptline.push_location.mrblocation:
+        if not label.qualified and not receiptline.push_location.mrblocation:
             values.update({'success': False, 'message': u'不合格品请放在MRB库位上！'})
             return values
         try:
@@ -170,6 +173,9 @@ class AASReceiptWechatController(http.Controller):
             })
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
+            return values
+        except ValidationError, ve:
+            values.update({'success': False, 'message': ve.name})
             return values
         values.update({
             'label_id': label.id, 'label_name': label.name, 'product_code': label.product_code,

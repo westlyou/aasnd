@@ -512,10 +512,10 @@ class AASStockReceiptOperation(models.Model):
         elif not label.qualified and not location.mrblocation:
             raise UserError(u'不合格品请放置在MRB库位上！')
         receiptvals = {'label_lines': [(1, rlabel.id, {'checked': True})]}
-        if receipt.state!='receipt':
+        if receipt.state != 'receipt':
             receiptvals['state'] = 'receipt'
         lineval = {'doing_qty': rline.doing_qty + rlabel.product_qty}
-        if rline.state!='receipt':
+        if rline.state != 'receipt':
             lineval['state'] = 'receipt'
         receiptvals['receipt_lines'] = [(1, rline.id, lineval)]
         receipt.write(receiptvals)
@@ -546,7 +546,7 @@ class AASStockReceiptOperation(models.Model):
             linvals = {'doing_qty': doing_qty}
             if float_compare(doing_qty, 0.0, precision_rounding=0.000001) <= 0.0:
                 linvals['doing_qty'] = 0.0
-                linvals['state'] = 'confirm' if rline.receipt_type!='purchase' else 'checked'
+                linvals['state'] = 'confirm' if rline.receipt_type != 'purchase' else 'checked'
             rline.write(linvals)
         return result
 
