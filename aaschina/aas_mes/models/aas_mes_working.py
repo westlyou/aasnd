@@ -35,7 +35,7 @@ class AASEquipmentEquipment(models.Model):
     @api.multi
     def action_mesline_workstation(self):
         """
-        向导，触发此方法弹出向导并进行业务处理
+        更新产线工位
         :return:
         """
         self.ensure_one()
@@ -223,12 +223,5 @@ class AASMESEquipmentWorkstationWizard(models.TransientModel):
     def action_done(self):
         if not self.mesline_workstation:
             raise UserError(u'请先设置好产线工位！')
-        self.equipment_id.write({
-            'mesline_id': self.mesline_workstation.mesline_id.id,
-            'workstation_id': self.mesline_workstation.workstation_id.id
-        })
-        self.env['aas.mes.workstation.equipment'].create({
-            'equipment_id': self.equipment_id.id,
-            'mesline_id': self.mesline_workstation.mesline_id.id,
-            'workstation_id': self.mesline_workstation.workstation_id.id
-        })
+        self.equipment_id.doset_mesline_workstation(self.mesline_workstation.mesline_id.id,
+                                                    self.mesline_workstation.workstation_id.id)
