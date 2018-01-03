@@ -56,3 +56,4 @@ import aas_mes_scrap
 import aas_mes_allocation
 import aas_mes_attendance
 import aas_mes_settings
+import aas_mes_container
