@@ -58,13 +58,9 @@ class AASContainerSurplusWizard(models.TransientModel):
 
 
     @api.one
-    @api.constrains('product_qty')
-    def action_check_productqty(self):
-        if not self.product_qty or float_compare(self.product_qty, 0.0, precision_rounding=0.000001) <= 0.0:
-            raise ValidationError(u'请设置有效的余料数量！')
-
-    @api.one
     def action_done(self):
+        if not self.product_qty or float_compare(self.product_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+            raise UserError(u'请设置有效的余料数量！')
         container, product = self.container_id, self.product_id
         pdomain = [('container_id', '=', container.id)]
         pdomain += [('product_id', '=', product.id), ('product_lot', '=', self.product_lot.id)]
