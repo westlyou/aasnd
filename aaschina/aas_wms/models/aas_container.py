@@ -113,6 +113,28 @@ class AASContainer(models.Model):
             'context': self.env.context
         }
 
+    @api.multi
+    def action_surplus(self):
+        """
+        容器添加余料
+        :return:
+        """
+        self.ensure_one()
+        wizard = self.env['aas.container.surplus.wizard'].create({'container_id': self.id})
+        view_form = self.env.ref('aas_wms.view_form_aas_container_surplus_wizard')
+        return {
+            'name': u"容器添加余料",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.container.surplus.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
 
     @api.multi
     def action_show_moves(self):
@@ -387,5 +409,50 @@ class AASContainerAdjustLineWizard(models.TransientModel):
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
     stock_qty = fields.Float(string=u'库存数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     temp_qty = fields.Float(string=u'未入库数', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+
+
+# 添加余料到容器
+class AASContainerSurplusWizard(models.TransientModel):
+    _name = 'aas.container.surplus.wizard'
+    _description = 'AAS Container Surplus Wizard'
+
+    container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='cascade')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
+    product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+
+
+    @api.one
+    @api.constrains('product_qty')
+    def action_check_product_qty(self):
+        if not self.productqty or float_compare(self.product_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+            raise ValidationError(u'请设置有效的余料数量！')
+
+    @api.one
+    def action_done(self):
+        container, product = self.container_id, self.product_id
+        pdomain = [('container_id', '=', container.id)]
+        pdomain += [('product_id', '=', product.id), ('product_lot', '=', self.product_lot.id)]
+        pline = self.env['aas.container.product'].search(pdomain, limit=1)
+        if pline:
+            pline.write({'stock_qty': pline.stock_qty + self.product_qty})
+        else:
+            self.env['aas.container.product'].create({
+                'container_id': container.id, 'product_id': product.id,
+                'product_lot': self.product_lot.id, 'stock_qty': self.product_qty
+            })
+        srclocation = self.mesline_id.location_material_list[0].location_id
+        destlocation = container.stock_location_id
+        self.env['stock.move'].create({
+            'name': container.name, 'product_id': product.id, 'product_uom': product.uom_id.id,
+            'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id,
+            'restrict_lot_id': self.product_lot.id, 'location_id': srclocation.id,
+            'location_dest_id': destlocation.id, 'product_uom_qty': self.product_qty
+        }).action_done()
+
+
+
+
 
 
