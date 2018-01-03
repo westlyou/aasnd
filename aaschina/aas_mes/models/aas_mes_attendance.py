@@ -211,6 +211,8 @@ class AASMESWorkAttendance(models.Model):
             else:
                 finishtime = fields.Datetime.from_string(record.attendance_finish)
             totaltime = (finishtime - starttime).total_seconds() / 3600.0
+            if float_compare(totaltime, 0.0, precision_rounding=0.000001) <= 0.0:
+                totaltime = 0.0
             attendancevals['attend_hours'] = totaltime
             overtime = totaltime - record.worktime_standard
             if float_compare(overtime, 0.0, precision_rounding=0.000001) > 0.0:
