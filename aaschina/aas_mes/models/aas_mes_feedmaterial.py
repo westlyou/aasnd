@@ -176,7 +176,7 @@ class AASMESFeedmaterial(models.Model):
 
     @api.model
     def action_feeding_withcontainer(self, mesline, workstation, barcode):
-        values = {'success': True, 'message': ''}
+        values = {'success': True, 'message': '', 'materiallist': []}
         container = self.env['aas.container'].search([('barcode', '=', barcode)], limit=1)
         if not container:
             values.update({'success': False, 'message': u'未搜索到容器，请仔细检查是否是有效的容器条码！'})
@@ -187,25 +187,52 @@ class AASMESFeedmaterial(models.Model):
         if not mesline.location_production_id or (not mesline.location_material_list or len(mesline.location_material_list) <= 0):
             values.update({'success': False, 'message': u'产线%s还未设置原料和成品库位！'% mesline.name})
             return values
+        materiallocation = mesline.location_material_list[0].location_id
         locationids = [mlocation.location_id.id for mlocation in mesline.location_material_list]
         locationids.append(mesline.location_production_id.id)
         locationlist = self.env['stock.location'].search([('id', 'child_of', locationids)])
         if container.location_id.id not in locationlist.ids:
             # 容器不在当前产线自动调拨
-            materiallocation = mesline.location_material_list[0].location_id
             container.write({'location_id': materiallocation.id})
+        productdict, movelist = {}, self.env['stock.move']
         for pline in container.product_lines:
-            product_id, product_lot = pline.product_id.id, pline.product_lot.id
+            pkey = 'P-'+str(pline.product_id.id)+'-'+str(pline.product_lot.id)
+            if pkey in productdict:
+                productdict[pkey]['material_qty'] += pline.stock_qty
+            else:
+                productdict[pkey] = {
+                    'material_id': pline.product_id.id, 'material_lot': pline.product_lot.id,
+                    'material_uom': pline.product_id.uom_id.id, 'material_qty': pline.stock_qty
+                }
+        materialist = []
+        for mline in productdict.values():
             feeddomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-            feeddomain.extend([('material_id', '=', product_id), ('material_lot', '=', product_lot)])
+            feeddomain += [('material_id', '=', mline['material_id']), ('material_lot', '=', mline['material_lot'])]
             feedmaterial = self.env['aas.mes.feedmaterial'].search(feeddomain, limit=1)
             if not feedmaterial:
-                self.env['aas.mes.feedmaterial'].create({
+                feedmaterial = self.env['aas.mes.feedmaterial'].create({
                     'mesline_id': mesline.id, 'workstation_id': workstation.id,
-                    'material_id': product_id, 'material_lot': product_lot
+                    'material_id': mline['material_id'], 'material_lot': mline['material_lot']
                 })
             else:
                 feedmaterial.action_refresh_stock()
+            materialist.append({
+                'feeding_id': feedmaterial.id, 'material_code': feedmaterial.material_id.default_code,
+                'material_lot': feedmaterial.material_lot.name, 'material_qty': feedmaterial.material_qty
+            })
+            # 将库存自动移动到线边库上
+            movelist |= self.env['stock.move'].create({
+                'name': container.name, 'product_id': mline['material_id'], 'product_uom': mline['material_uom'],
+                'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id,
+                'restrict_lot_id': mline['material_lot'], 'location_id': container.stock_location_id.id,
+                'location_dest_id': materiallocation.id, 'product_uom_qty': mline['material_qty']
+            })
+        movelist.action_done()
+        if container.product_lines and len(container.product_lines) > 0:
+            # 库存移动之后清理容器内容
+            container.product_lines.unlink()
+        values['materiallist'] = materialist
+
         return values
 
 
@@ -233,12 +260,16 @@ class AASMESFeedmaterial(models.Model):
         feeddomain.extend([('material_id', '=', label.product_id.id), ('material_lot', '=', label.product_lot.id)])
         feedmaterial = self.env['aas.mes.feedmaterial'].search(feeddomain, limit=1)
         if not feedmaterial:
-            self.env['aas.mes.feedmaterial'].create({
+            feedmaterial = self.env['aas.mes.feedmaterial'].create({
                 'mesline_id': mesline.id, 'workstation_id': workstation.id,
                 'material_id': label.product_id.id, 'material_lot': label.product_lot.id
             })
         else:
             feedmaterial.action_refresh_stock()
+        values.update({
+            'feeding_id': feedmaterial.id, 'material_code': label.product_code,
+            'material_lot': label.product_lotname, 'material_qty': feedmaterial.material_qty
+        })
         return values
 
 
