@@ -145,17 +145,18 @@ class AASMESOperationRecord(models.Model):
         if not equipment.mesline_id or not equipment.workstation_id:
             result.update({'success': False, 'message': u'设备还未设置产线或工位！'})
             return result
+        employeeid, operationid = False, False
         mesline, workstation = equipment.mesline_id, equipment.workstation_id
         employeelist = self.env['aas.mes.workstation.employee'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
-        if not employeelist or len(employeelist) <= 0:
-            result.update({'success': False, 'message': u'当前工位上还没有员工上岗，请先扫描员工卡上岗再继续其他操作！'})
-            return result
-        temployee = employeelist[0].employee_id
+        if employeelist and len(employeelist) > 0:
+            employeeid = employeelist[0].employee_id.id
         toperation = self.env['aas.mes.operation'].search([('serialnumber_name', '=', serialnumber)], limit=1)
+        if toperation:
+            operationid = toperation.id
         functiontestvals = {
-            'operation_id': toperation.id, 'operate_type': 'functiontest',
-            'employee_id': temployee.id, 'equipment_id': equipment.id,
-            'operation_pass': operation_pass, 'operate_result': operate_result, 'serialnumber': serialnumber
+            'employee_id': employeeid, 'operation_id': operationid, 'equipment_id': equipment.id,
+            'operate_type': 'functiontest', 'serialnumber': serialnumber,
+            'operation_pass': operation_pass, 'operate_result': operate_result
         }
         self.env['aas.mes.operation.record'].create(functiontestvals)
         if not operation_pass:
