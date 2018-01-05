@@ -34,3 +34,4 @@
 import aas_quality_order
 import aas_wms_models
 import aas_quality_frozen
+import aas_quality_concession

@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_quality_concession" model="ir.ui.view">
+            <field name="name">aas.quality.concession.tree</field>
+            <field name="model">aas.quality.concession</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="creator_id"/>
+                    <field name="create_time"/>
+                    <field name="receipter_id"/>
+                    <field name="receipt_time"/>
+                    <field name="location_dest_id"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_quality_concession" model="ir.ui.view">
+            <field name="name">aas.quality.concession.form</field>
+            <field name="model">aas.quality.concession</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_confirm" type="object" string="确认让步" states="draft" class="oe_highlight"
+                                groups="aas_quality.group_aas_quality_user,aas_quality.group_aas_quality_manager"/>
+                        <button name="action_receipt" type="object" string="让步收货" states="confirm" class="oe_highlight"
+                                groups="stock.group_stock_user,stock.group_stock_manager"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" required="1" attrs="{'readonly':[('state','!=','draft')]}"/>
+                                <field name="creator_id" readonly="1"/>
+                                <field name="receipter_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="location_dest_id" readonly="1"/>
+                                <field name="create_time" readonly="1"/>
+                                <field name="receipt_time" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="让步标签" name="concession_labels">
+                                <field name="concession_labels" attrs="{'readonly':[('state','!=','draft')]}">
+                                    <tree editable="bottom" edit="false">
+                                        <field name="label_id" options="{'no_create':true}"
+                                               domain="['&amp;','&amp;',('locked','=',False),('state','=','normal'),'|',('qualified','=',False),('location_id.mrblocation','=',True)]"/>
+                                        <field name="product_id" readonly="1"/>
+                                        <field name="product_uom" readonly="1"/>
+                                        <field name="product_qty" readonly="1"/>
+                                        <field name="location_id" readonly="1"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group><field name="label_id"/></group>
+                                        </group>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_uom"/>
+                                            </group>
+                                            <group>
+                                                <field name="product_qty"/>
+                                                <field name="location_id"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="让步明细" name="concession_lines">
+                                <field name="concession_lines" readonly="1">
+                                    <tree>
+                                        <field name="product_id"/>
+                                        <field name="product_uom"/>
+                                        <field name="product_qty"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_uom"/>
+                                                <field name="product_qty"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_quality_concession" model="ir.ui.view">
+            <field name="name">aas.quality.concession.search</field>
+            <field name="model">aas.quality.concession</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="creator_id" string="创建人" filter_domain="[('creator_id','ilike',self)]"/>
+                    <field name="receipter_id" string="收货人" filter_domain="[('receipter_id','ilike',self)]"/>
+                    <field name="location_dest_id" string="目标库位" filter_domain="[('location_dest_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="创建人" context="{'group_by':'creator_id'}"/>
+                        <filter string="收货人" context="{'group_by':'receipter_id'}"/>
+                        <filter string="目标库位" context="{'group_by':'location_dest_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_quality_concession" model="ir.actions.act_window">
+            <field name="name">让步接收</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.quality.concession</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_quality_concession"/>
+            <field name="search_view_id" ref="view_search_aas_quality_concession"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加让步接收</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_quality_concession" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_quality_concession"/>
+            <field name="act_window_id" ref="action_aas_quality_concession"/>
+        </record>
+
+        <record id="act_view_form_aas_quality_concession" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_quality_concession"/>
+            <field name="act_window_id" ref="action_aas_quality_concession"/>
+        </record>
+
+        <menuitem id="menu_aas_quality_concession"  name="让步接收" action="action_aas_quality_concession"
+                  parent="menu_aas_quality_order" sequence="2" groups="group_aas_quality_user,group_aas_quality_manager"/>
+
+        <record id="view_form_aas_quality_concession_receipt_wizard" model="ir.ui.view">
+            <field name="name">aas.quality.concession.receipt.wizard</field>
+            <field name="model">aas.quality.concession.receipt.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group> <field name="concession_id" readonly="1"/> </group>
+                            <group> <field name="location_id" required="1" options="{'no_create':true}"/> </group>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel" />
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_aas_quality_concession_wms" model="ir.actions.act_window">
+            <field name="name">让步接收</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.quality.concession</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_quality_concession"/>
+            <field name="search_view_id" ref="view_search_aas_quality_concession"/>
+            <field name="domain">[('state','!=','draft')]</field>
+        </record>
+
+        <record id="act_view_tree_wms_aas_quality_concession" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_quality_concession"/>
+            <field name="act_window_id" ref="action_aas_quality_concession_wms"/>
+        </record>
+
+        <record id="act_view_form_wms_aas_quality_concession" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_quality_concession"/>
+            <field name="act_window_id" ref="action_aas_quality_concession_wms"/>
+        </record>
+
+        <menuitem id="menu_aas_quality_concession_wms"  name="让步接收" action="action_aas_quality_concession_wms"
+                  parent="aas_wms.menu_aas_stock_receipt" sequence="50" groups="stock.group_stock_user,stock.group_stock_manager"/>
+
+    </data>
+</odoo>
