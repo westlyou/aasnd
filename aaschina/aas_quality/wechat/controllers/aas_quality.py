@@ -59,7 +59,7 @@ class AASWechatQualityOrderController(http.Controller):
             'order_state': qorder.state, 'state_name': ORDER_STATE_DICT[qorder.state],
             'product_qty': qorder.product_qty, 'qualified_qty': qorder.qualified_qty,
             'concession_qty': qorder.concession_qty, 'unqualified_qty': qorder.unqualified_qty,
-            'commit_user': qorder.commit_user.name,
+            'commit_user': qorder.commit_user.name, 'product_code': qorder.product_id.default_code,
             'commit_time': fields.Datetime.to_china_string(qorder.commit_time),
             'check_user': '' if not qorder.check_user else qorder.check_user.name,
             'check_time': fields.Datetime.to_china_string(qorder.check_time),
@@ -110,6 +110,16 @@ class AASWechatQualityOrderController(http.Controller):
             values.update({'success': False, 'message': u'质检已经完成，请不要重复操作！'})
             return values
         qorder.action_all_unqualified()
+        return values
+
+    @http.route('/aaswechat/quality/operationdel', type='json', auth="user")
+    def aas_wechat_quality_operationdel(self, lineid):
+        values = {'success': True, 'message': ''}
+        toperation = request.env['aas.quality.operation'].browse(lineid)
+        if not toperation:
+            values.update({'success': False, 'message': u'操作记录可能已删除，请不要重复操作！'})
+            return values
+        toperation.unlink()
         return values
 
 

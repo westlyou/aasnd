@@ -36,6 +36,7 @@ mui.ready(function(){
 
     //全部合格
     document.getElementById('action_allqualified').addEventListener('tap', function(){
+        mui('#order_detail_buttons').popover('toggle');
         mui.confirm('您确认所有未检测标签都合格？', '全部合格', ['确认', '取消'], function(e) {
             if(e.index!=0){
                 return ;
@@ -67,6 +68,7 @@ mui.ready(function(){
 
     //全不合格
     document.getElementById('action_allunqualified').addEventListener('tap', function(){
+        mui('#order_detail_buttons').popover('toggle');
         mui.confirm('您确认所有未检测标签都不合格？', '全不合格', ['确认', '取消'], function(e) {
             if(e.index!=0){
                 return ;
@@ -98,6 +100,7 @@ mui.ready(function(){
 
     //完成质检
     document.getElementById('action_done').addEventListener('tap', function(){
+        mui('#order_detail_buttons').popover('toggle');
         var orderid = parseInt(document.getElementById('order_detail_pullrefresh').getAttribute('orderid'));
         var temparams = {'orderid': orderid};
         var accessid = Math.floor(Math.random() * 1000 * 1000 * 1000);
@@ -186,6 +189,36 @@ mui.ready(function(){
                 });
             },
             fail: function(result){  mui.toast(result.errMsg); }
+        });
+    });
+
+    //删除发货作业
+    mui('#delivery_operations').on('tap', '.mui-btn', function(event) {
+        var li = this.parentNode.parentNode;
+        mui.confirm('确认删除该条记录？', '清除发货', ['确认', '取消'], function(e) {
+            if(e.index!=0){
+                mui.swipeoutClose(li);
+                return ;
+            }
+            var lineid = parseInt(li.getAttribute('lineid'));
+            var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+            mui.ajax('/aaswechat/quality/operationdel',{
+                data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {'lineid': lineid}, id: access_id }),
+                dataType:'json', type:'post', timeout:30000,
+                headers:{'Content-Type':'application/json'},
+                success:function(data){
+                    var dresult = data.result;
+                    if (!dresult.success){
+                        mui.toast(dresult.message);
+                        return ;
+                    }
+                    document.getElementById('operation_list').removeChild(li);
+                    window.location.reload(true);
+                },
+                error:function(xhr,type,errorThrown){
+                    console.log(type);
+                }
+            });
         });
     });
 
