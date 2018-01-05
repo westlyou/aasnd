@@ -88,11 +88,14 @@
                                         </div>
                                         <div class="box-body">
                                             <div class="row" style="margin-top:10px;">
-                                                <div class="col-md-12">
+                                                <div class="col-md-10">
                                                     <div class="input-group">
                                                         <span class="input-group-addon">操作员</span>
                                                         <input id="mes_employee" type="text" class="form-control"  readonly="readonly" employeeid="0"/>
                                                     </div>
+                                                </div>
+                                                <div class="col-md-2" style="margin-top:-10px;">
+                                                    <button id="action_clearemployee" type="button" class="btn bg-blue margin">清理员工</button>
                                                 </div>
                                             </div>
                                             <div class="row" style="margin-top:10px;">
@@ -223,6 +226,10 @@
                         <section class="content">
                             <div class="row">
                                 <div class="col-md-3">
+
+                                    <a id="action_clearemployee" href="javascript:void(0);"
+                                       class="btn btn-primary btn-block margin-bottom">清理员工</a>
+
                                     <div class="box box-solid">
                                         <div class="box-header with-border">
                                             <h3 class="box-title">基础信息</h3>
@@ -374,6 +381,10 @@
                         <section class="content">
                             <div class="row">
                                 <div class="col-md-3">
+
+                                    <a id="action_clearemployee" href="javascript:void(0);"
+                                       class="btn btn-primary btn-block margin-bottom">清理员工</a>
+
                                     <div class="box box-solid">
                                         <div class="box-header with-border">
                                             <h3 class="box-title">基础信息</h3>

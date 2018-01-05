@@ -51,6 +51,7 @@ class AASMESSerialnumber(models.Model):
     outputrecord_id = fields.Many2one(comodel_name='aas.mes.workorder.product', string=u'产出记录', index=True, ondelete='restrict')
     traced = fields.Boolean(string=u'已被追溯关联', default=False, copy=False)
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', index=True, ondelete='restrict')
+    operation_id = fields.Many2one(comodel_name='aas.mes.operation', string=u'操作记录', index=True, ondelete='restrict')
 
     rework_lines = fields.One2many(comodel_name='aas.mes.rework', inverse_name='serialnumber_id', string=u'返工清单')
     operation_lines = fields.One2many(comodel_name='aas.mes.operation.record', inverse_name='serialnumber_id', string=u'操作清单')
@@ -99,6 +100,7 @@ class AASMESSerialnumber(models.Model):
             'operate_type': 'newbarcode', 'employee_id': self.employee_id.id, 'equipment_id': self.equipment_id.id
         })
         operation.write({'barcode_create': True, 'barcode_record_id': barcoderecord.id})
+        self.write({'operation_id': operation.id})
 
     @api.one
     def action_functiontest(self):
@@ -130,3 +132,12 @@ class AASMESSerialnumber(models.Model):
             'res_id': operation.id,
             'context': self.env.context
         }
+
+
+    @api.multi
+    def action_label(self, labelid):
+        label = self.env['aas.product.label'].browse(labelid)
+        self.write({'label_id': labelid, 'product_lot': label.product_lot.id})
+        operationlist = self.env['aas.mes.operation'].search([('serialnumber_id', 'in', self.ids)])
+        if operationlist and len(operationlist) > 0:
+            operationlist.write({'labeled': True, 'label_id': labelid})

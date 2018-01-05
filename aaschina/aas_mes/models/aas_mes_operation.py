@@ -35,6 +35,8 @@ class AASMESOperation(models.Model):
     fqccheck_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'最终检查记录')
     gp12_check = fields.Boolean(string='GP12', default=False, copy=False)
     gp12_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'GP12确认记录')
+    labeled = fields.Boolean(string=u'已包装', default=False, copy=False)
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签')
 
     commit_badness = fields.Boolean(string=u'上报不良', default=False, copy=False)
     commit_badness_count = fields.Integer(string=u'上报不良次数', default=0, copy=False)

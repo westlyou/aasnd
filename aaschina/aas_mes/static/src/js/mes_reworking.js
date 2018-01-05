@@ -210,4 +210,12 @@ $(function(){
         },function(){});
     });
 
+
+    $('#action_clearemployee').click(function(){
+        layer.confirm('您确定清理员工信息？', {'btn': ['确定', '取消']}, function(index){
+            layer.close(index);
+            $('#mes_employee').val('').attr('employeeid', '0');
+        },function(){});
+    });
+
 });

@@ -78,18 +78,17 @@ class AASMESGP12CheckingController(http.Controller):
         tempoperation = request.env['aas.mes.operation'].search([('serialnumber_name', '=', barcode)], limit=1)
         if not tempoperation:
             values.update({
-                'result': 'NG',
-                'success': False, 'message': u'序列号异常，请检查您扫描的标签是否是一个正确的序列号！'
+                'result': 'NG', 'success': False, 'message': u'序列号异常，请检查您扫描的标签是否是一个正确的序列号！'
             })
             return values
         serialnumber = tempoperation.serialnumber_id
         if tempoperation.gp12_check and serialnumber.label_id:
-            values.update({'success':False, 'message': u'GP12已操作，请不要重复操作！'})
+            values.update({'success': False, 'message': u'GP12已操作，请不要重复操作！'})
             return values
         values['serialnumber_id'] = serialnumber.id
         values['productcode'] = serialnumber.customer_product_code.replace('-', '')
         if productcode and productcode != values['productcode']:
-            values.update({'success': False, 'message': u'序列号异常，请确认可能与其他序列号不是同类别的产品混入！！'})
+            values.update({'success': False, 'message': u'序列号异常，请确认可能与其他序列号不是同类别的产品混入！'})
             return values
         # 功能测试记录
         operatedomain = [('operation_id', '=', tempoperation.id), ('operate_type', '=', 'functiontest')]
@@ -238,8 +237,10 @@ class AASMESGP12CheckingController(http.Controller):
         tlabel = request.env['aas.product.label'].create({
             'product_id': tserialnumber.product_id.id, 'product_lot': product_lot.id,
             'product_qty': len(serialnumberlist), 'stocked': True,
-            'location_id': mesline.location_production_id.id, 'company_id': request.env.user.company_id.id
+            'location_id': mesline.location_production_id.id, 'company_id': request.env.user.company_id.id,
+            'customer_code': tserialnumber.customer_product_code
         })
+        serialnumberlist.action_label(tlabel.id)
         srclocation = request.env.ref('stock.location_production')
         tlabel.action_stock(srclocation.id)
         values['label_name'] = tlabel.name
