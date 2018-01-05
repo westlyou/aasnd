@@ -20,6 +20,7 @@
                     <field name="staff_code"/>
                     <field name="staff_name"/>
                     <field name="material_info"/>
+                    <field name="serial_number"/>
                 </tree>
             </field>
         </record>
@@ -58,6 +59,9 @@
                                 <field name="material_info"/>
                             </group>
                         </group>
+                        <group>
+                            <group colspan="4"> <field name="serial_number"/> </group>
+                        </group>
                         <div>
                             <label string="设备数据" for="data"/>
                             <field name="data" readonly="1"/>
@@ -79,6 +83,7 @@
                     <field name="job_code" string="主工单号" filter_domain="[('job_code','ilike',self)]"/>
                     <field name="workorder_code" string="子工单号" filter_domain="[('workorder_code','ilike',self)]"/>
                     <field name="product_code" string="成品编码" filter_domain="[('product_code','ilike',self)]"/>
+                    <field name="serial_number" string="序列号" filter_domain="[('serial_number','ilike',self)]"/>
                     <separator/>
                     <filter string="调试数据" domain="[('data_type','=','D')]"/>
                     <filter string="生产数据" domain="[('data_type','=','P')]"/>

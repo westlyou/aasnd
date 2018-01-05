@@ -113,4 +113,8 @@ class AASHREmployee(models.Model):
     def action_dimission(self):
         self.write({'dimission_time': fields.Datetime.now(), 'state': 'dimission', 'active': False})
 
+    @api.multi
+    def action_entry(self):
+        self.write({'entry_time': fields.Datetime.now(), 'state': 'leave', 'active': True})
+
 

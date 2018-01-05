@@ -82,6 +82,7 @@ class AASMESOperationRecord(models.Model):
     _description = 'AAS MES Operation Record'
 
     operation_id = fields.Many2one(comodel_name='aas.mes.operation', string=u'操作记录', ondelete='cascade')
+    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', index=True)
     serialnumber = fields.Char(string=u'序列号', copy=False)
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
     operate_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
@@ -104,7 +105,7 @@ class AASMESOperationRecord(models.Model):
     def action_after_create(self):
         serialnumber = self.operation_id.serialnumber_id
         if not self.serialnumber:
-            self.write({'serialnumber': serialnumber.name})
+            self.write({'serialnumber': serialnumber.name, 'serialnumber_id': serialnumber.id})
         operationvals = {}
         if self.operate_type == 'newbarcode':
             operationvals.update({'barcode_create': True, 'barcode_record_id': self.id})

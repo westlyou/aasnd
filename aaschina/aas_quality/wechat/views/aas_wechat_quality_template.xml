@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <template id="wechat_quality_index" name="Wechat Quality Index">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/iconfont/iconfont.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <a id="aas_quality_logout" class="mui-pull-right mui-icon iconfont icon-zhuxiao"
+                           style="color: #0870d9;" href="javascript:;"></a>
+                        <h1 class="mui-title"> 质检管理 </h1>
+                    </header>
+                    <div class="mui-content">
+                        <div class="mui-row aas-header">
+                            <span class="aas-header-avatar"> <img src="/aas_base/static/wechat/aas/images/wechat_icon.png"/> </span>
+                            <span class="aas-header-content"> <t t-esc="user"/>，欢迎您！</span>
+                        </div>
+                        <ul class="mui-table-view mui-grid-view mui-grid-9">
+                            <li class="mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3">
+                                <a href="/aaswechat/quality/orderlist">
+                                    <span class="mui-icon iconfont icon-jian"></span>
+                                    <div class="mui-media-body" style="font-size:12px;">收货质检</div>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </body>
+                <script src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+            </html>
+        </template>
+
+    </data>
+</odoo>

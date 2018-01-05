@@ -1569,6 +1569,10 @@ class Datetime(Field):
         return Datetime.to_string(timezone_time)
 
     @staticmethod
+    def to_china_string(value):
+        return Datetime.to_timezone_string(value, 'Asia/Shanghai')
+
+    @staticmethod
     def to_utc_string(value, timezone):
         if not value:
             return ''

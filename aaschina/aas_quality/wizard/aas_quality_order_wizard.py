@@ -48,6 +48,23 @@ class AASQualityRejectionWizard(models.TransientModel):
         :return:
         """
         self.ensure_one()
+        self.action_dolabels()
+        view_form = self.env.ref('aas_quality.view_form_aas_quality_rejection_labels_wizard')
+        return {
+            'name': u"不合格品标签",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.quality.rejection.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': self.id,
+            'context': self.env.context
+        }
+
+    @api.one
+    def action_dolabels(self):
         self.action_check_lots()
         label_lines = []
         for plot in self.plot_lines:
@@ -63,19 +80,6 @@ class AASQualityRejectionWizard(models.TransientModel):
                 }))
                 tproduct_qty -= tlabel_qty
         self.write({'label_lines': label_lines})
-        view_form = self.env.ref('aas_quality.view_form_aas_quality_rejection_labels_wizard')
-        return {
-            'name': u"不合格品标签",
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'aas.quality.rejection.wizard',
-            'views': [(view_form.id, 'form')],
-            'view_id': view_form.id,
-            'target': 'new',
-            'res_id': self.id,
-            'context': self.env.context
-        }
 
     @api.one
     def action_done(self):

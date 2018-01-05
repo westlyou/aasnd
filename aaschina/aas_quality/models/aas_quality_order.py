@@ -320,13 +320,17 @@ class AASQualityOperation(models.Model):
     product_qty = fields.Float(string=u'报检数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     concession_qty = fields.Float(string=u'让步数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     unqualified_qty = fields.Float(string=u'不合格数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    qualified_qty = fields.Float(string=u'合格数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_qualified_qty', store=True)
-    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
+    qualified_qty = fields.Float(string=u'合格数量', digits=dp.get_precision('Product Unit of Measure'),
+                                 compute='_compute_qualified_qty', store=True)
+    partqualified = fields.Boolean(string=u'部分合格', compute='_compute_partqualified', store=True)
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null',
+                                 default=lambda self: self.env.user.company_id)
 
     # 报检单据信息
     commit_id = fields.Integer(string=u'报检单据ID')
     commit_model = fields.Char(string=u'报检单据Model')
     commit_order = fields.Char(string=u'报检单据名称')
+    origin_order = fields.Char(string=u'来源单据', copy=False)
 
     _sql_constraints = [
         ('uniq_qlabel', 'unique (order_id, qlabel_id)', u'请不要重复添加同一个标签！')
@@ -336,6 +340,20 @@ class AASQualityOperation(models.Model):
     def _compute_qualified_qty(self):
         for record in self:
             record.qualified_qty = record.product_qty - record.concession_qty - record.unqualified_qty
+
+    @api.depends('product_qty', 'unqualified_qty')
+    def _compute_partqualified(self):
+        for record in self:
+            allqualified = float_is_zero(record.unqualified_qty, 0.0, precision_rounding=0.000001)
+            if allqualified:
+                record.partqualified = False
+                continue
+            if float_compare(record.product_qty, record.unqualified_qty, precision_rounding=0.000001) != 0.0:
+                record.partqualified = True
+            else:
+                record.partqualified = False
+
+
 
     @api.one
     @api.constrains('concession_qty', 'unqualified_qty')
@@ -363,7 +381,8 @@ class AASQualityOperation(models.Model):
         vals.update({
             'product_id': qlabel.product_id.id, 'product_uom': qlabel.product_uom.id,
             'product_lot': qlabel.product_lot.id, 'product_qty': qlabel.product_qty,
-            'commit_id': qlabel.commit_id, 'commit_model': qlabel.commit_model, 'commit_order': qlabel.commit_order
+            'commit_id': qlabel.commit_id, 'commit_model': qlabel.commit_model,
+            'commit_order': qlabel.commit_order, 'origin_order': qlabel.origin_order
         })
 
     @api.one

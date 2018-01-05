@@ -69,6 +69,8 @@
                     <header>
                         <button name="action_dimission" string="离职" type="object" class="oe_highlight" states="working,leave,atop,vacation"
                                 groups="aas_hr.group_aas_hr_user,aas_hr.group_aas_hr_manager"/>
+                        <button name="action_entry" string="重新入职" type="object" class="oe_highlight" states="dimission"
+                                groups="aas_hr.group_aas_hr_user,aas_hr.group_aas_hr_manager"/>
                         <field name="state" widget="statusbar" statusbar_visible="working,leave,atop,vacation,dimission"/>
                     </header>
                     <sheet>

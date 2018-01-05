@@ -53,6 +53,7 @@ class AASMESSerialnumber(models.Model):
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', index=True, ondelete='restrict')
 
     rework_lines = fields.One2many(comodel_name='aas.mes.rework', inverse_name='serialnumber_id', string=u'返工清单')
+    operation_lines = fields.One2many(comodel_name='aas.mes.operation.record', inverse_name='serialnumber_id', string=u'操作清单')
 
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'序列号的名称不可以重复！')
