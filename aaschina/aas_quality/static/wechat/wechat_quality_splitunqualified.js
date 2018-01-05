@@ -80,7 +80,7 @@ mui.ready(function() {
             if(e.index!=0){
                 return ;
             }
-            action_dosplit(wizardid, lotlines);
+            action_dosplit(parseInt(wizardid), lotlines);
         });
     });
 

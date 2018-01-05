@@ -320,7 +320,7 @@ class AASWechatQualityOrderController(http.Controller):
             labelids, labelist = [], []
             for tlabel in templabels:
                 label = tlabel.label_id
-                labelids.append(label.id)
+                labelids.append(str(label.id))
                 labelist.append({
                     'label_id': label.id, 'label_name': label.name, 'product_code': label.product_code,
                     'product_lot': label.product_lot.name, 'product_qty': label.product_qty

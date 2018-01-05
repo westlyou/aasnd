@@ -15,6 +15,7 @@ from odoo import http, fields
 from odoo.http import request
 from wechatpy.enterprise.crypto import WeChatCrypto
 from wechatpy.enterprise.client import WeChatClient
+from odoo.exceptions import AccessDenied, UserError, ValidationError
 
 quality_crypto = None
 quality_client = None
@@ -50,7 +51,24 @@ class AASWechatQualityController(http.Controller):
         cnoncestr = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(15))
         ctimestamp = int(time.time())
         csignature = quality_client.jsapi.get_jsapi_signature(noncestr=cnoncestr, ticket=cticket, timestamp=ctimestamp, url=curl)
-        return {'debug': False, 'appId': self.CorpId, 'timestamp': ctimestamp, 'nonceStr': cnoncestr, 'signature': csignature, 'jsApiList': ['scanQRCode']}
+        return {
+            'debug': False, 'appId': self.CorpId, 'timestamp': ctimestamp,
+            'nonceStr': cnoncestr, 'signature': csignature, 'jsApiList': ['scanQRCode']
+        }
+
+
+    @http.route('/aaswechat/quality/printlabels', type='json', auth="user")
+    def aas_wechat_quality_printlabels(self, printerid, labelids=[]):
+        values = {'success': True, 'message': ''}
+        try:
+            tempvals = request.env['aas.product.label'].action_print_label(printerid, ids=labelids)
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
+        values.update(tempvals)
+        printer = request.env['aas.label.printer'].browse(printerid)
+        values.update({'printer': printer.name, 'printurl': printer.serverurl})
+        return values
 
 
 import aas_quality

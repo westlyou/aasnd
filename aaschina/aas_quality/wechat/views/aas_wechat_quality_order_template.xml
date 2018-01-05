@@ -359,7 +359,7 @@
                                     <li class="mui-table-view-cell">
                                         <span class="mui-pull-left">来源单据</span>
                                         <span class="mui-pull-right"> <t t-esc="tlot['origin_order']"/> </span>
-                                    </li>productlot
+                                    </li>
                                     <li class="mui-table-view-cell">
                                         <span class="mui-pull-left">批次名称</span>
                                         <span class="mui-pull-right"> <t t-esc="tlot['product_lot']"/> </span>
@@ -399,6 +399,7 @@
                     <meta name="apple-mobile-web-app-capable" content="yes"/>
                     <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
                     <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.picker.min.css"/>
                     <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
                 </head>
                 <body>
@@ -459,7 +460,7 @@
                             </ul>
 
                             <div class="aas-mui-table-view-title"> 标签清单 </div>
-                            <ul id="operation_list" class="mui-table-view">
+                            <ul id="rejection_list" class="mui-table-view">
                                 <li class="mui-table-view-cell">
                                     <div class="mui-table">
                                         <div class="mui-table-cell mui-col-xs-6 mui-text-left">标签单号</div>
@@ -490,7 +491,9 @@
                     </div>
                 </body>
                 <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
-                <script type="text/javascript" src="/aas_quality/static/wechat/wechat_quality_order_detail.js"></script>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.picker.min.js"></script>
+                <script type="text/javascript" src="/aas_base/static/wechat/jquery-2.2.4.min.js"></script>
+                <script type="text/javascript" src="/aas_quality/static/wechat/wechat_quality_rejection_list.js"></script>
             </html>
         </template>
 
