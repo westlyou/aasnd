@@ -138,6 +138,8 @@
                     </header>
                     <sheet>
                         <div class="oe_right oe_button_box" style="width: 300px;" name="buttons">
+                            <button type="object" name="action_show_datalist" class="oe_stat_button" icon="fa-list"
+                                    string="设备数据"/>
                         </div>
                         <field name="image_small" widget="image" class="oe_avatar oe_left" options="{'size': [90, 90]}"/>
                         <div class="oe_title">

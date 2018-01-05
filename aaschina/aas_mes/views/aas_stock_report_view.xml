@@ -2,7 +2,18 @@
 <odoo>
     <data>
 
-        <menuitem id="menu_aas_stock_quant_report"  name="库存报表" action="aas_wms.action_aas_stock_quant_report"
+        <record id="action_aas_stock_quant_report_mes" model="ir.actions.act_window">
+            <field name="name">库存报表</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.stock.quant.report</field>
+            <field name="limit">50</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="aas_wms.view_tree_aas_stock_quant_report"/>
+            <field name="search_view_id" ref="aas_wms.view_search_aas_stock_quant_report"/>
+            <field name="domain">[('location_id.edgelocation','=',True)]</field>
+        </record>
+
+        <menuitem id="menu_aas_stock_quant_report"  name="库存报表" action="action_aas_stock_quant_report_mes"
                           parent="menu_aas_stock_report" sequence="3" groups="aas_mes.group_aas_manufacture_user"/>
 
 
@@ -48,6 +59,7 @@
             <field name="view_mode">tree</field>
             <field name="view_id" ref="view_tree_stock_quant_aas_mes"/>
             <field name="search_view_id" ref="view_search_stock_quant_aas_mes"/>
+            <field name="domain">[('location_id.edgelocation','=',True)]</field>
         </record>
 
         <menuitem id="menu_stock_quant_aas_mes"  name="库存查询" action="action_stock_quant_aas_mes"

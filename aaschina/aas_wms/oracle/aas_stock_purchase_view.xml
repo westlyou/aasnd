@@ -32,10 +32,8 @@
                     </header>
                     <sheet>
                         <group>
-                            <group>
+                            <group colspan="4">
                                 <field name="name" attrs="{'readonly':[('ebsorder','=',True)]}" required="1"/>
-                            </group>
-                            <group>
                                 <field name="partner_id" options="{'no_create':true}"
                                        required="1" attrs="{'readonly':[('ebsorder','=',True)]}"/>
                             </group>

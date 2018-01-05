@@ -30,7 +30,7 @@ class AASEquipmentData(models.Model, RedisModel):
     _checking = False
 
     data = fields.Text(string=u'数据集')
-    app_code = fields.Char(string=u'设备编码')
+    app_code = fields.Char(string=u'设备编码', index=True)
     app_secret = fields.Integer(string=u'秘钥')
     timstamp = fields.Datetime(string=u'传输时间')
     operate_time = fields.Datetime(string=u'操作时间')

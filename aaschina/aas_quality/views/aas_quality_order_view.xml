@@ -46,7 +46,7 @@
                     </header>
                     <sheet>
                         <group>
-                            <group>
+                            <group colspan="4">
                                 <field name="name" readonly="1"/>
                                 <field name="partner_id" attrs="{'readonly':[('state','!=','draft')]}"/>
                                 <field name="id" invisible="1"/>

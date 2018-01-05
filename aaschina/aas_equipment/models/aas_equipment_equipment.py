@@ -108,3 +108,24 @@ class AASEquipmentEquipment(models.Model):
         records = printer.action_correct_records(records)
         values['records'] = records
         return values
+
+
+    @api.multi
+    def action_show_datalist(self):
+        """显示设备数据
+        :return:
+        """
+        self.ensure_one()
+        equipment_code = self.code
+        view_form = self.env.ref('aas_equipment.view_form_aas_equipment_data')
+        view_tree = self.env.ref('aas_equipment.view_tree_aas_equipment_data')
+        return {
+            'name': u"设备数据",
+            'type': 'ir.actions.act_window',
+            'view_mode': 'tree,form',
+            'res_model': 'aas.equipment.data',
+            'views': [(view_tree.id, 'tree'), (view_form.id, 'form')],
+            'target': 'self',
+            'context': self.env.context,
+            'domain': "[('app_code','=','"+equipment_code+"')]"
+        }
