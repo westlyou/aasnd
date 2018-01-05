@@ -26,7 +26,10 @@
             <field name="arch" type="xml">
                 <form create="false" edit="false" delete="false" labelprint="true">
                     <header>
-                        <button name="action_allocate_mesline" string="分配产线" type="object" class="oe_highlight" groups="aas_mes.group_aas_manufacture_foreman"/>
+                        <button name="action_dimission" string="离职" type="object" class="oe_highlight"
+                                states="working,leave,atop,vacation" groups="aas_mes.group_aas_manufacture_foreman"/>
+                        <button name="action_entry" string="重新入职" type="object" class="oe_highlight"
+                                states="dimission" groups="aas_mes.group_aas_manufacture_foreman"/>
                         <field name="state" widget="statusbar" statusbar_visible="working,leave,atop,vacation,dimission"/>
                     </header>
                     <sheet>
