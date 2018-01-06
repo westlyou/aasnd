@@ -106,7 +106,7 @@ class AASMESOperationRecord(models.Model):
     @api.one
     def action_after_create(self):
         serialnumber = self.operation_id.serialnumber_id
-        if not self.serialnumber:
+        if serialnumber:
             self.write({'serialnumber': serialnumber.name, 'serialnumber_id': serialnumber.id})
         operationvals = {}
         if self.operate_type == 'newbarcode':
