@@ -91,6 +91,9 @@ mui.ready(function(){
                     mui.toast(dresult.message);
                     return ;
                 }
+                if(dresult.tips!=undefined && dresult.tips!=''){
+                    mui.toast(dresult.tips);
+                }
                 var feedline = document.createElement('li');
                 feedline.className = 'mui-table-view-cell';
                 feedline.setAttribute('id', 'feeding_'+dresult.feeding_id);
@@ -129,6 +132,9 @@ mui.ready(function(){
                 if (!dresult.success){
                     mui.toast(dresult.message);
                     return ;
+                }
+                if(dresult.tips!=undefined && dresult.tips!=''){
+                    mui.toast(dresult.tips);
                 }
                 if(dresult.materiallist.length <= 0){
                     return ;

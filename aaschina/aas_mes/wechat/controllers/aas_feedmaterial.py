@@ -81,7 +81,7 @@ class AASFeedmaterialWechatController(http.Controller):
 
     @http.route('/aaswechat/mes/feeding/containerscan', type='json', auth="user")
     def aas_wechat_mes_feeding_containerscan(self, barcode, workstationid):
-        values = {'success': True, 'message': '', 'materiallist': []}
+        values = {'success': True, 'message': '', 'materiallist': [], 'tips': ''}
         loginuser = request.env.user
         feeddomain = [('lineuser_id', '=', loginuser.id), ('mesrole', '=', 'feeder')]
         linefeeder = request.env['aas.mes.lineusers'].search(feeddomain, limit=1)
