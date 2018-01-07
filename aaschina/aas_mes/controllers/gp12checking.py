@@ -23,7 +23,7 @@ class AASMESGP12CheckingController(http.Controller):
 
     @http.route('/aasmes/gp12/checking', type='http', auth="user")
     def aasmes_gp12_checking(self):
-        values = {'success': True, 'message': '', 'employeelist': []}
+        values = {'success': True, 'message': '', 'employeelist': [], 'serialnumberlist': []}
         loginuser = request.env.user
         values['checker'] = loginuser.name
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
@@ -46,6 +46,12 @@ class AASMESGP12CheckingController(http.Controller):
                 'employee_name': temployee.employee_id.name, 'employee_code': temployee.employee_id.code
             } for temployee in employeelist]
         return request.render('aas_mes.aas_gp12_checking', values)
+
+
+    @http.route('/aasmes/gp12/loadunpacklist', type='json', auth="user")
+    def aasmes_gp12_loadunpacklist(self):
+        values = request.env['aas.mes.operation'].action_loading_unpacking()
+        return values
 
 
     @http.route('/aasmes/gp12/scanemployee', type='json', auth="user")
@@ -114,7 +120,7 @@ class AASMESGP12CheckingController(http.Controller):
                 'repair_time': '' if not rework.repair_time else fields.Datetime.to_timezone_string(rework.repair_time, 'Asia/Shanghai')
             } for rework in reworklist]
         serialnumber_name = serialnumber.name
-        operation_time = fields.Datetime.to_timezone_string(fields.Datetime.now(), 'Asia/Shanghai')
+        operation_time = fields.Datetime.to_china_string(fields.Datetime.now())
         # 返工件
         if tempoperation.serialnumber_id.reworked:
             if not tempoperation.dorework:
@@ -134,10 +140,7 @@ class AASMESGP12CheckingController(http.Controller):
             values.update({'message': u'序列号异常，最终检查还没有操作！！', 'result': 'NG'})
             return values
         if not tempoperation.gp12_check:
-            gp12record = request.env['aas.mes.operation.record'].create({
-                'operation_id': tempoperation.id, 'employee_id': employeeid, 'operate_result': 'OK', 'operate_type': 'gp12'
-            })
-            tempoperation.write({'gp12_check': True, 'gp12_record_id': gp12record.id})
+            tempoperation.action_gp12check(employeeid)
         values['operate_result'] = ','.join([serialnumber_name, 'OK', operation_time])
         return values
 
@@ -234,12 +237,10 @@ class AASMESGP12CheckingController(http.Controller):
         tserialnumber = serialnumberlist[0]
         lot_name = mesline.workdate.replace('-', '')
         product_lot = request.env['stock.production.lot'].action_checkout_lot(tserialnumber.product_id.id, lot_name)
-        tlabel = request.env['aas.product.label'].create({
-            'product_id': tserialnumber.product_id.id, 'product_lot': product_lot.id,
-            'product_qty': len(serialnumberlist), 'stocked': True,
-            'location_id': mesline.location_production_id.id, 'company_id': request.env.user.company_id.id,
-            'customer_code': tserialnumber.customer_product_code
-        })
+        product_id, product_qty = tserialnumber.product_id.id, len(serialnumberlist)
+        location_id, customer_code = mesline.location_production_id.id, tserialnumber.customer_product_code
+        tlabel = request.env['aas.mes.production.label'].action_gp12_dolabel(product_id, product_lot.id,
+                                                                      product_qty, location_id, customer_code)
         serialnumberlist.action_label(tlabel.id)
         srclocation = request.env.ref('stock.location_production')
         tlabel.action_stock(srclocation.id)
@@ -348,6 +349,41 @@ class AASMESGP12CheckingController(http.Controller):
         except ValidationError, ve:
             values.update({'success': False, 'message': ve.name})
             return values
+        return values
+
+
+
+    @http.route('/aasmes/gp12/loadreworksandrecords', type='json', auth="user")
+    def aasmes_gp12_loadreworksandrecords(self, serialnumberid):
+        values = {'success': True, 'message': '', 'functiontestlist': [], 'reworklist': []}
+        serialnumber = request.env['aas.mes.serialnumber'].browse(serialnumberid)
+        tempoperation = serialnumber.operation_id
+        if not tempoperation:
+            tempoperation = request.env['aas.mes.operation'].search([('serialnumber_id', '=', serialnumber.id)], limit=1)
+        values['serialnumber'] = serialnumber.name
+        # 功能测试记录
+        operatedomain = [('operation_id', '=', tempoperation.id), ('operate_type', '=', 'functiontest')]
+        functiontestlist = request.env['aas.mes.operation.record'].search(operatedomain)
+        if functiontestlist and len(functiontestlist) > 0:
+            values['functiontestlist'] = [{
+                'operate_result': record.operate_result,
+                'operator_name': '' if not record.employee_id else record.employee_id.name,
+                'operate_equipment': '' if not record.equipment_id else record.equipment_id.code,
+                'operate_time': fields.Datetime.to_timezone_string(record.operate_time, 'Asia/Shanghai')
+            } for record in functiontestlist]
+        # 返工记录
+        reworklist = request.env['aas.mes.rework'].search([('serialnumber_id', '=', serialnumber.id)])
+        if reworklist and len(reworklist) > 0:
+            values['reworklist'] = [{
+                'serialnumber': serialnumber.name, 'badmode_date': rework.badmode_date,
+                'product_code': rework.customerpn, 'workcenter_name': rework.workstation_id.name,
+                'badmode_name': rework.badmode_id.name, 'commiter_name': rework.commiter_id.name,
+                'state_name': REWORKSTATEDICT[rework.state],
+                'repair_result': '' if not rework.repair_note else rework.repair_note,
+                'repairer_name': '' if not rework.repairer_id else rework.repairer_id.name,
+                'ipqc_name': '' if not rework.ipqcchecker_id else rework.ipqcchecker_id.name,
+                'repair_time': '' if not rework.repair_time else fields.Datetime.to_china_string(rework.repair_time)
+            } for rework in reworklist]
         return values
 
 

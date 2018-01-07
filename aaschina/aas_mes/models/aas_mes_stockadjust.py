@@ -77,6 +77,11 @@ class AASMESStockadjust(models.Model):
             if not location_flag:
                 raise ValidationError(u'您选择的库位异常，并非是的产线%s的成品和原料库位！'% self.mesline_id.name)
 
+    @api.model
+    def create(self, vals):
+        record = super(AASMESStockadjust, self).create(vals)
+        record.write({'product_uom': record.product_id.uom_id.id})
+        return record
 
 
     @api.one

@@ -128,8 +128,8 @@ $(function() {
                         $('#mes_printbtn').attr('waitcount', waitcount+1);
                     }
                     var serialtr = $('<tr></tr>').prependTo($('#pass_list')).html('<td>'+dresult.operate_result+'</td>');
-                    serialtr.attr({'id': 'serialnumber_'+dresult.serialnumber_id, 'serialnumberid': dresult.serialnumber_id});
-                    serialtr.addClass('aas-waitprint');
+                    serialtr.attr({'serialnumberid': dresult.serialnumber_id});
+                    serialtr.addClass('aas-unpack');
                 }else{
                     $('#check_result_box').removeClass('bg-green').addClass('bg-red');
                     $('#fail_list').append('<tr><td>'+dresult.operate_result+'</td></tr>');
@@ -177,7 +177,7 @@ $(function() {
                 var waitcount = parseInt($('#mes_printbtn').attr('waitcount'));
                 var labelqty = parseInt($('#mes_labelqty').attr('qty'));
                 if(waitcount >= labelqty){
-                    action_print_label();
+                    action_print_label(labelqty);
                 }
             },
             error:function(xhr,type,errorThrown){
@@ -187,16 +187,78 @@ $(function() {
         });
     }
 
+    //单击序列号
+    $('#pass_list').on('click', 'tr.aas-unpack', function(){
+        var serialnumberid = parseInt($(this).attr('serialnumberid'));
+        var tparams = {'serialnumberid': serialnumberid};
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        $.ajax({
+            url: '/aasmes/gp12/loadreworksandrecords',
+            headers:{'Content-Type':'application/json'},
+            type: 'post', timeout:30000, dataType: 'json',
+            data: JSON.stringify({jsonrpc: "2.0", method: 'call', params: tparams, id: access_id}),
+            success:function(data){
+                var dresult = data.result;
+                if(!dresult.success){
+                    layer.msg(dresult.message, {icon: 5});
+                    return ;
+                }
+                $('#mes_serialnumber').html(dresult.serialnumber);
+                $('#functiontest_list').html('');
+                if(dresult.functiontestlist.length > 0){
+                    $.each(dresult.functiontestlist, function(index, record){
+                        var lineno = index+1;
+                        var functiontesttr = $('<tr></tr>').appendTo($('#functiontest_list'));
+                        $('<td></td>').html(lineno).appendTo(functiontesttr);
+                        $('<td></td>').html(record.operate_time).appendTo(functiontesttr);
+                        $('<td></td>').html(record.operate_result).appendTo(functiontesttr);
+                        $('<td></td>').html(record.operator_name).appendTo(functiontesttr);
+                        $('<td></td>').html(record.operate_equipment).appendTo(functiontesttr);
+                    });
+                }
+                $('#rework_list').html('');
+                if(dresult.reworklist.length > 0){
+                    $.each(dresult.reworklist, function(index, record){
+                        var lineno = index + 1;
+                        var reworktr = $('<tr></tr>').appendTo($('#rework_list'));
+                        $('<td></td>').html(lineno).appendTo(reworktr);
+                        $('<td></td>').html(record.serialnumber).appendTo(reworktr);
+                        $('<td></td>').html(record.badmode_date).appendTo(reworktr);
+                        $('<td></td>').html(record.product_code).appendTo(reworktr);
+                        $('<td></td>').html(record.workcenter_name).appendTo(reworktr);
+                        $('<td></td>').html(record.badmode_name).appendTo(reworktr);
+                        $('<td></td>').html(record.commiter_name).appendTo(reworktr);
+                        $('<td></td>').html(record.state_name).appendTo(reworktr);
+                        $('<td></td>').html(record.repair_result).appendTo(reworktr);
+                        $('<td></td>').html(record.repair_time).appendTo(reworktr);
+                        $('<td></td>').html(record.repairer_name).appendTo(reworktr);
+                        $('<td></td>').html(record.ipqc_name).appendTo(reworktr);
+                    });
+                }
+            },
+            error:function(xhr,type,errorThrown){ console.log(type); }
+        });
+
+    });
+
     //自动生成标签并打印
-    function action_print_label(){
-        var serialnumberlist = $('.aas-waitprint');
+    function action_print_label(serialcount){
+        var serialnumberlist = $('.aas-unpack');
         if(serialnumberlist.length <= 0){
             layer.msg('没有成品可以打印标签！', {icon: 5});
             return ;
         }
+        if(serialcount <= 0){
+            layer.msg('没有成品可以打印标签！', {icon: 5});
+            return ;
+        }
+        var tempqty = 0;
         var serialnumberids = [];
         $.each(serialnumberlist, function(index, serialnumbertr){
-            serialnumberids.push(parseInt($(serialnumbertr).attr('serialnumberid')));
+            if(tempqty < serialcount){
+                serialnumberids.push(parseInt($(serialnumbertr).attr('serialnumberid')));
+                tempqty += 1;
+            }
         });
         var printerid = parseInt($('#mes_printer').val());
         if(printerid==0){
@@ -216,6 +278,8 @@ $(function() {
                     layer.msg(dresult.message, {icon: 5});
                     return ;
                 }
+                $('#mes_label').html(dresult.label_name);
+                action_loading_unpacklist();
                 $.each(dresult.records, function(index, record){
                     var params = {'label_name': dresult.printer, 'label_count': 1, 'label_content':record};
                     $.ajax({type:'post', dataType:'script', url:'http://'+dresult.serverurl, data: params,
@@ -223,9 +287,6 @@ $(function() {
                         error:function(XMLHttpRequest,textStatus,errorThrown){}
                     });
                 });
-                serialnumberlist.removeClass('aas-waitprint');
-                $('#mes_printbtn').attr('waitcount', 0);
-                $('#mes_label').html(dresult.label_name);
             },
             error:function(xhr,type,errorThrown){
                 scanable = true;
@@ -253,7 +314,7 @@ $(function() {
         }
         layer.confirm(tipmessage, {'btn': ['确定', '取消']}, function(index){
             layer.close(index);
-            action_print_label();
+            action_print_label(waitcount);
         },function(){});
     });
 
@@ -384,5 +445,43 @@ $(function() {
 
         });
     }
+
+    function action_loading_unpacklist(){
+        $.ajax({
+            url: '/aasmes/gp12/loadunpacklist',
+            headers:{'Content-Type':'application/json'},
+            type: 'post', timeout:30000, dataType: 'json',
+            data: JSON.stringify({
+                jsonrpc: "2.0", method: 'call', params: {}, id: Math.floor(Math.random() * 1000 * 1000 * 1000)
+            }),
+            success:function(data){
+                var dresult = data.result;
+                if(!dresult.success){
+                    layer.msg(dresult.message, {icon: 5});
+                    return ;
+                }
+                $('#mes_currentpn').attr('customercode', dresult.productcode).html(dresult.productcode);
+                $('#mes_serialnumber').html(dresult.serialnumber);
+                $('#pass_count').attr('scount', dresult.serialcount).html(dresult.serialcount);
+                $('#pass_list').html('');
+                $('#mes_printbtn').attr('waitcount', dresult.serialcount);
+                $('#functiontest_list').html('');
+                $('#rework_list').html('');
+                if(dresult.serialnumberlist.length < 0){
+                    return ;
+                }
+                $.each(dresult.serialnumberlist, function(index, tserialnumber){
+                    var serialtr = $('<tr></tr>').html('<td>'+tserialnumber.serialnumber_content+'</td>');
+                    serialtr.attr({'class': 'aas-unpack', 'serialnumberid': tserialnumber.serialnumber_id});
+                    $('#pass_list').append(serialtr);
+                });
+            },
+            error:function(xhr,type,errorThrown){ console.log(type); }
+        });
+    }
+
+    // 加载未打包序列号
+    action_loading_unpacklist();
+
 
 });

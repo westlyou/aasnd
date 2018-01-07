@@ -35,8 +35,8 @@ class AASMESOperation(models.Model):
     fqccheck_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'最终检查记录')
     gp12_check = fields.Boolean(string='GP12', default=False, copy=False)
     gp12_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'GP12确认记录')
-    labeled = fields.Boolean(string=u'已包装', default=False, copy=False)
-    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签')
+    gp12_date = fields.Char(string=u'GP12检测日期', copy=False, index=True)
+    gp12_time = fields.Datetime(string=u'GP12检测时间', copy=False)
 
     commit_badness = fields.Boolean(string=u'上报不良', default=False, copy=False)
     commit_badness_count = fields.Integer(string=u'上报不良次数', default=0, copy=False)
@@ -45,6 +45,11 @@ class AASMESOperation(models.Model):
     ipqc_check = fields.Boolean(string='IPQC', default=False, copy=False)
     ipqc_check_count = fields.Integer(string=u'IPQC测试次数', default=0, copy=False)
 
+    labeled = fields.Boolean(string=u'已包装', default=False, copy=False)
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', index=True)
+    internal_product_code = fields.Char(string=u'产品编码', copy=False, help=u'内部产品编码')
+    customer_product_code = fields.Char(string=u'客户编码', copy=False, help=u'在客户方的产品编码')
     record_lines = fields.One2many(comodel_name='aas.mes.operation.record', inverse_name='operation_id', string=u'记录清单')
 
 
@@ -70,6 +75,48 @@ class AASMESOperation(models.Model):
             'operation_id': self.id, 'employee_id': employeeid, 'equipment_id': equipmentid,
             'operator_id': self.env.user.id, 'operation_pass': True, 'operate_result': 'Pass', 'operate_type': 'fqc'
         })
+
+    @api.one
+    def action_gp12check(self, employeeid):
+        current_time = fields.Datetime.now()
+        china_date = fields.Datetime.to_china_string(current_time)[0:10]
+        gp12record = self.env['aas.mes.operation.record'].create({
+            'operation_id': self.id, 'employee_id': employeeid, 'operate_result': 'OK', 'operate_type': 'gp12'
+        })
+        self.write({
+            'gp12_check': True, 'gp12_record_id': gp12record.id, 'gp12_date': china_date, 'gp12_time': current_time
+        })
+
+
+    @api.model
+    def action_loading_unpacking(self):
+        """获取GP12已检测并且还未打包标签的序列号
+        :return:
+        """
+        values = {'success': True, 'message': '', 'serialnumberlist': []}
+        values.update({'productcode': '', 'serialnumber': '', 'serialcount': '0'})
+        check_date = fields.Datetime.to_china_string(fields.Datetime.now())[0:10]
+        tempdomain = [('gp12_check', '=', True), ('labeled', '=', False), ('gp12_date', '=', check_date)]
+        operationlist = self.env['aas.mes.operation'].search(tempdomain, order='gp12_time desc')
+        if operationlist and len(operationlist) > 0:
+            firstoperation = operationlist[0]
+            customer_code = firstoperation.customer_product_code
+            if customer_code:
+                values['productcode'] = customer_code.replace('-', '')
+            values.update({'serialnumber': firstoperation.serialnumber_name, 'serialcount': len(operationlist)})
+            for toperation in operationlist:
+                if not toperation.gp12_time:
+                    checktime = fields.Datetime.to_china_string(fields.Datetime.now())
+                else:
+                    checktime = fields.Datetime.to_china_string(toperation.gp12_time)
+                values['serialnumberlist'].append({
+                    'serialnumber_id': toperation.serialnumber_id.id,
+                    'serialnumber_content': ','.join([toperation.serialnumber_name, 'OK', checktime])
+                })
+        return values
+
+        
+
 
 
 

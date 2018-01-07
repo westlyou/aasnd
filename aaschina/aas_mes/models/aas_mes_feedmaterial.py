@@ -232,7 +232,6 @@ class AASMESFeedmaterial(models.Model):
             # 库存移动之后清理容器内容
             container.product_lines.unlink()
         values['materiallist'] = materialist
-
         return values
 
 

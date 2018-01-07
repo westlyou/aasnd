@@ -94,10 +94,17 @@ class AASStockMove(models.Model):
 
     @api.multi
     def unlink(self):
+        labelist = self.env['aas.product.label']
         for record in self:
             if record.state == 'done':
                 raise UserError(u'%s调拨已完成不可以删除！'% record.name)
-        return super(AASStockMove, self).unlink()
+            if record.move_labels and len(record.move_labels) > 0:
+                for mlabel in record.move_labels:
+                    labelist |= mlabel.label_id
+        result = super(AASStockMove, self).unlink()
+        if labelist and len(labelist) > 0:
+            labelist.write({'locked': False, 'locked_order': False})
+        return result
 
 
     @api.multi

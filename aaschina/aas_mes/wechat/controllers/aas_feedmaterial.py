@@ -53,7 +53,7 @@ class AASFeedmaterialWechatController(http.Controller):
 
     @http.route('/aaswechat/mes/feeding/materialscan', type='json', auth="user")
     def aas_wechat_mes_feeding_materialscan(self, barcode, workstationid):
-        values = {'success': True, 'message': ''}
+        values = {'success': True, 'message': '', 'tips': ''}
         loginuser = request.env.user
         feeddomain = [('lineuser_id', '=', loginuser.id), ('mesrole', '=', 'feeder')]
         linefeeder = request.env['aas.mes.lineusers'].search(feeddomain, limit=1)
@@ -72,7 +72,11 @@ class AASFeedmaterialWechatController(http.Controller):
         if not workstation:
             values.update({'success': False, 'message': u'未搜索到相应工位，请仔细检查！'})
             return values
-        return request.env['aas.mes.feedmaterial'].action_feeding_withlabel(mesline, workstation, barcode)
+        tvalues = request.env['aas.mes.feedmaterial'].action_feeding_withlabel(mesline, workstation, barcode)
+        values.update(tvalues)
+        if values.get('success', False):
+            values['tips'] = u'%s上料成功，已上料%s'% (values['material_code'], values['material_qty'])
+        return values
 
 
     @http.route('/aaswechat/mes/feeding/containerscan', type='json', auth="user")
@@ -93,7 +97,11 @@ class AASFeedmaterialWechatController(http.Controller):
         if not workstation:
             values.update({'success': False, 'message': u'未搜索到相应工位，请仔细检查！'})
             return values
-        return request.env['aas.mes.feedmaterial'].action_feeding_withcontainer(mesline, workstation, barcode)
+        tvalues = request.env['aas.mes.feedmaterial'].action_feeding_withcontainer(mesline, workstation, barcode)
+        values.update(tvalues)
+        if values.get('success', False):
+            values['tips'] = u'容器%s上料成功！'% barcode[2:]
+        return values
 
 
     @http.route('/aaswechat/mes/feeding/materialdel', type='json', auth="user")
