@@ -126,6 +126,7 @@ $(function() {
                         $('#pass_count').attr('scount', scount).html(scount);
                         var waitcount = parseInt($('#mes_printbtn').attr('waitcount'));
                         $('#mes_printbtn').attr('waitcount', waitcount+1);
+                        $('#pass_count').speech({"speech": false, "speed": 6});
                     }
                     var serialtr = $('<tr></tr>').prependTo($('#pass_list')).html('<td>'+dresult.operate_result+'</td>');
                     serialtr.attr({
@@ -133,8 +134,10 @@ $(function() {
                         'serialnumberid': dresult.serialnumber_id, 'id': 'serialnumber_'+dresult.serialnumber_id
                     });
                 }else{
+                    $('#check_result').html('N G');
                     $('#check_result_box').removeClass('bg-green').addClass('bg-red');
                     $('#fail_list').append('<tr><td>'+dresult.operate_result+'</td></tr>');
+                    $('#check_result').speech({"speech": false, "speed": 6});
                 }
                 if(dresult.message!=null && dresult.message!=''){
                     $('#checkwarning').html(dresult.message);

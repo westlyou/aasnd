@@ -42,6 +42,7 @@ class AASMESSerialnumber(models.Model):
     reworked = fields.Boolean(string=u'是否返工', default=False, copy=False)
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'操作设备', ondelete='restrict')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', index=True)
 
     lastone_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'上一个', index=True, ondelete='restrict')
     output_time = fields.Datetime(string=u'产出时间', copy=False)
@@ -86,7 +87,7 @@ class AASMESSerialnumber(models.Model):
 
     @api.model
     def create(self, vals):
-        vals['operation_date'] = fields.Datetime.to_timezone_string(fields.Datetime.now(), 'Asia/Shanghai')[0:10]
+        vals['operation_date'] = fields.Datetime.to_china_string(fields.Datetime.now())[0:10]
         record = super(AASMESSerialnumber, self).create(vals)
         record.action_after_create()
         return record

@@ -19,9 +19,10 @@ _logger = logging.getLogger(__name__)
 
 
 # 成品标签记录
-class AASMESProduction(models.Model):
+class AASMESProductionLabel(models.Model):
     _name = 'aas.mes.production.label'
     _description = 'AAS MES Production Label'
+    _rec_name = 'label_id'
 
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', index=True)
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', index=True)
@@ -29,6 +30,9 @@ class AASMESProduction(models.Model):
     action_time = fields.Datetime(string=u'时间', default=fields.Datetime.now, copy=False)
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工')
     operator_id = fields.Many2one(comodel_name='res.users', string=u'用户')
+    customer_code = fields.Char(string=u'客户编码', copy=False)
+    product_code = fields.Char(string=u'产品编码', copy=False)
+    product_lot = fields.Many2one(comodel_name='stock.product.lot', string=u'批次')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
 
 
@@ -40,7 +44,25 @@ class AASMESProduction(models.Model):
         })
         chinadate = fields.Datetime.to_china_string(fields.Datetime.now())[0:10]
         self.env['aas.mes.production.label'].create({
-            'product_id': product_id, 'label_id': label.id, 'product_qty': product_qty,
+            'label_id': label.id, 'product_id': product_id,  'product_qty': product_qty,
+            'product_lot': productlot_id, 'product_code': label.product_code, 'customer_code': customer_code,
             'operator_id': self.env.user.id, 'action_date': chinadate
         })
         return label
+
+
+    @api.multi
+    def action_show_serialnumbers(self):
+        self.ensure_one()
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_serialnumber')
+        view_tree = self.env.ref('aas_mes.view_tree_aas_mes_serialnumber')
+        return {
+            'name': u"成品清单",
+            'type': 'ir.actions.act_window',
+            'view_mode': 'tree,form',
+            'res_model': 'aas.mes.serialnumber',
+            'views': [(view_tree.id, 'tree'), (view_form.id, 'form')],
+            'target': 'self',
+            'context': self.env.context,
+            'domain': "[('label_id','=',"+str(self.label_id.id)+")]"
+        }
