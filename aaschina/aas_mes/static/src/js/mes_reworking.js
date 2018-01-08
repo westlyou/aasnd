@@ -88,9 +88,13 @@ $(function(){
                         $('<td></td>').html(record.state_name).appendTo(reworktr);
                     });
                 }
-                $('<li class="aas-serialnumber"></li>').attr({'serialnumberid': dresult.serialnumber_id, 'id': 'serialnumber_'+dresult.serialnumber_id})
-                    .html('<a href="javascript:void(0);">'+dresult.serialnumber_name+'</a>')
-                    .prependTo($('#serialnumberlist'));
+                var templi = $('<li class="aas-serialnumber"></li>').attr({
+                    'serialnumberid': dresult.serialnumber_id, 'id': 'serialnumber_'+dresult.serialnumber_id
+                }).prependTo($('#serialnumberlist'));
+                var tempa = $('<a href="javascript:void(0);"></a>').appendTo(templi).append(dresult.serialnumber_name);
+                $('<span class="label label-danger pull-right">删除</span>').appendTo(tempa).attr({
+                    'serialnumberid': dresult.serialnumber_id
+                });
             },
             error:function(xhr,type,errorThrown){
                 scanable = true;
@@ -98,6 +102,15 @@ $(function(){
             }
         });
     }
+
+    //删除错误扫描
+    $('#serialnumberlist').on('click', 'span.label-danger', function(){
+        var serialnumberid = $(this).attr('serialnumberid');
+        var templi = $('#serialnumber_'+serialnumberid);
+        if(templi!=undefined && templi.length>0){
+            templi.remove();
+        }
+    });
 
     $('#mes_badmode').select2({
         placeholder: '选择不良模式...',

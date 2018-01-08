@@ -499,10 +499,11 @@ class AASMESWorkorder(models.Model):
         return values
 
     @api.model
-    def get_virtual_materiallist(self, equipment_code):
+    def get_virtual_materiallist(self, equipment_code, barcode=None):
         """
         获取工位上虚拟件的消耗清单
         :param equipment_code:
+        :param barcode: 子工单条码
         :return:
         """
         values = {'success': True, 'message': ''}
@@ -517,7 +518,13 @@ class AASMESWorkorder(models.Model):
         if not workstation:
             values.update({'success': False, 'message': u'设备还未绑定工位，请联系相关人员设置！'})
             return values
-        workorder = mesline.workorder_id
+        if barcode:
+            workorder = self.env['aas.mes.workorder'].search([('barcode', '=', barcode)], limit=1)
+            if not workorder:
+                values.update({'success': False, 'message': u'请仔细检查，是否扫描了有效的工单条码，或工单已经被删除！'})
+                return values
+        else:
+            workorder = mesline.workorder_id
         if not workorder:
             values.update({'success': False, 'message': u'设备产线还未指定生产工单，请联系领班设置工单！'})
             return values

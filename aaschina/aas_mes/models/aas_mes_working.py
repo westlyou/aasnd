@@ -92,12 +92,13 @@ class AASEquipmentEquipment(models.Model):
         return self.env['aas.mes.feedmaterial'].action_feed_onstationclient(equipment_code, barcode)
 
     @api.model
-    def get_virtual_materiallist(self, equipment_code):
+    def get_virtual_materiallist(self, equipment_code, barcode=None):
         """工位获取虚拟件清单
         :param equipment_code:
+        :param barcode: 子工单条码
         :return:
         """
-        return self.env['aas.mes.workorder'].get_virtual_materiallist(equipment_code)
+        return self.env['aas.mes.workorder'].get_virtual_materiallist(equipment_code, barcode)
 
     @api.model
     def get_workstation_workticket(self, equipment_code, barcode):

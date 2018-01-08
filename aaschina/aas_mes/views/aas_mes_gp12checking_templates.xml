@@ -157,7 +157,7 @@
                                                                 <span id="pass_count" scount="0" style="color:#00C0EF;font-size:30px;"/>
                                                             </div>
                                                         </div>
-                                                        <div class="box-body">
+                                                        <div class="box-body" style="height:650px;overflow-y:scroll;">
                                                             <div class="table-responsive">
                                                                 <table id="pass_list" class="table no-margin"></table>
                                                             </div>

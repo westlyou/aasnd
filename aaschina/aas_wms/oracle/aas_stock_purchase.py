@@ -426,6 +426,17 @@ class AASStockReceipt(models.Model):
                     purchaseline.write({'receipt_qty': temp_qty})
         return super(AASStockReceipt, self).action_cancel()
 
+    @api.multi
+    def unlink(self):
+        receiptlineids = []
+        for record in self:
+            if record.state != 'draft':
+                raise UserError(u'收货单%s已经在执行，不可以删除！'% record.name)
+            if record.receipt_lines and len(record.receipt_lines) > 0:
+                receiptlineids += record.receipt_lines.ids
+        if receiptlineids and len(receiptlineids) > 0:
+            self.env['aas.stock.receipt.line'].browse(receiptlineids).unlink()
+        return super(AASStockReceipt, self).unlink()
 
 
 
