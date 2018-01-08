@@ -128,8 +128,10 @@ $(function() {
                         $('#mes_printbtn').attr('waitcount', waitcount+1);
                     }
                     var serialtr = $('<tr></tr>').prependTo($('#pass_list')).html('<td>'+dresult.operate_result+'</td>');
-                    serialtr.attr({'serialnumberid': dresult.serialnumber_id});
-                    serialtr.addClass('aas-unpack');
+                    serialtr.attr({
+                        'class': 'aas-unpack',
+                        'serialnumberid': dresult.serialnumber_id, 'id': 'serialnumber_'+dresult.serialnumber_id
+                    });
                 }else{
                     $('#check_result_box').removeClass('bg-green').addClass('bg-red');
                     $('#fail_list').append('<tr><td>'+dresult.operate_result+'</td></tr>');
@@ -472,7 +474,10 @@ $(function() {
                 }
                 $.each(dresult.serialnumberlist, function(index, tserialnumber){
                     var serialtr = $('<tr></tr>').html('<td>'+tserialnumber.serialnumber_content+'</td>');
-                    serialtr.attr({'class': 'aas-unpack', 'serialnumberid': tserialnumber.serialnumber_id});
+                    serialtr.attr({
+                        'class': 'aas-unpack', 'serialnumberid': tserialnumber.serialnumber_id,
+                        'id': 'serialnumber_'+tserialnumber.serialnumber_id
+                    });
                     $('#pass_list').append(serialtr);
                 });
             },
