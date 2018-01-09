@@ -18,6 +18,7 @@
                     <field name="internal_product_code"/>
                     <field name="customer_product_code"/>
                     <field name="product_lot"/>
+                    <field name="mesline_id"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -37,15 +38,18 @@
 
                     <sheet>
                         <group>
-                            <group>
-                                <field name="name" readonly="1"/>
-                                <field name="operator_id" readonly="1"/>
-                                <field name="internal_product_code" readonly="1"/>
-                            </group>
+                            <group> <field name="name" readonly="1"/> </group>
+                        </group>
+                        <group>
                             <group>
                                 <field name="sequence_code" readonly="1"/>
-                                <field name="operation_time" readonly="1"/>
+                                <field name="internal_product_code" readonly="1"/>
                                 <field name="customer_product_code" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="mesline_id" readonly="1"/>
+                                <field name="operator_id" readonly="1"/>
+                                <field name="operation_time" readonly="1"/>
                             </group>
                         </group>
                         <group>

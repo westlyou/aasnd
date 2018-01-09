@@ -32,7 +32,7 @@ class AASMESProductionLabel(models.Model):
     operator_id = fields.Many2one(comodel_name='res.users', string=u'用户')
     customer_code = fields.Char(string=u'客户编码', copy=False)
     product_code = fields.Char(string=u'产品编码', copy=False)
-    product_lot = fields.Many2one(comodel_name='stock.product.lot', string=u'批次')
+    lot_id = fields.Many2one(comodel_name='stock.production.lot', string=u'批次')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
 
 
@@ -45,7 +45,7 @@ class AASMESProductionLabel(models.Model):
         chinadate = fields.Datetime.to_china_string(fields.Datetime.now())[0:10]
         self.env['aas.mes.production.label'].create({
             'label_id': label.id, 'product_id': product_id,  'product_qty': product_qty,
-            'product_lot': productlot_id, 'product_code': label.product_code, 'customer_code': customer_code,
+            'lot_id': productlot_id, 'product_code': label.product_code, 'customer_code': customer_code,
             'operator_id': self.env.user.id, 'action_date': chinadate
         })
         return label
