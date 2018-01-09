@@ -80,21 +80,20 @@ class AASMESGP12CheckingController(http.Controller):
 
     @http.route('/aasmes/gp12/scanserialnumber', type='json', auth="user")
     def aasmes_gp12_scan_serialnumber(self, barcode, employeeid, productcode=None):
-        values = {'success': True, 'message': '', 'result': 'OK', 'functiontestlist': [], 'reworklist': []}
+        values = {
+            'success': True, 'message': '', 'result': 'OK', 'functiontestlist': [], 'reworklist': [], 'done': False
+        }
         tempoperation = request.env['aas.mes.operation'].search([('serialnumber_name', '=', barcode)], limit=1)
         if not tempoperation:
-            values.update({
-                'result': 'NG', 'success': False, 'message': u'序列号异常，请检查您扫描的标签是否是一个正确的序列号！'
-            })
+            values.update({'result': 'NG', 'success': False, 'message': u'请检查您扫描的是否是一个有效的序列号'})
             return values
         serialnumber = tempoperation.serialnumber_id
-        if tempoperation.gp12_check and serialnumber.label_id:
-            values.update({'success': False, 'message': u'GP12已操作，请不要重复操作！'})
-            return values
+        if tempoperation.gp12_check:
+            values.update({'message': u'已扫描，请不要重复操作', 'done': True})
         values['serialnumber_id'] = serialnumber.id
         values['productcode'] = serialnumber.customer_product_code.replace('-', '')
         if productcode and productcode != values['productcode']:
-            values.update({'success': False, 'message': u'序列号异常，请确认可能与其他序列号不是同类别的产品混入！'})
+            values.update({'success': False, 'message': u'序列号异常，请确认可能混入其他型号'})
             return values
         # 功能测试记录
         operatedomain = [('operation_id', '=', tempoperation.id), ('operate_type', '=', 'functiontest')]

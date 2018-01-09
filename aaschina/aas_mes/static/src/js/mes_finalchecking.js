@@ -59,65 +59,36 @@ $(function(){
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scanparams, id: access_id}),
             success:function(data){
                 var dresult = data.result;
-                if(!dresult.success){
-                    layer.msg(dresult.message, {icon: 5});
-                    return ;
-                }
-                $('#checkwarning').html('');
+                $('#reworklist').html('');
                 $('#operationlist').html('');
-                $('#ctserialnumber').html(dresult.serialnumber).attr('serialnumber', barcode);
-                $('#informationlist').attr({'checkval': dresult.checkval, 'operationid': dresult.operationid});
-                if(dresult.message){
-                    $('#checkwarning').html(dresult.message);
-                }
-                if(dresult.rework){
-                    $('#serialrework').html('是').attr('class', 'pull-right text-red');
-                }else{
-                    $('#serialrework').html('否').attr('class', 'pull-right text-green');
-                }
+                $('#checkwarning').html(dresult.message);
                 $('#customercode').html(dresult.customer_code);
                 $('#internalcode').html(dresult.internal_code);
-                if(dresult.recordlist.length > 0){
-                    $('#operationlist').html('');
-                    $.each(dresult.recordlist, function(index, record){
-                        var operationtr = $('<tr></tr>');
-                        if(record.result){
-                            $('<td></td>').html('<i class="fa fa-check text-green"></i>').appendTo(operationtr);
-                        }else{
-                            $('<td></td>').html('<i class="fa fa-exclamation text-red"></i>').appendTo(operationtr);
-                        }
-                        $('<td></td>').html(record.sequence).appendTo(operationtr);
-                        $('<td></td>').html(record.operation_name).appendTo(operationtr);
-                        $('<td></td>').html(record.equipment_code).appendTo(operationtr);
-                        $('<td></td>').html(record.employee_name).appendTo(operationtr);
-                        $('<td></td>').html(record.operation_time).appendTo(operationtr);
-                        $('#operationlist').append(operationtr);
-                    });
+                $('#ctserialnumber').html(barcode).attr('serialnumber', barcode);
+                $('#informationlist').attr({'operationid': dresult.operationid});
+                action_init_record_rework(dresult.recordlist, dresult.reworklist);
+                if(!dresult.success){
+                    $('#final_result_box').removeClass('bg-green').addClass('bg-red');
+                    $('#final_result_content').html('NG');
+                    $('#checkwarning').speech({"speech": false, "speed": 6});
+                    return ;
                 }
-                if(dresult.reworklist.length > 0){
-                    $('#reworklist').html('');
-                    $.each(dresult.reworklist, function(index, record){
-                        var reworktr = $('<tr></tr>');
-                        $('<td></td>').html(index+1).appendTo(reworktr);
-                        $('<td></td>').html(record.badmode_name).appendTo(reworktr);
-                        $('<td></td>').html(record.badmode_date).appendTo(reworktr);
-                        $('<td></td>').html(record.commiter).appendTo(reworktr);
-                        $('<td></td>').html(record.commit_time).appendTo(reworktr);
-                        $('<td></td>').html(record.repairer).appendTo(reworktr);
-                        $('<td></td>').html(record.repair_time).appendTo(reworktr);
-                        $('<td></td>').html(record.ipqcchecker).appendTo(reworktr);
-                        $('<td></td>').html(record.ipqccheck_time).appendTo(reworktr);
-                        $('<td></td>').html(record.state).appendTo(reworktr);
-                        $('#reworklist').append(reworktr);
-                    });
+                $('#final_result_content').attr('serialcount', dresult.serialcount).html(dresult.serialcount);
+                if($('#final_result_box').hasClass('bg-red')){
+                    $('#final_result_box').removeClass('bg-red').addClass('bg-green');
                 }
-                if(dresult.checkval=='waiting'){
-                    if(dresult.rework){
-                        action_reworkconfirm(dresult.badmode_name);
+                if(dresult.rework){
+                    $('#checkwarning').speech({"speech": false, "speed": 6});
+                    $('#final_result_content').html('重工');
+                    $('#serialrework').html('是').attr('class', 'pull-right text-red');
+                    action_reworkconfirm(dresult.badmode_name);
+                }else{
+                    if(dresult.done){
+                        $('#checkwarning').speech({"speech": false, "speed": 6});
                     }else{
-
-                        action_confirm();
+                        $('#final_result_content').speech({"speech": false, "speed": 6});
                     }
+                    $('#serialrework').html('否').attr('class', 'pull-right text-green');
                 }
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
@@ -130,16 +101,8 @@ $(function(){
         layer.confirm(warnmessage, {'btn': ['确认', '取消']}, function(index){
             layer.close(index);
             var operationid = parseInt($('#informationlist').attr('operationid'));
-            if(operationid==0){
+            if(operationid<=0){
                 layer.msg('您还没有扫描条码，暂不可以操作！', {icon: 5});
-                return ;
-            }
-            var checkval = $('#informationlist').attr('checkval');
-            if(checkval=='forbidden'){
-                layer.msg('请仔细检查是否还有操作未完成！', {icon: 5});
-                return ;
-            }else if(checkval=='done'){
-                layer.msg('当前条码已经确认，请不要重复操作！', {icon: 5});
                 return ;
             }
             var confirmparams = {'operationid': operationid};
@@ -155,69 +118,71 @@ $(function(){
                         layer.msg(dresult.message, {icon: 5});
                         return ;
                     }
-                    var serialnumber = $('#ctserialnumber').attr('serialnumber');
-                    if(serialnumber == 0 || serialnumber == '0'){
-                        window.location.reload(true);
-                    }else{
-                        action_scanserialnumber(serialnumber);
-                    }
+                    action_loadrecordlist();
                 },
                 error:function(xhr,type,errorThrown){ console.log(type);}
             });
         }, function(){});
     }
 
-    //终检确认
-    /*$('#action_confirm').click(function(){
-        action_confirm();
-    });*/
-
-    function action_confirm(){
-        var workorderid = parseInt($('#mes_workorder').attr('workorderid'));
-        if(workorderid==0){
-            layer.msg('当前产线还未分配工单，暂不可以操作！', {icon: 5});
-            return ;
-        }
-        var employeelist = $('.cemployee');
-        if(employeelist==undefined || employeelist==null || employeelist.length<=0){
-            layer.msg('当前工位上没有员工，不可以确认操作，请先扫描工牌上岗！', {icon: 5});
-            return ;
-        }
+    //加载操作记录和返工记录
+    function action_loadrecordlist(){
+        $('#reworklist').html('');
+        $('#operationlist').html('');
         var operationid = parseInt($('#informationlist').attr('operationid'));
-        if(operationid==0){
-            layer.msg('您还没有扫描条码，暂不可以操作！', {icon: 5});
+        if(operationid <= 0){
             return ;
         }
-        var checkval = $('#informationlist').attr('checkval');
-        if(checkval=='forbidden'){
-            layer.msg('请仔细检查是否还有操作未完成！', {icon: 5});
-            return ;
-        }else if(checkval=='done'){
-            layer.msg('当前条码已经确认，请不要重复操作！', {icon: 5});
-            return ;
-        }
-        var scanparams = {'operationid': operationid, 'workorderid': workorderid};
+        var tparams = {'operationid': operationid};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
-            url: '/aasmes/finalchecking/actionconfirm',
+            url: '/aasmes/finalchecking/loadrecordlist',
             headers:{'Content-Type':'application/json'},
             type: 'post', timeout:10000, dataType: 'json',
-            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scanparams, id: access_id}),
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: tparams, id: access_id}),
             success:function(data){
                 var dresult = data.result;
-                if(!dresult.success){
-                    layer.msg(dresult.message, {icon: 5});
-                    return ;
-                }
-                var serialnumber = $('#ctserialnumber').attr('serialnumber');
-                if(serialnumber == 0 || serialnumber == '0'){
-                    window.location.reload(true);
-                }else{
-                    action_scanserialnumber(serialnumber);
-                }
+                action_init_record_rework(dresult.recordlist, dresult.reworklist);
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
         });
+    }
+
+    function action_init_record_rework(recordlist, reworklist){
+        $('#reworklist').html('');
+        $('#operationlist').html('');
+        if(recordlist.length > 0){
+            $.each(recordlist, function(index, record){
+                var operationtr = $('<tr></tr>');
+                if(record.result){
+                    $('<td></td>').html('<i class="fa fa-check text-green"></i>').appendTo(operationtr);
+                }else{
+                    $('<td></td>').html('<i class="fa fa-exclamation text-red"></i>').appendTo(operationtr);
+                }
+                $('<td></td>').html(record.sequence).appendTo(operationtr);
+                $('<td></td>').html(record.operation_name).appendTo(operationtr);
+                $('<td></td>').html(record.equipment_code).appendTo(operationtr);
+                $('<td></td>').html(record.employee_name).appendTo(operationtr);
+                $('<td></td>').html(record.operation_time).appendTo(operationtr);
+                $('#operationlist').append(operationtr);
+            });
+        }
+        if(reworklist.length > 0){
+            $.each(reworklist, function(index, record){
+                var reworktr = $('<tr></tr>');
+                $('<td></td>').html(index+1).appendTo(reworktr);
+                $('<td></td>').html(record.badmode_name).appendTo(reworktr);
+                $('<td></td>').html(record.badmode_date).appendTo(reworktr);
+                $('<td></td>').html(record.commiter).appendTo(reworktr);
+                $('<td></td>').html(record.commit_time).appendTo(reworktr);
+                $('<td></td>').html(record.repairer).appendTo(reworktr);
+                $('<td></td>').html(record.repair_time).appendTo(reworktr);
+                $('<td></td>').html(record.ipqcchecker).appendTo(reworktr);
+                $('<td></td>').html(record.ipqccheck_time).appendTo(reworktr);
+                $('<td></td>').html(record.state).appendTo(reworktr);
+                $('#reworklist').append(reworktr);
+            });
+        }
     }
 
     $('#action_consume').click(function(){
@@ -308,14 +273,13 @@ $(function(){
                 },
                 error:function(xhr,type,errorThrown){ console.log(type); }
             });
-
         });
     }
 
     function action_loading_serialcount(){
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
-            url: '/aasmes/attendance/actionleave',
+            url: '/aasmes/finalchecking/serialcount',
             headers:{'Content-Type':'application/json'},
             type: 'post', timeout:10000, dataType: 'json',
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {}, id: access_id}),

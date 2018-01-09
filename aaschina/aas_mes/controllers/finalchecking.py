@@ -75,9 +75,8 @@ class AASMESFinalCheckingController(http.Controller):
         workorder = mesline.workorder_id
         if not workorder:
             return values
-        productid, currentdate = workorder.product_id.id, fields.Datetime.to_china_string(fields.Datetime.now())[0:10]
-        tdomain = [('product_id', '=', productid), ('fqccheck_date', '=', currentdate), ('mesline_id', '=', mesline.id)]
-        values['serialcount'] = request.env['aas.mes.operation'].search_count(tdomain)
+        tempvalues = request.env['aas.mes.operation'].action_loading_serialcount(mesline.id)
+        values['serialcount'] = tempvalues['serialcount']
         return values
 
 
@@ -111,82 +110,62 @@ class AASMESFinalCheckingController(http.Controller):
 
     @http.route('/aasmes/finalchecking/scanserialnumber', type='json', auth="user")
     def aasmes_finalchecking_scanserialnumber(self, barcode):
-        values = {'success': True, 'message': '', 'serialnumber': barcode, 'recordlist': [], 'reworklist': []}
+        values = {
+            'success': True, 'message': '', 'serialnumber': barcode, 'done': False,
+            'recordlist': [], 'reworklist': [], 'rework': False, 'serialcount': 0,
+            'operationid': '0', 'internal_code': '', 'customer_code': '', 'badmode_name': ''
+        }
+        loginuser = request.env.user
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录员工还未绑定产线工位'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not mesline or not workstation:
+            values.update({'success': False, 'message': u'当前登录员工还未绑定产线工位'})
+            return values
+        workorder = mesline.workorder_id
         tempoperation = request.env['aas.mes.operation'].search([('serialnumber_name', '=', barcode)], limit=1)
         if not tempoperation:
-            values.update({'success': False, 'message': u'请仔细检查您扫描的是否是序列号条码！'})
+            values.update({'success': False, 'message': u'请仔细检查是否是有效条码'})
             return values
-        values['badmode_name'] = ''
+        tempvalues = request.env['aas.mes.operation'].action_loading_operation_rework_list(tempoperation.id)
+        values.update({'recordlist': tempvalues['recordlist'], 'reworklist': tempvalues['reworklist']})
         serialnumber = tempoperation.serialnumber_id
         values.update({
             'rework': serialnumber.reworked, 'internal_code': serialnumber.internal_product_code,
             'customer_code': serialnumber.customer_product_code, 'operationid': tempoperation.id
         })
-        recordlist, couldcheck = [], True
-        if tempoperation.barcode_create:
-            createrecord = tempoperation.barcode_record_id
-            recordlist.append({
-                'result': True, 'sequence': 1, 'operation_name': u'生成条码',
-                'employee_name': '' if not createrecord.employee_id else createrecord.employee_id.name,
-                'equipment_code': '' if not createrecord.equipment_id else createrecord.equipment_id.code,
-                'operation_time': fields.Datetime.to_timezone_string(createrecord.operate_time, 'Asia/Shanghai')
-            })
-        else:
-            recordlist.append({
-                'result': False, 'sequence': 1, 'operation_name': u'生成条码',
-                'employee_name': '', 'equipment_code': '', 'operation_time': ''
-            })
-            if not values.get('message', False):
-                values['message'] = u'请仔细检查，生成条码操作还未完成！'
-            couldcheck = False
-        if tempoperation.function_test:
-            ftestrecord = tempoperation.functiontest_record_id
-            recordlist.append({
-                'result': True, 'sequence': 2, 'operation_name': u'功能测试',
-                'employee_name': '' if not ftestrecord.employee_id else ftestrecord.employee_id.name,
-                'equipment_code': '' if not ftestrecord.equipment_id else ftestrecord.equipment_id.code,
-                'operation_time': fields.Datetime.to_timezone_string(ftestrecord.operate_time, 'Asia/Shanghai')
-            })
-        else:
-            recordlist.append({
-                'result': False, 'sequence': 2, 'operation_name': u'功能测试',
-                'employee_name': '', 'equipment_code': '', 'operation_time': ''
-            })
-            if not values.get('message', False):
-                values['message'] = u'请仔细检查，功能测试操作还未完成！'
-            couldcheck = False
-        values['checkval'] = 'forbidden'
+        if not tempoperation.function_test:
+            values.update({'success': False, 'message': u'功能测试未完成或未通过'})
+            return values
         if tempoperation.final_quality_check:
-            checkrecord = tempoperation.fqccheck_record_id
-            recordlist.append({
-                'result': True, 'sequence': 3, 'operation_name': u'最终检查',
-                'employee_name': '' if not checkrecord.employee_id else checkrecord.employee_id.name,
-                'equipment_code': '' if not checkrecord.equipment_id else checkrecord.equipment_id.code,
-                'operation_time': fields.Datetime.to_timezone_string(checkrecord.operate_time, 'Asia/Shanghai')
-            })
-            values['checkval'] = 'done'
-        else:
-            recordlist.append({
-                'result': False, 'sequence': 3, 'operation_name': u'最终检查',
-                'employee_name': '', 'equipment_code': '', 'operation_time': ''
-            })
-            if couldcheck:
-                values['checkval'] = 'waiting'
-        values['recordlist'] = recordlist
-        if serialnumber.rework_lines and len(serialnumber.rework_lines) > 0:
-            values['reworklist'] = [{
-                'badmode_name': rework.badmode_id.name+'['+rework.badmode_id.code+']', 'badmode_date': rework.badmode_date,
-                'commiter': '' if not rework.commiter_id else rework.commiter_id.name,
-                'commit_time': '' if not rework.commit_time else fields.Datetime.to_timezone_string(rework.commit_time, 'Asia/Shanghai'),
-                'repairer': '' if not rework.repairer_id else rework.repairer_id.name,
-                'repair_time': '' if not rework.repair_time else fields.Datetime.to_timezone_string(rework.repair_time, 'Asia/Shanghai'),
-                'ipqcchecker': '' if not rework.ipqcchecker_id else rework.ipqcchecker_id.name,
-                'ipqccheck_time': '' if not rework.ipqccheck_time else fields.Datetime.to_timezone_string(rework.ipqccheck_time, 'Asia/Shanghai'),
-                'state': REWORKSTATEDICT[rework.state]
-            } for rework in serialnumber.rework_lines]
-            currentrework = serialnumber.rework_lines[0]
-            values['badmode_name'] = currentrework.badmode_id.name
+            tempvalues = request.env['aas.mes.operation'].action_loading_serialcount(mesline.id)
+            values['serialcount'] = tempvalues['serialcount']
+            values.update({'message': u'已扫描，请不要重复操作', 'done': True})
+            return values
+        if serialnumber.reworked:
+            if serialnumber.rework_lines and len(serialnumber.rework_lines) > 0:
+                currentrework = serialnumber.rework_lines[0]
+                values['badmode_name'] = currentrework.badmode_id.name
+            values['message'] = u'%s重工，请仔细检查确认'% values['badmode_name']
+            return values
+        tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, barcode)
+        if not tvalues.get('success', False):
+            values.update(tvalues)
+            return values
+        tempoperation.action_finalcheck(mesline, workstation)
+        orvalues = request.env['aas.mes.operation'].action_loading_operation_rework_list(tempoperation.id)
+        values.update({'recordlist': orvalues['recordlist'], 'reworklist': orvalues['reworklist']})
+        scvalues = request.env['aas.mes.operation'].action_loading_serialcount(mesline.id)
+        values['serialcount'] = scvalues['serialcount']
         return values
+
+    @http.route('/aasmes/finalchecking/loadrecordlist', type='json', auth="user")
+    def aasmes_finalchecking_loadrecordlist(self, operationid):
+        return request.env['aas.mes.operation'].action_loading_operation_rework_list(operationid)
+
+
 
     @http.route('/aasmes/finalchecking/reworkconfirm', type='json', auth="user")
     def aasmes_finalchecking_reworkconfirm(self, operationid):
@@ -204,34 +183,11 @@ class AASMESFinalCheckingController(http.Controller):
             values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位！'})
             return values
         tempoperation = request.env['aas.mes.operation'].browse(operationid)
-        tempoperation.action_finalcheck(mesline, workstation)
+        if not tempoperation.final_quality_check:
+            tempoperation.action_finalcheck(mesline, workstation)
         return values
 
-    @http.route('/aasmes/finalchecking/actionconfirm', type='json', auth="user")
-    def aasmes_finalchecking_actionconfirm(self, workorderid, operationid):
-        values = {'success': True, 'message': ''}
-        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
-        if not lineuser:
-            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
-            return values
-        values['mesline_name'] = lineuser.mesline_id.name
-        if lineuser.mesrole != 'fqcchecker':
-            values.update({'success': False, 'message': u'当前登录账号还未授权终检'})
-            return values
-        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
-        if not workstation:
-            values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位！'})
-            return values
-        workorder = lineuser.mesline_id.workorder_id
-        if not workorder or workorder.id != workorderid:
-            values.update({'success': False, 'message': u'当前产线信息变化，请先刷新页面再继续操作！'})
-            return values
-        tempoperation = request.env['aas.mes.operation'].browse(operationid)
-        tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, mesline, workstation,
-                                                                             tempoperation.serialnumber_name)
-        if not tvalues.get('success', False):
-            return tvalues
-        return values
+
 
 
 

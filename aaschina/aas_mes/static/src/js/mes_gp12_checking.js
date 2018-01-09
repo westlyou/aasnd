@@ -110,11 +110,15 @@ $(function() {
             success:function(data){
                 scanable = true;
                 var dresult = data.result;
+                $('#checkwarning').html(dresult.message);
                 if(!dresult.success){
                     layer.msg(dresult.message, {icon: 5});
                     return ;
                 }
                 $('#check_result').html(dresult.result);
+                if(dresult.done){
+                    $('#checkwarning').speech({"speech": false, "speed": 6});
+                }
                 if(dresult.result=='OK'){
                     $('#check_result_box').removeClass('bg-red').addClass('bg-green');
                     var serialnumbertr = $('#serialnumber_'+dresult.serialnumber_id);
@@ -134,9 +138,9 @@ $(function() {
                         'serialnumberid': dresult.serialnumber_id, 'id': 'serialnumber_'+dresult.serialnumber_id
                     });
                 }else{
-                    $('#check_result').html('N G');
                     $('#check_result_box').removeClass('bg-green').addClass('bg-red');
                     $('#fail_list').append('<tr><td>'+dresult.operate_result+'</td></tr>');
+                    $('#check_result').html('N G');
                     $('#check_result').speech({"speech": false, "speed": 6});
                 }
                 if(dresult.message!=null && dresult.message!=''){
@@ -345,7 +349,7 @@ $(function() {
             if(employeename!=undefined&&employeename!=null&&employeename!=''){
                 localStorage.setItem('employeename', employeename);
             }
-            window.location.replace('/aasmes/gp12/rework');
+            window.open('/aasmes/gp12/rework');
         }, function(){});
     });
 
@@ -353,7 +357,7 @@ $(function() {
     $('#action_delivery').click(function(){
         layer.confirm('您确认成品出货？', {'btn': ['确定', '取消']}, function(index){
             layer.close(index);
-            window.location.replace('/aasmes/gp12/delivery');
+            window.open('/aasmes/gp12/delivery');
         }, function(){});
     });
 

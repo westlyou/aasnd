@@ -71,15 +71,13 @@
                                         </div>
                                     </div>
 
-                                    <!--<a id="action_confirm" href="javascript:void(0);" class="btn btn-primary btn-block margin-bottom"
-                                       checkval="forbidden" operationid="0">检测确认</a>-->
                                     <a id="action_consume" href="javascript:void(0);" class="btn btn-primary btn-block margin-bottom">班次结单</a>
                                     <div class="box box-solid">
                                         <div class="box-header with-border">
                                             <h3 class="box-title">基础信息</h3>
                                         </div>
                                         <div class="box-body no-padding">
-                                            <ul id="informationlist" class="nav nav-pills nav-stacked" checkval="forbidden" operationid="0">
+                                            <ul id="informationlist" class="nav nav-pills nav-stacked" operationid="0">
                                                 <li> <a href="javascript:void(0);">产线 <span class="pull-right" t-esc="mesline_name"/></a> </li>
                                                 <li> <a href="javascript:void(0);">工位 <span class="pull-right" t-esc="workstation_name"/></a> </li>
                                                 <li>
@@ -194,6 +192,7 @@
                 <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
+                <script src="/aas_base/static/libs/speech/js/jQuery.speech.min.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
                 <script src="/aas_mes/static/src/js/mes_finalchecking.js"></script>
             </body>

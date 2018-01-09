@@ -17,6 +17,8 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+REWORKSTATEDICT = {'commit': u'不良上报', 'repair': u'返工维修', 'ipqc': u'IPQC确认', 'done': u'完成'}
+
 # 生产操作
 class AASMESOperation(models.Model):
     _name = 'aas.mes.operation'
@@ -143,6 +145,77 @@ class AASMESOperation(models.Model):
         return values
 
 
+    @api.model
+    def action_loading_operation_rework_list(self, operationid):
+        """获取序列号的操作记录和返工清单
+        :param operationid:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'recordlist': [], 'reworklist': []}
+        toperation = self.env['aas.mes.operation'].browse(operationid)
+        recordlist, reworklist = [], []
+        if toperation.barcode_create:
+            createrecord = toperation.barcode_record_id
+            temployee, tequipment = createrecord.employee_id, createrecord.equipment_id
+            recordlist.append({
+                'result': True, 'sequence': 1, 'operation_name': u'生成条码',
+                'employee_name': '' if not temployee else temployee.name,
+                'equipment_code': '' if not tequipment else tequipment.code,
+                'operation_time': fields.Datetime.to_china_string(createrecord.operate_time)
+            })
+        else:
+            recordlist.append({
+                'result': False, 'sequence': 1, 'operation_name': u'生成条码',
+                'employee_name': '', 'equipment_code': '', 'operation_time': ''
+            })
+            if not values.get('message', False):
+                values['message'] = u'请仔细检查，生成条码操作还未完成！'
+        if toperation.function_test:
+            ftestrecord = toperation.functiontest_record_id
+            temployee, tequipment = ftestrecord.employee_id, ftestrecord.equipment_id
+            recordlist.append({
+                'result': True, 'sequence': 2, 'operation_name': u'功能测试',
+                'employee_name': '' if not temployee else temployee.name,
+                'equipment_code': '' if not tequipment else tequipment.code,
+                'operation_time': fields.Datetime.to_china_string(ftestrecord.operate_time)
+            })
+        else:
+            recordlist.append({
+                'result': False, 'sequence': 2, 'operation_name': u'功能测试',
+                'employee_name': '', 'equipment_code': '', 'operation_time': ''
+            })
+            if not values.get('message', False):
+                values['message'] = u'请仔细检查，功能测试操作还未完成！'
+        if toperation.final_quality_check:
+            checkrecord = toperation.fqccheck_record_id
+            temployee, tequipment = checkrecord.employee_id, checkrecord.equipment_id
+            recordlist.append({
+                'result': True, 'sequence': 3, 'operation_name': u'最终检查',
+                'employee_name': '' if not temployee else temployee.name,
+                'equipment_code': '' if not tequipment else tequipment.code,
+                'operation_time': fields.Datetime.to_china_string(checkrecord.operate_time)
+            })
+        else:
+            recordlist.append({
+                'result': False, 'sequence': 3, 'operation_name': u'最终检查',
+                'employee_name': '', 'equipment_code': '', 'operation_time': ''
+            })
+        values['recordlist'] = recordlist
+        serialnumber = toperation.serialnumber_id
+        if serialnumber.rework_lines and len(serialnumber.rework_lines) > 0:
+            values['reworklist'] = [{
+                'badmode_date': rework.badmode_date, 'state': REWORKSTATEDICT[rework.state],
+                'badmode_name': rework.badmode_id.name+'['+rework.badmode_id.code+']',
+                'commiter': '' if not rework.commiter_id else rework.commiter_id.name,
+                'commit_time': fields.Datetime.to_china_string(rework.commit_time),
+                'repairer': '' if not rework.repairer_id else rework.repairer_id.name,
+                'repair_time': fields.Datetime.to_china_string(rework.repair_time),
+                'ipqcchecker': '' if not rework.ipqcchecker_id else rework.ipqcchecker_id.name,
+                'ipqccheck_time': fields.Datetime.to_china_string(rework.ipqccheck_time)
+            } for rework in serialnumber.rework_lines]
+        return values
+
+
         
 
 
@@ -194,6 +267,9 @@ class AASMESOperationRecord(models.Model):
             if serialnumber.state == 'draft':
                 serialnumber.write({'state': 'normal'})
         elif self.operate_type == 'fqc':
+            if not serialnumber.reworked:
+                ttoday = fields.Datetime.to_china_string(fields.Datetime.now())[0:10]
+                operationvals['fqccheck_date'] = ttoday
             operationvals.update({'final_quality_check': True, 'fqccheck_record_id': self.id})
         elif self.operate_type == 'gp12':
             operationvals.update({'gp12_check': True, 'gp12_record_id': self.id})
