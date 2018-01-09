@@ -25,14 +25,20 @@ class AASMESOperation(models.Model):
 
     serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', required=True, ondelete='restrict', index=True)
     serialnumber_name = fields.Char(string=u'序列名称', copy=False, index=True)
+
     barcode_create = fields.Boolean(string=u'生成条码', default=False, copy=False)
     barcode_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'生成条码记录')
+
     embed_piece = fields.Boolean(string=u'置入连接片', default=False, copy=False)
     embed_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'置入连接片记录')
+
     function_test = fields.Boolean(string=u'隔离板测试', default=False, copy=False)
     functiontest_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'隔离板测试记录')
+
     final_quality_check = fields.Boolean(string='最终检查', default=False, copy=False)
     fqccheck_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'最终检查记录')
+    fqccheck_date = fields.Char(string=u'FQC日期', copy=False, index=True)
+
     gp12_check = fields.Boolean(string='GP12', default=False, copy=False)
     gp12_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'GP12确认记录')
     gp12_date = fields.Char(string=u'GP12检测日期', copy=False, index=True)
@@ -40,13 +46,16 @@ class AASMESOperation(models.Model):
 
     commit_badness = fields.Boolean(string=u'上报不良', default=False, copy=False)
     commit_badness_count = fields.Integer(string=u'上报不良次数', default=0, copy=False)
+
     dorework = fields.Boolean(string=u'不良维修', default=False, copy=False)
     dorework_count = fields.Integer(string=u'不良维修次数', default=0, copy=False)
+
     ipqc_check = fields.Boolean(string='IPQC', default=False, copy=False)
     ipqc_check_count = fields.Integer(string=u'IPQC测试次数', default=0, copy=False)
 
     labeled = fields.Boolean(string=u'已包装', default=False, copy=False)
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', index=True)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', index=True)
     internal_product_code = fields.Char(string=u'产品编码', copy=False, help=u'内部产品编码')
     customer_product_code = fields.Char(string=u'客户编码', copy=False, help=u'在客户方的产品编码')
@@ -115,6 +124,25 @@ class AASMESOperation(models.Model):
                 })
         return values
 
+    @api.model
+    def action_loading_serialcount(self, meslineid):
+        """加载当日终检扫描数量
+        :param meslineid:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'serialcount': 0}
+        mesline = self.env['aas.mes.line'].browse(meslineid)
+        if not mesline:
+            return values
+        workorder = mesline.workorder_id
+        if not workorder:
+            return values
+        productid, currentdate = workorder.product_id.id, fields.Datetime.to_china_string(fields.Datetime.now())[0:10]
+        tdomain = [('product_id', '=', productid), ('mesline_id', '=', mesline.id), ('fqccheck_date', '=', currentdate)]
+        values['serialcount'] = self.env['aas.mes.operation'].search_count(tdomain)
+        return values
+
+
         
 
 
@@ -135,7 +163,8 @@ class AASMESOperationRecord(models.Model):
     serialnumber = fields.Char(string=u'序列号', copy=False)
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
     operate_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
-    operator_id = fields.Many2one(comodel_name='res.users', string=u'操作用户', ondelete='restrict', default=lambda self: self.env.user)
+    operator_id = fields.Many2one(comodel_name='res.users', string=u'操作用户',
+                                  ondelete='restrict', default=lambda self: self.env.user)
     operation_pass = fields.Boolean(string=u'操作通过', default=True, copy=False)
     operate_result = fields.Char(string=u'操作结果', copy=False)
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'操作设备', ondelete='restrict')

@@ -25,7 +25,10 @@ class AASMESFinalCheckingController(http.Controller):
     def aasmes_finalchecking(self):
         values = {'success': True, 'message': '', 'employeelist': [], 'equipmentlist': [], 'workorder_id': '0'}
         loginuser = request.env.user
-        values['checker'] = loginuser.name
+        values.update({
+            'checker': loginuser.name, 'equipment_id': '0', 'equipment_code': '',
+            'workorder_id': '0', 'workorder_name': '', 'customer_code': '', 'product_code': ''
+        })
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
         if not lineuser:
             values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
@@ -39,11 +42,12 @@ class AASMESFinalCheckingController(http.Controller):
             return request.render('aas_mes.aas_finalchecking', values)
         values.update({'mesline_name': mesline.name, 'workstation_name': workstation.name})
         workorder = mesline.workorder_id
-        if not workorder:
-            values.update({'workorder_id': '0', 'workorder_name': ''})
-        else:
-            values.update({'workorder_id': workorder.id, 'workorder_name': workorder.name})
-        values['workstation_name'] = workstation.name
+        if workorder:
+            temproduct = workorder.product_id
+            values.update({
+                'workorder_id': workorder.id, 'workorder_name': workorder.name, 'product_code': temproduct.default_code,
+                'customer_code': '' if not temproduct.customer_product_code else temproduct.customer_product_code
+            })
         wkdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
         employees = request.env['aas.mes.workstation.employee'].search(wkdomain)
         if employees and len(employees) > 0:
@@ -53,11 +57,28 @@ class AASMESFinalCheckingController(http.Controller):
             } for wemployee in employees]
         equipments = request.env['aas.mes.workstation.equipment'].search(wkdomain)
         if equipments and len(equipments) > 0:
-            values['equipmentlist'] = [{
-                'equipment_id': wequipment.equipment_id.id,
-                'equipment_name': wequipment.equipment_id.name, 'equipment_code': wequipment.equipment_id.code
-            } for wequipment in equipments]
+            tempequipment = equipments[0].equipment_id
+            values.update({'equipment_id': tempequipment.id, 'equipment_code': tempequipment.code})
         return request.render('aas_mes.aas_finalchecking', values)
+
+
+    @http.route('/aasmes/finalchecking/serialcount', type='json', auth="user")
+    def aasmes_finalchecking_serialcount(self):
+        values = {'success': True, 'message': '', 'serialcount': '0'}
+        loginuser = request.env.user
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
+        if not lineuser:
+            return values
+        mesline = lineuser.mesline_id
+        if not mesline:
+            return values
+        workorder = mesline.workorder_id
+        if not workorder:
+            return values
+        productid, currentdate = workorder.product_id.id, fields.Datetime.to_china_string(fields.Datetime.now())[0:10]
+        tdomain = [('product_id', '=', productid), ('fqccheck_date', '=', currentdate), ('mesline_id', '=', mesline.id)]
+        values['serialcount'] = request.env['aas.mes.operation'].search_count(tdomain)
+        return values
 
 
 

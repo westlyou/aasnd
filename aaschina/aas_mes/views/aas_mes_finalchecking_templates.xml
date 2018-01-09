@@ -64,6 +64,13 @@
                         <section class="content">
                             <div class="row">
                                 <div class="col-md-3">
+
+                                    <div id="final_result_box" class="small-box bg-green" style="min-height:142px;">
+                                        <div class="inner">
+                                            <h3 id="final_result_content" style="font-size:120px;text-align:center;" serialcount="0"/>
+                                        </div>
+                                    </div>
+
                                     <!--<a id="action_confirm" href="javascript:void(0);" class="btn btn-primary btn-block margin-bottom"
                                        checkval="forbidden" operationid="0">检测确认</a>-->
                                     <a id="action_consume" href="javascript:void(0);" class="btn btn-primary btn-block margin-bottom">班次结单</a>
@@ -75,10 +82,27 @@
                                             <ul id="informationlist" class="nav nav-pills nav-stacked" checkval="forbidden" operationid="0">
                                                 <li> <a href="javascript:void(0);">产线 <span class="pull-right" t-esc="mesline_name"/></a> </li>
                                                 <li> <a href="javascript:void(0);">工位 <span class="pull-right" t-esc="workstation_name"/></a> </li>
-                                                <li> <a href="javascript:void(0);">工单 <span id="mes_workorder" class="pull-right" t-esc="workorder_name" t-att-workorderid="workorder_id"/></a> </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">工单
+                                                        <span id="mes_workorder" class="pull-right" t-esc="workorder_name" t-att-workorderid="workorder_id"/>
+                                                    </a>
+                                                </li>
                                                 <li> <a href="javascript:void(0);">重工 <span id="serialrework" class="pull-right"></span></a> </li>
-                                                <li> <a href="javascript:void(0);">客户料号 <span id="customercode" class="pull-right"></span></a> </li>
-                                                <li> <a href="javascript:void(0);">内部料号 <span id="internalcode" class="pull-right"></span></a> </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">客户料号
+                                                        <span id="customercode"  class="pull-right" t-esc="customer_code"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">内部料号
+                                                        <span id="internalcode" class="pull-right"  t-esc="product_code"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">设备编码
+                                                        <span id="mes_equipment" class="pull-right" t-att-equipmentid="equipment_id" t-esc="equipment_code"/>
+                                                    </a>
+                                                </li>
                                             </ul>
                                         </div>
                                     </div>
@@ -93,23 +117,6 @@
                                                         <a href="javascript:void(0);">
                                                             <t t-esc="temployee['employee_name']"/>
                                                             <span class="pull-right" t-esc="temployee['employee_code']"/>
-                                                        </a>
-                                                    </li>
-                                                </t>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                    <div class="box box-solid">
-                                        <div class="box-header with-border">
-                                            <h3 class="box-title">设备清单</h3>
-                                        </div>
-                                        <div class="box-body no-padding">
-                                            <ul class="nav nav-pills nav-stacked">
-                                                <t t-foreach="equipmentlist" t-as="tequipment">
-                                                    <li>
-                                                        <a href="javascript:void(0);">
-                                                            <t t-esc="tequipment['equipment_name']"/>
-                                                            <span class="pull-right" t-esc="tequipment['equipment_code']"/>
                                                         </a>
                                                     </li>
                                                 </t>

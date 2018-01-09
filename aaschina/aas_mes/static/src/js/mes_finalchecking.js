@@ -115,6 +115,7 @@ $(function(){
                     if(dresult.rework){
                         action_reworkconfirm(dresult.badmode_name);
                     }else{
+
                         action_confirm();
                     }
                 }
@@ -310,5 +311,27 @@ $(function(){
 
         });
     }
+
+    function action_loading_serialcount(){
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        $.ajax({
+            url: '/aasmes/attendance/actionleave',
+            headers:{'Content-Type':'application/json'},
+            type: 'post', timeout:10000, dataType: 'json',
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {}, id: access_id}),
+            success:function(data){
+                var dresult = data.result;
+                if(!dresult.success){
+                    layer.msg(dresult.message, {icon: 5});
+                    return ;
+                }
+                $('#final_result_content').attr('serialcount', dresult.serialcount).html(dresult.serialcount);
+            },
+            error:function(xhr,type,errorThrown){ console.log(type); }
+        });
+    }
+
+    //刷新页面显示扫描成品数量
+    action_loading_serialcount();
 
 });
