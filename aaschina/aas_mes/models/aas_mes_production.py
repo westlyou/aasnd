@@ -23,6 +23,7 @@ class AASMESProductionLabel(models.Model):
     _name = 'aas.mes.production.label'
     _description = 'AAS MES Production Label'
     _rec_name = 'label_id'
+    _order = 'id desc'
 
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', index=True)
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', index=True)
