@@ -52,7 +52,7 @@
         'views/aas_mes_attendance_view.xml',
         'views/aas_mes_settings_view.xml',
         'views/aas_mes_container_view.xml',
-        'views/aas_mes_production_label_view.xml',
+        'views/aas_mes_production_view.xml',
 
         'oracle/aas_ebs_mainorder_view.xml',
         'wechat/views/aas_wechat_mes_template.xml',

@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_mes_production_label" model="ir.ui.view">
+            <field name="name">aas.mes.production.label.tree</field>
+            <field name="model">aas.mes.production.label</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="label_id"/>
+                    <field name="action_date"/>
+                    <field name="action_time"/>
+                    <field name="product_code"/>
+                    <field name="customer_code"/>
+                    <field name="lot_id"/>
+                    <field name="product_qty"/>
+                    <field name="operator_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_production_label" model="ir.ui.view">
+            <field name="name">aas.mes.production.label.form</field>
+            <field name="model">aas.mes.production.label</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" edit="false" delete="false">
+                    <sheet>
+                        <div class="oe_right oe_button_box" style="width: 300px;" name="buttons">
+                            <button type="object" name="action_show_serialnumbers"
+                                    class="oe_stat_button" icon="fa-list" string="成品清单"/>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="label_id"/>
+                                <field name="product_code"/>
+                                <field name="customer_code"/>
+                                <field name="operator_id"/>
+                            </group>
+                            <group>
+                                <field name="action_date"/>
+                                <field name="lot_id"/>
+                                <field name="product_qty"/>
+                                <field name="action_time"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_production_label" model="ir.ui.view">
+            <field name="name">aas.mes.production.label.search</field>
+            <field name="model">aas.mes.production.label</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="label_id" string="标签" filter_domain="[('label_id','ilike',self)]"/>
+                    <field name="action_date" string="日期" filter_domain="[('action_date','ilike',self)]"/>
+                    <field name="product_code" string="产品编码" filter_domain="[('product_code','ilike',self)]"/>
+                    <field name="customer_code" string="客户编码" filter_domain="[('customer_code','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="产出日期" context="{'group_by':'action_date'}"/>
+                        <filter string="产品编码" context="{'group_by':'product_code'}"/>
+                        <filter string="产品批次" context="{'group_by':'lot_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_production_label" model="ir.actions.act_window">
+            <field name="name">GP12标签</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.production.label</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_production_label"/>
+            <field name="search_view_id" ref="view_search_aas_mes_production_label"/>
+        </record>
+
+        <record id="act_view_tree_aas_mes_production_label" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_production_label"/>
+            <field name="act_window_id" ref="action_aas_mes_production_label"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_production_label" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_production_label"/>
+            <field name="act_window_id" ref="action_aas_mes_production_label"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_production_label"  name="GP12标签" action="action_aas_mes_production_label"
+                          parent="menu_aas_mes_production" sequence="2" groups="aas_mes.group_aas_manufacture_user"/>
+
+
+        <record id="view_tree_aas_mes_sundryin" model="ir.ui.view">
+            <field name="name">aas.mes.sundryin.tree</field>
+            <field name="model">aas.mes.sundryin</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="product_id"/>
+                    <field name="product_lot"/>
+                    <field name="location_id"/>
+                    <field name="sundryin_qty"/>
+                    <field name="everyone_qty"/>
+                    <field name="operater_id"/>
+                    <field name="operate_time"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_sundryin" model="ir.ui.view">
+            <field name="name">aas.mes.sundryin.form</field>
+            <field name="model">aas.mes.sundryin</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_done" type="object" string="完成杂入" class="oe_highlight" states="draft"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="product_id" options="{'no_create':true}" required="1"/>
+                                <field name="product_lot" required="1"/>
+                                <field name="location_id" options="{'no_create':true}" required="1"
+                                        domain="[('edgelocation','=',True),('usage','=','internal')]"/>
+                            </group>
+                            <group>
+                                <field name="sundryin_qty" required="1"/>
+                                <field name="everyone_qty" required="1"/>
+                                <field name="operater_id" readonly="1"/>
+                                <field name="operate_time" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="说明信息">
+                                <field name="sundry_note" required="1"/>
+                            </page>
+                            <page string="标签明细">
+                                <field name="label_lines" readonly="1">
+                                    <tree>
+                                        <field name="label_id"/>
+                                        <field name="product_qty"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group> <field name="label_id"/> </group>
+                                            <group> <field name="product_qty"/> </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_sundryin" model="ir.ui.view">
+            <field name="name">aas.mes.sundryin.search</field>
+            <field name="model">aas.mes.sundryin</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="product_lot" string="批次" filter_domain="[('product_lot','ilike',self)]"/>
+                    <field name="location_id" string="库位" filter_domain="[('location_id','ilike',self)]"/>
+                    <field name="operater_id" string="操作员" filter_domain="[('operater_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="库位" context="{'group_by':'location_id'}"/>
+                        <filter string="操作员" context="{'group_by':'operater_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_sundryin" model="ir.actions.act_window">
+            <field name="name">生产杂入</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.sundryin</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_sundryin"/>
+            <field name="search_view_id" ref="view_search_aas_mes_sundryin"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加杂入信息</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_mes_sundryin" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_sundryin"/>
+            <field name="act_window_id" ref="action_aas_mes_sundryin"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_sundryin" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_sundryin"/>
+            <field name="act_window_id" ref="action_aas_mes_sundryin"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_sundryin"  name="生产杂入" action="action_aas_mes_sundryin"
+                          parent="menu_aas_mes_manufacture" sequence="11" groups="group_aas_manufacture_foreman"/>
+
+    </data>
+</odoo>
