@@ -31,6 +31,11 @@
                         <nav class="navbar navbar-static-top">
                             <div class="navbar-custom-menu">
                                 <ul class="nav navbar-nav">
+                                    <li id="action_reprint" class="messages-menu">
+                                        <a href="javascript:void(0);">
+                                            <i class="fa fa-qrcode"></i><span style="margin-left:5px;">条码重打</span>
+                                        </a>
+                                    </li>
                                     <li id="action_allocation" class="messages-menu">
                                         <a href="/aasmes/allocation" target="_blank">
                                             <i class="fa fa-shopping-cart"></i> <span>生产调拨</span>

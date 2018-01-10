@@ -140,16 +140,62 @@ $(function() {
                 var printername = dresult.printer;
                 var printcount = 1 ;
                 var printerurl = dresult.serverurl;
-                _(dresult.records).each(function(record){
+                $.each(dresult.records, function(index, record){
                     var params = {'label_name': printername, 'label_count': printcount, 'label_content':record};
                     $.ajax({type:'post', dataType:'script', url:'http://'+printerurl, data: params,
                         success: function (result) { },
                         error:function(XMLHttpRequest,textStatus,errorThrown){}
                     });
                 });
-
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
+        });
+    });
+
+    //条码重打
+    $('#action_reprint').click(function(){
+        var printerid = $('#printerlist').val();
+        if(printerid==null || printerid=='0'){
+            layer.msg('请先设置好标签打印机！', {icon: 5});
+            return ;
+        }
+        layer.prompt({title: '输入或扫描二维码', formType: 3}, function(text, index){
+            if(text==undefined || text==null || text==''){
+                layer.msg('请输入一个有效的条码！', {icon: 5});
+                return ;
+            }
+            layer.close(index);
+            var tparams = {'printerid': printerid, 'serialnumber': text};
+            var tempid = Math.floor(Math.random() * 1000 * 1000 * 1000);
+            $.ajax({
+                url: '/aasmes/serialnumber/reprint',
+                headers: {'Content-Type': 'application/json'},
+                type: 'post', timeout: 10000, dataType: 'json',
+                data: JSON.stringify({jsonrpc: "2.0", method: 'call', params: tparams, id: tempid}),
+                success: function (data) {
+                    var dresult = data.result;
+                    if(!dresult.success){
+                        layer.msg(dresult.message, {icon: 5});
+                        return ;
+                    }
+                    var printername = dresult.printer;
+                    var printerurl = dresult.serverurl;
+                    var temprecords = dresult.records;
+                    if(temprecords.length <= 0){
+                        layer.msg('未获取到需要打印的条码', {icon: 5});
+                        return ;
+                    }
+                    var record = temprecords[0];
+                    var pparams = {'label_name': printername, 'label_count': 1, 'label_content':record};
+                    $.ajax({type:'post', dataType:'script', url:'http://'+printerurl, data: pparams,
+                        success: function (result) { },
+                        error:function(XMLHttpRequest,textStatus,errorThrown){}
+                    });
+                },
+                error: function (xhr, type, errorThrown) {
+                    console.log(type);
+                }
+            });
         });
     });
 
