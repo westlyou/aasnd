@@ -132,6 +132,26 @@ class AASMESSundryin(models.Model):
         return super(AASMESSundryin, self).unlink()
 
 
+    @api.multi
+    def action_showlabels(self):
+        self.ensure_one()
+        if not self.label_lines or len(self.label_lines) <= 0:
+            raise UserError(u'当前还没有标签清单！')
+        labelids = '('+','.join([str(tlabel.label_id.id) for tlabel in self.label_lines])+')'
+        view_form = self.env.ref('aas_wms.view_form_aas_product_label')
+        view_tree = self.env.ref('aas_wms.view_tree_aas_product_label')
+        return {
+            'name': u"标签清单",
+            'type': 'ir.actions.act_window',
+            'view_mode': 'tree,form',
+            'res_model': 'aas.product.label',
+            'views': [(view_tree.id, 'tree'), (view_form.id, 'form')],
+            'target': 'self',
+            'context': self.env.context,
+            'domain': "[('id','in',"+labelids+")]"
+        }
+
+
 
 # 生产杂入生成的标签
 class AASMESSundryinLabel(models.Model):

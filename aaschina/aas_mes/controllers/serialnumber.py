@@ -132,6 +132,10 @@ class AASMESSerialnumberController(http.Controller):
     @http.route('/aasmes/serialnumber/reprint', type='json', auth="user")
     def aasmes_serialnumber_reprint(self, printerid, serialnumber):
         values = {'success': True, 'message': '', 'record': ''}
+        serialnumber = serialnumber.strip()
+        if not serialnumber:
+            values.update({'success': False, 'message': u'请检查是否输入有效条码！'})
+            return values
         tserialnumber = request.env['aas.mes.serialnumber'].search([('name', '=', serialnumber)], limit=1)
         if not tserialnumber:
             values.update({'success': False, 'message': u'请检查是否输入有效条码！'})
