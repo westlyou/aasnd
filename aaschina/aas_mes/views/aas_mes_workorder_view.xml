@@ -34,10 +34,13 @@
                         <button name="action_producing" type="object" string="开始生产" class="oe_highlight"
                                 attrs="{'invisible':['|','|',('mesline_type','=','station'),('isproducing','=',True),('state','in',['draft','done'])]}"/>
                         <button name="action_waitconsume" type="object" string="原料消耗" class="oe_highlight" attrs="{'invisible':[('waitconsume','=',False)]}"/>
-                        <button name="action_close" type="object" string="关闭工单" class="oe_highlight" states="confirm,producing,pause"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,producing,pause,done"/>
                     </header>
                     <sheet>
+                        <div class="oe_right oe_button_box" style="width: 300px;" name="buttons">
+                            <button type="object" name="action_close" class="oe_stat_button" icon="fa-close"
+                                    string="关闭工单" attrs="{'invisible':[('state','not in',['confirm','producing','pause'])]}"/>
+                        </div>
                         <group>
                             <group> <field name="name" attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/> </group>
                             <group> <field name="mainorder_id" readonly="1"/> </group>
