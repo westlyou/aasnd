@@ -102,12 +102,14 @@ class AASWorkorderWechatController(http.Controller):
             return http.redirect_with_hash('/aaswechat/mes/workticket/start/'+str(workticketid))
         if workticket.state == 'done':
             values.update({'success': False, 'message': u'工票已完工，不可以再操作！'})
+        product_code = workticket.product_id.default_code
+        temp_qty = workticket.output_qty + workticket.badmode_qty
         values.update({
             'workticket_id': workticketid, 'workticket_name': workticket.name,
+            'time_start': fields.Datetime.to_china_string(workticket.time_start),
             'sequence': workticket.sequence, 'workcenter_name': workticket.workcenter_name,
-            'product_code': workticket.product_id.default_code, 'input_qty': workticket.input_qty,
-            'output_qty': workticket.output_qty + workticket.badmode_qty,
-            'time_start': fields.Datetime.to_timezone_string(workticket.time_start, 'Asia/Shanghai'),
+            'product_code': product_code, 'input_qty': workticket.input_qty,
+            'output_qty': temp_qty, 'workorder_name': workticket.workorder_id.name,
             'mesline_name': workticket.mesline_name, 'workstation_name': '', 'employeelist': [], 'equipmentlist': []
         })
         if workticket.workcenter_id.workstation_id:
@@ -121,7 +123,7 @@ class AASWorkorderWechatController(http.Controller):
                 values['equipmentlist'] = [{
                     'equipment_name': tequipment.equipment_id.name, 'equipment_code': tequipment.equipment_id.code
                 } for tequipment in workstation.equipment_lines]
-        if workticket.islastworkcenter():
+        if workticket.islastworkcenter() and workticket.workorder_id.output_manner == 'container':
             values['needcontainer'] = 'wanted'
         return request.render('aas_mes.wechat_mes_workticketfinish', values)
 
@@ -161,11 +163,15 @@ class AASWorkorderWechatController(http.Controller):
         # 验证投料是否足够消耗
         mesline, workorder = workticket.mesline_id, workticket.workorder_id
         cresult = request.env['aas.mes.workorder'].action_validate_consume(workorder.id, workticket.product_id.id, commit_qty, workstation.id, workcenter.id)
-        if not cresult['success']:
+        if not cresult.get('success', False):
             values.update(cresult)
             return values
         if workticket.islastworkcenter():
-            if not container_id:
+            manner = workorder.output_manner
+            if not manner:
+                values.update({'success': False, 'message': u'当前工单还未设置产出方式，请先设置工单产出方式！'})
+                return values
+            if manner == 'container' and not container_id:
                 values.update({'success': False, 'message': u'当前工序未最后一道工序成品产出需要指定容器，请先扫描容器条码！'})
                 return values
         try:

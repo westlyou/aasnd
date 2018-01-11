@@ -21,6 +21,7 @@ _logger = logging.getLogger(__name__)
 # 子工单
 
 ORDERSTATES = [('draft', u'草稿'), ('confirm', u'确认'), ('producing', u'生产'), ('pause', u'暂停'), ('done', u'完成')]
+OUTPUTMANNERS = [('container', u'容器'), ('label', u'标签'), ('none', u'暂无')]
 
 class AASMESWorkorder(models.Model):
     _name = 'aas.mes.workorder'
@@ -58,6 +59,7 @@ class AASMESWorkorder(models.Model):
     closer_id = fields.Many2one(comodel_name='res.users', string=u'手工关单员', ondelete='restrict', copy=False)
     output_time = fields.Datetime(string=u'产出时间', copy=False, help=u'最近一次产出的时间')
     scrap_qty = fields.Float(string=u'报废数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    output_manner = fields.Selection(selection=OUTPUTMANNERS, string=u'产出方式', copy=False)
 
     workticket_lines = fields.One2many(comodel_name='aas.mes.workticket', inverse_name='workorder_id', string=u'工票明细')
     product_lines = fields.One2many(comodel_name='aas.mes.workorder.product', inverse_name='workorder_id', string=u'产出明细')
@@ -662,6 +664,34 @@ class AASMESWorkorder(models.Model):
         return values
 
 
+    @api.multi
+    def action_show_outputlabels(self):
+        self.ensure_one()
+        labeldomain = [('workorder_id', '=', self.id), ('label_id', '!=', False)]
+        labellines = self.env['aas.mes.workorder.product'].search(labeldomain)
+        if not labellines or len(labellines) <= 0:
+            raise UserError(u'当前没有产出标签显示，可能已经按照其他方式产出！')
+        labelids = [str(tlabel.label_id.id) for tlabel in labellines]
+        if len(labelids) == 1:
+            tempdomain = "[('id','=',"+labelids[0]+")]"
+        else:
+            labelidsstr = ','.join(labelids)
+            tempdomain = "[('id','in',("+labelidsstr+"))]"
+        view_form = self.env.ref('aas_wms.view_form_aas_product_label')
+        view_tree = self.env.ref('aas_wms.view_tree_aas_product_label')
+        return {
+            'name': u"标签清单",
+            'type': 'ir.actions.act_window',
+            'view_mode': 'tree,form',
+            'res_model': 'aas.product.label',
+            'views': [(view_tree.id, 'tree'), (view_form.id, 'form')],
+            'target': 'self',
+            'context': self.env.context,
+            'domain': tempdomain
+        }
+
+
+
 # 工单产出明细
 class AASMESWorkorderProduct(models.Model):
     _name = 'aas.mes.workorder.product'
@@ -676,7 +706,8 @@ class AASMESWorkorderProduct(models.Model):
     product_qty = fields.Float(string=u'已产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     waiting_qty = fields.Float(string=u'待消耗数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     output_date = fields.Char(string=u'产出日期', copy=False)
-    container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict')
+    container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict', help=u'产出成品到容器')
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict', help=u'产出成品到标签')
     total_qty = fields.Float(string=u'总数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_total_qty', store=True)
 
     @api.depends('product_qty', 'waiting_qty')

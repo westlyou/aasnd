@@ -181,9 +181,7 @@
                     <group>
                         <group>
                             <field name="commit_qty" required="1"/>
-                            <field name="need_container" invisible="1"/>
-                            <field name="container_id" options="{'no_create':true}"
-                                    attrs="{'invisible':[('need_container','=',False)], 'required':[('need_container','=',True)]}"/>
+                            <field name="container_id" options="{'no_create':true}"/>
                         </group>
                     </group>
                     <notebook>

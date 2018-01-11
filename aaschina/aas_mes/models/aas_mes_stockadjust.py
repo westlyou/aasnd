@@ -34,6 +34,7 @@ class AASMESStockadjust(models.Model):
     adjust_time = fields.Datetime(string=u'调整时间', default=fields.Datetime.now, copy=False)
     adjustuser_id = fields.Many2one(comodel_name='res.users', string=u'操作人', ondelete='restrict', default= lambda self: self.env.user)
     state = fields.Selection(selection=[('draft', u'草稿'), ('done', u'完成')], string=u'状态', default='draft', copy=False)
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     @api.depends('location_id')
     def _compute_adjustbefore_qty(self):

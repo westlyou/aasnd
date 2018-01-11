@@ -36,6 +36,7 @@ class AASMESProductionLabel(models.Model):
     product_code = fields.Char(string=u'产品编码', copy=False)
     lot_id = fields.Many2one(comodel_name='stock.production.lot', string=u'批次')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
 
     @api.model
@@ -85,6 +86,7 @@ class AASMESSundryin(models.Model):
     operater_id = fields.Many2one(comodel_name='res.users', string=u'操作员', default=lambda self: self.env.user)
     state = fields.Selection(selection=[('draft', u'草稿'), ('done', u'完成')], string=u'状态', default='draft', copy=False)
     label_lines = fields.One2many(comodel_name='aas.mes.sundryin.label', inverse_name='sundryin_id', string=u'标签明细')
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     @api.one
     def action_done(self):
@@ -137,7 +139,12 @@ class AASMESSundryin(models.Model):
         self.ensure_one()
         if not self.label_lines or len(self.label_lines) <= 0:
             raise UserError(u'当前还没有标签清单！')
-        labelids = '('+','.join([str(tlabel.label_id.id) for tlabel in self.label_lines])+')'
+        labelids = [str(tlabel.label_id.id) for tlabel in self.label_lines]
+        if len(labelids) == 1:
+            labeldomain = "[('id','=',"+labelids[0]+")]"
+        else:
+            labelidsstr = ','.join(labelids)
+            labeldomain = "[('id','in',("+labelidsstr+"))]"
         view_form = self.env.ref('aas_wms.view_form_aas_product_label')
         view_tree = self.env.ref('aas_wms.view_tree_aas_product_label')
         return {
@@ -148,7 +155,7 @@ class AASMESSundryin(models.Model):
             'views': [(view_tree.id, 'tree'), (view_form.id, 'form')],
             'target': 'self',
             'context': self.env.context,
-            'domain': "[('id','in',"+labelids+")]"
+            'domain': labeldomain
         }
 
 
@@ -162,3 +169,4 @@ class AASMESSundryinLabel(models.Model):
     sundryin_id = fields.Many2one(comodel_name='aas.mes.sundryin', string=u'生产杂入', ondelete='restrict')
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', default=lambda self: self.env.user.company_id)

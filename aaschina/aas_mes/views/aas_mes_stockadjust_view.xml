@@ -52,7 +52,8 @@
                                 <field name="mesline_id" options="{'no_create':true}" required="1"
                                         attrs="{'readonly':[('state', '=', 'done')]}"/>
                                 <field name="location_id" options="{'no_create':true}" required="1"
-                                       domain="[('edgelocation','=',True)]" attrs="{'readonly':[('state', '=', 'done')]}"/>
+                                       domain="[('edgelocation','=',True),('usage','=','internal')]"
+                                       attrs="{'readonly':[('state', '=', 'done')]}"/>
                                 <field name="adjustbefore_qty" readonly="1"/>
                                 <field name="adjustafter_qty" required="1"/>
                             </group>

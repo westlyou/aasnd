@@ -38,6 +38,8 @@
                     </header>
                     <sheet>
                         <div class="oe_right oe_button_box" style="width: 300px;" name="buttons">
+                            <button type="object" name="action_show_outputlabels" class="oe_stat_button" icon="fa-list"
+                                    string="标签清单"/>
                             <button type="object" name="action_close" class="oe_stat_button" icon="fa-close"
                                     string="关闭工单" attrs="{'invisible':[('state','not in',['confirm','producing','pause'])]}"/>
                         </div>
@@ -50,7 +52,7 @@
                                 <field name="product_id" options="{'no_create':true}"
                                         attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
                                 <field name="product_uom" readonly="1"/>
-                                <field name="input_qty" required="1"/>
+                                <field name="input_qty" required="1" attrs="{'readonly':[('state','!=','draft')]}"/>
                                 <field name="creator_id" readonly="1"/>
                                 <field name="time_create" readonly="1"/>
                                 <field name="time_finish" readonly="1"/>
@@ -68,6 +70,9 @@
                         </group>
                         <group>
                             <group>
+                                <field name="output_manner" attrs="{
+                                       'invisible':[('mesline_type','=','flowing')],
+                                       'required':[('mesline_type','=','station')],'readonly':[('state','=','done')]}"/>
                                 <field name="date_code" readonly="1"/>
                                 <field name="output_qty" readonly="1"/>
                                 <field name="scrap_qty" readonly="1"/>
@@ -93,6 +98,7 @@
                                         <field name="waiting_qty"/>
                                         <field name="output_date"/>
                                         <field name="container_id"/>
+                                        <field name="label_id"/>
                                     </tree>
                                     <form>
                                         <group>
@@ -108,7 +114,10 @@
                                             </group>
                                         </group>
                                         <group>
-                                            <group> <field name="container_id"/> </group>
+                                            <group>
+                                                <field name="container_id"/>
+                                                <field name="label_id"/>
+                                            </group>
                                         </group>
                                     </form>
                                 </field>

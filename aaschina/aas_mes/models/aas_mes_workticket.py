@@ -53,6 +53,7 @@ class AASMESWorkticket(models.Model):
     badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     badmode_lines = fields.One2many(comodel_name='aas.mes.workticket.badmode', inverse_name='workticket_id', string=u'不良明细')
 
+    # 最后一次产出的容器
     container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict')
 
     @api.depends('name')
@@ -125,9 +126,6 @@ class AASMESWorkticket(models.Model):
             'workticket_id': self.id, 'workstation_id': workstation.id,
             'waiting_qty': waiting_qty, 'workcenter_id': self.workcenter_id.id
         }
-        routing_id, sequence = self.workcenter_id.routing_id.id, self.workcenter_id.sequence
-        if self.env['aas.mes.routing.line'].search_count([('routing_id', '=', routing_id), ('sequence', '>', sequence)]) <= 0:
-            wizardvals['need_container'] = True
         badmodelist = workstation.get_badmode_list(workstation.id)
         if badmodelist and len(badmodelist) > 0:
             wizardvals['badmode_lines'] = [(0, 0, {'badmode_id': badmode.id}) for badmode in badmodelist]
@@ -150,7 +148,8 @@ class AASMESWorkticket(models.Model):
     @api.one
     def action_doing_commit(self, commit_qty, badmode_lines=[], container_id=False):
         ticketvals, product_output_qty = {'output_qty': self.output_qty + commit_qty}, commit_qty
-        if self.islastworkcenter():
+        needcontainer = self.islastworkcenter() and self.workorder_id.output_manner == 'container'
+        if needcontainer:
             if not container_id:
                 raise UserError(u'当前工序是最后一道工序，需要先添加产出容器！')
             else:
@@ -293,25 +292,12 @@ class AASMESWorkticket(models.Model):
             mesline.action_refresh_schedule()
         lotname = mesline.workdate.replace('-', '')
         product_lot = self.env['stock.production.lot'].action_checkout_lot(product.id, lotname)
-        if self.islastworkcenter() and self.container_id:
-            self.env['aas.mes.workorder.product'].create({
-                'workorder_id': workorder.id, 'mesline_id': mesline.id, 'product_id': product.id,
-                'product_lot': product_lot.id, 'product_qty': output_qty, 'output_date': mesline.workdate,
-                'container_id': self.container_id.id,
-                'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id
-            })
-            stockdomain = [('container_id', '=', self.container_id.id), ('product_id', '=', product.id)]
-            stockdomain.append(('product_lot', '=', product_lot.id))
-            containerstock = self.env['aas.container.product'].search(stockdomain, limit=1)
-            if not containerstock:
-                containerstock = self.env['aas.container.product'].create({
-                    'container_id': self.container_id.id, 'product_id': product.id,
-                    'product_lot': product_lot.id, 'temp_qty': output_qty
-                })
-            else:
-                containerstock.write({'temp_qty': containerstock.temp_qty+output_qty})
-            containerstock.action_stock(output_qty)
         trace.write({'product_lot': product_lot.id, 'product_lot_name': product_lot.name})
+        if self.islastworkcenter():
+            if workorder.output_manner == 'container' and self.container_id:
+                self.action_output2container(product_lot, output_qty, self.container_id.id)
+            if workorder.output_manner == 'label':
+                self.action_output2label(product_lot, output_qty)
         # 根据结单方式判断什么时候自动结单
         closeorder = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'closeorder_method')
         if closeorder == 'equal':
@@ -321,6 +307,62 @@ class AASMESWorkticket(models.Model):
             total_qty = self.output_qty + self.badmode_qty
             if float_compare(total_qty, self.input_qty, precision_rounding=0.000001) < 0.0:
                 return
+        self.action_workticket_done()
+
+    @api.one
+    def action_output2container(self, product_lot, output_qty, container_id):
+        """产出到容器
+        :param product_lot:
+        :param output_qty:
+        :param container_id:
+        :return:
+        """
+        workorder = self.workorder_id
+        mesline, product = workorder.mesline_id, workorder.product_id
+        self.env['aas.mes.workorder.product'].create({
+            'workorder_id': workorder.id, 'mesline_id': mesline.id, 'product_id': product.id,
+            'product_lot': product_lot.id, 'product_qty': output_qty, 'output_date': mesline.workdate,
+            'container_id': container_id, 'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id
+        })
+        stockdomain = [('container_id', '=', container_id)]
+        stockdomain += [('product_id', '=', product.id), ('product_lot', '=', product_lot.id)]
+        containerstock = self.env['aas.container.product'].search(stockdomain, limit=1)
+        if not containerstock:
+            containerstock = self.env['aas.container.product'].create({
+                'container_id': self.container_id.id, 'product_id': product.id,
+                'product_lot': product_lot.id, 'temp_qty': output_qty
+            })
+        else:
+            containerstock.write({'temp_qty': containerstock.temp_qty+output_qty})
+        containerstock.action_stock(output_qty)
+
+    @api.one
+    def action_output2label(self, product_lot, output_qty):
+        """产出到标签
+        :param product_lot:
+        :param output_qty:
+        :return:
+        """
+        workorder = self.workorder_id
+        mesline, product = workorder.mesline_id, workorder.product_id
+        label = self.env['aas.product.label'].create({
+            'product_id': product.id, 'product_lot': product_lot.id,
+            'product_qty': output_qty, 'location_id': mesline.location_production_id.id, 'stocked': True
+        })
+        srclocationid = self.env.ref('stock.location_production').id
+        label.action_stock(srclocationid)
+        self.env['aas.mes.workorder.product'].create({
+            'workorder_id': workorder.id, 'mesline_id': mesline.id, 'product_id': product.id,
+            'product_lot': product_lot.id, 'product_qty': output_qty, 'output_date': mesline.workdate,
+            'label_id': label.id, 'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id
+        })
+
+
+    @api.one
+    def action_workticket_done(self):
+        """结束当前工票
+        :return:
+        """
         self.write({'state': 'done', 'time_finish': fields.Datetime.now()})
         workorder, currentworkcenter = self.workorder_id, self.workcenter_id
         domain = [('routing_id', '=', self.routing_id.id), ('sequence', '>', currentworkcenter.sequence)]
@@ -349,7 +391,10 @@ class AASMESWorkticket(models.Model):
                     workordervals['consume_lines'] = consumelines
             workorder.write(workordervals)
         else:
-            self.workorder_id.action_done()
+            workorder.action_done()
+
+
+
 
     @api.multi
     def islastworkcenter(self):
@@ -359,7 +404,8 @@ class AASMESWorkticket(models.Model):
         """
         self.ensure_one()
         routing_id, sequence = self.routing_id.id, self.sequence
-        workcenterlist = self.env['aas.mes.routing.line'].search([('routing_id', '=', routing_id), ('sequence', '>', sequence)])
+        tempdomain = [('routing_id', '=', routing_id), ('sequence', '>', sequence)]
+        workcenterlist = self.env['aas.mes.routing.line'].search(tempdomain)
         if workcenterlist and len(workcenterlist) > 0:
             return False
         else:
@@ -427,8 +473,8 @@ class AASMESWorkticket(models.Model):
             'actual_qty': actual_qty, 'todo_qty': todo_qty, 'lastworkcenter': workticket.islastworkcenter(),
             'schedule_name': '' if not workticket.schedule_id else workticket.schedule_id.name,
             'product_code': workticket.product_id.default_code, 'mesline_name': workticket.mesline_name,
-            'time_start': '' if not workticket.time_start else fields.Datetime.to_timezone_string(workticket.time_start, 'Asia/Shanghai'),
-            'time_finish': '' if not workticket.time_finish else fields.Datetime.to_timezone_string(workticket.time_finish, 'Asia/Shanghai')
+            'time_start': fields.Datetime.to_china_string(workticket.time_start),
+            'time_finish': fields.Datetime.to_china_string(workticket.time_finish)
         })
         return values
 
@@ -455,7 +501,8 @@ class AASMESWorkticket(models.Model):
         return values
 
     @api.model
-    def action_workticket_finish_onstationclient(self, workticket_id, equipment_id, commit_qty, badmode_lines=[], container_id=False):
+    def action_workticket_finish_onstationclient(self, workticket_id, equipment_id, commit_qty,
+                                                 badmode_lines=[], container_id=False):
         """
         工控工位客户端上报工
         :param workticket_id:
@@ -466,24 +513,29 @@ class AASMESWorkticket(models.Model):
         """
         values = {'success': True, 'message': ''}
         equipment = self.env['aas.equipment.equipment'].browse(equipment_id)
-        mesline, workstation = equipment.mesline_id, equipment.workstation_id
-        wemployees = self.env['aas.mes.workstation.employee'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
+        meslineid, workstationid = equipment.mesline_id.id, equipment.workstation_id.id
+        tempdomain = [('mesline_id', '=', meslineid), ('workstation_id', '=', workstationid)]
+        wemployees = self.env['aas.mes.workstation.employee'].search(tempdomain)
         if not wemployees or len(wemployees) <= 0:
             values.update({'success': False, 'message': u'当前工位上还没有员工上岗，请先让员工上岗再进行其他操作！'})
             return values
         workticket = self.env['aas.mes.workticket'].browse(workticket_id)
         # 更新容器或不良模式
-        ticketvals = {}
+        ticketvals, workorder = {}, workticket.workorder_id
         if workticket.islastworkcenter():
-            if not container_id:
+            manner = workorder.output_manner
+            if not manner:
+                values.update({'success': False, 'message': u'请先在工单上设置产出方式！'})
+                return values
+            if not container_id and manner == 'container':
                 values.update({'success': False, 'message': u'当前工序是工艺中最后一道工序，需要扫描产出容器！'})
                 return values
             else:
                 ticketvals['container_id'] = container_id
         # 验证物料消耗
-        workorder = workticket.workorder_id
-        cresult = workorder.action_validate_consume(workorder.id, workticket.product_id.id, commit_qty, workstation.id, workticket.workcenter_id.id)
-        if not cresult['success']:
+        productid, workcenterid = workorder.product_id.id, workticket.workcenter_id.id
+        cresult = workorder.action_validate_consume(workorder.id, productid, commit_qty, workstationid, workcenterid)
+        if not cresult.get('success', False):
             values.update(cresult)
             return values
         # 消耗物料并产出
@@ -548,8 +600,6 @@ class AASMESWorkticketCommitWizard(models.TransientModel):
     waiting_qty = fields.Float(string=u'待产数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     commit_qty = fields.Float(string=u'报工数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     badmode_lines = fields.One2many(comodel_name='aas.mes.workticket.badmode.wizard', inverse_name='wizard_id', string=u'不良信息')
-
-    need_container = fields.Boolean(string=u'需要容器', default=False, copy=False)
     container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict')
 
     @api.one
@@ -558,9 +608,16 @@ class AASMESWorkticketCommitWizard(models.TransientModel):
             raise UserError(u'报工数量不可以大于待产数量！')
         if float_compare(self.commit_qty, 0.0, precision_rounding=0.000001) <= 0.0:
             raise UserError(u'报工数量必须是一个大于零的数！')
+
         container_id = False if not self.container_id else self.container_id.id
-        if self.need_container and (not container_id):
-            raise UserError(u'当前工序是最后一道工序，必须添加产出容器！')
+        workticket = self.workticket_id
+        workorder, workcenter = workticket.workorder_id, workticket.workcenter_id
+        if workticket.islastworkcenter():
+            manner = workorder.output_manner
+            if not manner:
+                raise UserError(u'请先在工单上设置产出方式！')
+            if not container_id and manner == 'container':
+                raise UserError(u'当前工序是最后一道工序，需要产出到容器，请先设置容器！')
         badmode_qty, badmode_lines = 0.0, []
         if self.badmode_lines and len(self.badmode_lines) > 0:
             for bline in self.badmode_lines:
@@ -571,12 +628,12 @@ class AASMESWorkticketCommitWizard(models.TransientModel):
                 badmode_lines.append({'badmode_id': badmode.id, 'badmode_qty': bline.badmode_qty})
         if float_compare(badmode_qty, self.commit_qty, precision_rounding=0.000001) > 0.0:
             raise UserError(u'不良数量的总和不可以大于报工数量！')
-        workorder, workcenter = self.workticket_id.workorder_id, self.workticket_id.workcenter_id
-        workstation, product = workcenter.workstation_id, self.workticket_id.product_id
-        cresult = workorder.action_validate_consume(workorder.id, product.id, self.commit_qty, workstation.id, workcenter.id)
-        if not cresult['success']:
+        workstationid, productid = workcenter.workstation_id.id, workticket.product_id.id
+        workorderid, workcenterid, commitqty = workorder.id, workcenter.id, self.commit_qty
+        cresult = workorder.action_validate_consume(workorderid, productid, commitqty, workstationid, workcenterid)
+        if not cresult.get('success', False):
             raise UserError(cresult['message'])
-        self.workticket_id.action_doing_commit(self.commit_qty, badmode_lines, container_id)
+        workticket.action_doing_commit(commitqty, badmode_lines, container_id)
 
 class AASMESWorkticketBadmodeWizard(models.TransientModel):
     _name = 'aas.mes.workticket.badmode.wizard'

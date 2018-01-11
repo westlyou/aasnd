@@ -90,6 +90,10 @@
                                     <span class="mui-pull-right" t-esc="sequence"></span>
                                 </li>
                                 <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">工单名称</span>
+                                    <span class="mui-pull-right" t-esc="workorder_name"></span>
+                                </li>
+                                <li class="mui-table-view-cell">
                                     <span class="mui-pull-left">产品编码</span>
                                     <span class="mui-pull-right" t-esc="product_code"></span>
                                 </li>
