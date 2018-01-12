@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_mes_producttest" model="ir.ui.view">
+            <field name="name">aas.mes.producttest.tree</field>
+            <field name="model">aas.mes.producttest</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="product_id"/>
+                    <field name="workcenter_id"/>
+                    <field name="operator_id"/>
+                    <field name="operate_time"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_producttest" model="ir.ui.view">
+            <field name="name">aas.mes.producttest.form</field>
+            <field name="model">aas.mes.producttest</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_firstone_checking" type="object" string="首件登记" class="oe_highlight" groups="group_aas_manufacture_user"/>
+                        <button name="action_lastone_checking" type="object" string="末件登记" class="oe_highlight" groups="group_aas_manufacture_user"/>
+                        <button name="action_random_checking" type="object" string="抽检登记" class="oe_highlight" groups="group_aas_manufacture_user"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="product_id" options="{'no_create':true}"/>
+                                <field name="workcenter_id" options="{'no_create': true}" required="1"/>
+                            </group>
+                            <group>
+                                <field name="operator_id" readonly="1"/>
+                                <field name="operate_time" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="参数明细">
+                                <field name="parameter_lines">
+                                    <tree>
+                                        <field name="sequence"/>
+                                        <field name="parameter_name"/>
+                                        <field name="parameter_type"/>
+                                        <field name="parameter_value"/>
+                                        <field name="parameter_maxvalue"/>
+                                        <field name="parameter_minvalue"/>
+                                        <field name="parameter_note"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="sequence"/>
+                                                <field name="parameter_name"/>
+                                                <field name="parameter_type"/>
+                                            </group>
+                                            <group>
+                                                <field name="parameter_value"/>
+                                                <field name="parameter_maxvalue" attrs="{'readonly':[('parameter_type','=','char')]}"/>
+                                                <field name="parameter_minvalue" attrs="{'readonly':[('parameter_type','=','char')]}"/>
+                                            </group>
+                                        </group>
+                                        <notebook>
+                                            <page string="备注说明">
+                                                <field name="parameter_note"/>
+                                            </page>
+                                        </notebook>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_producttest" model="ir.ui.view">
+            <field name="name">aas.mes.producttest.search</field>
+            <field name="model">aas.mes.producttest</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="workcenter_id" string="工序" filter_domain="[('workcenter_id','ilike',self)]"/>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <separator/>
+                    <filter string="线下PN" domain="[('product_id','=',False)]" />
+                    <group expand="0" string="分组">
+                        <filter string="工序" context="{'group_by':'workcenter_id'}"/>
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_producttest" model="ir.actions.act_window">
+            <field name="name">检测清单</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.producttest</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_producttest"/>
+            <field name="search_view_id" ref="view_search_aas_mes_producttest"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加检测信息</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_mes_producttest" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_producttest"/>
+            <field name="act_window_id" ref="action_aas_mes_producttest"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_producttest" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_producttest"/>
+            <field name="act_window_id" ref="action_aas_mes_producttest"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_producttest_list"  name="检测清单" action="action_aas_mes_producttest"
+                          parent="menu_aas_mes_producttest" sequence="1" groups="group_aas_manufacture_user"/>
+
+        <record id="view_tree_aas_mes_producttest_order" model="ir.ui.view">
+            <field name="name">aas.mes.producttest.order.tree</field>
+            <field name="model">aas.mes.producttest.order</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="workcenter_id"/>
+                    <field name="product_id"/>
+                    <field name="mesline_id"/>
+                    <field name="equipment_id"/>
+                    <field name="order_date"/>
+                    <field name="employee_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_producttest_order" model="ir.ui.view">
+            <field name="name">aas.mes.producttest.order.form</field>
+            <field name="model">aas.mes.producttest.order</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_loading_producttest" type="object" string="加载检测信息" class="oe_highlight"
+                                groups="group_aas_manufacture_user" attrs="{'invisible':[('paramsloaded','=',True)]}"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,prdcheck,frmcheck,ipqcheck,done"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="paramsloaded" invisible="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="product_id" options="{'no_create':true}"
+                                       attrs="{'readonly':[('paramsloaded','=',True)]}"/>
+                                <field name="workcenter_id" options="{'no_create':true}"
+                                       attrs="{'readonly':[('paramsloaded','=',True)]}" required="1"/>
+                                <field name="mesline_id" options="{'no_create':true}"
+                                       attrs="{'readonly':[('state','!=',draft)]}"/>
+                                <field name="equipment_id" options="{'no_create':true}"
+                                       attrs="{'readonly':[('state','!=',draft)]}"/>
+                                <field name="order_time" required="1" attrs="{'readonly':[('state','!=',draft)]}"/>
+                            </group>
+                            <group>
+                                <field name="employee_id" options="{'no_create':true}" required="1"
+                                       attrs="{'readonly':[('state','!=',draft)]}"/>
+                                <field name="instrument_code" attrs="{'readonly':[('state','!=',draft)]}"/>
+                                <field name="fixture_code" attrs="{'readonly':[('state','!=',draft)]}"/>
+                                <field name="schedule_id" options="{'no_create':true}" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="参数明细">
+                                <field name="order_lines" attrs="{'readonly':[('state','!=',draft)]}">
+                                    <tree editable="bottom" create="false" delete="false">
+                                        <field name="parameter_id" readonly="1"/>
+                                        <field name="parameter_value" required="1"/>
+                                        <field name="parameter_note"/>
+                                    </tree>
+                                    <form create="false" delete="false">
+                                        <group>
+                                            <group>
+                                                <field name="parameter_id" readonly="1"/>
+                                            </group>
+                                            <group>
+                                                <field name="parameter_value" required="1"/>
+                                            </group>
+                                        </group>
+                                        <notebook>
+                                            <page string="备注说明"> <field name="parameter_note"/> </page>
+                                        </notebook>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="检查明细">
+                                <field name="determine_lines" readonly="1">
+                                    <tree>
+                                        <field name="determine_type"/>
+                                        <field name="determine_pass"/>
+                                        <field name="checker_code"/>
+                                        <field name="determine_time"/>
+                                        <field name="determine_note"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="determine_type"/>
+                                                <field name="determine_pass"/>
+                                            </group>
+                                            <group>
+                                                <field name="checker_code"/>
+                                                <field name="determine_time"/>
+                                            </group>
+                                        </group>
+                                        <notebook>
+                                            <page string="备注说明"> <field name="determine_note"/> </page>
+                                        </notebook>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_producttest_order" model="ir.ui.view">
+            <field name="name">aas.mes.producttest.order.search</field>
+            <field name="model">aas.mes.producttest.order</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="workcenter_id" string="工序" filter_domain="[('workcenter_id','ilike',self)]"/>
+                    <field name="mesline_id" string="产线" filter_domain="[('mesline_id','ilike',self)]"/>
+                    <field name="equipment_id" string="设备" filter_domain="[('equipment_id','ilike',self)]"/>
+                    <field name="employee_id" string="员工" filter_domain="[('employee_id','ilike',self)]"/>
+                    <field name="order_date" string="日期" filter_domain="[('equipment_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="工序" context="{'group_by':'workcenter_id'}"/>
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="产线" context="{'group_by':'mesline_id'}"/>
+                        <filter string="设备" context="{'group_by':'equipment_id'}"/>
+                        <filter string="员工" context="{'group_by':'employee_id'}"/>
+                        <filter string="日期" context="{'group_by':'order_date'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_producttest_order_firstone" model="ir.actions.act_window">
+            <field name="name">首件检测</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.producttest.order</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_producttest_order"/>
+            <field name="search_view_id" ref="view_search_aas_mes_producttest_order"/>
+            <field name="domain">[('test_type','=','firstone')]</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加首件检测</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_mes_producttest_order_firstone" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_producttest_order"/>
+            <field name="act_window_id" ref="action_aas_mes_producttest_order_firstone"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_producttest_order_firstone" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_producttest_order"/>
+            <field name="act_window_id" ref="action_aas_mes_producttest_order_firstone"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_producttest_order_firstone"  name="首件检测" action="action_aas_mes_producttest_order_firstone"
+                          parent="menu_aas_mes_producttest" sequence="2" groups="group_aas_manufacture_user"/>
+
+        <record id="action_aas_mes_producttest_order_lastone" model="ir.actions.act_window">
+            <field name="name">末件检测</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.producttest.order</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_producttest_order"/>
+            <field name="search_view_id" ref="view_search_aas_mes_producttest_order"/>
+            <field name="domain">[('test_type','=','lastone')]</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加末件检测</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_mes_producttest_order_lastone" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_producttest_order"/>
+            <field name="act_window_id" ref="action_aas_mes_producttest_order_lastone"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_producttest_order_lastone" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_producttest_order"/>
+            <field name="act_window_id" ref="action_aas_mes_producttest_order_lastone"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_producttest_order_lastone"  name="末件检测" action="action_aas_mes_producttest_order_lastone"
+                          parent="menu_aas_mes_producttest" sequence="3" groups="group_aas_manufacture_user"/>
+
+
+        <record id="action_aas_mes_producttest_order_random" model="ir.actions.act_window">
+            <field name="name">抽样检测</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.producttest.order</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_producttest_order"/>
+            <field name="search_view_id" ref="view_search_aas_mes_producttest_order"/>
+            <field name="domain">[('test_type','=','random')]</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加抽样检测</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_mes_producttest_order_random" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_producttest_order"/>
+            <field name="act_window_id" ref="action_aas_mes_producttest_order_random"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_producttest_order_random" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_producttest_order"/>
+            <field name="act_window_id" ref="action_aas_mes_producttest_order_random"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_producttest_order_random"  name="抽样检测" action="action_aas_mes_producttest_order_random"
+                          parent="menu_aas_mes_producttest" sequence="4" groups="group_aas_manufacture_user"/>
+
+    </data>
+</odoo>
