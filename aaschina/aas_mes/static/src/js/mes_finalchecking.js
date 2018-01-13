@@ -36,17 +36,70 @@ $(function(){
                     layer.msg(dresult.message, {icon: 1});
                 }
                 if(dresult.action=='working'){
-                    var templi = $('<li class="cemployee" id="employee_'+dresult.employee_id+'"></li>');
-                    templi.html('<a href="javascript:void(0);">'+dresult.employee_name+'<span class="pull-right">'+dresult.employee_code+'</span></a>');
-                    $('#finalchecking_employees').append(templi);
+                    if(dresult.needrole){
+                        // layer.msg(dresult.message, {icon: 1});
+                        initcheckingrolehtml(dresult.employee_id);
+                    }else{
+                        changeemployeerole(dresult.employee_id, 'check');
+                    }
                 }else{
-                    $('#employee_'+dresult.employee_id).remove();
                     action_leave(dresult.attendance_id);
                 }
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
         });
     }
+
+    function initcheckingrolehtml(employeeid){
+        var tcontent = '<div class="row" style="margin-top: 10px;clear: both;zoom: 1; padding:0px 20px;">';
+
+        tcontent += '<div class="col-md-6">';
+        tcontent += '<a href="javascript:void(0);" class="btn btn-block btn-success aas-action" ';
+        tcontent += 'style="margin-top:10px;margin-bottom:10px; height:100px; line-height:100px; font-size:25px; padding:0;" ';
+        tcontent += 'actiontype="scan">扫描</a>';
+        tcontent += '</div>';
+
+        tcontent += '<div class="col-md-6">';
+        tcontent += '<a href="javascript:void(0);" class="btn btn-block btn-success aas-action" ';
+        tcontent += 'style="margin-top:10px;margin-bottom:10px; height:100px; line-height:100px; font-size:25px; padding:0;" ';
+        tcontent += 'actiontype="check">终检</a>';
+        tcontent += '</div>';
+
+        tcontent += '</div>';
+        var lindex = layer.open({
+            type: 1,
+            closeBtn: 0,
+            skin: 'layui-layer-rim',
+            title: '请在下面选择您的角色',
+            area: ['490px', '250px'],
+            content: tcontent
+        });
+        $('.aas-action').click(function(){
+            var self = $(this);
+            changeemployeerole(employeeid, self.attr('actiontype'));
+        });
+    }
+
+    function changeemployeerole(employeeid, role){
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        var tparams = {'employeeid': employeeid, 'action_type': role};
+        $.ajax({
+            url: '/aasmes/finalchecking/changemployeerole',
+            headers:{'Content-Type':'application/json'},
+            type: 'post', timeout:10000, dataType: 'json',
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: tparams, id: access_id}),
+            success:function(data){
+                var dresult = data.result;
+                if(!dresult.success){
+                    layer.msg(dresult.message, {icon: 5});
+                    return ;
+                }
+                window.location.reload(true);
+            },
+            error:function(xhr,type,errorThrown){ console.log(type); }
+        });
+    }
+
 
     //扫描序列号
     function action_scanserialnumber(barcode){
@@ -80,7 +133,6 @@ $(function(){
                 if(dresult.rework){
                     $('#checkwarning').speech({"speech": false, "speed": 6});
                     $('#final_result_content').html('重工');
-                    $('#serialrework').html('是').attr('class', 'pull-right text-red');
                     action_reworkconfirm(dresult.badmode_name);
                 }else{
                     if(dresult.done){
@@ -88,7 +140,6 @@ $(function(){
                     }else{
                         $('#final_result_content').speech({"speech": false, "speed": 6});
                     }
-                    $('#serialrework').html('否').attr('class', 'pull-right text-green');
                 }
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
@@ -161,9 +212,10 @@ $(function(){
                 }
                 $('<td></td>').html(record.sequence).appendTo(operationtr);
                 $('<td></td>').html(record.operation_name).appendTo(operationtr);
-                $('<td></td>').html(record.equipment_code).appendTo(operationtr);
-                $('<td></td>').html(record.employee_name).appendTo(operationtr);
                 $('<td></td>').html(record.operation_time).appendTo(operationtr);
+                $('<td></td>').html(record.equipment_code).appendTo(operationtr);
+                $('<td></td>').html(record.scan_employee).appendTo(operationtr);
+                $('<td></td>').html(record.employee_name).appendTo(operationtr);
                 $('#operationlist').append(operationtr);
             });
         }
@@ -227,6 +279,7 @@ $(function(){
                     initleavelisthtml(attendanceid, dresult.leavelist);
                 }else{
                     layer.msg('您已离岗！', {icon: 1});
+                    window.location.reload(true);
                 }
             },
             error:function(xhr,type,errorThrown){
@@ -270,6 +323,7 @@ $(function(){
                         return ;
                     }
                     layer.close(lindex);
+                    window.location.reload(true);
                 },
                 error:function(xhr,type,errorThrown){ console.log(type); }
             });

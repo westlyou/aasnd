@@ -73,30 +73,87 @@ class AASMESOperation(models.Model):
             serialnumber.write({'state': 'normal'})
         return record
 
+
     @api.one
     def action_finalcheck(self, mesline, workstation):
+        tempemployeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        tempemloyeelist = self.env['aas.mes.workstation.employee'].search(tempemployeedomain)
+        scanemployeelist, scanemployeestr, checkemployeelist, checkemployeestr = [], False, [], False
+        if tempemloyeelist and len(tempemloyeelist) > 0:
+            for temployee in tempemloyeelist:
+                employee = temployee.employee_id
+                if temployee.action_type == 'scan':
+                    scanemployeelist.append(employee.name+'['+employee.code+']')
+                elif temployee.action_type == 'check':
+                    checkemployeelist.append(employee.name+'['+employee.code+']')
+            scanemployeestr, checkemployeestr = ','.join(scanemployeelist), ','.join(checkemployeelist)
         employeeid, equipmentid = False, False
-        employees = self.env['aas.mes.workstation.employee'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
-        if employees and len(employees) > 0:
-            employeeid = employees[0].employee_id.id
-        equipments = self.env['aas.mes.workstation.equipment'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
+        equipmentdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        equipments = self.env['aas.mes.workstation.equipment'].search(equipmentdomain)
         if equipments and len(equipments) > 0:
             equipmentid = equipments[0].equipment_id.id
         self.env['aas.mes.operation.record'].create({
-            'operation_id': self.id, 'employee_id': employeeid, 'equipment_id': equipmentid,
-            'operator_id': self.env.user.id, 'operation_pass': True, 'operate_result': 'Pass', 'operate_type': 'fqc'
+            'operation_id': self.id, 'equipment_id': equipmentid, 'employee_id': employeeid,
+            'scanning_employee': scanemployeestr, 'checking_employee': checkemployeestr,
+            'operator_id': self.env.user.id, 'operation_pass': True, 'operate_result': 'PASS', 'operate_type': 'fqc'
         })
+        # 添加产出记录
+        tserialnumber = self.serialnumber_id
+        outputdomain = [('serialnumber_id', '=', tserialnumber.id)]
+        outputdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        tempoutput = self.env['aas.mes.production.output'].search(outputdomain)
+        if tempoutput:
+            tempoutput.write({'pass_onetime': False})
+        else:
+            self.env['aas.mes.production.output'].create({
+                'product_id': tserialnumber.product_id.id, 'output_qty': 1.0,
+                'mesline_id': mesline.id, 'workstation_id': workstation.id, 'equipment_id': equipmentid,
+                'employee_id': employeeid, 'employee_name': checkemployeestr, 'serialnumber_id': tserialnumber.id
+            })
+
 
     @api.one
-    def action_gp12check(self, employeeid):
+    def action_gp12check(self, mesline, workstation):
+        tempemployeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        tempemloyeelist = self.env['aas.mes.workstation.employee'].search(tempemployeedomain)
+        scanemployeelist, scanemployeestr, checkemployeelist, checkemployeestr = [], False, [], False
+        if tempemloyeelist and len(tempemloyeelist) > 0:
+            for temployee in tempemloyeelist:
+                employee = temployee.employee_id
+                if temployee.action_type == 'scan':
+                    scanemployeelist.append(employee.name+'['+employee.code+']')
+                elif temployee.action_type == 'check':
+                    checkemployeelist.append(employee.name+'['+employee.code+']')
+            scanemployeestr, checkemployeestr = ','.join(scanemployeelist), ','.join(checkemployeelist)
+        employeeid, equipmentid = False, False
+        equipmentdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        equipments = self.env['aas.mes.workstation.equipment'].search(equipmentdomain)
+        if equipments and len(equipments) > 0:
+            equipmentid = equipments[0].equipment_id.id
+        gp12record = self.env['aas.mes.operation.record'].create({
+            'operation_id': self.id, 'operate_result': 'PASS', 'operate_type': 'gp12', 'equipment_id': equipmentid,
+            'employee_id': employeeid, 'scanning_employee': scanemployeestr, 'checking_employee': checkemployeestr
+        })
         current_time = fields.Datetime.now()
         china_date = fields.Datetime.to_china_string(current_time)[0:10]
-        gp12record = self.env['aas.mes.operation.record'].create({
-            'operation_id': self.id, 'employee_id': employeeid, 'operate_result': 'OK', 'operate_type': 'gp12'
-        })
         self.write({
             'gp12_check': True, 'gp12_record_id': gp12record.id, 'gp12_date': china_date, 'gp12_time': current_time
         })
+        # 添加产出记录
+        tserialnumber = self.serialnumber_id
+        outputdomain = [('serialnumber_id', '=', tserialnumber.id)]
+        outputdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        tempoutput = self.env['aas.mes.production.output'].search(outputdomain)
+        if tempoutput:
+            tempoutput.write({'pass_onetime': False})
+        else:
+            self.env['aas.mes.production.output'].create({
+                'product_id': tserialnumber.product_id.id, 'output_qty': 1.0,
+                'mesline_id': mesline.id, 'workstation_id': workstation.id, 'equipment_id': equipmentid,
+                'employee_id': employeeid, 'employee_name': checkemployeestr, 'serialnumber_id': tserialnumber.id
+            })
+
+
 
 
     @api.model
@@ -161,12 +218,12 @@ class AASMESOperation(models.Model):
                 'result': True, 'sequence': 1, 'operation_name': u'生成条码',
                 'employee_name': '' if not temployee else temployee.name,
                 'equipment_code': '' if not tequipment else tequipment.code,
-                'operation_time': fields.Datetime.to_china_string(createrecord.operate_time)
+                'operation_time': fields.Datetime.to_china_string(createrecord.operate_time), 'scan_employee': ''
             })
         else:
             recordlist.append({
                 'result': False, 'sequence': 1, 'operation_name': u'生成条码',
-                'employee_name': '', 'equipment_code': '', 'operation_time': ''
+                'employee_name': '', 'equipment_code': '', 'operation_time': '', 'scan_employee': ''
             })
             if not values.get('message', False):
                 values['message'] = u'请仔细检查，生成条码操作还未完成！'
@@ -177,28 +234,31 @@ class AASMESOperation(models.Model):
                 'result': True, 'sequence': 2, 'operation_name': u'功能测试',
                 'employee_name': '' if not temployee else temployee.name,
                 'equipment_code': '' if not tequipment else tequipment.code,
-                'operation_time': fields.Datetime.to_china_string(ftestrecord.operate_time)
+                'operation_time': fields.Datetime.to_china_string(ftestrecord.operate_time), 'scan_employee': ''
             })
         else:
             recordlist.append({
                 'result': False, 'sequence': 2, 'operation_name': u'功能测试',
-                'employee_name': '', 'equipment_code': '', 'operation_time': ''
+                'employee_name': '', 'equipment_code': '', 'operation_time': '', 'scan_employee': ''
             })
             if not values.get('message', False):
                 values['message'] = u'请仔细检查，功能测试操作还未完成！'
         if toperation.final_quality_check:
             checkrecord = toperation.fqccheck_record_id
+            scanemployee = '' if not checkrecord.scanning_employee else checkrecord.scanning_employee
+            checkemployee = '' if not checkrecord.checking_employee else checkrecord.checking_employee
+
             temployee, tequipment = checkrecord.employee_id, checkrecord.equipment_id
             recordlist.append({
                 'result': True, 'sequence': 3, 'operation_name': u'最终检查',
-                'employee_name': '' if not temployee else temployee.name,
+                'scan_employee': scanemployee, 'employee_name': checkemployee,
                 'equipment_code': '' if not tequipment else tequipment.code,
                 'operation_time': fields.Datetime.to_china_string(checkrecord.operate_time)
             })
         else:
             recordlist.append({
                 'result': False, 'sequence': 3, 'operation_name': u'最终检查',
-                'employee_name': '', 'equipment_code': '', 'operation_time': ''
+                'employee_name': '', 'equipment_code': '', 'operation_time': '', 'scan_employee': ''
             })
         values['recordlist'] = recordlist
         serialnumber = toperation.serialnumber_id
@@ -234,10 +294,11 @@ class AASMESOperationRecord(models.Model):
     operation_id = fields.Many2one(comodel_name='aas.mes.operation', string=u'操作记录', ondelete='cascade')
     serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', index=True)
     serialnumber = fields.Char(string=u'序列号', copy=False)
+    scanning_employee = fields.Char(string=u'扫描员工', copy=False, index=True)
+    checking_employee = fields.Char(string=u'检查员工', copy=False, index=True)
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
     operate_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
-    operator_id = fields.Many2one(comodel_name='res.users', string=u'操作用户',
-                                  ondelete='restrict', default=lambda self: self.env.user)
+    operator_id = fields.Many2one(comodel_name='res.users', string=u'操作用户', default=lambda self: self.env.user)
     operation_pass = fields.Boolean(string=u'操作通过', default=True, copy=False)
     operate_result = fields.Char(string=u'操作结果', copy=False)
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'操作设备', ondelete='restrict')
@@ -313,6 +374,24 @@ class AASMESOperationRecord(models.Model):
         self.env['aas.mes.operation.record'].create(functiontestvals)
         if not operation_pass:
             toperation.write({'function_test': False, 'functiontest_record_id': False})
+
+        # 添加或更新产出信息
+        tserialnumber = toperation.serialnumber_id
+        tempdomain = [('serialnumber_id', '=', tserialnumber.id), ('mesline_id', '=', mesline.id),
+                      ('workstation_id', '=', workstation.id)]
+        tempoutput = self.env['aas.mes.production.output'].search(tempdomain, order='output_time desc', limit=1)
+        if tempoutput:
+            tempoutput.write({'pass_onetime': False, 'qualified': operation_pass})
+        else:
+            tempvals = {
+                'serialnumber_id': tserialnumber.id, 'output_qty': 1,
+                'pass_onetime': operation_pass, 'qualified': operation_pass,
+                'product_id': tserialnumber.product_id.id, 'mesline_id': mesline.id,
+                'workstation_id': workstation.id, 'equipment_id': equipment.id, 'employee_id': employeeid
+            }
+            if mesline.schedule_id:
+                tempvals['schedule_id'] = mesline.schedule_id.id
+            self.env['aas.mes.production.output'].create(tempvals)
         return result
 
 

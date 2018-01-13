@@ -78,6 +78,16 @@
                                         </div>
                                         <div class="box-body no-padding">
                                             <ul id="informationlist" class="nav nav-pills nav-stacked" operationid="0">
+                                                <li>
+                                                    <a href="javascript:void(0);">扫描员工
+                                                        <span id="mes_scanemployee" class="pull-right" t-esc="scan_employee"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">终检员工
+                                                        <span id="mes_checkemployee" class="pull-right" t-esc="check_employee"/>
+                                                    </a>
+                                                </li>
                                                 <li> <a href="javascript:void(0);">产线 <span class="pull-right" t-esc="mesline_name"/></a> </li>
                                                 <li> <a href="javascript:void(0);">工位 <span class="pull-right" t-esc="workstation_name"/></a> </li>
                                                 <li>
@@ -85,7 +95,6 @@
                                                         <span id="mes_workorder" class="pull-right" t-esc="workorder_name" t-att-workorderid="workorder_id"/>
                                                     </a>
                                                 </li>
-                                                <li> <a href="javascript:void(0);">重工 <span id="serialrework" class="pull-right"></span></a> </li>
                                                 <li>
                                                     <a href="javascript:void(0);">客户料号
                                                         <span id="customercode"  class="pull-right" t-esc="customer_code"/>
@@ -97,27 +106,8 @@
                                                     </a>
                                                 </li>
                                                 <li>
-                                                    <a href="javascript:void(0);">设备编码
-                                                        <span id="mes_equipment" class="pull-right" t-att-equipmentid="equipment_id" t-esc="equipment_code"/>
-                                                    </a>
+                                                    <a href="javascript:void(0);">设备编码 <span class="pull-right" t-esc="equipmentlist"/> </a>
                                                 </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                    <div class="box box-solid">
-                                        <div class="box-header with-border">
-                                            <h3 class="box-title">员工清单</h3>
-                                        </div>
-                                        <div class="box-body no-padding">
-                                            <ul id="finalchecking_employees" class="nav nav-pills nav-stacked">
-                                                <t t-foreach="employeelist" t-as="temployee">
-                                                    <li class="cemployee" t-attf-id="employee_{{temployee['employee_id']}}">
-                                                        <a href="javascript:void(0);">
-                                                            <t t-esc="temployee['employee_name']"/>
-                                                            <span class="pull-right" t-esc="temployee['employee_code']"/>
-                                                        </a>
-                                                    </li>
-                                                </t>
                                             </ul>
                                         </div>
                                     </div>
@@ -138,9 +128,10 @@
                                                             <td></td>
                                                             <td>序号</td>
                                                             <td>工序名称</td>
-                                                            <td>设备</td>
-                                                            <td>操作员</td>
                                                             <td>出货时间</td>
+                                                            <td>设备编码</td>
+                                                            <td>扫描员工</td>
+                                                            <td>操作/终检员工</td>
                                                         </tr>
                                                     </thead>
                                                     <tbody id="operationlist"></tbody>

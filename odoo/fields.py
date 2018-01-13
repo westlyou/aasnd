@@ -1560,6 +1560,10 @@ class Datetime(Field):
         return temptime.astimezone(pytz.timezone(timezone))
 
     @staticmethod
+    def to_china_time(value):
+        return Datetime.to_timezone_time(value, 'Asia/Shanghai')
+
+    @staticmethod
     def to_timezone_string(value, timezone):
         if not value:
             return ''

@@ -72,11 +72,13 @@
                         <section class="content">
                             <div class="row">
                                 <div class="col-md-2">
-                                    <div id="check_result_box" class="small-box bg-green">
-                                        <div id="check_result" class="inner" style="text-align:center;font-size:24px;font-weight:bold;">
+
+                                    <div id="gp12_result_box" class="small-box bg-green" style="min-height:120px;">
+                                        <div class="inner">
+                                            <h3 id="gp12_result_content" style="font-size:90px;text-align:center;" serialcount="0"/>
                                         </div>
-                                        <a href="javascript:void(0);" class="small-box-footer">检测结果</a>
                                     </div>
+
                                     <div class="box box-solid">
                                         <div class="box-header with-border">
                                             <h3 class="box-title">基础信息</h3>
@@ -85,8 +87,12 @@
                                             <ul class="nav nav-pills nav-stacked">
                                                 <li> <a href="javascript:void(0);">产线 <span id="mes_mesline" class="pull-right" t-esc="mesline_name"/></a> </li>
                                                 <li> <a href="javascript:void(0);">工位 <span id="mes_workstation" class="pull-right" t-esc="workstation_name"/></a> </li>
-                                                <li> <a href="javascript:void(0);">操作员 <span id="mes_operator" class="pull-right" employeeid="0"/></a> </li>
                                                 <li> <a href="javascript:void(0);">当前PN <span id="mes_currentpn" class="pull-right" customercode=""/></a> </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">扫描员工
+                                                        <span id="mes_scanner" class="pull-right" t-esc="scanner_name" t-att-employeeid="scanner_id"/>
+                                                    </a>
+                                                </li>
                                             </ul>
                                         </div>
                                     </div>
@@ -119,21 +125,27 @@
                                             </ul>
                                         </div>
                                     </div>
+
                                     <div class="box box-solid">
                                         <div class="box-header with-border">
-                                            <h3 class="box-title">员工清单</h3>
+                                            <h3 class="box-title">目检员工</h3>
                                         </div>
                                         <div class="box-body no-padding">
-                                            <ul id="employee_list" class="nav nav-pills nav-stacked">
-                                                <t t-foreach="employeelist" t-as="temployee">
-                                                    <li class="aas-employee" t-attf-id="employee_{{temployee['employee_id']}}"
-                                                        t-att-employeeid="temployee['employee_id']" t-att-employeename="temployee['employee_name']">
-                                                        <a href="javascript:void(0);"> <t t-esc="temployee['employee_name']"/> </a>
-                                                    </li>
+                                            <ul id="checker_list" class="nav nav-pills nav-stacked">
+                                                <t t-if="checkerlist">
+                                                    <t t-foreach="checkerlist" t-as="tchecker">
+                                                        <li t-attf-id="checker_{{tchecker['employee_id']}}">
+                                                            <a href="javascript:void(0);">
+                                                                <t t-esc="tchecker['employee_name']"/>
+                                                                <span class="pull-right" t-esc="tchecker['employee_code']"/>
+                                                            </a>
+                                                        </li>
+                                                    </t>
                                                 </t>
                                             </ul>
                                         </div>
                                     </div>
+
                                 </div>
                                 <div class="col-md-10">
                                     <div class="box box-primary">
@@ -153,9 +165,7 @@
                                                         <div class="box-header">
                                                             <i class="fa fa-list"></i>
                                                             <h3 class="box-title">合格SN：</h3>
-                                                            <div class="box-tools pull-right">
-                                                                <span id="pass_count" scount="0" style="color:#00C0EF;font-size:30px;"/>
-                                                            </div>
+                                                            <span id="speechcontent" class="pull-right"></span>
                                                         </div>
                                                         <div class="box-body" style="height:650px;overflow-y:scroll;">
                                                             <div class="table-responsive">

@@ -23,7 +23,10 @@ class AASMESGP12CheckingController(http.Controller):
 
     @http.route('/aasmes/gp12/checking', type='http', auth="user")
     def aasmes_gp12_checking(self):
-        values = {'success': True, 'message': '', 'employeelist': [], 'serialnumberlist': []}
+        values = {
+            'success': True, 'message': '', 'serialnumberlist': [],
+            'checkerlist': [], 'scanner_id': '0', 'scanner_name': '', 'serialcount': '0'
+        }
         loginuser = request.env.user
         values['checker'] = loginuser.name
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
@@ -39,12 +42,17 @@ class AASMESGP12CheckingController(http.Controller):
             return request.render('aas_mes.aas_gp12_checking', values)
         values.update({'mesline_name': mesline.name, 'workstation_name': workstation.name})
         employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-        employeelist = request.env['aas.mes.workstation.employee'].search(employeedomain)
-        if employeelist and len(employeelist) > 0:
-            values['employeelist'] = [{
-                'employee_id': temployee.employee_id.id,
-                'employee_name': temployee.employee_id.name, 'employee_code': temployee.employee_id.code
-            } for temployee in employeelist]
+        scannerdomain = employeedomain + [('action_type', '=', 'scan')]
+        scanner = request.env['aas.mes.workstation.employee'].search(scannerdomain, limit=1)
+        if scanner:
+            values.update({'scanner_id': scanner.employee_id.id, 'scanner_name': scanner.employee_id.name})
+        checkerdomain = employeedomain + [('action_type', '=', 'check')]
+        checkerlist = request.env['aas.mes.workstation.employee'].search(checkerdomain)
+        if checkerlist and len(checkerlist) > 0:
+            values['checkerlist'] = [{
+                'employee_id': tchecker.employee_id.id,
+                'employee_name': tchecker.employee_id.name, 'employee_code': tchecker.employee_id.code
+            } for tchecker in checkerlist]
         return request.render('aas_mes.aas_gp12_checking', values)
 
 
@@ -56,7 +64,10 @@ class AASMESGP12CheckingController(http.Controller):
 
     @http.route('/aasmes/gp12/scanemployee', type='json', auth="user")
     def aasmes_gp12_scanemployee(self, barcode):
-        values = {'success': True, 'message': '', 'employee_id': '0', 'employee_name': '', 'action': 'working'}
+        values = {
+            'success': True, 'message': '', 'action': 'working',
+            'employee_id': '0', 'employee_name': '', 'employee_code': '', 'needrole': False
+        }
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
         if not lineuser:
             values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
@@ -72,24 +83,58 @@ class AASMESGP12CheckingController(http.Controller):
         if not employee:
             values.update({'success': False, 'message': u'员工卡扫描异常，请检查系统中是否存在该员工！'})
             return values
-        values.update({'employee_id': employee.id, 'employee_name': employee.name})
-        avalues = request.env['aas.mes.work.attendance'].action_scanning(employee, mesline, workstation)
-        values.update(avalues)
+        values.update({
+            'employee_id': employee.id, 'employee_name': employee.name, 'employee_code': employee.code
+        })
+        values.update(request.env['aas.mes.work.attendance'].action_scanning(employee, mesline, workstation))
+        tdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id), ('action_type', '=', 'scan')]
+        if request.env['aas.mes.workstation.employee'].search_count(tdomain) <= 0:
+            values['needrole'] = True
+        return values
+
+    @http.route('/aasmes/gp12/changemployeerole', type='json', auth="user")
+    def aasmes_gp12_changemployeerole(self, employeeid, action_type='check'):
+        values = {'success': True, 'message': ''}
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        if lineuser.mesrole != 'gp12checker':
+            values.update({'success': False, 'message': u'当前登录账号还未授权GP12检测！'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位'})
+            return values
+        tdomain = [('employee_id', '=', employeeid)]
+        tdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        wemployee = request.env['aas.mes.workstation.employee'].search(tdomain, limit=1)
+        if wemployee:
+            wemployee.write({'action_type': action_type})
         return values
 
 
     @http.route('/aasmes/gp12/scanserialnumber', type='json', auth="user")
-    def aasmes_gp12_scan_serialnumber(self, barcode, employeeid, productcode=None):
+    def aasmes_gp12_scan_serialnumber(self, barcode, productcode=None):
         values = {
-            'success': True, 'message': '', 'result': 'OK', 'functiontestlist': [], 'reworklist': [], 'done': False
+            'success': True, 'message': '', 'result': 'OK',  'functiontestlist': [], 'reworklist': [], 'done': False
         }
+        userdomain = [('lineuser_id', '=', request.env.user.id), ('mesrole', '=', 'gp12checker')]
+        lineuser = request.env['aas.mes.lineusers'].search(userdomain, limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
+            return values
         tempoperation = request.env['aas.mes.operation'].search([('serialnumber_name', '=', barcode)], limit=1)
         if not tempoperation:
             values.update({'result': 'NG', 'success': False, 'message': u'请检查您扫描的是否是一个有效的序列号'})
             return values
         serialnumber = tempoperation.serialnumber_id
         if tempoperation.gp12_check:
-            values.update({'message': u'已扫描，请不要重复操作', 'done': True})
+            values.update({'message': u'已扫描 请不要重复操作', 'done': True})
         values['serialnumber_id'] = serialnumber.id
         values['productcode'] = serialnumber.customer_product_code.replace('-', '')
         if productcode and productcode != values['productcode']:
@@ -139,7 +184,7 @@ class AASMESGP12CheckingController(http.Controller):
             values.update({'message': u'序列号异常，最终检查还没有操作！！', 'result': 'NG'})
             return values
         if not tempoperation.gp12_check:
-            tempoperation.action_gp12check(employeeid)
+            tempoperation.action_gp12check(mesline, workstation)
         values['operate_result'] = ','.join([serialnumber_name, 'OK', operation_time])
         return values
 
