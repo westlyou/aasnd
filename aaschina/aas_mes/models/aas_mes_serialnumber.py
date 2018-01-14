@@ -87,7 +87,7 @@ class AASMESSerialnumber(models.Model):
 
     @api.model
     def create(self, vals):
-        vals['operation_date'] = fields.Datetime.to_china_string(fields.Datetime.now())[0:10]
+        vals['operation_date'] = fields.Datetime.to_china_today()
         record = super(AASMESSerialnumber, self).create(vals)
         record.action_after_create()
         return record
