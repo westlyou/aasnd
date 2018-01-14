@@ -24,6 +24,14 @@
                     <div id="linefeeding_pullrefresh" class="mui-content mui-scroll-wrapper" t-att-meslineid="meslineid">
                         <div class="mui-scroll">
                             <ul class="mui-table-view">
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">当前产线</span>
+                                    <span class="mui-pull-right"><t t-esc="mesline_name"/></span>
+                                </li>
+                            </ul>
+
+                            <div class="aas-mui-table-view-title"> 工位明细 </div>
+                            <ul class="mui-table-view">
                                 <t t-foreach="workstationlist" t-as="wkstation">
                                     <li class="mui-table-view-cell mui-collapse">
                                         <a class="mui-navigate-right" href="#">
@@ -31,7 +39,7 @@
                                         </a>
                                         <div class="mui-collapse-content">
                                             <ul class="mui-table-view" t-attf-id="workstation_{{wkstation['workstation_id']}}">
-                                                <li class="mui-table-view-cell">
+                                                <li class="mui-table-view-cell" t-attf-id="workstation_{{wkstation['workstation_id']}}_scanbtn">
                                                     <div class='mui-table'>
                                                         <div class='mui-table-cell mui-col-xs-12 mui-text-center'>
                                                             <button type="button" class="mui-btn mui-btn-primary mui-btn-block aas-feeding"
@@ -40,21 +48,18 @@
                                                     </div>
                                                 </li>
                                                 <t t-foreach="wkstation['materiallist']" t-as="material">
-                                                    <li t-attf-id="feeding_{{material['feeding_id']}}" t-att-feedingid="material['feeding_id']" class="mui-table-view-cell">
-                                                        <div class='mui-slider-right mui-disabled'> <a class='mui-btn mui-btn-red aas-feeding-del'>删除</a> </div>
-                                                        <div class="mui-slider-handle">
+                                                    <li class="aas-material mui-table-view-cell"
+                                                        t-att-id="material['mwmaterialid']" t-att-mwmaterialid="material['mwmaterialid']">
+                                                        <a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>
                                                             <div class='mui-table'>
-                                                                <div class='mui-table-cell mui-col-xs-4 mui-text-left'>
-                                                                    <t t-esc="material['material_code']"/>
+                                                                <div class="mui-table-cell mui-col-xs-6 mui-text-left">
+                                                                    <div> <t t-esc="material['material_code']"/> </div>
                                                                 </div>
-                                                                <div class='mui-table-cell mui-col-xs-4 mui-text-center'>
-                                                                    <t t-esc="material['material_lot']"/>
-                                                                </div>
-                                                                <div class='mui-table-cell mui-col-xs-4 mui-text-right'>
-                                                                    <t t-esc="material['material_qty']"/>
+                                                                <div class="mui-table-cell mui-col-xs-6 mui-text-right">
+                                                                    <div> <t t-esc="material['material_qty']"/>  </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
+                                                        </a>
                                                     </li>
                                                 </t>
                                             </ul>
@@ -76,6 +81,74 @@
                 <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
                 <script src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
                 <script src="/aas_mes/static/wechat/wechat_mes_linefeeding.js"></script>
+            </html>
+        </template>
+
+
+        <template id="wechat_mes_linefeeding_materialdetail" name="Wechat MES Line Feeding Material Detail">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/iconfont/iconfont.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+                        <h1 class="mui-title"> 上料详情 </h1>
+                    </header>
+                    <div id="linefeeding_materialdetail_pullrefresh" class="mui-content mui-scroll-wrapper">
+                        <div class="mui-scroll">
+                            <ul class="mui-table-view">
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">产线名称</span>
+                                    <span class="mui-pull-right"><t t-esc="mesline_name"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">库位名称</span>
+                                    <span class="mui-pull-right"><t t-esc="workstation_name"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">物料编码</span>
+                                    <span class="mui-pull-right"><t t-esc="product_code"/></span>
+                                </li>
+                            </ul>
+
+                            <div class="aas-mui-table-view-title"> 批次明细 </div>
+                            <ul class="mui-table-view">
+                                <li class="mui-table-view-cell" >
+                                    <div class="mui-table">
+                                        <div class="mui-table-cell mui-col-xs-6 mui-text-left"> 批次 </div>
+                                        <div class="mui-table-cell mui-col-xs-6 mui-text-right"> 数量 </div>
+                                    </div>
+                                </li>
+                                <t t-if="materialotlist">
+                                    <t t-foreach="materialotlist" t-as="mlot">
+                                        <li class="mui-table-view-cell" >
+                                            <div class="mui-table">
+                                                <div class="mui-table-cell mui-col-xs-6 mui-text-left">
+                                                    <t t-esc="mlot['lot_name']"/>
+                                                </div>
+                                                <div class="mui-table-cell mui-col-xs-6 mui-text-right">
+                                                    <t t-esc="mlot['lot_qty']"/>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </t>
+                                </t>
+                            </ul>
+
+                        </div>
+                    </div>
+                </body>
+                <script src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+                <script src="/aas_mes/static/wechat/wechat_mes_linefeeding_materialdetail.js"></script>
             </html>
         </template>
 
