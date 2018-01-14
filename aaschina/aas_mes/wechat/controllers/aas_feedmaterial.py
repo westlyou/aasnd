@@ -128,16 +128,16 @@ class AASFeedmaterialWechatController(http.Controller):
         if not workstation:
             values.update({'success': False, 'message': u'未搜索到相应工位，请仔细检查！'})
             return values
-        tvalues = request.env['aas.mes.feedmaterial'].action_feeding_withcontainer(mesline, workstation, barcode)
-        if not tvalues.get('success', False):
-            values.update({'success': False, 'message': tvalues.get('message', '')})
-            return values
         tempmaterial = materialcontainer.product_lines[0]
         product_id, product_code = tempmaterial.product_id.id, tempmaterial.product_id.default_code
         values.update({
             'material_code': product_code, 'workstation_id': workstation.id,
             'mwmterialid': str(mesline.id)+'-'+str(workstation.id)+'-'+str(product_id)
         })
+        tvalues = request.env['aas.mes.feedmaterial'].action_feeding_withcontainer(mesline, workstation, barcode)
+        if not tvalues.get('success', False):
+            values.update({'success': False, 'message': tvalues.get('message', '')})
+            return values
         feedomain = [('material_id', '=', product_id)]
         feedomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
         feedinglist = request.env['aas.mes.feedmaterial'].search(feedomain)
