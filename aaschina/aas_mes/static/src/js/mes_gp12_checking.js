@@ -388,16 +388,6 @@ $(function() {
     $('#action_badmode').click(function(){
         layer.confirm('您确认上报不良？', {'btn': ['确定', '取消']}, function(index){
             layer.close(index);
-            var employeeid = parseInt($('#mes_operator').attr('employeeid'));
-            if(employeeid==0){
-                layer.msg('请在左侧员工列表中选择一个当前操作员工', {icon: 5});
-                return ;
-            }
-            localStorage.setItem('employeeid', employeeid);
-            var employeename = $('#employee_'+employeeid).attr('employeename');
-            if(employeename!=undefined&&employeename!=null&&employeename!=''){
-                localStorage.setItem('employeename', employeename);
-            }
             window.open('/aasmes/gp12/rework');
         }, function(){});
     });
