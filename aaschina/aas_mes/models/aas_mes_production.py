@@ -255,25 +255,28 @@ class AASMESProductionOutputQueryWizard(models.TransientModel):
         for toutput in outputlist:
             tkey = 'P+'+str(toutput.product_id.id)+'+'+toutput.output_date+'+'+str(toutput.mesline_id.id)+'+'+str(toutput.workstation_id.id)
             if tkey in productquerydict:
-                productquerydict[tkey]['product_qty'] += toutput.product_qty
+                productquerydict[tkey]['product_qty'] += toutput.output_qty
             else:
                 productquerydict[tkey] = {
-                    'product_id': toutput.product_id.id, 'product_qty': toutput.product_qty,
+                    'product_id': toutput.product_id.id, 'product_qty': toutput.output_qty,
                     'mesline_id': toutput.mesline_id.id, 'workstation_id': toutput.workstation_id.id,
                     'output_date': toutput.output_date, 'once_rate': 0.0, 'twice_rate': 0.0,
                     'once_qty': 0.0, 'twice_total_qty': 0.0, 'twice_qualified_qty': 0.0
                 }
             if toutput.pass_onetime:
-                productquerydict[tkey]['once_qty'] += toutput.product_qty
+                productquerydict[tkey]['once_qty'] += toutput.output_qty
             else:
-                productquerydict[tkey]['twice_total_qty'] += toutput.product_qty
+                productquerydict[tkey]['twice_total_qty'] += toutput.output_qty
                 if toutput.qualified:
-                    productquerydict[tkey]['twice_qualified_qty'] += toutput.product_qty
+                    productquerydict[tkey]['twice_qualified_qty'] += toutput.output_qty
         for pkey, pval in productquerydict.items():
             total_qty, once_qty = pval['product_qty'], pval['once_qty']
             twice_total_qty, twice_qualified_qty = pval['twice_qualified_qty'], pval['twice_qualified_qty']
+            if float_is_zero(twice_total_qty, precision_rounding=0.000001):
+                pval['twice_rate'] = 100
+            else:
+                pval['twice_rate'] = float_round(twice_qualified_qty / twice_total_qty * 100, precision_rounding=0.001)
             pval['once_rate'] = float_round(once_qty / total_qty * 100, precision_rounding=0.001)
-            pval['twice_rate'] = float_round(twice_qualified_qty / twice_total_qty * 100, precision_rounding=0.001)
             querylines.append((0, 0, pval))
         self.write({'query_lines': querylines})
         view_form = self.env.ref('aas_mes.view_form_aas_mes_production_output_query_result')
