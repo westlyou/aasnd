@@ -140,29 +140,6 @@ class AASMESGP12CheckingController(http.Controller):
         if productcode and productcode != values['productcode']:
             values.update({'success': False, 'message': u'序列号异常，请确认可能混入其他型号'})
             return values
-        # 功能测试记录
-        operatedomain = [('operation_id', '=', tempoperation.id), ('operate_type', '=', 'functiontest')]
-        functiontestlist = request.env['aas.mes.operation.record'].search(operatedomain)
-        if functiontestlist and len(functiontestlist) > 0:
-            values['functiontestlist'] = [{
-                'operate_result': record.operate_result,
-                'operator_name': '' if not record.employee_id else record.employee_id.name,
-                'operate_equipment': '' if not record.equipment_id else record.equipment_id.code,
-                'operate_time': fields.Datetime.to_timezone_string(record.operate_time, 'Asia/Shanghai')
-            } for record in functiontestlist]
-        # 返工记录
-        reworklist = request.env['aas.mes.rework'].search([('serialnumber_id', '=', serialnumber.id)])
-        if reworklist and len(reworklist) > 0:
-            values['reworklist'] = [{
-                'serialnumber': serialnumber.name, 'badmode_date': rework.badmode_date,
-                'product_code': rework.customerpn, 'workcenter_name': rework.workstation_id.name,
-                'badmode_name': rework.badmode_id.name, 'commiter_name': rework.commiter_id.name,
-                'state_name': REWORKSTATEDICT[rework.state],
-                'repair_result': '' if not rework.repair_note else rework.repair_note,
-                'repairer_name': '' if not rework.repairer_id else rework.repairer_id.name,
-                'ipqc_name': '' if not rework.ipqcchecker_id else rework.ipqcchecker_id.name,
-                'repair_time': '' if not rework.repair_time else fields.Datetime.to_timezone_string(rework.repair_time, 'Asia/Shanghai')
-            } for rework in reworklist]
         serialnumber_name = serialnumber.name
         operation_time = fields.Datetime.to_china_string(fields.Datetime.now())
         # 返工件
@@ -284,7 +261,7 @@ class AASMESGP12CheckingController(http.Controller):
         product_id, product_qty = tserialnumber.product_id.id, len(serialnumberlist)
         location_id, customer_code = mesline.location_production_id.id, tserialnumber.customer_product_code
         tlabel = request.env['aas.mes.production.label'].action_gp12_dolabel(product_id, product_lot.id,
-                                                                      product_qty, location_id, customer_code)
+                                                                      product_qty, location_id, customer_code=customer_code)
         serialnumberlist.action_label(tlabel.id)
         srclocation = request.env.ref('stock.location_production')
         tlabel.action_stock(srclocation.id)
@@ -399,22 +376,24 @@ class AASMESGP12CheckingController(http.Controller):
 
     @http.route('/aasmes/gp12/loadreworksandrecords', type='json', auth="user")
     def aasmes_gp12_loadreworksandrecords(self, serialnumberid):
-        values = {'success': True, 'message': '', 'functiontestlist': [], 'reworklist': []}
+        values = {'success': True, 'message': '', 'operationlist': [], 'reworklist': []}
         serialnumber = request.env['aas.mes.serialnumber'].browse(serialnumberid)
         tempoperation = serialnumber.operation_id
         if not tempoperation:
             tempoperation = request.env['aas.mes.operation'].search([('serialnumber_id', '=', serialnumber.id)], limit=1)
         values['serialnumber'] = serialnumber.name
-        # 功能测试记录
-        operatedomain = [('operation_id', '=', tempoperation.id), ('operate_type', '=', 'functiontest')]
-        functiontestlist = request.env['aas.mes.operation.record'].search(operatedomain)
-        if functiontestlist and len(functiontestlist) > 0:
-            values['functiontestlist'] = [{
+        # 操作记录
+        operationlist = request.env['aas.mes.operation.record'].search([('operation_id', '=', tempoperation.id)])
+        if operationlist and len(operationlist) > 0:
+            values['operationlist'] = [{
                 'operate_result': record.operate_result,
+                'operation_name': '' if not record.operate_name else record.operate_name,
                 'operator_name': '' if not record.employee_id else record.employee_id.name,
+                'scanner_name': '' if not record.scanning_employee else record.scanning_employee,
+                'checker_name': '' if not record.checking_employee else record.checking_employee,
                 'operate_equipment': '' if not record.equipment_id else record.equipment_id.code,
-                'operate_time': fields.Datetime.to_timezone_string(record.operate_time, 'Asia/Shanghai')
-            } for record in functiontestlist]
+                'operate_time': fields.Datetime.to_china_string(record.operate_time)
+            } for record in operationlist]
         # 返工记录
         reworklist = request.env['aas.mes.rework'].search([('serialnumber_id', '=', serialnumber.id)])
         if reworklist and len(reworklist) > 0:

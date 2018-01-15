@@ -179,7 +179,7 @@
                                                     <div class="box box-primary">
                                                         <div class="box-header">
                                                             <i class="fa fa-list"></i>
-                                                            <h3 class="box-title">Test记录</h3>
+                                                            <h3 class="box-title">操作记录</h3>
                                                         </div>
                                                         <div class="box-body">
                                                             <div class="table-responsive">
@@ -187,13 +187,16 @@
                                                                     <thead>
                                                                         <tr>
                                                                             <th>No</th>
-                                                                            <th>测试时间</th>
-                                                                            <th>测试结果</th>
-                                                                            <th>测试人员</th>
-                                                                            <th>测试设备</th>
+                                                                            <th>操作类型</th>
+                                                                            <th>操作时间</th>
+                                                                            <th>操作结果</th>
+                                                                            <th>扫描人员</th>
+                                                                            <th>检测人员</th>
+                                                                            <th>操作人员</th>
+                                                                            <th>操作设备</th>
                                                                         </tr>
                                                                     </thead>
-                                                                    <tbody id="functiontest_list"></tbody>
+                                                                    <tbody id="operation_list"></tbody>
                                                                 </table>
                                                             </div>
                                                         </div>

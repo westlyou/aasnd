@@ -208,42 +208,13 @@ $(function() {
                 if(customercode==null || customercode==''){
                     custmoercodespan.attr('customercode', dresult.productcode).html(dresult.productcode);
                 }
-                $('#functiontest_list').html('');
-                if(dresult.functiontestlist.length > 0){
-                    $.each(dresult.functiontestlist, function(index, record){
-                        var lineno = index+1;
-                        var functiontesttr = $('<tr></tr>').appendTo($('#functiontest_list'));
-                        $('<td></td>').html(lineno).appendTo(functiontesttr);
-                        $('<td></td>').html(record.operate_time).appendTo(functiontesttr);
-                        $('<td></td>').html(record.operate_result).appendTo(functiontesttr);
-                        $('<td></td>').html(record.operator_name).appendTo(functiontesttr);
-                        $('<td></td>').html(record.operate_equipment).appendTo(functiontesttr);
-                    });
-                }
-                $('#rework_list').html('');
-                if(dresult.reworklist.length > 0){
-                    $.each(dresult.reworklist, function(index, record){
-                        var lineno = index + 1;
-                        var reworktr = $('<tr></tr>').appendTo($('#rework_list'));
-                        $('<td></td>').html(lineno).appendTo(reworktr);
-                        $('<td></td>').html(record.serialnumber).appendTo(reworktr);
-                        $('<td></td>').html(record.badmode_date).appendTo(reworktr);
-                        $('<td></td>').html(record.product_code).appendTo(reworktr);
-                        $('<td></td>').html(record.workcenter_name).appendTo(reworktr);
-                        $('<td></td>').html(record.badmode_name).appendTo(reworktr);
-                        $('<td></td>').html(record.commiter_name).appendTo(reworktr);
-                        $('<td></td>').html(record.state_name).appendTo(reworktr);
-                        $('<td></td>').html(record.repair_result).appendTo(reworktr);
-                        $('<td></td>').html(record.repair_time).appendTo(reworktr);
-                        $('<td></td>').html(record.repairer_name).appendTo(reworktr);
-                        $('<td></td>').html(record.ipqc_name).appendTo(reworktr);
-                    });
-                }
                 $('#mes_serialnumber').html(barcode);
                 var waitcount = parseInt($('#mes_printbtn').attr('waitcount'));
                 var labelqty = parseInt($('#mes_labelqty').attr('qty'));
                 if(waitcount >= labelqty){
                     action_print_label(labelqty);
+                }else{
+                    action_show_operationandreworklist(dresult.serialnumber_id);
                 }
             },
             error:function(xhr,type,errorThrown){
@@ -256,6 +227,10 @@ $(function() {
     //单击序列号
     $('#pass_list').on('click', 'tr.aas-unpack', function(){
         var serialnumberid = parseInt($(this).attr('serialnumberid'));
+        action_show_operationandreworklist(serialnumberid);
+    });
+
+    function action_show_operationandreworklist(serialnumberid){
         var tparams = {'serialnumberid': serialnumberid};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
@@ -270,16 +245,19 @@ $(function() {
                     return ;
                 }
                 $('#mes_serialnumber').html(dresult.serialnumber);
-                $('#functiontest_list').html('');
-                if(dresult.functiontestlist.length > 0){
-                    $.each(dresult.functiontestlist, function(index, record){
+                $('#operation_list').html('');
+                if(dresult.operationlist.length > 0){
+                    $.each(dresult.operationlist, function(index, record){
                         var lineno = index+1;
-                        var functiontesttr = $('<tr></tr>').appendTo($('#functiontest_list'));
-                        $('<td></td>').html(lineno).appendTo(functiontesttr);
-                        $('<td></td>').html(record.operate_time).appendTo(functiontesttr);
-                        $('<td></td>').html(record.operate_result).appendTo(functiontesttr);
-                        $('<td></td>').html(record.operator_name).appendTo(functiontesttr);
-                        $('<td></td>').html(record.operate_equipment).appendTo(functiontesttr);
+                        var operationtr = $('<tr></tr>').appendTo($('#operation_list'));
+                        $('<td></td>').html(lineno).appendTo(operationtr);
+                        $('<td></td>').html(record.operation_name).appendTo(operationtr);
+                        $('<td></td>').html(record.operate_time).appendTo(operationtr);
+                        $('<td></td>').html(record.operate_result).appendTo(operationtr);
+                        $('<td></td>').html(record.scanner_name).appendTo(operationtr);
+                        $('<td></td>').html(record.checker_name).appendTo(operationtr);
+                        $('<td></td>').html(record.operator_name).appendTo(operationtr);
+                        $('<td></td>').html(record.operate_equipment).appendTo(operationtr);
                     });
                 }
                 $('#rework_list').html('');
@@ -304,8 +282,7 @@ $(function() {
             },
             error:function(xhr,type,errorThrown){ console.log(type); }
         });
-
-    });
+    }
 
     //自动生成标签并打印
     function action_print_label(serialcount){
@@ -409,23 +386,56 @@ $(function() {
             url: '/aasmes/printerlist',
             headers:{'Content-Type':'application/json'},
             data: function(params){
-                var sparams =  {
-                    'q': params.term || '', 'page': params.page || 1
-                };
-                return JSON.stringify({ jsonrpc: "2.0", method: 'call', params: sparams, id: Math.floor(Math.random() * 1000 * 1000 * 1000) })
+                var sparams =  {'q': params.term || '', 'page': params.page || 1};
+                return JSON.stringify({
+                    jsonrpc: "2.0", method: 'call', params: sparams, id: Math.floor(Math.random() * 1000 * 1000 * 1000)
+                });
             },
             processResults: function (data, params) {
                 params.page = params.page || 1;
                 var dresult = data.result;
                 return {
                     results: dresult.items,
-                    pagination: {
-                        more: (params.page * 30) < dresult.total_count
-                    }
+                    pagination: {more: (params.page * 30) < dresult.total_count}
                 };
             }
         }
     });
+
+    $('#mes_printer').on('select2:select', function(event){
+        var selectedatas = $('#mes_printer').select2('data');
+        var printerobj = selectedatas[0];
+        var cdate = new Date();
+        var cyear = cdate.getFullYear();
+        var cmonth = cdate.getMonth()+1;
+        var cday = cdate.getDate();
+        var currentdate = cyear+'-'+cmonth+'-'+cday;
+        localStorage.setItem('printer_date', currentdate);
+        localStorage.setItem('printer_id', printerobj.id);
+        localStorage.setItem('printer_name', printerobj.text);
+    });
+
+    function setdefault_printer(){
+        var printer_id = localStorage.getItem('printer_id');
+        var printer_name = localStorage.getItem('printer_name');
+        var printer_date = localStorage.getItem('printer_date');
+        if(printer_id==null || printer_name==null || printer_date==null){
+            return ;
+        }
+        var cdate = new Date();
+        var cyear = cdate.getFullYear();
+        var cmonth = cdate.getMonth()+1;
+        var cday = cdate.getDate();
+        var currentdate = cyear+'-'+cmonth+'-'+cday;
+        if(printer_date!=currentdate){
+            return ;
+        }
+        $('#mes_printer').val(printer_id);
+        $('#mes_printer').html("<option value="+printer_id+">"+printer_name+"</option>");
+    }
+    //设置默认打印机
+    setdefault_printer();
+
 
     function action_leave(attendanceid){
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
