@@ -53,3 +53,16 @@ class AASMESController(http.Controller):
             values['items'] = [{'id': workstation.id, 'text': workstation.name} for workstation in workstationlist]
         values['total_count'] = request.env['aas.mes.workstation'].search_count(search_domain)
         return values
+
+
+    @http.route('/aasmes/loadproductlist', type='json', auth="user")
+    def aasmes_loadproductlist(self, q=None, page=1, limit=20):
+        values = {'items': [], 'total_count': 0}
+        search_domain = []
+        if q:
+            search_domain.append(('default_code', 'ilike', '%'+q+'%'))
+        productlist = request.env['product.product'].search(search_domain, offset=(page-1)*limit)
+        if productlist and len(productlist) > 0:
+            values['items'] = [{'id': tproduct.id, 'text': tproduct.default_code} for tproduct in productlist]
+        values['total_count'] = request.env['product.product'].search_count(search_domain)
+        return values

@@ -201,6 +201,63 @@ class AASMESProductionOutput(models.Model):
 
 
 
+    @api.model
+    def action_building_outputrecords(self, meslineid, starttime, finishtime, workstationid=None,
+                                      productid=None, equipmentid=None):
+        values = {'success': True, 'message': '', 'records': []}
+        if finishtime <= starttime:
+            values.update({'success': False, 'message': u'请设置有效的开始和结束时间，结束时间必须要大于开始时间！'})
+            return values
+        tempdomain = [('mesline_id', '=', meslineid)]
+        tempdomain += [('output_time', '>=', starttime), ('output_time', '<=', finishtime)]
+        if workstationid:
+            tempdomain.append(('workstation_id', '=', workstationid))
+        if productid:
+            tempdomain.append(('product_id', '=', productid))
+        if equipmentid:
+            tempdomain.append(('equipment_id', '=', equipmentid))
+        outputlist = self.env['aas.mes.production.output'].search(tempdomain)
+        if not outputlist or len(outputlist) <= 0:
+            values.update({'success': False, 'message': u'请确认查询条件，当前可能还没有可以查询的数据'})
+            return values
+        productquerydict, records = {}, []
+        for toutput in outputlist:
+            tkey = 'P+'+str(toutput.product_id.id)+'+'+toutput.output_date+'+'+str(toutput.mesline_id.id)+'+'+str(toutput.workstation_id.id)
+            if tkey in productquerydict:
+                productquerydict[tkey]['product_qty'] += toutput.output_qty
+            else:
+                product, mesline, workstation = toutput.product_id, toutput.mesline_id, toutput.workstation_id
+                productquerydict[tkey] = {
+                    'product_id': product.id, 'product_qty': toutput.output_qty,
+                    'mesline_id': mesline.id, 'workstation_id': workstation.id,
+                    'output_date': toutput.output_date, 'once_rate': 0.0, 'twice_rate': 0.0,
+                    'once_qty': 0.0, 'twice_total_qty': 0.0, 'twice_qualified_qty': 0.0,
+                    'product_code': '' if not product else product.default_code,
+                    'mesline_name': '' if not mesline else mesline.name,
+                    'workstation_name': '' if not workstation else workstation.name
+                }
+            if toutput.pass_onetime:
+                productquerydict[tkey]['once_qty'] += toutput.output_qty
+            else:
+                productquerydict[tkey]['twice_total_qty'] += toutput.output_qty
+                if toutput.qualified:
+                    productquerydict[tkey]['twice_qualified_qty'] += toutput.output_qty
+        for pkey, pval in productquerydict.items():
+            total_qty, once_qty = pval['product_qty'], pval['once_qty']
+            twice_total_qty, twice_qualified_qty = pval['twice_qualified_qty'], pval['twice_qualified_qty']
+            if float_is_zero(twice_total_qty, precision_rounding=0.000001):
+                pval['twice_rate'] = 100
+            else:
+                pval['twice_rate'] = float_round(twice_qualified_qty / twice_total_qty * 100, precision_rounding=0.001)
+            pval['once_rate'] = float_round(once_qty / total_qty * 100, precision_rounding=0.001)
+            records.append(pval)
+        values['records'] = records
+        return values
+
+
+
+
+
 
 
 
@@ -217,6 +274,7 @@ class AASMESProductionOutputQueryWizard(models.TransientModel):
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='cascade')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='cascade')
+    equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', ondelete='cascade')
     time_start = fields.Datetime(string=u'开始时间', copy=False)
     time_finish = fields.Datetime(string=u'结束时间', copy=False)
     query_lines = fields.One2many(comodel_name='aas.mes.production.output.query.line.wizard', inverse_name='wizard_id', string=u'查询明细')
@@ -240,44 +298,27 @@ class AASMESProductionOutputQueryWizard(models.TransientModel):
         :return:
         """
         self.ensure_one()
-        if self.time_finish <= self.time_start:
-            raise UserError(u'请设置有效的开始和结束时间，结束时间必须要大于开始时间！')
-        tempdomain = [('output_time', '>=', self.time_start), ('output_time', '<=', self.time_finish)]
-        tempdomain.append(('mesline_id', '=', self.mesline_id.id))
-        if self.product_id:
-            tempdomain.append(('product_id', '=', self.product_id.id))
-        if self.workstation_id:
-            tempdomain.append(('workstation_id', '=', self.workstation_id.id))
-        outputlist = self.env['aas.mes.production.output'].search(tempdomain)
-        if not outputlist or len(outputlist) <= 0:
-            raise UserError(u'请确认查询条件，当前可能还没有可以查询的数据！')
-        productquerydict, querylines = {}, []
-        for toutput in outputlist:
-            tkey = 'P+'+str(toutput.product_id.id)+'+'+toutput.output_date+'+'+str(toutput.mesline_id.id)+'+'+str(toutput.workstation_id.id)
-            if tkey in productquerydict:
-                productquerydict[tkey]['product_qty'] += toutput.output_qty
-            else:
-                productquerydict[tkey] = {
-                    'product_id': toutput.product_id.id, 'product_qty': toutput.output_qty,
-                    'mesline_id': toutput.mesline_id.id, 'workstation_id': toutput.workstation_id.id,
-                    'output_date': toutput.output_date, 'once_rate': 0.0, 'twice_rate': 0.0,
-                    'once_qty': 0.0, 'twice_total_qty': 0.0, 'twice_qualified_qty': 0.0
-                }
-            if toutput.pass_onetime:
-                productquerydict[tkey]['once_qty'] += toutput.output_qty
-            else:
-                productquerydict[tkey]['twice_total_qty'] += toutput.output_qty
-                if toutput.qualified:
-                    productquerydict[tkey]['twice_qualified_qty'] += toutput.output_qty
-        for pkey, pval in productquerydict.items():
-            total_qty, once_qty = pval['product_qty'], pval['once_qty']
-            twice_total_qty, twice_qualified_qty = pval['twice_qualified_qty'], pval['twice_qualified_qty']
-            if float_is_zero(twice_total_qty, precision_rounding=0.000001):
-                pval['twice_rate'] = 100
-            else:
-                pval['twice_rate'] = float_round(twice_qualified_qty / twice_total_qty * 100, precision_rounding=0.001)
-            pval['once_rate'] = float_round(once_qty / total_qty * 100, precision_rounding=0.001)
-            querylines.append((0, 0, pval))
+        meslineid, starttime, finishtime = self.mesline_id.id, self.time_start, self.time_finish
+        workstationid = False if not self.workstation_id else self.workstation_id.id
+        productid = False if not self.product_id else self.product_id.id
+        equipmentid = False if not self.equipment_id else self.equipment_id.id
+        tvalues = self.env['aas.mes.production.output'].action_building_outputrecords(meslineid,
+                                                                                      starttime,
+                                                                                      finishtime,
+                                                                                      workstationid=workstationid,
+                                                                                      productid=productid,
+                                                                                      equipmentid=equipmentid)
+        if not tvalues.get('success', False):
+            raise UserError(tvalues.get('message', u'异常错误！'))
+        querylines = []
+        for record in tvalues.get('records', []):
+            querylines.append((0, 0, {
+                'product_id': record['product_id'], 'product_qty': record['product_qty'],
+                'mesline_id': record['mesline_id'], 'workstation_id': record['workstation_id'],
+                'output_date': record['output_date'], 'once_rate': record['once_rate'],
+                'twice_rate': record['twice_rate'], 'once_qty': record['once_qty'],
+                'twice_total_qty': record['twice_total_qty'], 'twice_qualified_qty': record['twice_qualified_qty']
+            }))
         self.write({'query_lines': querylines})
         view_form = self.env.ref('aas_mes.view_form_aas_mes_production_output_query_result')
         return {
