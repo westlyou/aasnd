@@ -163,7 +163,8 @@ class AASContainer(models.Model):
             values.update({'success': False, 'message': u'未搜索到容器，请仔细检查条码是否正确！'})
             return values
         values.update({
-            'container_id': container.id, 'container_name': container.name, 'container_alias': container.alias
+            'container_id': container.id, 'container_name': container.name,
+            'container_alias': container.alias, 'isempty': container.isempty
         })
         return values
 

@@ -258,13 +258,14 @@ class AASMESFinalCheckingController(http.Controller):
     def aasmes_finalchecking_query(self):
         values = {'success': True, 'message': '', 'mesline_id': '0', 'workstation_id': '0'}
         loginuser = request.env.user
+        values['checker'] = loginuser.name
         finaldomain = [('lineuser_id', '=', loginuser.id), ('mesrole', '=', 'fqcchecker')]
         lineuser = request.env['aas.mes.lineusers'].search(finaldomain, limit=1)
         if not lineuser:
             values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
             return request.render('aas_mes.aas_finalchecking_query', values)
         mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
-        values.update({'checker': loginuser.name, 'mesline_name': mesline.name, 'mesline_id': mesline.id})
+        values.update({'mesline_name': mesline.name, 'mesline_id': mesline.id})
         if not workstation:
             values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位！'})
             return request.render('aas_mes.aas_finalchecking_query', values)

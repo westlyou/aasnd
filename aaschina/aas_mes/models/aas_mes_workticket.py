@@ -480,7 +480,8 @@ class AASMESWorkticket(models.Model):
             'schedule_name': '' if not workticket.schedule_id else workticket.schedule_id.name,
             'product_code': workticket.product_id.default_code, 'mesline_name': workticket.mesline_name,
             'time_start': fields.Datetime.to_china_string(workticket.time_start),
-            'time_finish': fields.Datetime.to_china_string(workticket.time_finish)
+            'time_finish': fields.Datetime.to_china_string(workticket.time_finish),
+            'output_manner': workorder.output_manner
         })
         return values
 
