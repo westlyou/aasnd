@@ -412,5 +412,24 @@ class AASMESGP12CheckingController(http.Controller):
 
 
 
+    @http.route('/aasmes/gp12/checking/query', type='http', auth="user")
+    def aasmes_gp12_checking_query(self):
+        values = {'success': True, 'message': '', 'labelist': []}
+        loginuser = request.env.user
+        values['checker'] = loginuser.name
+        gpdomain = [('lineuser_id', '=', loginuser.id), ('mesrole', '=', 'gp12checker')]
+        lineuser = request.env['aas.mes.lineusers'].search(gpdomain, limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return request.render('aas_mes.aas_gp12_checking_query', values)
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
+            return request.render('aas_mes.aas_gp12_checking_query', values)
+        return request.render('aas_mes.aas_gp12_checking_query', values)
+
+
+
+
 
 
