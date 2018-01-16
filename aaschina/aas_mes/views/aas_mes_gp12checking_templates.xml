@@ -36,7 +36,7 @@
 
                                 <div class="navbar-custom-menu">
                                     <ul class="nav navbar-nav">
-                                        <li id="action_delivery" class="notifications-menu">
+                                        <li class="notifications-menu">
                                             <a href="/aasmes/gp12/checking/query" target="_blank">
                                                 <i class="fa fa-search"></i> 产出查询
                                             </a>
