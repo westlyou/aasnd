@@ -23,7 +23,10 @@ class AASMESGP12CheckingController(http.Controller):
 
     @http.route('/aasmes/gp12/checking', type='http', auth="user")
     def aasmes_gp12_checking(self):
-        values = {'success': True, 'message': '', 'employeelist': [], 'serialnumberlist': []}
+        values = {
+            'success': True, 'message': '', 'serialnumberlist': [],
+            'checkerlist': [], 'scanner_id': '0', 'scanner_name': '', 'serialcount': '0'
+        }
         loginuser = request.env.user
         values['checker'] = loginuser.name
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
@@ -39,12 +42,17 @@ class AASMESGP12CheckingController(http.Controller):
             return request.render('aas_mes.aas_gp12_checking', values)
         values.update({'mesline_name': mesline.name, 'workstation_name': workstation.name})
         employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-        employeelist = request.env['aas.mes.workstation.employee'].search(employeedomain)
-        if employeelist and len(employeelist) > 0:
-            values['employeelist'] = [{
-                'employee_id': temployee.employee_id.id,
-                'employee_name': temployee.employee_id.name, 'employee_code': temployee.employee_id.code
-            } for temployee in employeelist]
+        scannerdomain = employeedomain + [('action_type', '=', 'scan')]
+        scanner = request.env['aas.mes.workstation.employee'].search(scannerdomain, limit=1)
+        if scanner:
+            values.update({'scanner_id': scanner.employee_id.id, 'scanner_name': scanner.employee_id.name})
+        checkerdomain = employeedomain + [('action_type', '=', 'check')]
+        checkerlist = request.env['aas.mes.workstation.employee'].search(checkerdomain)
+        if checkerlist and len(checkerlist) > 0:
+            values['checkerlist'] = [{
+                'employee_id': tchecker.employee_id.id,
+                'employee_name': tchecker.employee_id.name, 'employee_code': tchecker.employee_id.code
+            } for tchecker in checkerlist]
         return request.render('aas_mes.aas_gp12_checking', values)
 
 
@@ -56,7 +64,10 @@ class AASMESGP12CheckingController(http.Controller):
 
     @http.route('/aasmes/gp12/scanemployee', type='json', auth="user")
     def aasmes_gp12_scanemployee(self, barcode):
-        values = {'success': True, 'message': '', 'employee_id': '0', 'employee_name': '', 'action': 'working'}
+        values = {
+            'success': True, 'message': '', 'action': 'working',
+            'employee_id': '0', 'employee_name': '', 'employee_code': '', 'needrole': False
+        }
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
         if not lineuser:
             values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
@@ -72,52 +83,63 @@ class AASMESGP12CheckingController(http.Controller):
         if not employee:
             values.update({'success': False, 'message': u'员工卡扫描异常，请检查系统中是否存在该员工！'})
             return values
-        values.update({'employee_id': employee.id, 'employee_name': employee.name})
-        avalues = request.env['aas.mes.work.attendance'].action_scanning(employee, mesline, workstation)
-        values.update(avalues)
+        values.update({
+            'employee_id': employee.id, 'employee_name': employee.name, 'employee_code': employee.code
+        })
+        values.update(request.env['aas.mes.work.attendance'].action_scanning(employee, mesline, workstation))
+        tdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id), ('action_type', '=', 'scan')]
+        if request.env['aas.mes.workstation.employee'].search_count(tdomain) <= 0:
+            values['needrole'] = True
+        return values
+
+    @http.route('/aasmes/gp12/changemployeerole', type='json', auth="user")
+    def aasmes_gp12_changemployeerole(self, employeeid, action_type='check'):
+        values = {'success': True, 'message': ''}
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        if lineuser.mesrole != 'gp12checker':
+            values.update({'success': False, 'message': u'当前登录账号还未授权GP12检测！'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位'})
+            return values
+        tdomain = [('employee_id', '=', employeeid)]
+        tdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        wemployee = request.env['aas.mes.workstation.employee'].search(tdomain, limit=1)
+        if wemployee:
+            wemployee.write({'action_type': action_type})
         return values
 
 
     @http.route('/aasmes/gp12/scanserialnumber', type='json', auth="user")
-    def aasmes_gp12_scan_serialnumber(self, barcode, employeeid, productcode=None):
+    def aasmes_gp12_scan_serialnumber(self, barcode, productcode=None):
         values = {
-            'success': True, 'message': '', 'result': 'OK', 'functiontestlist': [], 'reworklist': [], 'done': False
+            'success': True, 'message': '', 'result': 'OK',  'functiontestlist': [], 'reworklist': [], 'done': False
         }
+        userdomain = [('lineuser_id', '=', request.env.user.id), ('mesrole', '=', 'gp12checker')]
+        lineuser = request.env['aas.mes.lineusers'].search(userdomain, limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
+            return values
         tempoperation = request.env['aas.mes.operation'].search([('serialnumber_name', '=', barcode)], limit=1)
         if not tempoperation:
             values.update({'result': 'NG', 'success': False, 'message': u'请检查您扫描的是否是一个有效的序列号'})
             return values
         serialnumber = tempoperation.serialnumber_id
         if tempoperation.gp12_check:
-            values.update({'message': u'已扫描，请不要重复操作', 'done': True})
+            values.update({'message': u'已扫描 请不要重复操作', 'done': True})
         values['serialnumber_id'] = serialnumber.id
         values['productcode'] = serialnumber.customer_product_code.replace('-', '')
         if productcode and productcode != values['productcode']:
             values.update({'success': False, 'message': u'序列号异常，请确认可能混入其他型号'})
             return values
-        # 功能测试记录
-        operatedomain = [('operation_id', '=', tempoperation.id), ('operate_type', '=', 'functiontest')]
-        functiontestlist = request.env['aas.mes.operation.record'].search(operatedomain)
-        if functiontestlist and len(functiontestlist) > 0:
-            values['functiontestlist'] = [{
-                'operate_result': record.operate_result,
-                'operator_name': '' if not record.employee_id else record.employee_id.name,
-                'operate_equipment': '' if not record.equipment_id else record.equipment_id.code,
-                'operate_time': fields.Datetime.to_timezone_string(record.operate_time, 'Asia/Shanghai')
-            } for record in functiontestlist]
-        # 返工记录
-        reworklist = request.env['aas.mes.rework'].search([('serialnumber_id', '=', serialnumber.id)])
-        if reworklist and len(reworklist) > 0:
-            values['reworklist'] = [{
-                'serialnumber': serialnumber.name, 'badmode_date': rework.badmode_date,
-                'product_code': rework.customerpn, 'workcenter_name': rework.workstation_id.name,
-                'badmode_name': rework.badmode_id.name, 'commiter_name': rework.commiter_id.name,
-                'state_name': REWORKSTATEDICT[rework.state],
-                'repair_result': '' if not rework.repair_note else rework.repair_note,
-                'repairer_name': '' if not rework.repairer_id else rework.repairer_id.name,
-                'ipqc_name': '' if not rework.ipqcchecker_id else rework.ipqcchecker_id.name,
-                'repair_time': '' if not rework.repair_time else fields.Datetime.to_timezone_string(rework.repair_time, 'Asia/Shanghai')
-            } for rework in reworklist]
         serialnumber_name = serialnumber.name
         operation_time = fields.Datetime.to_china_string(fields.Datetime.now())
         # 返工件
@@ -139,7 +161,7 @@ class AASMESGP12CheckingController(http.Controller):
             values.update({'message': u'序列号异常，最终检查还没有操作！！', 'result': 'NG'})
             return values
         if not tempoperation.gp12_check:
-            tempoperation.action_gp12check(employeeid)
+            tempoperation.action_gp12check(mesline, workstation)
         values['operate_result'] = ','.join([serialnumber_name, 'OK', operation_time])
         return values
 
@@ -239,7 +261,7 @@ class AASMESGP12CheckingController(http.Controller):
         product_id, product_qty = tserialnumber.product_id.id, len(serialnumberlist)
         location_id, customer_code = mesline.location_production_id.id, tserialnumber.customer_product_code
         tlabel = request.env['aas.mes.production.label'].action_gp12_dolabel(product_id, product_lot.id,
-                                                                      product_qty, location_id, customer_code)
+                                                                      product_qty, location_id, customer_code=customer_code)
         serialnumberlist.action_label(tlabel.id)
         srclocation = request.env.ref('stock.location_production')
         tlabel.action_stock(srclocation.id)
@@ -354,22 +376,24 @@ class AASMESGP12CheckingController(http.Controller):
 
     @http.route('/aasmes/gp12/loadreworksandrecords', type='json', auth="user")
     def aasmes_gp12_loadreworksandrecords(self, serialnumberid):
-        values = {'success': True, 'message': '', 'functiontestlist': [], 'reworklist': []}
+        values = {'success': True, 'message': '', 'operationlist': [], 'reworklist': []}
         serialnumber = request.env['aas.mes.serialnumber'].browse(serialnumberid)
         tempoperation = serialnumber.operation_id
         if not tempoperation:
             tempoperation = request.env['aas.mes.operation'].search([('serialnumber_id', '=', serialnumber.id)], limit=1)
         values['serialnumber'] = serialnumber.name
-        # 功能测试记录
-        operatedomain = [('operation_id', '=', tempoperation.id), ('operate_type', '=', 'functiontest')]
-        functiontestlist = request.env['aas.mes.operation.record'].search(operatedomain)
-        if functiontestlist and len(functiontestlist) > 0:
-            values['functiontestlist'] = [{
+        # 操作记录
+        operationlist = request.env['aas.mes.operation.record'].search([('operation_id', '=', tempoperation.id)])
+        if operationlist and len(operationlist) > 0:
+            values['operationlist'] = [{
                 'operate_result': record.operate_result,
+                'operation_name': '' if not record.operate_name else record.operate_name,
                 'operator_name': '' if not record.employee_id else record.employee_id.name,
+                'scanner_name': '' if not record.scanning_employee else record.scanning_employee,
+                'checker_name': '' if not record.checking_employee else record.checking_employee,
                 'operate_equipment': '' if not record.equipment_id else record.equipment_id.code,
-                'operate_time': fields.Datetime.to_timezone_string(record.operate_time, 'Asia/Shanghai')
-            } for record in functiontestlist]
+                'operate_time': fields.Datetime.to_china_string(record.operate_time)
+            } for record in operationlist]
         # 返工记录
         reworklist = request.env['aas.mes.rework'].search([('serialnumber_id', '=', serialnumber.id)])
         if reworklist and len(reworklist) > 0:

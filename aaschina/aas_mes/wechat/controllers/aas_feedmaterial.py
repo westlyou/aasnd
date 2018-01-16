@@ -21,7 +21,7 @@ class AASFeedmaterialWechatController(http.Controller):
 
     @http.route('/aaswechat/mes/linefeeding', type='http', auth='user')
     def aas_wechat_mes_linefeeding(self):
-        values = {'success': True, 'message': '', 'meslineid': '0'}
+        values = {'success': True, 'message': '', 'meslineid': '0', 'mesline_name': ''}
         loginuser = request.env.user
         feeddomain = [('lineuser_id', '=', loginuser.id), ('mesrole', '=', 'feeder')]
         linefeeder = request.env['aas.mes.lineusers'].search(feeddomain, limit=1)
@@ -29,7 +29,7 @@ class AASFeedmaterialWechatController(http.Controller):
             values.update({'success': False, 'message': u'当前登录用户可能还不是上料员，请仔细检查！'})
             return request.render('aas_mes.wechat_mes_message', values)
         mesline = linefeeder.mesline_id
-        values['meslineid'] = mesline.id
+        values.update({'meslineid': mesline.id, 'mesline_name': mesline.name})
         workstations = request.env['aas.mes.line.workstation'].search([('mesline_id', '=', mesline.id)], order='sequence')
         if not workstations or len(workstations) <= 0:
             values.update({'success': False, 'message': u'产线%s还未设置工位，请先设置工位，再进行上料操作！'})
@@ -38,14 +38,26 @@ class AASFeedmaterialWechatController(http.Controller):
         for wkstation in workstations:
             workstation = wkstation.workstation_id
             stationvals = {
-                'workstation_id': workstation.id, 'workstation_name': workstation.name, 'workstation_code': workstation.code, 'materiallist': []
+                'workstation_id': workstation.id, 'workstation_name': workstation.name,
+                'workstation_code': workstation.code, 'materiallist': []
             }
-            materiallist = request.env['aas.mes.feedmaterial'].search([('workstation_id', '=', workstation.id)])
+            feedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+            materiallist = request.env['aas.mes.feedmaterial'].search(feedomain)
             if materiallist and len(materiallist) > 0:
-                stationvals['materiallist'] = [{
-                    'feeding_id': feedmaterial.id, 'material_code': feedmaterial.material_id.default_code,
-                    'material_lot': feedmaterial.material_lot.name, 'material_qty': feedmaterial.material_qty
-                } for feedmaterial in materiallist]
+                productdict = {}
+                for tmaterial in materiallist:
+                    productid = tmaterial.material_id.id
+                    meslineid, workstationid = tmaterial.mesline_id.id, tmaterial.workstation_id.id
+                    pkey = 'P'+str(productid)
+                    if pkey in productdict:
+                        productdict[pkey]['material_qty'] += tmaterial.material_qty
+                    else:
+                        productdict[pkey] = {
+                            'material_qty': tmaterial.material_qty,
+                            'material_code': tmaterial.material_id.default_code,
+                            'mwmaterialid': str(meslineid)+'-'+str(workstationid)+'-'+str(productid)
+                        }
+                stationvals['materiallist'] = productdict.values()
             workstationlist.append(stationvals)
         values['workstationlist'] = workstationlist
         return request.render('aas_mes.wechat_mes_linefeeding', values)
@@ -53,7 +65,10 @@ class AASFeedmaterialWechatController(http.Controller):
 
     @http.route('/aaswechat/mes/feeding/materialscan', type='json', auth="user")
     def aas_wechat_mes_feeding_materialscan(self, barcode, workstationid):
-        values = {'success': True, 'message': '', 'tips': ''}
+        values = {
+            'success': True, 'message': '', 'tips': '',
+            'material_code': '', 'material_qty': 0.0, 'mwmterialid': '', 'workstation_id': '0'
+        }
         loginuser = request.env.user
         feeddomain = [('lineuser_id', '=', loginuser.id), ('mesrole', '=', 'feeder')]
         linefeeder = request.env['aas.mes.lineusers'].search(feeddomain, limit=1)
@@ -73,7 +88,17 @@ class AASFeedmaterialWechatController(http.Controller):
             values.update({'success': False, 'message': u'未搜索到相应工位，请仔细检查！'})
             return values
         tvalues = request.env['aas.mes.feedmaterial'].action_feeding_withlabel(mesline, workstation, barcode)
-        values.update(tvalues)
+        if not tvalues.get('success', False):
+            values.update({'success': False, 'message': tvalues.get('message', '')})
+            return values
+        values['workstation_id'] = workstation.id
+        values['material_code'] = materiallabel.product_id.default_code
+        values['mwmterialid'] = str(mesline.id)+'-'+str(workstation.id)+'-'+str(materiallabel.product_id.id)
+        feedomain = [('material_id', '=', materiallabel.product_id.id)]
+        feedomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        feedinglist = request.env['aas.mes.feedmaterial'].search(feedomain)
+        if feedinglist and len(feedinglist) > 0:
+            values['material_qty'] = sum([feeding.material_qty for feeding in feedinglist])
         if values.get('success', False):
             values['tips'] = u'%s上料成功，已上料%s'% (values['material_code'], values['material_qty'])
         return values
@@ -81,7 +106,10 @@ class AASFeedmaterialWechatController(http.Controller):
 
     @http.route('/aaswechat/mes/feeding/containerscan', type='json', auth="user")
     def aas_wechat_mes_feeding_containerscan(self, barcode, workstationid):
-        values = {'success': True, 'message': '', 'materiallist': [], 'tips': ''}
+        values = {
+            'success': True, 'message': '', 'materiallist': [], 'tips': '',
+            'material_code': '', 'material_qty': 0.0, 'mwmterialid': '', 'workstation_id': '0'
+        }
         loginuser = request.env.user
         feeddomain = [('lineuser_id', '=', loginuser.id), ('mesrole', '=', 'feeder')]
         linefeeder = request.env['aas.mes.lineusers'].search(feeddomain, limit=1)
@@ -93,14 +121,30 @@ class AASFeedmaterialWechatController(http.Controller):
         if not materialcontainer:
             values.update({'success': False, 'message': u'未获取当前容器信息，请仔细检查！'})
             return values
+        if materialcontainer.isempty:
+            values.update({'success': False, 'message': u'当前容器空空如也，没有物料可以使用！'})
+            return values
         workstation = request.env['aas.mes.workstation'].browse(workstationid)
         if not workstation:
             values.update({'success': False, 'message': u'未搜索到相应工位，请仔细检查！'})
             return values
+        tempmaterial = materialcontainer.product_lines[0]
+        product_id, product_code = tempmaterial.product_id.id, tempmaterial.product_id.default_code
+        values.update({
+            'material_code': product_code, 'workstation_id': workstation.id,
+            'mwmterialid': str(mesline.id)+'-'+str(workstation.id)+'-'+str(product_id)
+        })
         tvalues = request.env['aas.mes.feedmaterial'].action_feeding_withcontainer(mesline, workstation, barcode)
-        values.update(tvalues)
+        if not tvalues.get('success', False):
+            values.update({'success': False, 'message': tvalues.get('message', '')})
+            return values
+        feedomain = [('material_id', '=', product_id)]
+        feedomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        feedinglist = request.env['aas.mes.feedmaterial'].search(feedomain)
+        if feedinglist and len(feedinglist) > 0:
+            values['material_qty'] = sum([feeding.material_qty for feeding in feedinglist])
         if values.get('success', False):
-            values['tips'] = u'容器%s上料成功！'% barcode[2:]
+            values['tips'] = u'%s上料成功，已上料%s'% (values['material_code'], values['material_qty'])
         return values
 
 
@@ -126,3 +170,26 @@ class AASFeedmaterialWechatController(http.Controller):
             for feeding in feedinglist:
                 feeding.action_refresh_stock()
         return values
+
+
+    @http.route('/aaswechat/mes/feeding/materialdetail/<string:mwmaterialid>', type='http', auth='user')
+    def aas_wechat_mes_feeding_materialdetail(self, mwmaterialid):
+        values = {
+            'success': True, 'message': '', 'mesline_name': '',
+            'workstation_name': '', 'product_code': '', 'materialotlist': []
+        }
+        tempids = mwmaterialid.split('-')
+        meslineid, workstationid, materialid = int(tempids[0]), int(tempids[1]), int(tempids[2])
+        feeddomain = [('material_id', '=', materialid)]
+        feeddomain += [('mesline_id', '=', meslineid), ('workstation_id', '=', workstationid)]
+        feedinglist = request.env['aas.mes.feedmaterial'].search(feeddomain)
+        if feedinglist and len(feedinglist) > 0:
+            tempfeed = feedinglist[0]
+            values.update({
+                'mesline_name': tempfeed.mesline_id.name,
+                'workstation_name': tempfeed.workstation_id.name, 'product_code': tempfeed.material_id.default_code
+            })
+            values['materialotlist'] = [{
+                'lot_name': feeding.material_lot.name, 'lot_qty': feeding.material_qty
+            } for feeding in feedinglist]
+        return request.render('aas_mes.wechat_mes_linefeeding_materialdetail', values)

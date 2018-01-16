@@ -34,6 +34,11 @@
 
                                 <div class="navbar-custom-menu">
                                     <ul class="nav navbar-nav">
+                                        <li id="action_allocation" class="messages-menu">
+                                        <a href="/aasmes/finalchecking/query" target="_blank">
+                                            <i class="fa fa-search"></i> <span>产出查询</span>
+                                        </a>
+                                    </li>
                                         <li class="dropdown notifications-menu">
                                             <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">
                                                 <i class="fa fa-user"></i> <span t-esc="checker"/>
@@ -78,6 +83,16 @@
                                         </div>
                                         <div class="box-body no-padding">
                                             <ul id="informationlist" class="nav nav-pills nav-stacked" operationid="0">
+                                                <li>
+                                                    <a href="javascript:void(0);">扫描员工
+                                                        <span id="mes_scanemployee" class="pull-right" t-esc="scan_employee"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">终检员工
+                                                        <span id="mes_checkemployee" class="pull-right" t-esc="check_employee"/>
+                                                    </a>
+                                                </li>
                                                 <li> <a href="javascript:void(0);">产线 <span class="pull-right" t-esc="mesline_name"/></a> </li>
                                                 <li> <a href="javascript:void(0);">工位 <span class="pull-right" t-esc="workstation_name"/></a> </li>
                                                 <li>
@@ -85,7 +100,6 @@
                                                         <span id="mes_workorder" class="pull-right" t-esc="workorder_name" t-att-workorderid="workorder_id"/>
                                                     </a>
                                                 </li>
-                                                <li> <a href="javascript:void(0);">重工 <span id="serialrework" class="pull-right"></span></a> </li>
                                                 <li>
                                                     <a href="javascript:void(0);">客户料号
                                                         <span id="customercode"  class="pull-right" t-esc="customer_code"/>
@@ -97,27 +111,8 @@
                                                     </a>
                                                 </li>
                                                 <li>
-                                                    <a href="javascript:void(0);">设备编码
-                                                        <span id="mes_equipment" class="pull-right" t-att-equipmentid="equipment_id" t-esc="equipment_code"/>
-                                                    </a>
+                                                    <a href="javascript:void(0);">设备编码 <span class="pull-right" t-esc="equipmentlist"/> </a>
                                                 </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                    <div class="box box-solid">
-                                        <div class="box-header with-border">
-                                            <h3 class="box-title">员工清单</h3>
-                                        </div>
-                                        <div class="box-body no-padding">
-                                            <ul id="finalchecking_employees" class="nav nav-pills nav-stacked">
-                                                <t t-foreach="employeelist" t-as="temployee">
-                                                    <li class="cemployee" t-attf-id="employee_{{temployee['employee_id']}}">
-                                                        <a href="javascript:void(0);">
-                                                            <t t-esc="temployee['employee_name']"/>
-                                                            <span class="pull-right" t-esc="temployee['employee_code']"/>
-                                                        </a>
-                                                    </li>
-                                                </t>
                                             </ul>
                                         </div>
                                     </div>
@@ -138,9 +133,10 @@
                                                             <td></td>
                                                             <td>序号</td>
                                                             <td>工序名称</td>
-                                                            <td>设备</td>
-                                                            <td>操作员</td>
                                                             <td>出货时间</td>
+                                                            <td>设备编码</td>
+                                                            <td>扫描员工</td>
+                                                            <td>操作/终检员工</td>
                                                         </tr>
                                                     </thead>
                                                     <tbody id="operationlist"></tbody>
@@ -195,6 +191,139 @@
                 <script src="/aas_base/static/libs/speech/js/jQuery.speech.min.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
                 <script src="/aas_mes/static/src/js/mes_finalchecking.js"></script>
+            </body>
+        </html>
+    </template>
+
+
+    <template id="aas_finalchecking_query" name="AAS MES Final Checking Query">
+        &lt;!DOCTYPE html&gt;
+        <html>
+            <head>
+                <meta charset="utf-8" />
+                <title>安费诺先进传感器</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                <meta name="apple-mobile-web-app-capable" content="yes"/>
+                <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/daterangepicker/daterangepicker.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/select2/select2.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/skins/skin-blue.min.css"/>
+                <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+                <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+                <!--[if lt IE 9]>
+                   <script src="/aas_base/static/libs/html5shiv.min.js"></script>
+                   <script src="/aas_base/static/libs/respond.min.js"></script>
+                <![endif]-->
+            </head>
+            <body class="hold-transition skin-blue layout-top-nav">
+                <div class="wrapper">
+                    <header class="main-header">
+                        <nav class="navbar navbar-static-top">
+                            <div class="container">
+                                <div class="navbar-header">
+                                    <a href="javascript:void(0);" class="navbar-brand">
+                                        <span><b>安费诺先进传感器</b></span>
+                                    </a>
+                                </div>
+
+                                <div class="navbar-custom-menu">
+                                    <ul class="nav navbar-nav">
+                                        <li class="dropdown notifications-menu">
+                                            <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fa fa-user"></i> <span t-esc="checker"/>
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                <li class="header">欢迎您，<t t-esc="checker"/></li>
+                                                <li>
+                                                    <ul class="menu">
+                                                        <li> <a href="/web/session/logout">注销</a> </li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </nav>
+
+                    </header>
+
+                    <div id="finalchecking" class="content-wrapper" t-att-meslineid="mesline_id" t-att-message="message">
+                        <section class="content-header">
+                            <div class="row">
+                                <div class="col-xs-2" style="font-size:20px;font-weiht:bold;">
+                                    <span style="height:34px;line-height:34px;">产线：<t t-esc="mesline_name"/> </span>
+                                </div>
+                                <div class="col-xs-5">
+                                    <div class="form-group">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">产出时间</div>
+                                            <input type="text" class="form-control pull-right" id="querydatetime"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xs-4">
+                                    <div class="form-group">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">产品编码</div>
+                                            <select id="mesproduct" class="form-control select2" style="width: 100%;"></select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xs-1">
+                                    <button id="querybtn" type="button" class="btn btn-block btn-primary">查询</button>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="content">
+                            <div class="box box-primary">
+                                <div class="box-header with-border">
+                                    <h3 class="box-title">终检产出清单</h3>
+                                </div>
+                                <div class="box-body">
+
+                                    <div class="table-responsive mailbox-messages">
+                                        <table class="table table-hover table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>产品编码</th>
+                                                    <th>产线名称</th>
+                                                    <th>工位名称</th>
+                                                    <th>产出日期</th>
+                                                    <th>产出总数</th>
+                                                    <th>一次合格数量</th>
+                                                    <th>二次合格数量</th>
+                                                    <th>一次优率</th>
+                                                    <th>二次优率</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="outputlist"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="main-footer">
+                        <div class="container" style="text-align:center;">
+                            <span>
+                                Copyright © 安费诺先进传感器 &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <a href="http://www.miitbeian.gov.cn" target="_blank">苏ICP备16061622</a>
+                            </span>
+                        </div>
+                    </footer>
+                </div>
+                <script src="/aas_base/static/libs/jquery/jquery-2.2.4.min.js"></script>
+                <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
+                <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
+                <script src="/aas_base/static/libs/select2/select2.min.js"></script>
+                <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
+                <script src="/aas_base/static/libs/layer/layer.js"></script>
+                <script src="/aas_base/static/libs/daterangepicker/moment.min.js"></script>
+                <script src="/aas_base/static/libs/daterangepicker/daterangepicker.js"></script>
+                <script src="/aas_mes/static/src/js/mes_finalchecking_query.js"></script>
             </body>
         </html>
     </template>

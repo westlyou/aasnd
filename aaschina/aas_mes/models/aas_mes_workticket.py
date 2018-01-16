@@ -164,9 +164,9 @@ class AASMESWorkticket(models.Model):
             ticketvals['output_qty'] -= badmode_qty
             ticketvals['badmode_qty'] = badmode_qty + self.badmode_qty
         self.write(ticketvals)
-        # 添加追溯信息
-        temptrace = self.action_commit_tracing()
         try:
+            # 添加追溯信息
+            temptrace = self.action_commit_tracing()
             # 消耗物料
             self.action_material_consume(temptrace, commit_qty)
             # 工单报工善后

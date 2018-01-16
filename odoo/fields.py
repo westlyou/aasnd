@@ -1560,6 +1560,10 @@ class Datetime(Field):
         return temptime.astimezone(pytz.timezone(timezone))
 
     @staticmethod
+    def to_china_time(value):
+        return Datetime.to_timezone_time(value, 'Asia/Shanghai')
+
+    @staticmethod
     def to_timezone_string(value, timezone):
         if not value:
             return ''
@@ -1571,6 +1575,13 @@ class Datetime(Field):
     @staticmethod
     def to_china_string(value):
         return Datetime.to_timezone_string(value, 'Asia/Shanghai')
+
+    @staticmethod
+    def to_china_today():
+        china_time = Datetime.to_china_string(Datetime.now())
+        if not china_time:
+            return ''
+        return china_time[0:10]
 
     @staticmethod
     def to_utc_string(value, timezone):

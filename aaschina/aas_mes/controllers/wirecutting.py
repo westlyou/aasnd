@@ -150,7 +150,11 @@ class AASMESWireCuttingController(http.Controller):
         if not workstation:
             values.update({'success': False, 'message': u'下线工位还未设置！'})
             return values
-        feedmateriallist = request.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
+        if not container.isempty:
+            values.update({'success': False, 'message': u'容器已被占用，暂不可以使用！'})
+            return values
+        feedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        feedmateriallist = request.env['aas.mes.feedmaterial'].search(feedomain)
         if not feedmateriallist or len(feedmateriallist) <= 0:
             values.update({'success': False, 'message': u'当前工位还未上料，请上料再操作产出！'})
             return values

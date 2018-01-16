@@ -48,6 +48,7 @@ mui.ready(function(){
         return tempmask;
     }
 
+    //单击扫描上料按钮
     var feeding_flag = false;
     mui('div.mui-scroll').on('tap', 'button.aas-feeding', function(event){
         if (feeding_flag){
@@ -94,19 +95,26 @@ mui.ready(function(){
                 if(dresult.tips!=undefined && dresult.tips!=''){
                     mui.toast(dresult.tips);
                 }
+                var mwmaterialli = document.getElementById(dresult.mwmterialid);
+                if(mwmaterialli!=undefined && mwmaterialli!=null){
+                    mwmaterialli.parentNode.removeChild(mwmaterialli);
+                }
                 var feedline = document.createElement('li');
                 feedline.className = 'mui-table-view-cell';
-                feedline.setAttribute('id', 'feeding_'+dresult.feeding_id);
-                feedline.setAttribute('feedingid', dresult.feeding_id);
-                feedline.innerHTML = "<div class='mui-slider-right mui-disabled'> <a class='mui-btn mui-btn-red aas-feeding-del'>删除</a> </div> " +
-                    "<div class='mui-slider-handle'>" +
-                        "<div class='mui-table'>" +
-                            "<div class='mui-table-cell mui-col-xs-4 mui-text-left'>"+dresult.material_code+"</div>" +
-                            "<div class='mui-table-cell mui-col-xs-4 mui-text-center'>"+dresult.material_lot+"</div>" +
-                            "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>"+dresult.material_qty+"</div>" +
-                        "</div>" +
+                feedline.setAttribute('id', dresult.mwmterialid);
+                feedline.setAttribute('mwmaterialid', dresult.mwmaterialid);
+                feedline.innerHTML = "<a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>" +
+                    "<div class='mui-table'>" +
+                        "<div class='mui-table-cell mui-col-xs-6 mui-text-left'>"+dresult.material_code+"</div>" +
+                        "<div class='mui-table-cell mui-col-xs-6 mui-text-right'>"+dresult.material_qty+"</div>" +
                     "</div>";
-                document.getElementById('workstation_'+workstationid).appendChild(feedline);
+                var scanbtn = document.getElementById('workstation_'+dresult.workstation_id+'_scanbtn');
+                var workstationul = scanbtn.parentNode;
+                if(workstationul.lastChild == scanbtn){
+                    workstationul.appendChild(feedline);
+                }else{
+                    workstationul.insertBefore(feedline, scanbtn.nextSibling);
+                }
             },
             error:function(xhr,type,errorThrown){
                 console.log(type);
@@ -136,24 +144,26 @@ mui.ready(function(){
                 if(dresult.tips!=undefined && dresult.tips!=''){
                     mui.toast(dresult.tips);
                 }
-                if(dresult.materiallist.length <= 0){
-                    return ;
+                var mwmaterialli = document.getElementById(dresult.mwmterialid);
+                if(mwmaterialli!=undefined && mwmaterialli!=null){
+                    mwmaterialli.parentNode.removeChild(mwmaterialli);
                 }
-                mui.each(dresult.materiallist, function(index, tmaterial){
-                    var feedline = document.createElement('li');
-                    feedline.className = 'mui-table-view-cell';
-                    feedline.setAttribute('id', 'feeding_'+tmaterial.feeding_id);
-                    feedline.setAttribute('feedingid', tmaterial.feeding_id);
-                    feedline.innerHTML = "<div class='mui-slider-right mui-disabled'> <a class='mui-btn mui-btn-red aas-feeding-del'>删除</a> </div> " +
-                        "<div class='mui-slider-handle'>" +
-                            "<div class='mui-table'>" +
-                                "<div class='mui-table-cell mui-col-xs-4 mui-text-left'>"+tmaterial.material_code+"</div>" +
-                                "<div class='mui-table-cell mui-col-xs-4 mui-text-center'>"+tmaterial.material_lot+"</div>" +
-                                "<div class='mui-table-cell mui-col-xs-4 mui-text-right'>"+tmaterial.material_qty+"</div>" +
-                            "</div>" +
-                        "</div>";
-                    document.getElementById('workstation_'+workstationid).appendChild(feedline);
-                });
+                var feedline = document.createElement('li');
+                feedline.className = 'mui-table-view-cell';
+                feedline.setAttribute('id', dresult.mwmterialid);
+                feedline.setAttribute('mwmaterialid', dresult.mwmaterialid);
+                feedline.innerHTML = "<a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>" +
+                    "<div class='mui-table'>" +
+                        "<div class='mui-table-cell mui-col-xs-6 mui-text-left'>"+dresult.material_code+"</div>" +
+                        "<div class='mui-table-cell mui-col-xs-6 mui-text-right'>"+dresult.material_qty+"</div>" +
+                    "</div>";
+                var scanbtn = document.getElementById('workstation_'+dresult.workstation_id+'_scanbtn');
+                var workstationul = scanbtn.parentNode;
+                if(workstationul.lastChild == scanbtn){
+                    workstationul.appendChild(feedline);
+                }else{
+                    workstationul.insertBefore(feedline, scanbtn.nextSibling);
+                }
             },
             error:function(xhr,type,errorThrown){
                 console.log(type);
@@ -164,47 +174,12 @@ mui.ready(function(){
     }
 
 
-
-    //删除上料记录
-    var feeding_delete_flag = false;
-    mui('.mui-content').on('tap', '.aas-feeding-del', function(event) {
-        if(feeding_delete_flag){
-            mui.toast('删除操作正在处理，请耐心等待！');
-            return ;
-        }
-        feeding_delete_flag = true;
-        var feedingli = this.parentNode.parentNode;
-        mui.confirm('确认删除该条记录？', '清除上料记录', ['确认', '取消'], function(e) {
-            if(e.index!=0){
-                feeding_delete_flag = false;
-                mui.swipeoutClose(feedingli);
-                return ;
-            }
-            var feeding_id = parseInt(feedingli.getAttribute('feedingid'));
-            var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
-            var feeding_delmask = aas_feeding_loading();
-            mui.ajax('/aaswechat/mes/feeding/materialdel',{
-                data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {'feeding_id': feeding_id}, id: access_id }),
-                dataType:'json', type:'post', timeout:30000,
-                headers:{'Content-Type':'application/json'},
-                success:function(data){
-                    var dresult = data.result;
-                    feeding_delete_flag = false;
-                    feeding_delmask.close();
-                    if (!dresult.success){
-                        mui.toast(dresult.message);
-                        return ;
-                    }
-                    feedingli.parentNode.removeChild(feedingli);
-                },
-                error:function(xhr,type,errorThrown){
-                    console.log(type);
-                    feeding_delete_flag = false;
-                    feeding_delmask.close();
-                }
-            });
-        });
+    //查看上料详情
+    mui('div.mui-scroll').on('tap', 'li.aas-material', function(event){
+        var mwmaterialid = this.getAttribute('mwmaterialid');
+        mui.openWindow({'url': '/aaswechat/mes/feeding/materialdetail/'+mwmaterialid, 'id': 'feedingdetail'});
     });
+
 
     //刷新上料库存信息
     var feeding_refresh_flag = false;

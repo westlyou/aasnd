@@ -97,7 +97,6 @@ class AASMESSerialnumberController(http.Controller):
         if serialcount + sequence > 9999:
             values.update({'success': False, 'message': u'序列号已超出最大数9999，请确认调整后继续操作！'})
             return values
-        serialnumbers = []
         customercode = values['customer_code'].replace('-', '')
         current_date = fields.Datetime.to_timezone_string(fields.Datetime.now(), 'Asia/Shanghai')[0:10]
         lastserialnumber = values['lastserialnumber']
@@ -112,13 +111,8 @@ class AASMESSerialnumberController(http.Controller):
                 'sequence_code': sequence_code, 'name': temp_name, 'mesline_id': values.get('mesline_id', False),
                 'internal_product_code': values['product_code'], 'customer_product_code': values['customer_code']
             })
-            serialnumbers.append({
-                'serialid': tserialnumber.id,
-                'serialname': tserialnumber.name, 'product_code': tserialnumber.internal_product_code,
-                'sequencecode': tserialnumber.sequence_code, 'customer_code': tserialnumber.customer_product_code
-            })
             lastserialnumber = tserialnumber.name
-        values.update({'serialnumbers': serialnumbers, 'lastserialnumber': lastserialnumber})
+        values.update({'lastserialnumber': lastserialnumber})
         values['serial_count'] = request.env['aas.mes.serialnumber'].search_count([('regular_code', '=', regular_code)])
         return values
 
@@ -141,6 +135,34 @@ class AASMESSerialnumberController(http.Controller):
             values.update({'success': False, 'message': u'请检查是否输入有效条码！'})
             return values
         return request.env['aas.mes.serialnumber'].action_print_label(printerid, [tserialnumber.id])
+
+
+
+    @http.route('/aasmes/serialnumber/loadingmore', type='json', auth="user")
+    def aasmes_serialnumber_loadingmore(self, page=1, limit=200):
+        values = {
+            'success': True, 'message': '', 'recordlist': [], 'page': page, 'limit': limit, 'total': 0, 'count': limit
+        }
+        login = request.env.user
+        tempdomain = [('lineuser_id', '=', login.id), ('mesrole', '=', 'serialnumber')]
+        lineuser = request.env['aas.mes.lineusers'].search(tempdomain, limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录用户还未分配创建序列号的权限！'})
+            return values
+        mesline, todaydate = lineuser.mesline_id, fields.Datetime.to_china_today()
+        serialdomain = [('operation_date', '=', todaydate), ('mesline_id', '=', mesline.id)]
+        values['total'] = request.env['aas.mes.serialnumber'].search_count(serialdomain)
+        offset = (page - 1) * limit
+        serialnumberlist = request.env['aas.mes.serialnumber'].search(serialdomain, offset=offset, order='id desc', limit=limit)
+        if serialnumberlist and len(serialnumberlist) > 0:
+            values['recordlist'] = [{
+                'serialnumber_id': tserialnumber.id,
+                'serialnumber_name': tserialnumber.name,
+                'sequence_code': tserialnumber.sequence_code,
+                'customer_code': tserialnumber.customer_product_code, 'product_code': tserialnumber.internal_product_code
+            } for tserialnumber in serialnumberlist]
+            values['count'] = len(serialnumberlist)
+        return values
 
 
 

@@ -113,6 +113,8 @@
                                         <field name="operate_type"/>
                                         <field name="equipment_id"/>
                                         <field name="employee_id"/>
+                                        <field name="scanning_employee"/>
+                                        <field name="checking_employee"/>
                                         <field name="operate_time"/>
                                         <field name="operation_pass"/>
                                         <field name="operate_result"/>
@@ -124,11 +126,13 @@
                                                 <field name="operate_type"/>
                                                 <field name="employee_id"/>
                                                 <field name="operate_time"/>
+                                                <field name="scanning_employee"/>
                                             </group>
                                             <group>
                                                 <field name="equipment_id"/>
                                                 <field name="operation_pass"/>
                                                 <field name="operate_result"/>
+                                                <field name="checking_employee"/>
                                             </group>
                                         </group>
                                     </form>

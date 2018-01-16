@@ -59,18 +59,9 @@ $(function() {
                                 layer.msg(dresult.message, {icon: 5});
                                 return ;
                             }
-                            _.each(dresult.serialnumbers, function(serialnumber){
-                                var serialitem = $("<tr class='aas-serialnumber'></tr>");
-                                serialitem.attr({'serialid': serialnumber.serialid});
-                                var serialcontent = "<td>"+serialnumber.serialname+"</td>";
-                                serialcontent += "<td>"+serialnumber.sequencecode+"</td>";
-                                serialcontent += "<td>"+serialnumber.product_code+"</td>";
-                                serialcontent += "<td>"+serialnumber.customer_code+"</td>";
-                                serialitem.html(serialcontent);
-                                $('#serialnumberlist').append(serialitem);
-                            });
                             $('#serial_count').html(dresult.serial_count);
                             $('#lastserialnumber').html(dresult.lastserialnumber);
+                            loadingserialnumberlist(1, 200);
                         },
                         error: function (xhr, type, errorThrown) {
                             console.log(type);
@@ -113,16 +104,15 @@ $(function() {
             layer.msg('请先设置好标签打印机！', {icon: 5});
             return ;
         }
-        var serialnumbertrs = $('tr.aas-serialnumber');
-        if(serialnumbertrs==undefined || serialnumbertrs==null || serialnumbertrs.length <= 0){
-            layer.msg('请确认，您还没有生成需要打印的标签！', {icon: 5});
+        var serialnumberlist = $('input.aas-active');
+        if(serialnumberlist==undefined || serialnumberlist==null || serialnumberlist.length<=0){
+            layer.msg('请先选择需要打印的标签！', {icon: 5});
             return ;
         }
         var printerid = parseInt(printerid);
         var serialids = [];
-        $.each(serialnumbertrs, function(index, serialnumber){
-            var serialid = parseInt($(serialnumber).attr('serialid'));
-            serialids.push(serialid);
+        $.each(serialnumberlist, function(index, serialipt){
+            serialids.push(parseInt($(serialipt).attr('serialid')));
         });
         var params = {'printerid': printerid, 'serialids': serialids};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
@@ -198,5 +188,99 @@ $(function() {
             });
         });
     });
+
+    $("#checkall").click(function () {
+        var clicked = $(this).data('clicked');
+        if (clicked) {
+            $(".mailbox-messages input[type='checkbox']").iCheck("uncheck");
+            $(".fa", this).removeClass("fa-check-square-o").addClass('fa-square-o');
+          } else {
+            $(".mailbox-messages input[type='checkbox']").iCheck("check");
+            $(".fa", this).removeClass("fa-square-o").addClass('fa-check-square-o');
+          }
+          $(this).data("clicked", !clicked);
+    });
+
+    //加载序列号清单
+    function loadingserialnumberlist(page, limit){
+        var tparams = {'page': page, 'limit': limit};
+        var tempid = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        $.ajax({
+            url: '/aasmes/serialnumber/loadingmore',
+            headers: {'Content-Type': 'application/json'},
+            type: 'post', timeout: 10000, dataType: 'json',
+            data: JSON.stringify({jsonrpc: "2.0", method: 'call', params: tparams, id: tempid}),
+            success: function (data) {
+                $('#serialnumberlist').html('');
+                var dresult = data.result;
+                if(!dresult.success){
+                    layer.msg(dresult.message, {icon: 5});
+                    return ;
+                }
+                var firstno = ((page-1) * limit) + 1;
+                var lastno = page * limit;
+                if (dresult.count < limit){
+                    lastno = firstno - 1 + dresult.count;
+                }
+                var serialcount_content = firstno+'-'+lastno+'/'+dresult.total;
+                $('#serialcount_content').html(serialcount_content);
+                $('#action_prepage').attr({'page': page, 'limit': limit, 'total': dresult.total});
+                $('#action_nxtpage').attr({'page': page, 'limit': limit, 'total': dresult.total});
+                if (dresult.recordlist.length <= 0){
+                    return ;
+                }
+                $.each(dresult.recordlist, function(index, record){
+                    var serialitem = $("<tr class='aas-serialnumber'></tr>");
+                    var serialcontent = "<td><input type='checkbox' serialid="+record.serialnumber_id+"></td>";
+                    serialcontent += "<td>"+record.serialnumber_name+"</td>";
+                    serialcontent += "<td>"+record.sequence_code+"</td>";
+                    serialcontent += "<td>"+record.product_code+"</td>";
+                    serialcontent += "<td>"+record.customer_code+"</td>";
+                    serialitem.html(serialcontent);
+                    $('#serialnumberlist').append(serialitem);
+                });
+                $('.mailbox-messages input[type="checkbox"]').iCheck({checkboxClass: 'icheckbox_flat-blue'});
+                $(".mailbox-messages input[type='checkbox']").on('ifChecked', function(event){
+                    $(this).addClass('aas-active');
+                });
+                $(".mailbox-messages input[type='checkbox']").on('ifUnchecked', function(event){
+                    $(this).removeClass('aas-active');
+                    if($('.fa', '#checkall').hasClass('fa-check-square-o')){
+                        $('.fa', '#checkall').removeClass("fa-check-square-o").addClass('fa-square-o');
+                    }
+                });
+            },
+            error: function (xhr, type, errorThrown) {
+                console.log(type);
+            }
+        });
+
+    }
+
+    $('#action_prepage').click(function(){
+        var page = parseInt($(this).attr('page'));
+        var limit = parseInt($(this).attr('limit'));
+        var total = parseInt($(this).attr('total'));
+        if(page <= 1){
+            layer.msg('当前已经是第一页了！', {icon: 5});
+            return ;
+        }
+        page -= 1;
+        loadingserialnumberlist(page, limit);
+    });
+
+    $('#action_nxtpage').click(function(){
+        var page = parseInt($(this).attr('page'));
+        var limit = parseInt($(this).attr('limit'));
+        var total = parseInt($(this).attr('total'));
+        if(page*limit >= total){
+            layer.msg('当前已经是第后一页了！', {icon: 5});
+            return ;
+        }
+        page += 1;
+        loadingserialnumberlist(page, limit);
+    });
+
+    loadingserialnumberlist(1, 200);
 
 });

@@ -171,6 +171,8 @@ class AASMESWorkstationEmployee(models.Model):
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', ondelete='restrict')
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict')
     action_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
+    action_type = fields.Selection(selection=[('work', u'工作'), ('scan', u'扫描'), ('check', u'检测')],
+                                   string=u'操作类型', default='work', copy=False)
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     _sql_constraints = [

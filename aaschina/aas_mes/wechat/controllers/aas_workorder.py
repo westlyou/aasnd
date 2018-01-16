@@ -193,5 +193,8 @@ class AASWorkorderWechatController(http.Controller):
         if not container:
             values.update({'success': False, 'message': u'请检查二维码是否是有效的容器二维码！'})
             return values
+        if not container.isempty:
+            values.update({'success': False, 'message': u'容器已被占用，暂不可以使用！'})
+            return values
         values.update({'container_id': container.id, 'container_name': container.name})
         return values

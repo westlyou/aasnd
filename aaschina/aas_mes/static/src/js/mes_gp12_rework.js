@@ -4,15 +4,6 @@
 
 $(function() {
 
-    var employeeid = localStorage.getItem('employeeid');
-    var employeename = localStorage.getItem('employeename');
-    if(employeeid!=undefined&&employeeid!=null&&employeeid!=0){
-        $('#mes_employee').attr('employeeid', employeeid);
-    }
-    if(employeename!=undefined&&employeename!=null&&employeename!=''){
-        $('#mes_employee').val(employeename);
-    }
-
     var scanable = true; //是否可以继续扫描
     new VScanner(function(barcode) {
         if (barcode == null || barcode == '') {

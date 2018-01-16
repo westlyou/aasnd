@@ -23,18 +23,16 @@ class AASMESFinalCheckingController(http.Controller):
 
     @http.route('/aasmes/finalchecking', type='http', auth="user")
     def aasmes_finalchecking(self):
-        values = {'success': True, 'message': '', 'employeelist': [], 'equipmentlist': [], 'workorder_id': '0'}
+        values = {'success': True, 'message': '', 'equipmentlist': '', 'workorder_id': '0'}
         loginuser = request.env.user
         values.update({
             'checker': loginuser.name, 'equipment_id': '0', 'equipment_code': '',
-            'workorder_id': '0', 'workorder_name': '', 'customer_code': '', 'product_code': ''
+            'workorder_name': '', 'customer_code': '', 'product_code': '', 'scan_employee': '', 'check_employee': ''
         })
-        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
+        userdomain = [('lineuser_id', '=', loginuser.id), ('mesrole', '=', 'fqcchecker')]
+        lineuser = request.env['aas.mes.lineusers'].search(userdomain, limit=1)
         if not lineuser:
             values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
-            return request.render('aas_mes.aas_finalchecking', values)
-        if lineuser.mesrole != 'fqcchecker':
-            values.update({'success': False, 'message': u'当前登录账号还未授权终检'})
             return request.render('aas_mes.aas_finalchecking', values)
         mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
         if not workstation:
@@ -49,16 +47,19 @@ class AASMESFinalCheckingController(http.Controller):
                 'customer_code': '' if not temproduct.customer_product_code else temproduct.customer_product_code
             })
         wkdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-        employees = request.env['aas.mes.workstation.employee'].search(wkdomain)
-        if employees and len(employees) > 0:
-            values['employeelist'] = [{
-                'employee_id': wemployee.employee_id.id,
-                'employee_name': wemployee.employee_id.name, 'employee_code': wemployee.employee_id.code
-            } for wemployee in employees]
-        equipments = request.env['aas.mes.workstation.equipment'].search(wkdomain)
-        if equipments and len(equipments) > 0:
-            tempequipment = equipments[0].equipment_id
-            values.update({'equipment_id': tempequipment.id, 'equipment_code': tempequipment.code})
+        temployees = request.env['aas.mes.workstation.employee'].search(wkdomain)
+        if temployees and len(temployees) > 0:
+            scanemployees, checkemployees = [], []
+            for temployee in temployees:
+                if temployee.action_type == 'scan':
+                    scanemployees.append(temployee.employee_id.name)
+                elif temployee.action_type == 'check':
+                    checkemployees.append(temployee.employee_id.name)
+            values['scan_employee'] = ','.join(scanemployees)
+            values['check_employee'] = ','.join(checkemployees)
+        tequipments = request.env['aas.mes.workstation.equipment'].search(wkdomain)
+        if tequipments and len(tequipments) > 0:
+            values['equipmentlist'] = ','.join([tequipment.equipment_id.code for tequipment in tequipments])
         return request.render('aas_mes.aas_finalchecking', values)
 
 
@@ -84,7 +85,7 @@ class AASMESFinalCheckingController(http.Controller):
     @http.route('/aasmes/finalchecking/scanemployee', type='json', auth="user")
     def aasmes_finalchecking_scanemployee(self, barcode):
         values = {
-            'success': True, 'message': '', 'action': 'working',
+            'success': True, 'message': '', 'action': 'working', 'needrole': False,
             'employee_id': '0', 'employee_name': '', 'employee_code': ''
         }
         employee = request.env['aas.hr.employee'].search([('barcode', '=', barcode)], limit=1)
@@ -103,8 +104,31 @@ class AASMESFinalCheckingController(http.Controller):
             values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位'})
             return values
         values.update({'employee_id': employee.id, 'employee_name': employee.name, 'employee_code': employee.code})
-        avalues = request.env['aas.mes.work.attendance'].action_scanning(employee, mesline, workstation)
-        values.update(avalues)
+        values.update(request.env['aas.mes.work.attendance'].action_scanning(employee, mesline, workstation))
+        tdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id), ('action_type', '=', 'scan')]
+        if request.env['aas.mes.workstation.employee'].search_count(tdomain) <= 0:
+            values['needrole'] = True
+        return values
+
+    @http.route('/aasmes/finalchecking/changemployeerole', type='json', auth="user")
+    def aasmes_finalchecking_changemployeerole(self, employeeid, action_type='check'):
+        values = {'success': True, 'message': ''}
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        if lineuser.mesrole != 'fqcchecker':
+            values.update({'success': False, 'message': u'当前登录账号还未授权终检！'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位'})
+            return values
+        tdomain = [('employee_id', '=', employeeid)]
+        tdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        wemployee = request.env['aas.mes.workstation.employee'].search(tdomain, limit=1)
+        if wemployee:
+            wemployee.write({'action_type': action_type})
         return values
 
 
@@ -160,6 +184,7 @@ class AASMESFinalCheckingController(http.Controller):
         scvalues = request.env['aas.mes.operation'].action_loading_serialcount(mesline.id)
         values['serialcount'] = scvalues['serialcount']
         return values
+
 
     @http.route('/aasmes/finalchecking/loadrecordlist', type='json', auth="user")
     def aasmes_finalchecking_loadrecordlist(self, operationid):
@@ -226,3 +251,54 @@ class AASMESFinalCheckingController(http.Controller):
                 workorder.action_done()
         values['message'] = u'结单成功！'
         return values
+
+
+
+    @http.route('/aasmes/finalchecking/query', type='http', auth="user")
+    def aasmes_finalchecking_query(self):
+        values = {'success': True, 'message': '', 'mesline_id': '0', 'workstation_id': '0'}
+        loginuser = request.env.user
+        finaldomain = [('lineuser_id', '=', loginuser.id), ('mesrole', '=', 'fqcchecker')]
+        lineuser = request.env['aas.mes.lineusers'].search(finaldomain, limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return request.render('aas_mes.aas_finalchecking_query', values)
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        values.update({'checker': loginuser.name, 'mesline_name': mesline.name, 'mesline_id': mesline.id})
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位！'})
+            return request.render('aas_mes.aas_finalchecking_query', values)
+        values['workstation_id'] = workstation.id
+        return request.render('aas_mes.aas_finalchecking_query', values)
+
+
+
+    @http.route('/aasmes/finalchecking/query/loadrecords', type='json', auth="user")
+    def aasmes_finalchecking_query_loadrecords(self, meslineid, starttime, finishtime, productid=False):
+        values = {'success': True, 'message': '', 'records': []}
+        lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        values['mesline_name'] = lineuser.mesline_id.name
+        if lineuser.mesrole != 'fqcchecker':
+            values.update({'success': False, 'message': u'当前登录账号还未授权终检'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位！'})
+            return values
+        workstationid = workstation.id
+        timestart = fields.Datetime.to_string(fields.Datetime.to_timezone_time(starttime, 'Asia/Shanghai'))
+        timefinish = fields.Datetime.to_string(fields.Datetime.to_timezone_time(finishtime, 'Asia/Shanghai'))
+        if not productid:
+            productid = False
+        tvalues = request.env['aas.mes.production.output'].action_building_outputrecords(meslineid, timestart,
+                                                                                         timefinish, workstationid,
+                                                                                         productid=productid)
+        values.update(tvalues)
+        return values
+
+
+
+

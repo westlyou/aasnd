@@ -21,6 +21,7 @@ _logger = logging.getLogger(__name__)
 class AASMESStockadjust(models.Model):
     _name = 'aas.mes.stockadjust'
     _description = 'AAS MES Stock Adjust'
+    _order = 'id desc'
 
     name = fields.Char(string=u'名称', required=True, copy=False)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
