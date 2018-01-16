@@ -429,7 +429,29 @@ class AASMESGP12CheckingController(http.Controller):
         return request.render('aas_mes.aas_gp12_checking_query', values)
 
 
+    @http.route('/aasmes/gp12/checking/query/labelist', type='json', auth="user")
+    def aasmes_gp12_checking_query_labelist(self):
+        values = {'success': True, 'message': '', 'labelist': []}
+        current_date = fields.Datetime.to_china_today()
+        templabelist = request.env['aas.mes.production.label'].search([('action_date', '=', current_date)])
+        if not templabelist or len(templabelist) <= 0:
+            return values
+        values['labelist'] = [{
+            'label_id': tlabel.label_id.id, 'label_name': tlabel.label_id.name, 'label_qty': tlabel.product_qty
+        } for tlabel in templabelist]
+        return values
 
+
+    @http.route('/aasmes/gp12/checking/query/serialist', type='json', auth="user")
+    def aasmes_gp12_checking_query_serialist(self, labelid):
+        values = {'success': True, 'message': '', 'serialist': []}
+        tempserialnumberlist = request.env['aas.mes.serialnumber'].search([('label_id', '=', labelid)])
+        if not tempserialnumberlist or len(tempserialnumberlist) <= 0:
+            return values
+        values['serialist'] = [{
+            'serialnumber_id': tserialnumber.id, 'serialnumber_name': tserialnumber.name
+        } for tserialnumber in tempserialnumberlist]
+        return values
 
 
 

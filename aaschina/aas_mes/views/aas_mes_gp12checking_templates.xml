@@ -37,6 +37,11 @@
                                 <div class="navbar-custom-menu">
                                     <ul class="nav navbar-nav">
                                         <li id="action_delivery" class="notifications-menu">
+                                            <a href="/aasmes/gp12/checking/query" target="_blank">
+                                                <i class="fa fa-search"></i> 产出查询
+                                            </a>
+                                        </li>
+                                        <li id="action_delivery" class="notifications-menu">
                                             <a href="javascript:void(0);"> <i class="fa fa-send"></i> 成品出货 </a>
                                         </li>
                                         <li id="action_badmode" class="notifications-menu">
@@ -287,7 +292,6 @@
                 <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
-                <link rel="stylesheet" href="/aas_base/static/libs/iCheck/flat/blue.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/select2/select2.min.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/skins/skin-blue.min.css"/>
@@ -345,7 +349,7 @@
                                         <div class="box-header with-border">
                                             <h3 class="box-title">标签清单</h3>
                                         </div>
-                                        <div class="box-body no-padding">
+                                        <div class="box-body no-padding" style="height:700px;overflow-y:scroll;">
                                             <ul id="gp12labelist" class="nav nav-pills nav-stacked"></ul>
                                         </div>
                                     </div>
@@ -353,113 +357,66 @@
                                 <div class="col-md-2">
                                     <div class="box box-solid">
                                         <div class="box-header with-border">
-                                            <h3 class="box-title">标签清单</h3>
+                                            <h3 class="box-title">序列号清单</h3>
                                         </div>
-                                        <div class="box-body no-padding">
-                                            <ul id="gp12labelist" class="nav nav-pills nav-stacked"></ul>
+                                        <div class="box-body no-padding" style="height:700px;overflow-y:scroll;">
+                                            <ul id="serialnumberlist" class="nav nav-pills nav-stacked"></ul>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-10">
+                                <div class="col-md-8">
                                     <div class="box box-primary">
-                                        <div class="box-header with-border">
-                                            <h3 class="box-title">当前SN</h3>
-                                            <div class="box-tools pull-right">
-                                                <div style="font-size:22px; font-weight:bold;">
-                                                    <span id="mes_serialnumber" style="color:#72AFD2;"></span>
-                                                </div>
+                                        <div class="box-header">
+                                            <h3 class="box-title">操作记录</h3>
+                                            <span id="meserialnumber" class="pull-right"/>
+                                        </div>
+                                        <div class="box-body">
+                                            <div class="table-responsive">
+                                                <table class="table no-margin">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>No</th>
+                                                            <th>操作类型</th>
+                                                            <th>操作时间</th>
+                                                            <th>操作结果</th>
+                                                            <th>扫描人员</th>
+                                                            <th>检测人员</th>
+                                                            <th>操作人员</th>
+                                                            <th>操作设备</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="operation_list"></tbody>
+                                                </table>
                                             </div>
                                         </div>
-                                        <div class="box-body no-padding">
-                                            <div class="row">
+                                    </div>
 
-                                                <section class="col-md-4 col-sm-12">
-                                                    <div class="box box-primary">
-                                                        <div class="box-header">
-                                                            <i class="fa fa-list"></i>
-                                                            <h3 class="box-title">合格SN：</h3>
-                                                            <span id="speechcontent" class="pull-right"></span>
-                                                        </div>
-                                                        <div class="box-body" style="height:650px;overflow-y:scroll;">
-                                                            <div class="table-responsive">
-                                                                <table id="pass_list" class="table no-margin"></table>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </section>
-
-                                                <section class="col-md-8 col-sm-12">
-                                                    <div class="box box-primary">
-                                                        <div class="box-header">
-                                                            <i class="fa fa-list"></i>
-                                                            <h3 class="box-title">操作记录</h3>
-                                                        </div>
-                                                        <div class="box-body">
-                                                            <div class="table-responsive">
-                                                                <table class="table no-margin">
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th>No</th>
-                                                                            <th>操作类型</th>
-                                                                            <th>操作时间</th>
-                                                                            <th>操作结果</th>
-                                                                            <th>扫描人员</th>
-                                                                            <th>检测人员</th>
-                                                                            <th>操作人员</th>
-                                                                            <th>操作设备</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody id="operation_list"></tbody>
-                                                                </table>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="box box-primary">
-                                                        <div class="box-header">
-                                                            <i class="fa fa-list"></i>
-                                                            <h3 class="box-title">Rework记录</h3>
-                                                        </div>
-                                                        <div class="box-body">
-                                                            <div class="table-responsive">
-                                                                <table class="table no-margin">
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th>No</th>
-                                                                            <th>SN</th>
-                                                                            <th>不良日期</th>
-                                                                            <th>料号</th>
-                                                                            <th>工序</th>
-                                                                            <th>不良模式</th>
-                                                                            <th>作业员</th>
-                                                                            <th>维修状态</th>
-                                                                            <th>维修结果</th>
-                                                                            <th>维修时间</th>
-                                                                            <th>维修人员</th>
-                                                                            <th>IPQC</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody id="rework_list"></tbody>
-                                                                </table>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="box box-danger">
-                                                        <div class="box-header">
-                                                            <i class="fa fa-list"></i>
-                                                            <h3 class="box-title">不合格SN</h3>
-                                                        </div>
-                                                        <div class="box-body">
-                                                            <div class="table-responsive">
-                                                                <table id="fail_list" class="table no-margin">
-                                                                </table>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </section>
-
-
+                                    <div class="box box-primary">
+                                        <div class="box-header">
+                                            <i class="fa fa-list"></i>
+                                            <h3 class="box-title">Rework记录</h3>
+                                        </div>
+                                        <div class="box-body">
+                                            <div class="table-responsive">
+                                                <table class="table no-margin">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>No</th>
+                                                            <th>SN</th>
+                                                            <th>不良日期</th>
+                                                            <th>料号</th>
+                                                            <th>工序</th>
+                                                            <th>不良模式</th>
+                                                            <th>作业员</th>
+                                                            <th>维修状态</th>
+                                                            <th>维修结果</th>
+                                                            <th>维修时间</th>
+                                                            <th>维修人员</th>
+                                                            <th>IPQC</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="rework_list"></tbody>
+                                                </table>
                                             </div>
                                         </div>
                                     </div>
@@ -478,13 +435,10 @@
                 <script src="/aas_base/static/libs/jquery/jquery-2.2.4.min.js"></script>
                 <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
                 <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
-                <script src="/aas_base/static/libs/iCheck/icheck.min.js"></script>
                 <script src="/aas_base/static/libs/select2/select2.min.js"></script>
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
-                <script src="/aas_base/static/libs/speech/js/jQuery.speech.min.js"></script>
-                <script src="/aas_base/static/libs/vscanner.js"></script>
-                <script src="/aas_mes/static/src/js/mes_gp12_checking.js"></script>
+                <script src="/aas_mes/static/src/js/mes_gp12_checking_query.js"></script>
             </body>
         </html>
     </template>
