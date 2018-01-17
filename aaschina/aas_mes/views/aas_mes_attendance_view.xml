@@ -10,8 +10,6 @@
                 <tree create="false" edit="false" delete="false">
                     <field name="attendance_date"/>
                     <field name="employee_id"/>
-                    <field name="mesline_id"/>
-                    <field name="schedule_id"/>
                     <field name="attendance_start"/>
                     <field name="attendance_finish"/>
                     <field name="attend_hours" widget="float_time"/>
@@ -31,11 +29,9 @@
                         <group>
                             <group>
                                 <field name="employee_id" options="{'no_create':true}"/>
-                                <field name="mesline_id" options="{'no_create':true}"/>
-                                <field name="schedule_id" options="{'no_create':true}" domain="[('mesline_id','=',mesline_id)]"/>
+                                <field name="attendance_date"/>
                             </group>
                             <group>
-                                <field name="attendance_date"/>
                                 <field name="attendance_start"/>
                                 <field name="attendance_finish"/>
                             </group>
@@ -51,6 +47,7 @@
                             <page string="出勤明细">
                                 <field name="attend_lines" readonly="1">
                                     <tree>
+                                        <field name="mesline_id"/>
                                         <field name="workstation_id"/>
                                         <field name="equipment_id"/>
                                         <field name="attendance_date"/>
@@ -63,16 +60,16 @@
                                     <form>
                                         <group>
                                             <group>
+                                                <field name="mesline_id"/>
                                                 <field name="workstation_id"/>
                                                 <field name="equipment_id"/>
-                                                <field name="attendance_date"/>
                                                 <field name="schedule_id"/>
                                             </group>
                                             <group>
+                                                <field name="attendance_date"/>
                                                 <field name="attendance_start"/>
                                                 <field name="attendance_finish"/>
                                                 <field name="attend_hours" widget="float_time"/>
-                                                <field name="leave_id"/>
                                             </group>
                                         </group>
                                     </form>
@@ -89,14 +86,10 @@
             <field name="model">aas.mes.work.attendance</field>
             <field name="arch" type="xml">
                 <search>
-                    <field name="mesline_name" string="产线名称" filter_domain="[('mesline_name','ilike',self)]"/>
-                    <field name="schedule_name" string="班次名称" filter_domain="[('schedule_name','ilike',self)]"/>
                     <field name="employee_name" string="员工名称" filter_domain="[('employee_name','ilike',self)]"/>
                     <field name="employee_code" string="员工工号" filter_domain="[('employee_code','ilike',self)]"/>
                     <separator/>
                     <group expand="0" string="分组">
-                        <filter string="产线" context="{'group_by':'mesline_id'}"/>
-                        <filter string="班次" context="{'group_by':'schedule_id'}"/>
                         <filter string="员工" context="{'group_by':'employee_id'}"/>
                         <filter string="日期" context="{'group_by':'attendance_date'}"/>
                     </group>
