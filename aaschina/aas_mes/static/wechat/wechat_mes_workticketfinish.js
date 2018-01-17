@@ -173,7 +173,7 @@ mui.ready(function(){
                                 return ;
                             }
                             if(tempid != oldbadmodeid){
-                                templist.append(tempid);
+                                templist.push(tempid);
                             }
                         }
                         templist.push(currentid);
