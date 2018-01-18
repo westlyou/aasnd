@@ -314,13 +314,13 @@ class AASMESWorkticket(models.Model):
         # 根据结单方式判断什么时候自动结单
         closeorder = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'closeorder_method')
         if closeorder == 'equal':
-            if float_compare(self.output_qty, self.input_qty, precision_rounding=0.000001) < 0.0:
-                return
+            if float_compare(self.output_qty, self.input_qty, precision_rounding=0.000001) >= 0.0:
+                self.action_workticket_done()
         else:  # total
             total_qty = self.output_qty + self.badmode_qty
-            if float_compare(total_qty, self.input_qty, precision_rounding=0.000001) < 0.0:
-                return
-        self.action_workticket_done()
+            if float_compare(total_qty, self.input_qty, precision_rounding=0.000001) >= 0.0:
+                self.action_workticket_done()
+
 
     @api.one
     def action_output2container(self, product_lot, output_qty, container_id):
