@@ -27,7 +27,9 @@ class AASMESAllocation(models.Model):
     allotuser_id = fields.Many2one(comodel_name='res.users', string=u'调拨用户', rondelete='restrict')
     operator_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员', ondelete='restrict')
     operation_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
-    state = fields.Selection(selection=[('draft', u'草稿'), ('done', u'完成')], string=u'状态', default='draft', copy=False)
+    state = fields.Selection(selection=[('draft', u'草稿'), ('done', u'完成')], string=u'状态', default='draft')
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='restrict', index=True,
+                                 default=lambda self: self.env.user.company_id)
     allocation_lines = fields.One2many(comodel_name='aas.mes.allocation.line', inverse_name='allocation_id', string=u'调拨明细')
 
     @api.model
@@ -168,6 +170,8 @@ class AASMESAllocationLine(models.Model):
     container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict')
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict')
     location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='restrict')
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='restrict', index=True,
+                                 default=lambda self: self.env.user.company_id)
 
 
 

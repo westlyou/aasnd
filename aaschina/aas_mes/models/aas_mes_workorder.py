@@ -501,14 +501,14 @@ class AASMESWorkorder(models.Model):
         return values
 
     @api.model
-    def get_virtual_materiallist(self, equipment_code, barcode=None):
+    def get_virtual_materiallist(self, equipment_code, workorderid=None):
         """
         获取工位上虚拟件的消耗清单
         :param equipment_code:
-        :param barcode: 子工单条码
+        :param workorderid: 子工单id
         :return:
         """
-        values = {'success': True, 'message': ''}
+        values = {'success': True, 'message': '', 'virtuallist': [], 'orderlist': []}
         equipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)
         if not equipment:
             values.update({'success': False, 'message': u'设备编码异常，未搜索到相应编码的设备；请仔细检查！'})
@@ -520,10 +520,10 @@ class AASMESWorkorder(models.Model):
         if not workstation:
             values.update({'success': False, 'message': u'设备还未绑定工位，请联系相关人员设置！'})
             return values
-        if barcode:
-            workorder = self.env['aas.mes.workorder'].search([('barcode', '=', barcode)], limit=1)
+        if workorderid:
+            workorder = self.env['aas.mes.workorder'].browse(workorderid)
             if not workorder:
-                values.update({'success': False, 'message': u'请仔细检查，是否扫描了有效的工单条码，或工单已经被删除！'})
+                values.update({'success': False, 'message': u'请仔细检查，是否加载了有效的工单，或工单已经被删除！'})
                 return values
         else:
             workorder = mesline.workorder_id
@@ -532,10 +532,16 @@ class AASMESWorkorder(models.Model):
             return values
         values.update({
             'workorder_id': workorder.id, 'workorder_name': workorder.name, 'product_id': workorder.product_id.id,
-            'product_code': workorder.product_id.default_code, 'input_qty': workorder.input_qty, 'virtuallist': [],
+            'product_code': workorder.product_id.default_code, 'input_qty': workorder.input_qty,
             'mainorder_id': 0 if not workorder.mainorder_id else workorder.mainorder_id.id,
             'mainorder_name': '' if not workorder.mainorder_id else workorder.mainorder_id.name
         })
+        orderdomain = [('mesline_id', '=', mesline.id), ('id', '!=', workorder.id), ('state', '=', 'confirm')]
+        workorderlist = self.env['aas.mes.workorder'].search(orderdomain)
+        if workorderlist and len(workorderlist) > 0:
+            values['orderlist'] = [{
+                'order_id': torder.id, 'order_name': torder.name, 'product_code': torder.product_id.default_code
+            } for torder in workorderlist]
         routing = workorder.routing_id
         if not routing:
             values.update({'success': False, 'message': u'工单%s上未设置工艺路线，请仔细检查！'% workorder.name})
