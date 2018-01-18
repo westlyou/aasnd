@@ -464,40 +464,41 @@ class AASMESWorkorder(models.Model):
         if workcenter_id:
             consumedomain.append(('workcenter_id', '=', workcenter_id))
         consumelist = self.env['aas.mes.workorder.consume'].search(consumedomain)
-        if consumelist and len(consumelist) > 0:
-            consumedict, feedmaterialdict = {}, {}
-            for tempconsume in consumelist:
-                pkey = 'P-'+str(tempconsume.material_id.id)
-                consume_qty = tempconsume.consume_unit * product_qty
-                if pkey not in consumedict:
-                    consumedict[pkey] = {'code': tempconsume.material_id.default_code, 'qty': consume_qty}
-                else:
-                    consumedict[pkey]['qty'] += consume_qty
-            feeddomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation_id)]
-            feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
-            if not feedmateriallist or len(feedmateriallist) <= 0:
-                values.update({'success': False, 'message': u'工位%s还未上料，请联系上料员上料！'% workstation.name})
-                return values
-            for feedmaterial in feedmateriallist:
-                pkey = 'P-'+str(feedmaterial.material_id.id)
-                if pkey in feedmaterialdict:
-                    feedmaterialdict[pkey] += feedmaterial.material_qty
-                else:
-                    feedmaterialdict[pkey] = feedmaterial.material_qty
-            lesslist, nonelist = [], []
-            for ckey, cval in consumedict.items():
-                if ckey not in feedmaterialdict:
-                    nonelist.append(cval['code'])
-                    continue
-                consume_qty, feed_qty = cval['qty'], feedmaterialdict[ckey]
-                if float_compare(feed_qty, consume_qty, precision_rounding=0.000001) < 0.0:
-                    lesslist.append(cval['code'])
-            if nonelist and len(nonelist) > 0:
-                values['success'] = False
-                values['message'] = '原料%s未投料；'% ','.join(nonelist)
-            if lesslist and len(lesslist) > 0:
-                values['success'] = False
-                values['message'] = values['message'] + ('原料%s投料不足'% ','.join(lesslist))
+        if not consumelist or len(consumelist) <= 0:
+            return values
+        consumedict, feedmaterialdict = {}, {}
+        for tempconsume in consumelist:
+            pkey = 'P-'+str(tempconsume.material_id.id)
+            consume_qty = tempconsume.consume_unit * product_qty
+            if pkey not in consumedict:
+                consumedict[pkey] = {'code': tempconsume.material_id.default_code, 'qty': consume_qty}
+            else:
+                consumedict[pkey]['qty'] += consume_qty
+        feeddomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation_id)]
+        feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
+        if not feedmateriallist or len(feedmateriallist) <= 0:
+            values.update({'success': False, 'message': u'工位%s还未上料，请联系上料员上料！'% workstation.name})
+            return values
+        for feedmaterial in feedmateriallist:
+            pkey = 'P-'+str(feedmaterial.material_id.id)
+            if pkey in feedmaterialdict:
+                feedmaterialdict[pkey] += feedmaterial.material_qty
+            else:
+                feedmaterialdict[pkey] = feedmaterial.material_qty
+        lesslist, nonelist = [], []
+        for ckey, cval in consumedict.items():
+            if ckey not in feedmaterialdict:
+                nonelist.append(cval['code'])
+                continue
+            consume_qty, feed_qty = cval['qty'], feedmaterialdict[ckey]
+            if float_compare(feed_qty, consume_qty, precision_rounding=0.000001) < 0.0:
+                lesslist.append(cval['code'])
+        if nonelist and len(nonelist) > 0:
+            values['success'] = False
+            values['message'] = '原料%s未投料；'% ','.join(nonelist)
+        if lesslist and len(lesslist) > 0:
+            values['success'] = False
+            values['message'] = values['message'] + ('原料%s投料不足'% ','.join(lesslist))
         return values
 
     @api.model

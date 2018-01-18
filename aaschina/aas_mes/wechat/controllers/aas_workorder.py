@@ -155,14 +155,19 @@ class AASWorkorderWechatController(http.Controller):
             return values
         workcenter, workstation = workticket.workcenter_id, workticket.workcenter_id.workstation_id
         if not workstation:
-            values.update({'success': False, 'message': u'工序%s还未设置工位信息，无法提取员工信息，请联系相关人员设置工位！'% workticket.workcenter_name})
+            values.update({
+                'success': False,
+                'message': u'工序%s还未设置工位信息，无法提取员工信息，请联系相关人员设置工位！'% workticket.workcenter_name
+            })
             return values
-        if not workstation.employee_lines or len(workstation.employee_lines) <= 0:
-            values.update({'success': False, 'message': u'工位%s还没有员工信息，请先刷卡上岗再操作工单！'% workstation.name})
+        mesline, workorder = workticket.mesline_id, workticket.workorder_id
+        employeedomain = [('workstation_id', '=', workstation.id), ('mesline_id', '=', mesline.id)]
+        if request.env['aas.mes.workstation.employee'].search_count(employeedomain) <= 0:
+            values.update({'success': False, 'message': u'当前岗位没有员工在岗，请员工先上岗再继续操作！'})
             return values
         # 验证投料是否足够消耗
-        mesline, workorder = workticket.mesline_id, workticket.workorder_id
-        cresult = request.env['aas.mes.workorder'].action_validate_consume(workorder.id, workticket.product_id.id, commit_qty, workstation.id, workcenter.id)
+        cresult = request.env['aas.mes.workorder'].action_validate_consume(workorder.id, workticket.product_id.id,
+                                                                           commit_qty, workstation.id, workcenter.id)
         if not cresult.get('success', False):
             values.update(cresult)
             return values
