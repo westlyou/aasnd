@@ -17,6 +17,8 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+STATIONTYPES = [('scanner', u'扫描工位'), ('controller', u'工控工位')]
+
 class AASMESWorkstation(models.Model):
     _name = 'aas.mes.workstation'
     _description = 'AAS MES Workstation'
@@ -25,7 +27,7 @@ class AASMESWorkstation(models.Model):
     code = fields.Char(string=u'编码', required=True, copy=False)
     barcode = fields.Char(string=u'条码', compute='_compute_barcode', store=True, index=True)
     active = fields.Boolean(string=u'是否有效', default=True, copy=False)
-    station_type = fields.Selection(selection=[('scanner', u'扫描工位'), ('controller', u'工控工位')], string=u'工位类型', default='scanner', copy=False)
+    station_type = fields.Selection(selection=STATIONTYPES, string=u'工位类型', default='scanner', copy=False)
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     employee_lines = fields.One2many(comodel_name='aas.mes.workstation.employee', inverse_name='workstation_id', string=u'员工清单')
@@ -159,7 +161,7 @@ class AASMESWorkstation(models.Model):
 
 
 
-
+ACTIONTYPES = [('work', u'工作'), ('scan', u'扫描'), ('check', u'检测')]
 
 
 class AASMESWorkstationEmployee(models.Model):
@@ -171,8 +173,7 @@ class AASMESWorkstationEmployee(models.Model):
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', ondelete='restrict')
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict')
     action_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
-    action_type = fields.Selection(selection=[('work', u'工作'), ('scan', u'扫描'), ('check', u'检测')],
-                                   string=u'操作类型', default='work', copy=False)
+    action_type = fields.Selection(selection=ACTIONTYPES, string=u'操作类型', default='work', copy=False)
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     _sql_constraints = [
@@ -204,7 +205,8 @@ class AASMESWorkstationBadmode(models.Model):
     badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')
     badmode_code = fields.Char(string=u'编码', copy=False)
     operate_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
-    operater_id = fields.Many2one(comodel_name='res.users', string=u'操作员', ondelete='restrict', default=lambda self: self.env.user)
+    operater_id = fields.Many2one('res.users', string=u'操作员', default=lambda self: self.env.user)
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     _sql_constraints = [
         ('uniq_badmode', 'unique (workstation_id, badmode_id)', u'请不要重复添加同一个不良模式！')

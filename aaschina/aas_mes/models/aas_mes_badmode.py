@@ -27,6 +27,8 @@ class AASMESBadmode(models.Model):
     code = fields.Char(string=u'编码', copy=False)
     note = fields.Text(string=u'描述')
     universal = fields.Boolean(string=u'通用的', default=True, copy=False)
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='restrict', index=True,
+                                 default=lambda self: self.env.user.company_id)
 
     _sql_constraints = [
         ('uniq_code', 'unique (code)', u'不良模式的编码不可以重复！')

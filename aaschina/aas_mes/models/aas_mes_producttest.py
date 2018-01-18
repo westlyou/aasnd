@@ -22,7 +22,7 @@ class AASMESProductTest(models.Model):
     _name = 'aas.mes.producttest'
     _description = 'AAS MES ProductTest'
 
-
+    name = fields.Char(string=u'名称', copy=False)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict', index=True)
     workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='restrict', index=True)
     active = fields.Boolean(string=u'有效', default=True, copy=False)
@@ -126,8 +126,8 @@ class AASMESProductTestParameter(models.Model):
     parameter_type = fields.Selection(selection=[('char', 'Char'), ('number', 'Number')],
                                       string=u'数据类型', default='char', copy=False)
     parameter_value = fields.Char(string=u'规格值', copy=False)
-    parameter_maxvalue = fields.Float(string=u'规格上限', default=0.0)
-    parameter_minvalue = fields.Float(string=u'规格下限', default=0.0)
+    parameter_maxvalue = fields.Float(string=u'规格上限')
+    parameter_minvalue = fields.Float(string=u'规格下限')
     parameter_note = fields.Text(string=u'备注说明')
     company_id = fields.Many2one(comodel_name='res.company',
                                  string=u'公司', default=lambda self: self.env.user.company_id)
@@ -207,7 +207,9 @@ class AASMESProductTestOrderLine(models.Model):
     parameter_id = fields.Many2one(comodel_name='aas.mes.producttest.parameter', string=u'参数名称', ondelete='restrict')
     parameter_value = fields.Char(string=u'参数数据', copy=False)
     parameter_note = fields.Char(string=u'备注说明', copy=False)
-    qualified = fields.Boolean(string=u'合格', default=False, copy=False)
+    qualified = fields.Boolean(string=u'合格', copy=False)
+
+
 
 
 class AASMESProductTestOrderDetermine(models.Model):

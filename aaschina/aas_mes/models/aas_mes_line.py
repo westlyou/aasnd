@@ -27,6 +27,8 @@ class AASBaseCron(models.Model):
 
     @api.model
     def action_thirty_minutes_cron(self):
+        # 清理待完成的出勤记录
+        self.env['aas.mes.work.attendance'].action_done_attendances()
         # 切换产线班次
         self.env['aas.mes.line'].action_switch_schedule()
 
@@ -119,8 +121,8 @@ class AASMESLine(models.Model):
     def action_refresh(self):
         self.action_refresh_schedule()
         currenttime = fields.Datetime.now()
-        searchdomain = [('actual_start', '<=', currenttime), ('actual_finish', '>', currenttime)]
-        searchdomain.append(('mesline_id', '=', self.id))
+        searchdomain = [('mesline_id', '=', self.id)]
+        searchdomain += [('actual_start', '<=', currenttime), ('actual_finish', '>', currenttime)]
         schedule = self.env['aas.mes.schedule'].search(searchdomain, limit=1)
         if not schedule or not self.schedule_id or schedule.id != self.schedule_id.id:
             # if self.workorder_id and self.workorder_id.isproducing:
@@ -133,8 +135,8 @@ class AASMESLine(models.Model):
                 ordervals['schedule_id'] = schedule.id
                 schedule.write({'state': 'working'})
             self.write(ordervals)
-            # 清理上一个班次员工上岗信息
-            self.action_clear_employees(self.id)
+            # 分割快班次员工出勤记录
+            self.action_split_employee_attendance(self.id)
             # 刷新上料信息
             self.action_refreshandclear_feeding(self.id)
 
@@ -187,17 +189,13 @@ class AASMESLine(models.Model):
 
 
     @api.model
-    def action_clear_employees(self, mesline_id):
+    def action_split_employee_attendance(self, mesline_id):
         """
-        清空当前产线上的员工，并更新上岗记录信息
+        分割跨班次员工的出勤记录
         :param mesline_id:
         :return:
         """
         tempdomain = [('mesline_id', '=', mesline_id), ('attend_done', '=', False)]
-        attendancelist = self.env['aas.mes.work.attendance'].search(tempdomain)
-        if attendancelist and len(attendancelist) > 0:
-            attendancelist.action_done()
-        # 更新并分割出勤明细
         attendancelines = self.env['aas.mes.work.attendance.line'].search(tempdomain)
         if attendancelines and len(attendancelines) > 0:
             attendancelines.action_split()

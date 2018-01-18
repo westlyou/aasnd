@@ -55,6 +55,7 @@ class AASMESWorkticket(models.Model):
 
     # 最后一次产出的容器
     container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict')
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     @api.depends('name')
     def _compute_barcode(self):
@@ -164,44 +165,32 @@ class AASMESWorkticket(models.Model):
             ticketvals['output_qty'] -= badmode_qty
             ticketvals['badmode_qty'] = badmode_qty + self.badmode_qty
         self.write(ticketvals)
+        # 添加追溯信息
+        workcenter, mesline = self.workcenter_id, self.mesline_id
+        workstation, workorder = workcenter.workstation_id, self.workorder_id
+        temptrace = self.env['aas.mes.tracing'].create({
+            'workorder_id': workorder.id, 'workcenter_id': workcenter.id,
+            'workstation_id': workstation.id, 'product_id': self.product_id.id, 'mesline_id': mesline.id,
+            'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id,
+            'mainorder_id': False if not self.mainorder_id else self.mainorder_id.id,
+            'date_start': self.time_start if not self.time_finish else self.time_finish,
+            'date_finish': fields.Datetime.now(),
+            'employeelist': workstation.action_get_employeestr(mesline.id, workstation.id),
+            'equipmentlist': workstation.action_get_equipmentstr(mesline.id, workstation.id)
+        })
         try:
-            # 添加追溯信息
-            temptrace = self.action_commit_tracing()
-            # 消耗物料
-            self.action_material_consume(temptrace, commit_qty)
-            # 工单报工善后
-            self.action_after_commit(temptrace, product_output_qty)
+            # 物料消耗
+            self.action_workticket_consume(temptrace, commit_qty)
+            # 工票产出
+            self.action_workticket_output(temptrace, product_output_qty)
         except UserError, ue:
             raise UserError(ue.name)
         except ValidationError, ve:
             raise ValidationError(ve.name)
 
 
-
-
-    @api.multi
-    def action_commit_tracing(self):
-        """
-        报工信息追溯
-        :return:
-        """
-        self.ensure_one()
-        workstation = self.workcenter_id.workstation_id
-        tracevals = {
-            'workorder_id': self.workorder_id.id, 'workcenter_id': self.workcenter_id.id,
-            'workstation_id': workstation.id, 'product_id': self.product_id.id, 'mesline_id': self.mesline_id.id,
-            'schedule_id': False if not self.mesline_id.schedule_id else self.mesline_id.schedule_id.id,
-            'mainorder_id': False if not self.mainorder_id else self.mainorder_id.id,
-            'date_start': self.time_start if not self.time_finish else self.time_finish,
-            'date_finish': fields.Datetime.now(),
-            'employeelist': workstation.action_get_employeestr(self.mesline_id.id, workstation.id),
-            'equipmentlist': workstation.action_get_equipmentstr(self.mesline_id.id, workstation.id)
-        }
-        return self.env['aas.mes.tracing'].create(tracevals)
-
-
     @api.one
-    def action_material_consume(self, trace, commit_qty):
+    def action_workticket_consume(self, trace, commit_qty):
         """
         计算物料消耗
         :param trace:
@@ -294,8 +283,8 @@ class AASMESWorkticket(models.Model):
             feedmateriallist.action_freshandclear()
 
 
-    @api.one
-    def action_after_commit(self, trace, output_qty):
+    # 工票产出和结单
+    def action_workticket_output(self, trace, output_qty):
         workorder, mesline, product = self.workorder_id, self.workorder_id.mesline_id, self.product_id
         if not mesline.workdate:
             mesline.action_refresh_schedule()
@@ -320,7 +309,6 @@ class AASMESWorkticket(models.Model):
             total_qty = self.output_qty + self.badmode_qty
             if float_compare(total_qty, self.input_qty, precision_rounding=0.000001) >= 0.0:
                 self.action_workticket_done()
-
 
     @api.one
     def action_output2container(self, product_lot, output_qty, container_id):
@@ -362,8 +350,7 @@ class AASMESWorkticket(models.Model):
             'product_id': product.id, 'product_lot': product_lot.id, 'stocked': True,
             'product_qty': output_qty, 'location_id': mesline.location_production_id.id
         })
-        srclocationid = self.env.ref('stock.location_production').id
-        label.action_stock(srclocationid)
+        label.action_stock(self.env.ref('stock.location_production').id)
         self.env['aas.mes.workorder.product'].create({
             'workorder_id': workorder.id, 'mesline_id': mesline.id, 'product_id': product.id,
             'product_lot': product_lot.id, 'product_qty': output_qty, 'output_date': mesline.workdate,
@@ -561,13 +548,6 @@ class AASMESWorkticket(models.Model):
         return values
 
 
-
-
-
-
-
-
-
 class AASMESWorkticketBadmode(models.Model):
     _name = 'aas.mes.workticket.badmode'
     _description = 'AAS MES Workticket Badmode'
@@ -576,6 +556,7 @@ class AASMESWorkticketBadmode(models.Model):
     workticket_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'工票', ondelete='cascade')
     badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')
     badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
 
 

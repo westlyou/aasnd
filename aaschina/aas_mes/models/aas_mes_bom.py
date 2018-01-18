@@ -146,6 +146,8 @@ class AASMESBOMLine(models.Model):
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', required=True, ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='restrict', index=True,
+                                 default=lambda self: self.env.user.company_id)
     workcenter_lines = fields.One2many(comodel_name='aas.mes.bom.workcenter', inverse_name='bom_line_id', string=u'工序明细')
 
     _sql_constraints = [
@@ -185,6 +187,8 @@ class AASMESBOMWorkcenter(models.Model):
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺', ondelete='restrict')
     workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工艺工序', ondelete='restrict')
+    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='restrict', index=True,
+                                 default=lambda self: self.env.user.company_id)
 
     _sql_constraints = [
         ('uniq_product_workcenter', 'unique (bom_id, product_id, workcenter_id)', u'请不要在同一工序上重复添加同一产品！')
