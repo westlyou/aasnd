@@ -209,9 +209,12 @@ class AASMESWorkticket(models.Model):
         :return:
         """
         workorder, workcenter = self.workorder_id, self.workcenter_id
-        product, workstation = self.product_id, workcenter.workstation_id
+        product, workstation, mesline = self.product_id, workcenter.workstation_id, self.mesline_id
         if not workstation:
             raise UserError(u'还未设置工位，请先设置工序工位！')
+        employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        if self.env['aas.mes.workstation.employee'].search_count(employeedomain) <= 0:
+            raise UserError(u'%s工位还没有员工在岗，请员工先上岗再继续操作！')
         consumedomain = [
             ('workorder_id', '=', workorder.id), ('workcenter_id', '=', workcenter.id), ('product_id', '=', product.id)
         ]
@@ -222,7 +225,7 @@ class AASMESWorkticket(models.Model):
         movevallist, consumelines, materiallist, movelist = [], [], [], self.env['stock.move']
         for tempconsume in consumelist:
             want_qty, material = tempconsume.consume_unit * commit_qty, tempconsume.material_id
-            feeddomain = [('mesline_id', '=', self.mesline_id.id)]
+            feeddomain = [('mesline_id', '=', mesline.id)]
             feeddomain += [('workstation_id', '=', workstation.id), ('material_id', '=', material.id)]
             feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
             if not feedmateriallist or len(feedmateriallist) <= 0:
@@ -285,7 +288,7 @@ class AASMESWorkticket(models.Model):
             trace.write({'materiallist': ','.join(materiallist)})
         workorder.write({'consume_lines': consumelines})
         # 刷新上料记录库存
-        feeddomain = [('mesline_id', '=', self.mesline_id.id), ('workstation_id', '=', workstation.id)]
+        feeddomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
         feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
         if feedmateriallist and len(feedmateriallist) > 0:
             feedmateriallist.action_freshandclear()
@@ -296,7 +299,11 @@ class AASMESWorkticket(models.Model):
         workorder, mesline, product = self.workorder_id, self.workorder_id.mesline_id, self.product_id
         if not mesline.workdate:
             mesline.action_refresh_schedule()
-        lotname = mesline.workdate.replace('-', '')
+        # 再次判断是否还是没有工作日
+        if not mesline.workdate:
+            lotname = fields.Datetime.to_china_today().replace('-', '')
+        else:
+            lotname = mesline.workdate.replace('-', '')
         product_lot = self.env['stock.production.lot'].action_checkout_lot(product.id, lotname)
         trace.write({'product_lot': product_lot.id, 'product_lot_name': product_lot.name})
         if self.islastworkcenter():
@@ -352,8 +359,8 @@ class AASMESWorkticket(models.Model):
         workorder = self.workorder_id
         mesline, product = workorder.mesline_id, workorder.product_id
         label = self.env['aas.product.label'].create({
-            'product_id': product.id, 'product_lot': product_lot.id,
-            'product_qty': output_qty, 'location_id': mesline.location_production_id.id, 'stocked': True
+            'product_id': product.id, 'product_lot': product_lot.id, 'stocked': True,
+            'product_qty': output_qty, 'location_id': mesline.location_production_id.id
         })
         srclocationid = self.env.ref('stock.location_production').id
         label.action_stock(srclocationid)
