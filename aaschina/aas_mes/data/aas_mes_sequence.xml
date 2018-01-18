@@ -24,7 +24,7 @@
         </record>
 
         <record id="seq_aas_mes_producttest_order" model="ir.sequence">
-            <field name="name">生产调拨</field>
+            <field name="name">检测工单</field>
             <field name="code">aas.mes.producttest.order</field>
             <field name="prefix">FAE%(year)s%(month)s%(day)s</field>
             <field name="number_increment">1</field>
