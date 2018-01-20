@@ -64,6 +64,7 @@ class AASMESWorkorder(models.Model):
     workticket_lines = fields.One2many(comodel_name='aas.mes.workticket', inverse_name='workorder_id', string=u'工票明细')
     product_lines = fields.One2many(comodel_name='aas.mes.workorder.product', inverse_name='workorder_id', string=u'产出明细')
     consume_lines = fields.One2many(comodel_name='aas.mes.workorder.consume', inverse_name='workorder_id', string=u'消耗明细')
+    badmode_lines = fields.One2many(comodel_name='aas.mes.workticket.badmode', inverse_name='workorder_id', string=u'不良明细')
 
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'子工单名称不可以重复！')
@@ -331,11 +332,12 @@ class AASMESWorkorder(models.Model):
 
 
     @api.model
-    def action_output(self, workorder_id, product_id, output_qty, container_id=None, serialnumber=None):
+    def action_output(self, workorder_id, product_id, output_qty, badmode_lines=[], container_id=None, serialnumber=None):
         """工单产出
         :param workorder_id:
         :param product_id:
         :param output_qty:
+        :param badmode_lines:
         :param container_id:
         :param serialnumber:
         :return:
@@ -562,8 +564,9 @@ class AASMESWorkorder(models.Model):
                 pkey = 'P-'+str(tempbom.product_id.id)
                 productdict[pkey] = {
                     'product_id': tempbom.product_id.id, 'product_code': tempbom.product_id.default_code,
-                    'input_qty': (tempbom.product_qty / tempbom.bom_id.product_qty) * workorder.input_qty, 'output_qty': 0.0,
-                    'badmode_qty': 0.0, 'actual_qty': 0.0, 'todo_qty': 0.0, 'materiallist': [], 'weld_count': tempbom.product_id.weld_count
+                    'input_qty': (tempbom.product_qty / tempbom.bom_id.product_qty) * workorder.input_qty,
+                    'output_qty': 0.0, 'badmode_qty': 0.0, 'actual_qty': 0.0, 'todo_qty': 0.0, 'materiallist': [],
+                    'weld_count': tempbom.product_id.weld_count
                 }
         # 获取虚拟件消耗明细
         materialdomain = [('workorder_id', '=', workorder.id), ('workcenter_id', '=', workcenter.id)]
@@ -601,7 +604,7 @@ class AASMESWorkorder(models.Model):
         return values
 
     @api.model
-    def action_vtproduct_output(self, workstation_id, workorder_id, product_id, output_qty):
+    def action_vtproduct_output(self, workstation_id, workorder_id, product_id, output_qty, badmode_lines=[]):
         """虚拟件半成品产出
         :param workstation_id:
         :param workorder_id:
@@ -614,7 +617,7 @@ class AASMESWorkorder(models.Model):
         if not vdvalues.get('success', False):
             values.update(vdvalues)
             return values
-        opvalues = self.action_output(workorder_id, product_id, output_qty)
+        opvalues = self.action_output(workorder_id, product_id, output_qty, badmode_lines=badmode_lines)
         if not opvalues.get('success', False):
             values.update({'success': False, 'message': opvalues['message']})
             return values

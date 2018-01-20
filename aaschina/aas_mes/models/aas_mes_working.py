@@ -167,15 +167,17 @@ class AASEquipmentEquipment(models.Model):
         return self.env['aas.mes.workorder.consume'].loading_consumelist_onclient(workorder_id, workcenter_id)
 
     @api.model
-    def action_vtproduct_output(self, workstation_id, workorder_id, product_id, output_qty):
+    def action_vtproduct_output(self, workstation_id, workorder_id, product_id, output_qty, badmode_lines=[]):
         """工控工位虚拟件产出
         :param workstation_id:
         :param workorder_id:
         :param product_id:
         :param output_qty:
+        :param badmode_lines:
         :return:
         """
-        return self.env['aas.mes.workorder'].action_vtproduct_output(workstation_id, workorder_id, product_id, output_qty)
+        return self.env['aas.mes.workorder'].action_vtproduct_output(workstation_id, workorder_id,
+                                                                     product_id, output_qty, badmode_lines=badmode_lines)
 
     @api.model
     def action_loading_badmodelist(self, equipment_code):

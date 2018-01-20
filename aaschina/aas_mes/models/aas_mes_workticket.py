@@ -553,10 +553,22 @@ class AASMESWorkticketBadmode(models.Model):
     _description = 'AAS MES Workticket Badmode'
     _rec_name = 'badmode_id'
 
-    workticket_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'工票', ondelete='cascade')
+    workticket_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'工票', ondelete='cascade', index=True)
+    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='cascade', index=True)
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade', index=True)
     badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')
     badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
+
+    @api.model
+    def create(self, vals):
+        record = super(AASMESWorkticketBadmode, self).create(vals)
+        if not record.workorder_id and record.workticket_id:
+            record.write({
+                'workorder_id': record.workticket_id.workorder_id.id, 'product_id': record.workticket_id.product_id.id
+            })
+        return record
+
 
 
 
