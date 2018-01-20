@@ -56,7 +56,8 @@ class AASMESWorkstation(models.Model):
         :param workstation_id:
         :return:
         """
-        employeelist = self.env['aas.mes.workstation.employee'].search([('mesline_id', '=', mesline_id), ('workstation_id', '=', workstation_id)])
+        employeedomain = [('mesline_id', '=', mesline_id), ('workstation_id', '=', workstation_id)]
+        employeelist = self.env['aas.mes.workstation.employee'].search(employeedomain)
         if not employeelist or len(employeelist) <= 0:
             employeelist = []
         return employeelist
@@ -65,7 +66,7 @@ class AASMESWorkstation(models.Model):
     def action_get_employeestr(self, mesline_id, workstation_id):
         stationemployees = self.action_list_employees(mesline_id, workstation_id)
         if not stationemployees or len(stationemployees) <= 0:
-            return False
+            return ''
         employeeids, employeelist = [], []
         for semployee in stationemployees:
             employee = semployee.employee_id

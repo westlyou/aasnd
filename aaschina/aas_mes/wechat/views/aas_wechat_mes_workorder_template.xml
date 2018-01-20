@@ -117,9 +117,15 @@
                                     <span class="mui-pull-left">生产工位</span>
                                     <span class="mui-pull-right" t-esc="workstation_name"></span>
                                 </li>
-                                <li id="container_line" class="mui-table-view-cell" t-att-needcontainer="needcontainer" style="display:none;">
+                                <li id="container_line" class="mui-table-view-cell"
+                                    t-att-needcontainer="needcontainer" style="display:none;">
                                     <span class="mui-pull-left">成品容器</span>
                                     <span id="mes_container" class="mui-pull-right" containerid="0"></span>
+                                </li>
+                                <li id="printer_line" class="mui-table-view-cell"
+                                    t-att-needprinter="needprinter" style="display:none;">
+                                    <span class="mui-pull-left">标签打印机</span>
+                                    <span id="mes_printer" class="mui-pull-right" printerid="0">单击选择打印机</span>
                                 </li>
                                 <li class="mui-table-view-cell">
                                     <div class="mui-table">
@@ -202,6 +208,7 @@
                 <script src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
                 <script src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
                 <script src="/aas_base/static/wechat/mui/js/mui.picker.min.js"></script>
+                <script src="/aas_base/static/wechat/jquery-2.2.4.min.js"></script>
                 <script src="/aas_mes/static/wechat/wechat_mes_workticketfinish.js"></script>
             </html>
         </template>

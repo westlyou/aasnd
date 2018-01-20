@@ -55,6 +55,8 @@ class AASMESWorkticket(models.Model):
 
     # 最后一次产出的容器
     container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict')
+    # 最后一次产出的标签
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签')
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     @api.depends('name')
@@ -356,6 +358,7 @@ class AASMESWorkticket(models.Model):
             'product_lot': product_lot.id, 'product_qty': output_qty, 'output_date': mesline.workdate,
             'label_id': label.id, 'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id
         })
+        self.write({'label_id': label.id})
 
 
     @api.one

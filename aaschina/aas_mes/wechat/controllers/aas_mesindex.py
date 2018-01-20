@@ -55,3 +55,16 @@ class AASMESIndexWechatController(http.Controller):
         wxvalues.update({'signature': csignature, 'jsApiList': ['scanQRCode']})
         return wxvalues
 
+    @http.route('/aaswechat/mes/printlabels', type='json', auth="user")
+    def aas_wechat_mes_printlabels(self, printerid, labelids=[]):
+        values = {'success': True, 'message': ''}
+        try:
+            tempvals = request.env['aas.product.label'].action_print_label(printerid, ids=labelids)
+            values.update(tempvals)
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
+        printer = request.env['aas.label.printer'].browse(printerid)
+        values.update({'printer': printer.name, 'printurl': printer.serverurl})
+        return values
+
