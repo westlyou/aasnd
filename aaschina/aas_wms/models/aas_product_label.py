@@ -348,7 +348,7 @@ class AASProductLabel(models.Model):
 
     @api.model
     def action_print_label(self, printer_id, ids=[], domain=[]):
-        values = {'success': True, 'message': ''}
+        values = {'success': True, 'message': '', 'records': []}
         printer = self.env['aas.label.printer'].browse(printer_id)
         if not printer.field_lines or len(printer.field_lines) <= 0:
             values.update({'success': False, 'message': u'请联系管理员标签打印未指定具体打印内容！'})

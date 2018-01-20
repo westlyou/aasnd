@@ -27,6 +27,23 @@ mui.ready(function(){
         document.getElementById('action_scancontainer').style.display = 'block';
     }
 
+    var printerline = document.getElementById('printer_line');
+    var needprinter = printerline.getAttribute('needprinter');
+    if(needprinter=='wanted'){
+        printerline.style.display = 'block';
+    }
+
+    var printerid = localStorage.getItem('mesprinterid');
+    var printername = localStorage.getItem('mesprintername');
+    var mesprinter = document.getElementById('mes_printer');
+    if(printerid==null || printername==null){
+        mesprinter.setAttribute('printerid', '0');
+        mesprinter.innerHTML = '单击选择打印机';
+    }else{
+        mesprinter.setAttribute('printerid', printerid);
+        mesprinter.innerHTML = printername;
+    }
+
     mui.ajax('/aaswechat/mes/scaninit',{
         data: JSON.stringify({
             jsonrpc: "2.0", method: 'call', params: {'access_url': location.href}, id: Math.floor(Math.random() * 1000 * 1000 * 1000)
@@ -62,6 +79,38 @@ mui.ready(function(){
         if (reg.test(val)){ return true; }
         return false;
     }
+
+    //单击选择打印机
+    document.getElementById('mes_printer').addEventListener('tap', function(){
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        mui.ajax('/aaswechat/labelprinters', {
+            data: JSON.stringify({jsonrpc: "2.0",method: 'call',params: {}, id: access_id}),
+            dataType: 'json', type: 'post', timeout: 10000,
+            headers: {'Content-Type': 'application/json'},
+            success: function (data) {
+                var dresult = data.result;
+                if(!dresult.success){
+                    mui.toast(dresult.message);
+                    return ;
+                }
+                if (dresult.printers.length<=0){
+                    mui.alert('请联系管理员，可能系统中还未配置打印机！');
+                    return ;
+                }
+                var printerpicker = new mui.PopPicker();
+                printerpicker.setData(dresult.printers);
+                printerpicker.show(function(items) {
+                    var labelprinter = document.getElementById('mes_printer');
+                    labelprinter.innerText = items[0].text;
+                    labelprinter.setAttribute('printerid', items[0].value);
+                    localStorage.setItem('mesprinterid', items[0].value);
+                    localStorage.setItem('mesprintername', items[0].text);
+                });
+            },
+            error:function(xhr,type,errorThrown){ console.log(type); }
+        });
+
+    });
 
 
     //添加不良模式
@@ -271,6 +320,12 @@ mui.ready(function(){
                 params['container_id'] = containerid;
             }
         }
+        var needprinter = document.getElementById('printer_line').getAttribute('needprinter');
+        var temprinterid = parseInt(document.getElementById('mes_printer').getAttribute('printerid'));
+        if(needprinter=='wanted' && temprinterid==0){
+            mui.toast('您还未设置标签打印机；请先设置标签打印机，产出时将自动打印标签！');
+            return ;
+        }
         var badmodenamelist = document.querySelectorAll('.aas-badmode-name');
         if(badmodenamelist!=undefined && badmodenamelist.length>0){
             for(var i=0; i< badmodenamelist.length; i++){
@@ -329,13 +384,53 @@ mui.ready(function(){
                     mui.toast(dresult.message);
                     return ;
                 }
-                window.location.replace('/aaswechat/mes');
+                if(needprinter=='wanted' && dresult.labelid!='0'){
+                    autoprintlabel(temprinterid, [dresult.labelid]);
+                }else{
+                    window.location.replace('/aaswechat/mes');
+                }
             },
             error:function(xhr,type,errorThrown){
                 console.log(type);
                 finish_flag = false;
                 finishmask.close();
             }
+        });
+    }
+
+    //自动打印标签
+    function autoprintlabel(printerid, labelids){
+        mui.toast('正在打印标签，请稍后......');
+        var printparams = {'printerid': printerid, 'labelids': labelids};
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        mui.ajax('/aaswechat/mes/printlabels', {
+            data: JSON.stringify({jsonrpc: "2.0", method: 'call', params: printparams, id: access_id}),
+            dataType: 'json', type: 'post', timeout: 10000,
+            headers: {'Content-Type': 'application/json'},
+            success: function (data) {
+                var dresult = data.result;
+                if(!dresult.success){
+                    mui.toast(dresult.message);
+                    return ;
+                }
+                var records = dresult.records;
+                if(records.length<=0){
+                    window.location.replace('/aaswechat/mes');
+                    return ;
+                }
+                var printer = dresult.printer;
+                var printurl = 'http://'+dresult.printurl;
+                mui.each(records, function(index, record){
+                    var params = {'label_name': printer, 'label_count': 1, 'label_content':record};
+                    $.ajax({type:'post', dataType:'script', url: printurl, data: params,
+                        success: function (result) {
+                            window.location.replace('/aaswechat/mes');
+                        },
+                        error:function(XMLHttpRequest,textStatus,errorThrown){}
+                    });
+                });
+            },
+            error: function (xhr, type, errorThrown) { console.log(type);}
         });
     }
 
