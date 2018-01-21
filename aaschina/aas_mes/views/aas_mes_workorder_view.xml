@@ -96,6 +96,7 @@
                                         <field name="product_lot"/>
                                         <field name="product_qty"/>
                                         <field name="waiting_qty"/>
+                                        <field name="badmode_qty"/>
                                         <field name="output_date"/>
                                         <field name="container_id"/>
                                         <field name="label_id"/>
@@ -108,13 +109,14 @@
                                                 <field name="product_lot"/>
                                             </group>
                                             <group>
-                                                <field name="output_date"/>
                                                 <field name="product_qty"/>
                                                 <field name="waiting_qty"/>
+                                                <field name="badmode_qty"/>
                                             </group>
                                         </group>
                                         <group>
                                             <group>
+                                                <field name="output_date"/>
                                                 <field name="container_id"/>
                                                 <field name="label_id"/>
                                             </group>
