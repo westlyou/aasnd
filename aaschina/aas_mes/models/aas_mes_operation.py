@@ -328,9 +328,8 @@ class AASMESOperationRecord(models.Model):
             if serialnumber.state == 'draft':
                 serialnumber.write({'state': 'normal'})
         elif self.operate_type == 'fqc':
-            if not serialnumber.reworked:
-                ttoday = fields.Datetime.to_china_string(fields.Datetime.now())[0:10]
-                operationvals['fqccheck_date'] = ttoday
+            if not serialnumber.stocked:
+                operationvals['fqccheck_date'] = fields.Datetime.to_china_today()
             operationvals.update({'final_quality_check': True, 'fqccheck_record_id': self.id})
         elif self.operate_type == 'gp12':
             operationvals.update({'gp12_check': True, 'gp12_record_id': self.id})

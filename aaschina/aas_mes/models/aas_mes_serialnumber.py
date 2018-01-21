@@ -29,7 +29,7 @@ class AASMESSerialnumber(models.Model):
     regular_code = fields.Char(string=u'规则编码', copy=False)
     sequence = fields.Integer(string=u'规则序号', copy=False)
     sequence_code = fields.Char(string=u'序列编码', copy=False)
-    used = fields.Boolean(string=u'已使用', default=False, copy=False)
+    stocked = fields.Boolean(string=u'已库存', default=False, copy=False)
     qualified = fields.Boolean(string=u'合格的', default=True, copy=False)
     operation_date = fields.Char(string=u'生成日期', copy=False)
     operation_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)

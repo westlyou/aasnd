@@ -10,7 +10,6 @@
                 <tree create="false" edit="false" labelprint="true">
                     <field name="name"/>
                     <field name="sequence_code"/>
-                    <field name="used"/>
                     <field name="qualified"/>
                     <field name="reworked"/>
                     <field name="operator_id"/>
@@ -155,7 +154,6 @@
                     <field name="internal_product_code" string="内部料号" filter_domain="[('internal_product_code','ilike',self)]"/>
                     <field name="customer_product_code" string="客户料号" filter_domain="[('customer_product_code','ilike',self)]"/>
                     <separator/>
-                    <filter string="未使用" domain="[('used','=',False)]" />
                     <filter string="不合格" domain="[('qualified','=',False)]" />
                     <filter string="返工品" domain="[('reworked','=',True)]" />
                     <group expand="0" string="分组">

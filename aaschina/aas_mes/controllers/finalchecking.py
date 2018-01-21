@@ -183,6 +183,7 @@ class AASMESFinalCheckingController(http.Controller):
         values.update({'recordlist': orvalues['recordlist'], 'reworklist': orvalues['reworklist']})
         scvalues = request.env['aas.mes.operation'].action_loading_serialcount(mesline.id)
         values['serialcount'] = scvalues['serialcount']
+        serialnumber.write({'stocked': True})
         return values
 
 
@@ -208,8 +209,16 @@ class AASMESFinalCheckingController(http.Controller):
             values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位！'})
             return values
         tempoperation = request.env['aas.mes.operation'].browse(operationid)
+        workorder, tserialnumber = mesline.workorder_id, tempoperation.serialnumber_id
+        if not tserialnumber.stocked and workorder:
+            tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, tserialnumber.name)
+            if not tvalues.get('success', False):
+                values.update(tvalues)
+                return values
         if not tempoperation.final_quality_check:
             tempoperation.action_finalcheck(mesline, workstation)
+        if not tserialnumber.stocked:
+            tserialnumber.write({'stocked': True})
         return values
 
 
