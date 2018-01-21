@@ -332,13 +332,15 @@ class AASMESWorkorder(models.Model):
 
 
     @api.model
-    def action_output(self, workorder_id, product_id, output_qty, badmode_lines=[], container_id=None, serialnumber=None):
+    def action_output(self, workorder_id, product_id, commit_qty, container_id=None,
+                      workstation_id=None, badmode_lines=[], serialnumber=None):
         """工单产出
         :param workorder_id:
         :param product_id:
-        :param output_qty:
-        :param badmode_lines:
+        :param commit_qty:
         :param container_id:
+        :param workstation_id:
+        :param badmode_lines:
         :param serialnumber:
         :return:
         """
@@ -357,6 +359,13 @@ class AASMESWorkorder(models.Model):
                 return result
         if not workorder.mesline_id.workdate:
             workorder.mesline_id.action_refresh_schedule()
+        tempbadlines, badmode_qty = [], 0.0
+        if badmode_lines and len(badmode_lines) > 0:
+            workstation_id = False if not workstation_id else workstation_id
+            for badline in badmode_lines:
+                badline.update({'workstation_id': workstation_id, 'product_id': product_id})
+                badmode_qty += badline['badmode_qty']
+        output_qty = commit_qty - badmode_qty
         output_date = workorder.mesline_id.workdate
         lot_name = output_date.replace('-', '')
         # 成品批次
@@ -369,13 +378,17 @@ class AASMESWorkorder(models.Model):
             outputdomain.append(('schedule_id', '=', workorder.mesline_id.schedule_id.id))
         outputrecord = self.env['aas.mes.workorder.product'].search(outputdomain, limit=1)
         if not outputrecord:
-            outputvals = {'workorder_id': workorder_id, 'product_id': product_id, 'product_lot': product_lot}
-            outputvals.update({'output_date': output_date, 'mesline_id': workorder.mesline_id.id})
+            outputvals = {
+                'workorder_id': workorder_id, 'product_id': product_id,
+                'product_lot': product_lot, 'output_date': output_date, 'mesline_id': workorder.mesline_id.id
+            }
             if workorder.mesline_id.schedule_id:
                 outputvals['schedule_id'] = workorder.mesline_id.schedule_id.id
             outputrecord = self.env['aas.mes.workorder.product'].create(outputvals)
-        outputrecord.write({'waiting_qty': outputrecord.waiting_qty + output_qty})
+        outputrecord.write({'waiting_qty': outputrecord.waiting_qty + output_qty, 'badmode_qty': badmode_qty})
         result['outputrecord'] = outputrecord
+        if tempbadlines and len(tempbadlines) > 0:
+            workorder.write({'badmode_lines': tempbadlines})
         if serialnumber:
             # 更新序列号产出信息
             serialrecord = self.env['aas.mes.serialnumber'].search([('name', '=', serialnumber)], limit=1)
@@ -539,11 +552,13 @@ class AASMESWorkorder(models.Model):
             'mainorder_id': 0 if not workorder.mainorder_id else workorder.mainorder_id.id,
             'mainorder_name': '' if not workorder.mainorder_id else workorder.mainorder_id.name
         })
-        orderdomain = [('mesline_id', '=', mesline.id), ('id', '!=', workorder.id), ('state', '=', 'confirm')]
+        orderdomain = [('state', 'in', ['confirm', 'producing'])]
+        orderdomain += [('mesline_id', '=', mesline.id), ('id', '!=', workorder.id)]
         workorderlist = self.env['aas.mes.workorder'].search(orderdomain)
         if workorderlist and len(workorderlist) > 0:
             values['orderlist'] = [{
-                'order_id': torder.id, 'order_name': torder.name, 'product_code': torder.product_id.default_code
+                'order_id': torder.id, 'order_name': torder.name,
+                'product_code': torder.product_id.default_code, 'input_qty': torder.input_qty
             } for torder in workorderlist]
         routing = workorder.routing_id
         if not routing:
@@ -589,17 +604,23 @@ class AASMESWorkorder(models.Model):
         if outputlist and len(outputlist) > 0:
             for tempout in outputlist:
                 pkey = 'P-'+str(tempout.product_id.id)
+                output_qty, badmode_qty = tempout.product_qty + tempout.waiting_qty, tempout.badmode_qty
+                total_qty = output_qty + badmode_qty
                 if pkey in outputdict:
-                    outputdict[pkey] += tempout.total_qty
+                    outputdict[pkey]['output_qty'] += output_qty
+                    outputdict[pkey]['badmode_qty'] += badmode_qty
+                    outputdict[pkey]['total_qty'] += total_qty
                 else:
-                    outputdict[pkey] = tempout.total_qty
+                    outputdict[pkey] = {'output_qty': output_qty, 'badmode_qty': badmode_qty, 'total_qty': total_qty}
         for tkey, tval in productdict.items():
             temp_qty = tval['output_qty']
             if tkey in outputdict:
-                temp_qty = outputdict[tkey]
-            tval['output_qty'] = temp_qty
-            tval['actual_qty'] = temp_qty
-            tval['todo_qty'] = tval['input_qty'] - temp_qty
+                temp_qty = outputdict[tkey]['output_qty']
+            tval.update({
+                'output_qty': temp_qty,
+                'todo_qty': tval['input_qty'] - temp_qty,
+                'actual_qty': outputdict[tkey]['total_qty'], 'badmode_qty': outputdict[tkey]['badmode_qty']
+            })
             values['virtuallist'].append(tval)
         return values
 
@@ -610,6 +631,7 @@ class AASMESWorkorder(models.Model):
         :param workorder_id:
         :param product_id:
         :param output_qty:
+        :param badmode_lines:
         :return:
         """
         values = {'success': True, 'message': ''}
@@ -617,7 +639,8 @@ class AASMESWorkorder(models.Model):
         if not vdvalues.get('success', False):
             values.update(vdvalues)
             return values
-        opvalues = self.action_output(workorder_id, product_id, output_qty, badmode_lines=badmode_lines)
+        opvalues = self.action_output(workorder_id, product_id, output_qty, workstation_id=workstation_id,
+                                      badmode_lines=badmode_lines)
         if not opvalues.get('success', False):
             values.update({'success': False, 'message': opvalues['message']})
             return values
@@ -711,19 +734,20 @@ class AASMESWorkorderProduct(models.Model):
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='cascade', index=True)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict', index=True)
     schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', ondelete='restrict', index=True)
+    output_date = fields.Char(string=u'产出日期', copy=False)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict', index=True)
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict', index=True)
     product_qty = fields.Float(string=u'已产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     waiting_qty = fields.Float(string=u'待消耗数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    output_date = fields.Char(string=u'产出日期', copy=False)
+    badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    total_qty = fields.Float(string=u'总数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_total_qty', store=True)
     container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict', help=u'产出成品到容器')
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict', help=u'产出成品到标签')
-    total_qty = fields.Float(string=u'总数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_total_qty', store=True)
 
     @api.depends('product_qty', 'waiting_qty')
     def _compute_total_qty(self):
         for record in self:
-            record.total_qty = record.product_qty + record.waiting_qty
+            record.total_qty = record.product_qty + record.waiting_qty + record.badmode_qty
 
 
 

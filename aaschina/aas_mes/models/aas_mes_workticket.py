@@ -558,6 +558,8 @@ class AASMESWorkticketBadmode(models.Model):
 
     workticket_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'工票', ondelete='cascade', index=True)
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='cascade', index=True)
+    workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='restrict')
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade', index=True)
     badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')
     badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
@@ -566,9 +568,12 @@ class AASMESWorkticketBadmode(models.Model):
     @api.model
     def create(self, vals):
         record = super(AASMESWorkticketBadmode, self).create(vals)
-        if not record.workorder_id and record.workticket_id:
+        tempworkticket = record.workticket_id
+        if tempworkticket:
             record.write({
-                'workorder_id': record.workticket_id.workorder_id.id, 'product_id': record.workticket_id.product_id.id
+                'workorder_id': tempworkticket.workorder_id.id, 'product_id': tempworkticket.product_id.id,
+                'workcenter_id': tempworkticket.workcenter_id.id,
+                'workstation_id': tempworkticket.workcenter_id.workstation_id.id
             })
         return record
 
