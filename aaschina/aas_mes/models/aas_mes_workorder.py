@@ -572,7 +572,7 @@ class AASMESWorkorder(models.Model):
         productdict = {}
         bomdomain = [('bom_id', '=', workorder.aas_bom_id.id), ('workcenter_id', '=', workcenter.id)]
         bomworkcenters = self.env['aas.mes.bom.workcenter'].search(bomdomain)
-        if bomworkcenters and len(bomworkcenters):
+        if bomworkcenters and len(bomworkcenters) > 0:
             for tempbom in bomworkcenters:
                 if not tempbom.product_id.virtual_material:
                     continue
@@ -613,14 +613,12 @@ class AASMESWorkorder(models.Model):
                 else:
                     outputdict[pkey] = {'output_qty': output_qty, 'badmode_qty': badmode_qty, 'total_qty': total_qty}
         for tkey, tval in productdict.items():
-            temp_qty = tval['output_qty']
             if tkey in outputdict:
-                temp_qty = outputdict[tkey]['output_qty']
-            tval.update({
-                'output_qty': temp_qty,
-                'todo_qty': tval['input_qty'] - temp_qty,
-                'actual_qty': outputdict[tkey]['total_qty'], 'badmode_qty': outputdict[tkey]['badmode_qty']
-            })
+                tval.update({
+                    'output_qty': outputdict[tkey]['output_qty'],
+                    'actual_qty': outputdict[tkey]['total_qty'], 'badmode_qty': outputdict[tkey]['badmode_qty']
+                })
+            tval['todo_qty'] = tval['input_qty'] - tval['output_qty']
             values['virtuallist'].append(tval)
         return values
 
