@@ -389,7 +389,10 @@ class AASMESWorkorder(models.Model):
             if workorder.mesline_id.schedule_id:
                 outputvals['schedule_id'] = workorder.mesline_id.schedule_id.id
             outputrecord = self.env['aas.mes.workorder.product'].create(outputvals)
-        outputrecord.write({'waiting_qty': outputrecord.waiting_qty + output_qty, 'badmode_qty': badmode_qty})
+        outputrecord.write({
+            'waiting_qty': outputrecord.waiting_qty + output_qty,
+            'badmode_qty': outputrecord.badmode_qty + badmode_qty
+        })
         result['outputrecord'] = outputrecord
         if tempbadlines and len(tempbadlines) > 0:
             workorder.write({'badmode_lines': tempbadlines})
