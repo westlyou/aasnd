@@ -210,6 +210,40 @@ class AASEquipmentEquipment(models.Model):
         tequipment.doset_mesline_workstation(mesline_id, workstation_id)
         return values
 
+    @api.model
+    def get_printer_list(self):
+        """
+        获取标签打印机清单
+        :return:
+        """
+        values = {'success': True, 'message': '', 'printers': []}
+        printerlist = self.env['aas.label.printer'].search([])
+        if not printerlist or len(printerlist) <= 0:
+            return values
+        values['printers'] = [{
+            'printer_id': printer.id, 'printer_name': printer.name
+        } for printer in printerlist]
+        return values
+
+    def action_print_labels(self, printerid, res_model, res_ids=[]):
+        """
+        打印标签
+        :param printerid:
+        :param res_model:
+        :param res_ids:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'printer': '', 'serverurl': '', 'records': []}
+        if not res_model:
+            values.update({'success': False, 'message': u'请设置有效的打印对象！'})
+            return values
+        if not res_ids or len(res_ids) <= 0:
+            values.update({'success': False, 'message': u'请设置有效的打印对象！'})
+            return values
+        return self.env[res_model].action_print_label(printerid, res_ids)
+
+
+
 
 #######################向导#################################
 
