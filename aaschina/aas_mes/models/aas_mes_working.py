@@ -225,6 +225,8 @@ class AASEquipmentEquipment(models.Model):
         } for printer in printerlist]
         return values
 
+
+    @api.model
     def action_print_labels(self, printerid, res_model, res_ids=[]):
         """
         打印标签
