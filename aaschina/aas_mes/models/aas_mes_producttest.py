@@ -17,22 +17,56 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+DATATYPES = [('char', 'Char'), ('number', 'Number')]
+
+PRODUCTTESTSTATES = [
+    ('draft', u'草稿'), ('prdcheck', u'PRD检查'), ('frmcheck', u'领班检查'), ('ipqcheck', u'IPQC检查'), ('done', u'完成')
+]
+TESTTYPES = [('firstone', u'首件'), ('lastone', u'末件'), ('random', u'抽检')]
+DETERMINETYPES = [('prdcheck', u'PRD检查'), ('frmcheck', u'领班检查'), ('ipqcheck', u'IPQC检查')]
+
+
+# 测试分类
+class AASMESProductTestTemplate(models.Model):
+    _name = 'aas.mes.producttest.template'
+    _description = 'AAS MES ProductTest Template'
+
+    name = fields.Char(string=u'名称', copy=False)
+    operate_time = fields.Datetime(string=u'创建时间', default=fields.Datetime.now, copy=False)
+    operator_id = fields.Many2one('res.users', string=u'创建用户', default=lambda self: self.env.user)
+    parameter_lines = fields.One2many(comodel_name='aas.mes.producttest.template.parameter', inverse_name='template_id',
+                                      string=u'参数明细')
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
+
+
+class AASMESProductTestTemplateParameter(models.Model):
+    _name = 'aas.mes.producttest.template.parameter'
+    _description = 'AAS MES ProductTest Template Parameter'
+    _rec_name = 'parameter_name'
+
+    template_id = fields.Many2one(comodel_name='aas.mes.producttest.template', string=u'测试', ondelete='cascade')
+    sequence = fields.Integer(string=u'序号', required=True)
+    active = fields.Boolean(string=u'有效', default=True, copy=False)
+    parameter_name = fields.Char(string=u'名称', required=True, copy=False)
+    parameter_type = fields.Selection(selection=DATATYPES, string=u'数据类型', default='char', copy=False)
+    parameter_note = fields.Text(string=u'备注说明')
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
+
+
 
 class AASMESProductTest(models.Model):
     _name = 'aas.mes.producttest'
     _description = 'AAS MES ProductTest'
 
     name = fields.Char(string=u'名称', copy=False)
+    template_id = fields.Many2one(comodel_name='aas.mes.producttest.template', string=u'测试分类', ondelete='restrict')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict', index=True)
     workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='restrict', index=True)
     active = fields.Boolean(string=u'有效', default=True, copy=False)
     operate_time = fields.Datetime(string=u'创建时间', default=fields.Datetime.now, copy=False)
-    operator_id = fields.Many2one(comodel_name='res.users', string=u'创建用户',
-                                  ondelete='restrict', default=lambda self: self.env.user)
-    parameter_lines = fields.One2many(comodel_name='aas.mes.producttest.parameter', inverse_name='producttest_id',
-                                      string=u'参数明细')
-    company_id = fields.Many2one(comodel_name='res.company', string=u'公司',
-                                 default=lambda self: self.env.user.company_id)
+    operator_id = fields.Many2one('res.users', string=u'创建用户', default=lambda self: self.env.user)
+    parameter_lines = fields.One2many('aas.mes.producttest.parameter', inverse_name='producttest_id', string=u'参数明细')
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     _sql_constraints = [
         ('uniq_test', 'unique (workcenter_id, product_id)', u'请不要重复添加同一个测试信息！')
@@ -123,21 +157,13 @@ class AASMESProductTestParameter(models.Model):
     sequence = fields.Integer(string=u'序号', required=True)
     active = fields.Boolean(string=u'有效', default=True, copy=False)
     parameter_name = fields.Char(string=u'名称', required=True, copy=False)
-    parameter_type = fields.Selection(selection=[('char', 'Char'), ('number', 'Number')],
-                                      string=u'数据类型', default='char', copy=False)
+    parameter_type = fields.Selection(selection=DATATYPES, string=u'数据类型', default='char', copy=False)
     parameter_value = fields.Char(string=u'规格值', copy=False)
     parameter_maxvalue = fields.Float(string=u'规格上限')
     parameter_minvalue = fields.Float(string=u'规格下限')
     parameter_note = fields.Text(string=u'备注说明')
-    company_id = fields.Many2one(comodel_name='res.company',
-                                 string=u'公司', default=lambda self: self.env.user.company_id)
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
-
-
-PRODUCTTESTSTATES = [('draft', u'草稿'), ('prdcheck', u'PRD检查'), ('frmcheck', u'领班检查'),
-                  ('ipqcheck', u'IPQC检查'), ('done', u'完成')]
-TESTTYPES = [('firstone', u'首件'), ('lastone', u'末件'), ('random', u'抽检')]
-DETERMINETYPES = [('prdcheck', u'PRD检查'), ('frmcheck', u'领班检查'), ('ipqcheck', u'IPQC检查')]
 
 # 首末件工单
 class AASMESProductTestOrder(models.Model):
@@ -174,7 +200,7 @@ class AASMESProductTestOrder(models.Model):
 
 
     @api.multi
-    def  unlink(self):
+    def unlink(self):
         for record in self:
             if record.state != 'draft':
                 raise UserError(u'%s检测已经执行不可以删除！'% record.name)
