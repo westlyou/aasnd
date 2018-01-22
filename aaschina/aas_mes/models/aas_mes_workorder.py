@@ -368,7 +368,7 @@ class AASMESWorkorder(models.Model):
                     'badmode_id': badline.get('badmode_id', False), 'badmode_qty': badline.get('badmode_qty', 0.0)
                 }
                 badmode_qty += badline['badmode_qty']
-                tempbadlines.append(templine)
+                tempbadlines.append((0, 0, templine))
         output_qty = commit_qty - badmode_qty
         output_date = workorder.mesline_id.workdate
         lot_name = output_date.replace('-', '')
