@@ -363,8 +363,12 @@ class AASMESWorkorder(models.Model):
         if badmode_lines and len(badmode_lines) > 0:
             workstation_id = False if not workstation_id else workstation_id
             for badline in badmode_lines:
-                badline.update({'workstation_id': workstation_id, 'product_id': product_id})
+                templine = {
+                    'workstation_id': workstation_id, 'product_id': product_id,
+                    'badmode_id': badline.get('badmode_id', False), 'badmode_qty': badline.get('badmode_qty', 0.0)
+                }
                 badmode_qty += badline['badmode_qty']
+                tempbadlines.append(templine)
         output_qty = commit_qty - badmode_qty
         output_date = workorder.mesline_id.workdate
         lot_name = output_date.replace('-', '')
