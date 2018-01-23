@@ -176,6 +176,13 @@ class AASMESWorkorder(models.Model):
         确认工单；工位式生产工单需要生成首道工序工票；生成物料消耗清单
         :return:
         """
+        if not self.mesline_id:
+            raise UserError(u'当前工单还未设置产线信息！')
+        if self.mesline_id.line_type == 'station':
+            if not self.output_manner:
+                raise UserError(u'请先设置工单产出方式！')
+            if self.output_manner not in ['container', 'label']:
+                raise UserError(u'产线%s的产出方式只能是容器或标签，请设置有效的产出方式！')
         self.write({'state': 'confirm'})
         self.action_build_first_workticket()
         self.action_build_consumelist()

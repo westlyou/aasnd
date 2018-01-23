@@ -384,7 +384,7 @@ mui.ready(function(){
                     mui.toast(dresult.message);
                     return ;
                 }
-                if(needprinter=='wanted' && dresult.labelid!='0'){
+                if(needprinter=='wanted' && dresult.labelid!='0' && dresult.labelid!=0){
                     autoprintlabel(temprinterid, [dresult.labelid]);
                 }else{
                     window.location.replace('/aaswechat/mes');

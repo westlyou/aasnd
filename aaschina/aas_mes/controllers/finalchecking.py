@@ -148,6 +148,11 @@ class AASMESFinalCheckingController(http.Controller):
         if not mesline or not workstation:
             values.update({'success': False, 'message': u'当前登录员工还未绑定产线工位'})
             return values
+        tempemployeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        tempemloyeelist = self.env['aas.mes.workstation.employee'].search(tempemployeedomain)
+        if not tempemloyeelist or len(tempemloyeelist) <= 0:
+            values.update({'success': False, 'message': u'当前岗位可能没有员工在岗，请先让员工上岗再继续操作！'})
+            return values
         workorder = mesline.workorder_id
         tempoperation = request.env['aas.mes.operation'].search([('serialnumber_name', '=', barcode)], limit=1)
         if not tempoperation:

@@ -104,13 +104,13 @@ class AASWorkorderWechatController(http.Controller):
             values.update({'success': False, 'message': u'工票已完工，不可以再操作！'})
         workorder = workticket.workorder_id
         product_code = workticket.product_id.default_code
-        temp_qty = workticket.output_qty + workticket.badmode_qty
+        output_qty, badmode_qty = workticket.output_qty, workticket.badmode_qty
         values.update({
             'workticket_id': workticketid, 'workticket_name': workticket.name,
             'time_start': fields.Datetime.to_china_string(workticket.time_start),
             'sequence': workticket.sequence, 'workcenter_name': workticket.workcenter_name,
             'product_code': product_code, 'input_qty': workticket.input_qty, 'output_manner': workorder.output_manner,
-            'output_qty': temp_qty, 'workorder_name': workticket.workorder_id.name,
+            'output_qty': output_qty, 'badmode_qty': badmode_qty, 'workorder_name': workticket.workorder_id.name,
             'mesline_name': workticket.mesline_name, 'workstation_name': '', 'employeelist': [], 'equipmentlist': []
         })
         if workticket.workcenter_id.workstation_id:

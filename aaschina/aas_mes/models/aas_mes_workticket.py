@@ -150,7 +150,7 @@ class AASMESWorkticket(models.Model):
 
     @api.one
     def action_doing_commit(self, commit_qty, badmode_lines=[], container_id=False):
-        ticketvals, product_output_qty = {'output_qty': self.output_qty + commit_qty}, commit_qty
+        ticketvals, output_qty, badmode_qty = {'output_qty': self.output_qty + commit_qty}, commit_qty, 0.0
         needcontainer = self.islastworkcenter() and self.workorder_id.output_manner == 'container'
         if needcontainer:
             if not container_id:
@@ -158,14 +158,16 @@ class AASMESWorkticket(models.Model):
             else:
                 ticketvals['container_id'] = container_id
         if badmode_lines and len(badmode_lines) > 0:
-            badmodelist, badmode_qty = [], 0.0
+            badmodelist = []
             for badmode in badmode_lines:
                 badmodelist.append((0, 0, badmode))
                 badmode_qty += badmode['badmode_qty']
             ticketvals['badmode_lines'] = badmodelist
-            product_output_qty -= badmode_qty
+            output_qty -= badmode_qty
             ticketvals['output_qty'] -= badmode_qty
             ticketvals['badmode_qty'] = badmode_qty + self.badmode_qty
+        if float_compare(badmode_qty, commit_qty, precision_rounding=0.000001) > 0:
+            raise UserError(u'不良数量不能超过上报总数！')
         self.write(ticketvals)
         # 添加追溯信息
         workcenter, mesline = self.workcenter_id, self.mesline_id
@@ -184,7 +186,7 @@ class AASMESWorkticket(models.Model):
             # 物料消耗
             self.action_workticket_consume(temptrace, commit_qty)
             # 工票产出
-            self.action_workticket_output(temptrace, product_output_qty)
+            self.action_workticket_output(temptrace, output_qty, badmode_qty)
         except UserError, ue:
             raise UserError(ue.name)
         except ValidationError, ve:
@@ -286,7 +288,7 @@ class AASMESWorkticket(models.Model):
 
 
     # 工票产出和结单
-    def action_workticket_output(self, trace, output_qty):
+    def action_workticket_output(self, trace, output_qty, badmode_qty):
         workorder, mesline, product = self.workorder_id, self.workorder_id.mesline_id, self.product_id
         if not mesline.workdate:
             mesline.action_refresh_schedule()
@@ -299,9 +301,9 @@ class AASMESWorkticket(models.Model):
         trace.write({'product_lot': product_lot.id, 'product_lot_name': product_lot.name})
         if self.islastworkcenter():
             if workorder.output_manner == 'container' and self.container_id:
-                self.action_output2container(product_lot, output_qty, self.container_id.id)
+                self.action_output2container(product_lot, output_qty, self.container_id.id, badmode_qty)
             if workorder.output_manner == 'label':
-                self.action_output2label(product_lot, output_qty)
+                self.action_output2label(product_lot, output_qty, badmode_qty)
         # 根据结单方式判断什么时候自动结单
         closeorder = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'closeorder_method')
         if closeorder == 'equal':
@@ -313,7 +315,7 @@ class AASMESWorkticket(models.Model):
                 self.action_workticket_done()
 
     @api.one
-    def action_output2container(self, product_lot, output_qty, container_id):
+    def action_output2container(self, product_lot, output_qty, container_id, badmode_qty=0.0):
         """产出到容器
         :param product_lot:
         :param output_qty:
@@ -322,11 +324,15 @@ class AASMESWorkticket(models.Model):
         """
         workorder = self.workorder_id
         mesline, product = workorder.mesline_id, workorder.product_id
-        self.env['aas.mes.workorder.product'].create({
-            'workorder_id': workorder.id, 'mesline_id': mesline.id, 'product_id': product.id,
-            'product_lot': product_lot.id, 'product_qty': output_qty, 'output_date': mesline.workdate,
-            'container_id': container_id, 'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id
+        scheduleid = False if not mesline.schedule_id else mesline.schedule_id.id
+        tempoutput = self.env['aas.mes.workorder.product'].create({
+            'workorder_id': workorder.id, 'mesline_id': mesline.id,
+            'product_id': product.id, 'product_lot': product_lot.id,
+            'product_qty': output_qty, 'output_date': mesline.workdate,
+            'schedule_id': scheduleid, 'badmode_qty': badmode_qty
         })
+        if float_compare(output_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+            return
         stockdomain = [('container_id', '=', container_id)]
         stockdomain += [('product_id', '=', product.id), ('product_lot', '=', product_lot.id)]
         containerstock = self.env['aas.container.product'].search(stockdomain, limit=1)
@@ -338,9 +344,10 @@ class AASMESWorkticket(models.Model):
         else:
             containerstock.write({'temp_qty': containerstock.temp_qty+output_qty})
         containerstock.action_stock(output_qty)
+        tempoutput.write({'container_id': container_id})
 
     @api.one
-    def action_output2label(self, product_lot, output_qty):
+    def action_output2label(self, product_lot, output_qty, badmode_qty=0.0):
         """产出到标签
         :param product_lot:
         :param output_qty:
@@ -348,16 +355,21 @@ class AASMESWorkticket(models.Model):
         """
         workorder = self.workorder_id
         mesline, product = workorder.mesline_id, workorder.product_id
+        scheduleid = False if not mesline.schedule_id else mesline.schedule_id.id
+        tempoutput = self.env['aas.mes.workorder.product'].create({
+            'workorder_id': workorder.id, 'mesline_id': mesline.id,
+            'product_id': product.id, 'product_lot': product_lot.id,
+            'product_qty': output_qty, 'output_date': mesline.workdate,
+            'schedule_id': scheduleid, 'badmode_qty': badmode_qty
+        })
+        if float_compare(output_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+            return
         label = self.env['aas.product.label'].create({
             'product_id': product.id, 'product_lot': product_lot.id, 'stocked': True,
             'product_qty': output_qty, 'location_id': mesline.location_production_id.id
         })
         label.action_stock(self.env.ref('stock.location_production').id)
-        self.env['aas.mes.workorder.product'].create({
-            'workorder_id': workorder.id, 'mesline_id': mesline.id, 'product_id': product.id,
-            'product_lot': product_lot.id, 'product_qty': output_qty, 'output_date': mesline.workdate,
-            'label_id': label.id, 'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id
-        })
+        tempoutput.write({'label_id': label.id})
         self.write({'label_id': label.id})
 
 
