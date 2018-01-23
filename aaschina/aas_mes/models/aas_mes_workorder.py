@@ -21,7 +21,7 @@ _logger = logging.getLogger(__name__)
 # 子工单
 
 ORDERSTATES = [('draft', u'草稿'), ('confirm', u'确认'), ('producing', u'生产'), ('pause', u'暂停'), ('done', u'完成')]
-OUTPUTMANNERS = [('container', u'容器'), ('label', u'标签'), ('none', u'暂无')]
+OUTPUTMANNERS = [('container', u'容器'), ('label', u'标签')]
 
 class AASMESWorkorder(models.Model):
     _name = 'aas.mes.workorder'
@@ -176,13 +176,6 @@ class AASMESWorkorder(models.Model):
         确认工单；工位式生产工单需要生成首道工序工票；生成物料消耗清单
         :return:
         """
-        if not self.mesline_id:
-            raise UserError(u'当前工单还未设置产线信息！')
-        if self.mesline_id.line_type == 'station':
-            if not self.output_manner:
-                raise UserError(u'请先设置工单产出方式！')
-            if self.output_manner not in ['container', 'label']:
-                raise UserError(u'产线%s的产出方式只能是容器或标签，请设置有效的产出方式！')
         self.write({'state': 'confirm'})
         self.action_build_first_workticket()
         self.action_build_consumelist()

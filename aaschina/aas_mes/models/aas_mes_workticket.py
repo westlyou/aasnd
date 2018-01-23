@@ -150,6 +150,7 @@ class AASMESWorkticket(models.Model):
 
     @api.one
     def action_doing_commit(self, commit_qty, badmode_lines=[], container_id=False):
+        _logger.info(u'工票%s开始报工;当前时间：%s', self.name, fields.Datetime.now())
         ticketvals, output_qty, badmode_qty = {'output_qty': self.output_qty + commit_qty}, commit_qty, 0.0
         needcontainer = self.islastworkcenter() and self.workorder_id.output_manner == 'container'
         if needcontainer:
@@ -169,6 +170,7 @@ class AASMESWorkticket(models.Model):
         if float_compare(badmode_qty, commit_qty, precision_rounding=0.000001) > 0:
             raise UserError(u'不良数量不能超过上报总数！')
         self.write(ticketvals)
+        _logger.info(u'工票%s更新产出信息;当前时间：%s;产出数量%s,不良数量%s', self.name, fields.Datetime.now(), output_qty, badmode_qty)
         # 添加追溯信息
         workcenter, mesline = self.workcenter_id, self.mesline_id
         workstation, workorder = workcenter.workstation_id, self.workorder_id
@@ -191,6 +193,7 @@ class AASMESWorkticket(models.Model):
             raise UserError(ue.name)
         except ValidationError, ve:
             raise ValidationError(ve.name)
+        _logger.info(u'工票%s报工结束;当前时间：%s', self.name, fields.Datetime.now())
 
 
     @api.one
@@ -201,6 +204,7 @@ class AASMESWorkticket(models.Model):
         :param commit_qty:
         :return:
         """
+        _logger.info(u'工票%s开始物料消耗;当前时间：%s;待消耗数量%s', self.name, fields.Datetime.now(), commit_qty)
         workorder, workcenter = self.workorder_id, self.workcenter_id
         product, workstation, mesline = self.product_id, workcenter.workstation_id, self.mesline_id
         if not workstation:
@@ -265,30 +269,28 @@ class AASMESWorkticket(models.Model):
                 }
                 movevallist.append(moveval)
                 want_qty -= tempqty
+        _logger.info(u'工票%s消耗明细计算结束;当前时间：%s', self.name, fields.Datetime.now())
         if movevallist and len(movevallist) > 0:
             for moveval in movevallist:
-                moverecord = self.env['stock.move'].create(moveval)
-                # 如果来源库位是一个容器则需要更新容器库存信息
-                tcontainer = moverecord.location_id.container_id
-                if tcontainer:
-                    tproduct_qty = moverecord.product_uom_qty
-                    tproduct_id, tproduct_lot = moverecord.product_id.id, moverecord.restrict_lot_id.id
-                    tcontainer.action_consume(tproduct_id, tproduct_lot, tproduct_qty)
-                movelist |= moverecord
+                movelist |= self.env['stock.move'].create(moveval)
         if movelist and len(movelist) > 0:
             movelist.action_done()
+            _logger.info(u'工票%s库存已消耗;当前时间：%s', self.name, fields.Datetime.now())
         if materiallist and len(materiallist) > 0:
             trace.write({'materiallist': ','.join(materiallist)})
         workorder.write({'consume_lines': consumelines})
+        _logger.info(u'工票%s更新消耗明细;当前时间：%s', self.name, fields.Datetime.now())
         # 刷新上料记录库存
         feeddomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
         feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
         if feedmateriallist and len(feedmateriallist) > 0:
             feedmateriallist.action_freshandclear()
+        _logger.info(u'工票%s结束物料消耗;当前时间：%s', self.name, fields.Datetime.now())
 
 
     # 工票产出和结单
     def action_workticket_output(self, trace, output_qty, badmode_qty):
+        _logger.info(u'工票%s开始产出;当前时间：%s;产出数量%s;不良数量%s', self.name, fields.Datetime.now(), output_qty, badmode_qty)
         workorder, mesline, product = self.workorder_id, self.workorder_id.mesline_id, self.product_id
         if not mesline.workdate:
             mesline.action_refresh_schedule()
@@ -313,6 +315,7 @@ class AASMESWorkticket(models.Model):
             total_qty = self.output_qty + self.badmode_qty
             if float_compare(total_qty, self.input_qty, precision_rounding=0.000001) >= 0.0:
                 self.action_workticket_done()
+        _logger.info(u'工票%s产出结束;当前时间：%s', self.name, fields.Datetime.now())
 
     @api.one
     def action_output2container(self, product_lot, output_qty, container_id, badmode_qty=0.0):
@@ -322,6 +325,7 @@ class AASMESWorkticket(models.Model):
         :param container_id:
         :return:
         """
+        _logger.info(u'工票%s容器产出;当前时间：%s', self.name, fields.Datetime.now())
         workorder = self.workorder_id
         mesline, product = workorder.mesline_id, workorder.product_id
         scheduleid = False if not mesline.schedule_id else mesline.schedule_id.id
@@ -345,6 +349,7 @@ class AASMESWorkticket(models.Model):
             containerstock.write({'temp_qty': containerstock.temp_qty+output_qty})
         containerstock.action_stock(output_qty)
         tempoutput.write({'container_id': container_id})
+        _logger.info(u'工票%s容器产出到容器;当前容器：%s', self.name, tempoutput.container_id.name)
 
     @api.one
     def action_output2label(self, product_lot, output_qty, badmode_qty=0.0):
@@ -353,6 +358,7 @@ class AASMESWorkticket(models.Model):
         :param output_qty:
         :return:
         """
+        _logger.info(u'工票%s标签产出;当前时间：%s', self.name, fields.Datetime.now())
         workorder = self.workorder_id
         mesline, product = workorder.mesline_id, workorder.product_id
         scheduleid = False if not mesline.schedule_id else mesline.schedule_id.id
@@ -371,6 +377,7 @@ class AASMESWorkticket(models.Model):
         label.action_stock(self.env.ref('stock.location_production').id)
         tempoutput.write({'label_id': label.id})
         self.write({'label_id': label.id})
+        _logger.info(u'工票%s容器产出到标签;当前标签：%s', self.name, label.name)
 
 
     @api.one
@@ -378,6 +385,7 @@ class AASMESWorkticket(models.Model):
         """结束当前工票
         :return:
         """
+        _logger.info(u'工票%s完工;当前时间：%s', self.name, fields.Datetime.now())
         self.write({'state': 'done', 'time_finish': fields.Datetime.now()})
         workorder, currentworkcenter = self.workorder_id, self.workcenter_id
         domain = [('routing_id', '=', self.routing_id.id), ('sequence', '>', currentworkcenter.sequence)]
@@ -394,6 +402,7 @@ class AASMESWorkticket(models.Model):
                 'mainorder_name': self.mainorder_name, 'mesline_id': self.mesline_id.id,
                 'mesline_name': self.mesline_name, 'sequence': nextworkcenter.sequence
             })
+            _logger.info(u'工票%s完工创建新工票%s;当前时间：%s', self.name, tempworkcenter.name, fields.Datetime.now())
             workordervals = {'workcenter_id': tempworkcenter.id, 'workcenter_name': nextworkcenter.name}
             if float_compare(self.badmode_qty, 0.0, precision_rounding=0.000001) > 0.0:
                 consumedomain = [('workorder_id', '=', workorder.id), ('workcenter_id', '=', nextworkcenter.id)]
@@ -407,6 +416,7 @@ class AASMESWorkticket(models.Model):
             workorder.write(workordervals)
         else:
             workorder.action_done()
+            _logger.info(u'工票%s完工;工单%s完工;当前时间：%s', self.name, workorder.name, fields.Datetime.now())
 
 
 
