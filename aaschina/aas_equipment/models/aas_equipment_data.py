@@ -34,7 +34,7 @@ class AASEquipmentData(models.Model, RedisModel):
     app_secret = fields.Integer(string=u'秘钥')
     timstamp = fields.Datetime(string=u'传输时间')
     operate_time = fields.Datetime(string=u'操作时间')
-    data_type = fields.Selection(selection=[('D', 'Debug'), ('P', 'Production'), ('T', 'Test')], string=u'数据类型')
+    data_type = fields.Char(string=u'数据类型')
 
     lot_code = fields.Char(string=u'批次号')
     serial_number = fields.Char(string=u'序列号')

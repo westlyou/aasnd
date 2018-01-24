@@ -71,6 +71,29 @@ class AASMESProductionLabel(models.Model):
             'domain': "[('label_id','=',"+str(self.label_id.id)+")]"
         }
 
+
+    @api.multi
+    def action_update_serialnumber(self):
+        self.ensure_one()
+        wizard = self.env['aas.mes.production.label.update.serialnumber.wizard'].create({
+            'plabel_id': self.id, 'label_id': self.label_id.id,
+            'product_id': self.label_id.product_id.id, 'lot_id': self.label_id.product_lot.id,
+            'product_qty': self.label_id.product_qty
+        })
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_production_label_update_serialnumber_wizard')
+        return {
+            'name': u"更新标签序列号",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.mes.production.label.update.serialnumber.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
 # 生产杂入
 class AASMESSundryin(models.Model):
     _name = 'aas.mes.sundryin'
@@ -356,6 +379,129 @@ class AASMESProductionOutputQueryLineWizard(models.TransientModel):
     once_rate = fields.Float(string=u'一次优率', default=0.0)
     twice_rate = fields.Float(string=u'二次优率', default=0.0)
 
+
+
+class AASMESProductionLabelUpdateSerialnumberWizard(models.TransientModel):
+    _name = 'aas.mes.production.label.update.serialnumber.wizard'
+    _description = 'AAS MES Production Label Update Serialnumber Wizard'
+
+    plabel_id = fields.Many2one(comodel_name='aas.mes.production.label', string=u'标签', ondelete='cascade')
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    lot_id = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', index=True)
+    product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+
+    add_lines = fields.One2many('aas.mes.production.label.update.addserial.wizard', inverse_name='wizard_id', string=u'新增明细')
+    del_lines = fields.One2many('aas.mes.production.label.update.delserial.wizard', inverse_name='wizard_id', string=u'删除明细')
+
+    @api.one
+    def action_done(self):
+        tlabel, plabel = self.label_id, self.plabel_id
+        addcount = 0 if not self.add_lines else len(self.add_lines)
+        delcount = 0 if not self.del_lines else len(self.del_lines)
+        if addcount <= 0 and delcount <= 0:
+            raise UserError(u'请先设置需要新增或则清理的序列号！')
+        if addcount > 0:
+            aserialnumberlist = self.env['aas.mes.serialnumber']
+            for tserial in self.add_lines:
+                aserialnumberlist |= tserial.serialnumber_id
+            aserialnumberlist.write({'label_id': tlabel.id, 'product_lot': tlabel.product_lot.id})
+        if delcount > 0:
+            dserialnumberlist, doperationlist = self.env['aas.mes.serialnumber'], self.env['aas.mes.operation']
+            for tserial in self.del_lines:
+                dserialnumberlist |= tserial.serialnumber_id
+                doperationlist |= tserial.serialnumber_id.operation_id
+            dserialnumberlist.write({'label_id': False, 'product_lot': False})
+            doperationlist.write({'gp12_check': False, 'gp12_record_id': False, 'gp12_date': False, 'gp12_time': False})
+        if addcount == delcount:
+            return
+        labelocation = tlabel.location_id
+        pdtlocation = self.env.ref('stock.location_production')
+        movevals = {
+            'name': tlabel.name, 'product_id': tlabel.product_id.id,
+            'company_id': self.env.user.company_id.id, 'product_uom': tlabel.product_id.uom_id.id,
+            'create_date': fields.Datetime.now(), 'restrict_lot_id': tlabel.product_lot.id,
+            'product_uom_qty': abs(addcount - delcount)
+        }
+        if addcount > delcount:
+            movevals.update({'location_id': pdtlocation.id, 'location_dest_id': labelocation.id})
+        else:
+            movevals.update({'location_id': labelocation.id, 'location_dest_id': pdtlocation.id})
+        self.env['stock.move'].create(movevals).action_done()
+        temp_qty = tlabel.product_qty + addcount - delcount
+        plabel.write({'product_qty': temp_qty})
+        tlabel.write({'product_qty': temp_qty})
+
+
+
+class AASMESProductionLabelUpdateAddserialWizard(models.TransientModel):
+    _name = 'aas.mes.production.label.update.addserial.wizard'
+    _description = 'AAS MES Production Label Update Addserial Wizard'
+
+    wizard_id = fields.Many2one(comodel_name='aas.mes.production.label.update.serialnumber.wizard', string='Wizard', ondelete='cascade')
+    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
+    sequence_code = fields.Char(string=u'序列编码', copy=False)
+
+    @api.onchange('serialnumber_id')
+    def action_change_serialnumber(self):
+        if not self.serialnumber_id:
+            self.product_id, self.sequence_code = False, False
+        else:
+            self.product_id = self.serialnumber_id.product_id.id
+            self.sequence_code = self.serialnumber_id.sequence_code
+
+    @api.model
+    def create(self, vals):
+        record = super(AASMESProductionLabelUpdateAddserialWizard, self).create(vals)
+        record.write({
+            'product_id': record.serialnumber_id.product_id.id,
+            'sequence_code': record.serialnumber_id.sequence_code
+        })
+        return record
+
+
+    @api.one
+    @api.constrains('serialnumber_id')
+    def action_check_serialnumber(self):
+        plabel = self.wizard_id.plabel_id
+        serialnumber = self.serialnumber_id
+        if serialnumber.label_id:
+            raise ValidationError(u'序列号%s已绑定在标签%中，不可以随意更换标签'% (serialnumber.name, serialnumber.label_id.name))
+        if plabel.label_id.product_id.id != serialnumber.product_id.id:
+            raise ValidationError(u'序列号%s与标签%s的产品不一致，不可以添加到此标签中！'% (serialnumber.name, plabel.label_id.name))
+        toperation = serialnumber.operation_id
+        if not toperation.gp12_check:
+            raise ValidationError(u'序列号%s还未通过GP12检测，不可以添加到产出标签！'% serialnumber.name)
+
+
+
+class AASMESProductionLabelUpdateDelserialWizard(models.TransientModel):
+    _name = 'aas.mes.production.label.update.delserial.wizard'
+    _description = 'AAS MES Production Label Update Delserial Wizard'
+
+    wizard_id = fields.Many2one(comodel_name='aas.mes.production.label.update.serialnumber.wizard', string='Wizard', ondelete='cascade')
+    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
+    sequence_code = fields.Char(string=u'序列编码', copy=False)
+
+
+    @api.onchange('serialnumber_id')
+    def action_change_serialnumber(self):
+        if not self.serialnumber_id:
+            self.product_id, self.sequence_code = False, False
+        else:
+            self.product_id = self.serialnumber_id.product_id.id
+            self.sequence_code = self.serialnumber_id.sequence_code
+
+    @api.model
+    def create(self, vals):
+        record = super(AASMESProductionLabelUpdateDelserialWizard, self).create(vals)
+        record.write({
+            'product_id': record.serialnumber_id.product_id.id,
+            'sequence_code': record.serialnumber_id.sequence_code
+        })
+        return record
 
 
 
