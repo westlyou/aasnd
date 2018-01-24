@@ -33,6 +33,7 @@ DETERMINETYPES = [('prdcheck', u'PRD检查'), ('frmcheck', u'领班检查'), ('i
 class AASMESProductTestTemplate(models.Model):
     _name = 'aas.mes.producttest.template'
     _description = 'AAS MES ProductTest Template'
+    _order = 'id desc'
 
     name = fields.Char(string=u'名称', copy=False)
     operate_time = fields.Datetime(string=u'创建时间', default=fields.Datetime.now, copy=False)
@@ -87,6 +88,7 @@ class AASMESProductTestTemplateParameter(models.Model):
 class AASMESProductTest(models.Model):
     _name = 'aas.mes.producttest'
     _description = 'AAS MES ProductTest'
+    _order = 'id desc'
 
     name = fields.Char(string=u'名称', copy=False)
     template_id = fields.Many2one(comodel_name='aas.mes.producttest.template', string=u'测试分类', ondelete='restrict')
@@ -213,6 +215,7 @@ class AASMESProductTestParameter(models.Model):
 class AASMESProductTestOrder(models.Model):
     _name = 'aas.mes.producttest.order'
     _description = 'AAS MES ProductTest Order'
+    _order = 'id desc'
 
     name = fields.Char(string=u'名称', copy=False)
     producttest_id = fields.Many2one(comodel_name='aas.mes.producttest', string=u'测试', ondelete='restrict')
