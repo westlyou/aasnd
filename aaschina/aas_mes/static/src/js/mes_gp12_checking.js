@@ -330,6 +330,7 @@ $(function() {
                         error:function(XMLHttpRequest,textStatus,errorThrown){}
                     });
                 });
+                $('#speechcontent').speech({"speech": false, "speed": 6, 'content': '标签已经打印，请注意查收'});
             },
             error:function(xhr,type,errorThrown){
                 scanable = true;

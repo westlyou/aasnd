@@ -63,7 +63,7 @@ class AASMESSerialnumberController(http.Controller):
         regular_code = values['serial_supplier'] + values['serial_year'] + values['serial_week'] + values['serial_weekday']
         regular_code += values['serial_type'] + values['serial_extend']
         values['regular_code'] = regular_code
-        serialdomain = [('regular_code', '=', regular_code)]
+        serialdomain = [('regular_code', '=', regular_code), ('mesline_id', '=', mesline.id)]
         maxserialnumber = request.env['aas.mes.serialnumber'].search(serialdomain, order='sequence desc', limit=1)
         if maxserialnumber:
             values['lastserialnumber'] = maxserialnumber.name
