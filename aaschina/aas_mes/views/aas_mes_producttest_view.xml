@@ -112,6 +112,7 @@
                     <field name="operator_id"/>
                     <field name="operate_time"/>
                     <field name="template_id"/>
+                    <field name="state"/>
                 </tree>
             </field>
         </record>
@@ -123,12 +124,15 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
+                        <button name="action_confirm" type="object" string="确认" class="oe_highlight"
+                                states="draft" groups="aas_mes.group_aas_mes_technologist"/>
                         <button name="action_firstone_checking" type="object" string="首件登记" class="oe_highlight"
-                                groups="aas_mes.group_aas_manufacture_user"/>
+                                states="confirm" groups="aas_mes.group_aas_manufacture_user"/>
                         <button name="action_lastone_checking" type="object" string="末件登记" class="oe_highlight"
-                                groups="aas_mes.group_aas_manufacture_user"/>
+                                states="confirm" groups="aas_mes.group_aas_manufacture_user"/>
                         <button name="action_random_checking" type="object" string="抽检登记" class="oe_highlight"
-                                groups="aas_mes.group_aas_manufacture_user"/>
+                                states="confirm" groups="aas_mes.group_aas_manufacture_user"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm"/>
                     </header>
                     <sheet>
                         <group>
@@ -191,11 +195,14 @@
                 <search>
                     <field name="workcenter_id" string="工序" filter_domain="[('workcenter_id','ilike',self)]"/>
                     <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="template_id" string="分类" filter_domain="[('template_id','ilike',self)]"/>
                     <separator/>
                     <filter string="线下PN" domain="[('product_id','=',False)]" />
+                    <filter string="待确认" domain="[('state','=','draft')]" />
                     <group expand="0" string="分组">
                         <filter string="工序" context="{'group_by':'workcenter_id'}"/>
                         <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="分类" context="{'group_by':'template_id'}"/>
                     </group>
                 </search>
             </field>

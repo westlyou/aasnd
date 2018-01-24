@@ -19,6 +19,8 @@ _logger = logging.getLogger(__name__)
 
 DATATYPES = [('char', 'Char'), ('number', 'Number')]
 
+TESTSTATES = [('draft', u'草稿'), ('confirm', u'确认')]
+
 PRODUCTTESTSTATES = [
     ('draft', u'草稿'), ('confirm', u'确认'),
     ('prdcheck', u'PRD检查'), ('frmcheck', u'领班检查'), ('ipqcheck', u'IPQC检查'), ('done', u'完成')
@@ -91,14 +93,20 @@ class AASMESProductTest(models.Model):
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict', index=True)
     workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='restrict', index=True)
     active = fields.Boolean(string=u'有效', default=True, copy=False)
+    state = fields.Selection(selection=TESTSTATES, string=u'状态', default='draft', copy=False)
     operate_time = fields.Datetime(string=u'创建时间', default=fields.Datetime.now, copy=False)
     operator_id = fields.Many2one('res.users', string=u'创建用户', default=lambda self: self.env.user)
     parameter_lines = fields.One2many('aas.mes.producttest.parameter', inverse_name='producttest_id', string=u'参数明细')
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
+
     _sql_constraints = [
         ('uniq_test', 'unique (workcenter_id, product_id)', u'请不要重复添加同一个测试信息！')
     ]
+
+    @api.one
+    def action_confirm(self):
+        self.write({'state': 'confirm'})
 
     @api.multi
     def action_firstone_checking(self):
