@@ -11,7 +11,7 @@
      """,
     'author': 'Luforn',
     'website': 'http://www.zhiq.info',
-    'depends': ['aas_wms'],
+    'depends': ['aas_wms', 'aas_mes'],
     'data': [
         'security/aas_quality_security.xml',
         'security/ir.model.access.csv',
@@ -26,7 +26,11 @@
         'views/aas_quality_concession_view.xml',
 
         'wechat/views/aas_wechat_quality_template.xml',
-        'wechat/views/aas_wechat_quality_order_template.xml'
+        'wechat/views/aas_wechat_quality_order_template.xml',
+
+        'views/aas_mes_producttest_view.xml',
+        'views/aas_mes_rework_view.xml',
+        'views/aas_mes_tracing_view.xml'
     ],
     'qweb':[],
     'installable': True,

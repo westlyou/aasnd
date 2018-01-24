@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_mes_tracing_quality" model="ir.ui.view">
+            <field name="name">aas.mes.tracing.quality.tree</field>
+            <field name="model">aas.mes.tracing</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="mesline_id"/>
+                    <field name="workdate"/>
+                    <field name="schedule_id"/>
+                    <field name="mainorder_id"/>
+                    <field name="workorder_id"/>
+                    <field name="workcenter_id"/>
+                    <field name="workstation_id"/>
+                    <field name="product_id"/>
+                    <field name="product_uom"/>
+                    <field name="product_lot"/>
+                    <field name="date_code"/>
+                    <field name="date_start"/>
+                    <field name="date_finish"/>
+                    <field name="materiallist"/>
+                    <field name="equipmentlist"/>
+                    <field name="employeelist"/>
+                    <field name="serialnumbers"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_tracing_quality" model="ir.ui.view">
+            <field name="name">aas.mes.tracing.quality.form</field>
+            <field name="model">aas.mes.tracing</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" edit="false" delete="false">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="product_id" options="{'no_open':true}"/>
+                                <field name="workorder_id" options="{'no_open':true}"/>
+                                <field name="mesline_id" options="{'no_open':true}"/>
+                                <field name="schedule_id" options="{'no_open':true}"/>
+                            </group>
+                            <group>
+                                <field name="product_uom" options="{'no_open':true}"/>
+                                <field name="product_lot" options="{'no_open':true}"/>
+                                <field name="date_code"/>
+                                <field name="date_start"/>
+                                <field name="date_finish"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="workdate"/>
+                                <field name="mainorder_id" options="{'no_open':true}"/>
+                                <field name="workcenter_id" options="{'no_open':true}"/>
+                                <field name="workstation_id" options="{'no_open':true}"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="原料信息">
+                                <field name="materiallist"/>
+                            </page>
+                            <page string="设备信息">
+                                <field name="equipmentlist"/>
+                            </page>
+                            <page string="员工信息">
+                                <field name="employeelist"/>
+                            </page>
+                            <page string="序列号信息">
+                                <field name="serialnumbers"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_tracing_quality" model="ir.ui.view">
+            <field name="name">aas.mes.tracing.quality.search</field>
+            <field name="model">aas.mes.tracing</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="mesline_id" string="产线" filter_domain="[('mesline_id','ilike',self)]"/>
+                    <field name="product_id" string="成品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="product_lot" string="批次" filter_domain="[('product_lot','ilike',self)]"/>
+                    <field name="workcenter_id" string="工序" filter_domain="[('workcenter_id','ilike',self)]"/>
+                    <field name="workstation_id" string="工位" filter_domain="[('workstation_id','ilike',self)]"/>
+                    <field name="workdate" string="工作日" filter_domain="[('workdate','ilike',self)]"/>
+                    <field name="mainorder_id" string="主工单" filter_domain="[('mainorder_id','ilike',self)]"/>
+                    <field name="workorder_id" string="子工单" filter_domain="[('workorder_id','ilike',self)]"/>
+                    <field name="date_code" string="DateCode" filter_domain="[('date_code','ilike',self)]"/>
+                    <field name="materiallist" string="原料信息" filter_domain="[('materiallist','ilike',self)]"/>
+                    <field name="equipmentlist" string="设备信息" filter_domain="[('equipmentlist','ilike',self)]"/>
+                    <field name="employeelist" string="员工信息" filter_domain="[('employeelist','ilike',self)]"/>
+                    <field name="serialnumbers" string="序列号信息" filter_domain="[('serialnumbers','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="产线" context="{'group_by':'mesline_id'}"/>
+                        <filter string="成品" context="{'group_by':'product_id'}"/>
+                        <filter string="批次" context="{'group_by':'product_lot'}"/>
+                        <filter string="工序" context="{'group_by':'workcenter_id'}"/>
+                        <filter string="工位" context="{'group_by':'workstation_id'}"/>
+                        <filter string="工作日" context="{'group_by':'workdate'}"/>
+                        <filter string="主工单" context="{'group_by':'mainorder_id'}"/>
+                        <filter string="子工单" context="{'group_by':'workorder_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_tracing_quality" model="ir.actions.act_window">
+            <field name="name">生产追溯</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.tracing</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_tracing_quality"/>
+            <field name="search_view_id" ref="view_search_aas_mes_tracing_quality"/>
+        </record>
+
+        <record id="act_view_tree_aas_mes_tracing_quality" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_tracing_quality"/>
+            <field name="act_window_id" ref="action_aas_mes_tracing_quality"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_tracing_quality" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_tracing_quality"/>
+            <field name="act_window_id" ref="action_aas_mes_tracing_quality"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_tracing_list_quality"  name="追溯信息" action="action_aas_mes_tracing_quality"
+                          parent="menu_aas_mes_tracing_quality" sequence="1" groups="group_aas_quality_user,group_aas_quality_manager"/>
+
+    </data>
+</odoo>

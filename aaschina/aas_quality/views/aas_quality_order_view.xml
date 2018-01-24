@@ -2,9 +2,6 @@
 <odoo>
     <data>
 
-        <menuitem id="menu_aas_quality_order"  name="质检" parent="menu_aas_quality" sequence="1"
-                  groups="group_aas_quality_user,group_aas_quality_manager"/>
-
         <record id="view_tree_aas_quality_order" model="ir.ui.view">
             <field name="name">aas.quality.order.tree</field>
             <field name="model">aas.quality.order</field>
