@@ -304,7 +304,7 @@
                         <notebook>
                             <page string="参数明细">
                                 <field name="order_lines" attrs="{'readonly':[('state','not in',['draft','confirm'])]}">
-                                    <tree editable="bottom" create="false" delete="false">
+                                    <tree editable="bottom" create="false" delete="false" decoration-danger="not qualified">
                                         <field name="parameter_id" readonly="1"/>
                                         <field name="parameter_value" required="1"/>
                                         <field name="qualified"/>

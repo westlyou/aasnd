@@ -13,6 +13,7 @@ from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.tools.float_utils import float_compare, float_is_zero
 from odoo.exceptions import UserError, ValidationError
 
+import re
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -27,6 +28,16 @@ PRODUCTTESTSTATES = [
 ]
 TESTTYPES = [('firstone', u'首件'), ('lastone', u'末件'), ('random', u'抽检')]
 DETERMINETYPES = [('prdcheck', u'PRD检查'), ('frmcheck', u'领班检查'), ('ipqcheck', u'IPQC检查')]
+
+
+def isfloat(value):
+    if not value:
+        return False
+    if not re.match('^-?[1-9]\d*$', value) and not re.match('^-?([1-9]\d*\.\d*|0\.\d*[1-9]\d*|0?\.0+|0)$', value):
+        return False
+    return True
+
+
 
 
 # 测试分类
@@ -210,6 +221,13 @@ class AASMESProductTestParameter(models.Model):
         ('uniq_name', 'unique (template_id, parameter_name)', u'请不要重复添加同一个参数名称！')
     ]
 
+    @api.one
+    @api.constrains('parameter_type', 'parameter_value')
+    def action_check_parameter(self):
+        if self.parameter_type == 'number' and self.parameter_value:
+            if not isfloat(self.parameter_value):
+                raise ValidationError(u'参数%s的规格值必须是一个数值；例如12.34'% self.parameter_name)
+
 
 # 首末件工单
 class AASMESProductTestOrder(models.Model):
@@ -234,7 +252,7 @@ class AASMESProductTestOrder(models.Model):
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
 
     qualified = fields.Boolean(string=u'合格', default=True, copy=False)
-    order_lines = fields.One2many(comodel_name='aas.mes.producttest.order.line', inverse_name='order_id', string=u'检测明细')
+    order_lines = fields.One2many(comodel_name='aas.mes.producttest.order.line', inverse_name='order_id', string=u'参数明细')
     determine_lines = fields.One2many(comodel_name='aas.mes.producttest.order.determine', inverse_name='order_id', string=u'检查明细')
 
     @api.model
@@ -346,7 +364,44 @@ class AASMESProductTestOrderLine(models.Model):
     parameter_id = fields.Many2one(comodel_name='aas.mes.producttest.parameter', string=u'参数名称', ondelete='restrict')
     parameter_value = fields.Char(string=u'参数数据', copy=False)
     parameter_note = fields.Char(string=u'备注说明', copy=False)
-    qualified = fields.Boolean(string=u'合格', default=True, copy=False)
+    qualified = fields.Boolean(string=u'合格', compute="_compute_parameter_qualified", store=True)
+
+    @api.one
+    @api.constrains('parameter_id', 'parameter_value')
+    def action_check_parameter(self):
+        if self.parameter_id.parameter_type == 'number' and self.parameter_value:
+            if not isfloat(self.parameter_value):
+                raise ValidationError(u'参数%s的规格值必须是一个数值；例如12.34'% self.parameter_id.parameter_name)
+
+
+    @api.depends('parameter_id', 'parameter_value')
+    def _compute_parameter_qualified(self):
+        for record in self:
+            recordvalue = record.parameter_value
+            if not recordvalue:
+                record.qualified = False
+                continue
+            tparameter = record.parameter_id
+            if tparameter.parameter_type == 'char':
+                record.qualified = True
+                continue
+            if tparameter.parameter_type == 'number':
+                standardvalue = tparameter.parameter_value
+                if standardvalue:
+                    tempvalue = float(standardvalue) - float(recordvalue)
+                    record.qualified = float_is_zero(tempvalue, precision_rounding=0.000001)
+                    continue
+                maxvalue, minvalue = tparameter.parameter_maxvalue, tparameter.parameter_minvalue
+                if maxvalue and float_compare(float(recordvalue), maxvalue, precision_rounding=0.000001) > 0.0:
+                    record.qualified = False
+                    continue
+                if minvalue and float_compare(float(recordvalue), minvalue, precision_rounding=0.000001) < 0.0:
+                    record.qualified = False
+                    continue
+                record.qualified = True
+
+
+
 
 
 
