@@ -94,6 +94,27 @@ class AASMESProductionLabel(models.Model):
             'context': self.env.context
         }
 
+    @api.multi
+    def action_destroy(self):
+        self.ensure_one()
+        wizard = self.env['aas.mes.production.label.destroy.wizard'].create({
+            'plabel_id': self.id, 'product_qty': self.label_id.product_qty,
+            'product_id': self.label_id.product_id.id, 'lot_id': self.label_id.product_lot.id
+        })
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_production_label_destroy_wizard')
+        return {
+            'name': u"解除标签绑定",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.mes.production.label.destroy.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
 # 生产杂入
 class AASMESSundryin(models.Model):
     _name = 'aas.mes.sundryin'
@@ -216,11 +237,6 @@ class AASMESProductionOutput(models.Model):
     pass_onetime = fields.Boolean(string=u'一次通过', default=True, copy=False)
     operator_id = fields.Many2one(comodel_name='res.users', string=u'用户', default=lambda self:self.env.user)
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', default=lambda self:self.env.user.company_id)
-
-    @api.model
-    def create(self, vals):
-        vals['output_date'] = fields.Datetime.to_china_string(fields.Datetime.now())[0:10]
-        return super(AASMESProductionOutput, self).create(vals)
 
 
 
@@ -502,6 +518,40 @@ class AASMESProductionLabelUpdateDelserialWizard(models.TransientModel):
             'sequence_code': record.serialnumber_id.sequence_code
         })
         return record
+
+class AASMESProductionLabelDestroyWizard(models.TransientModel):
+    _name = 'aas.mes.production.label.destroy.wizard'
+    _description = 'AAS MES Production Label Destroy Wizard'
+
+    plabel_id = fields.Many2one(comodel_name='aas.mes.production.label', string=u'标签', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    lot_id = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', index=True)
+    product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+
+    @api.one
+    def action_done(self):
+        tlabel = self.plabel_id.label_id
+        operationlist = self.env['aas.mes.operation']
+        serialnumberlist = self.env['aas.mes.serialnumber'].search([('label_id', '=', tlabel.id)])
+        if serialnumberlist and len(serialnumberlist) > 0:
+            for tserialnumber in serialnumberlist:
+                operationlist |= tserialnumber.operation_id
+            serialnumberlist.write({'label_id': False})
+        if operationlist and len(operationlist) > 0:
+            operationlist.write({'gp12_check': False, 'gp12_record_id': False, 'gp12_date': False, 'gp12_time': False})
+        if float_compare(tlabel.product_qty, 0.0, precision_rounding=0.000001) > 0.0:
+            labelocation, pdtlocation = tlabel.location_id, self.env.ref('stock.location_production')
+            self.env['stock.move'].create({
+                'name': tlabel.name, 'product_id': tlabel.product_id.id,
+                'company_id': self.env.user.company_id.id, 'product_uom': tlabel.product_id.uom_id.id,
+                'create_date': fields.Datetime.now(), 'restrict_lot_id': tlabel.product_lot.id,
+                'product_uom_qty': tlabel.product_qty, 'location_id': labelocation.id, 'location_dest_id': pdtlocation.id
+            }).action_done()
+        tlabel.write({'product_qty': 0.0})
+        self.plabel_id.unlink()
+
+
+
 
 
 

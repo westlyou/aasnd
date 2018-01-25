@@ -53,10 +53,31 @@ class AASMESRework(models.Model):
     @api.model
     def create(self, vals):
         record = super(AASMESRework, self).create(vals)
-        record.write({
-            'internalpn': record.serialnumber_id.internal_product_code, 'customerpn': record.serialnumber_id.customer_product_code
-        })
+        record.action_after_create()
         return record
+
+    @api.one
+    def action_after_create(self):
+        tserialnumber = self.serialnumber_id
+        self.write({
+            'internalpn': tserialnumber.internal_product_code, 'customerpn': tserialnumber.customer_product_code
+        })
+        equipmentid, employeeid, employeename = False, False, False
+        workstation, mesline = self.workstation_id, self.serialnumber_id.mesline_id
+        tempdomain = [('serialnumber_id', '=', tserialnumber.id)]
+        tempdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        tempoutput = self.env['aas.mes.production.output'].search(tempdomain, order='output_time desc', limit=1)
+        if tempoutput:
+            tempoutput.write({'pass_onetime': False, 'qualified': False})
+        else:
+            self.env['aas.mes.production.output'].create({
+                'product_id': tserialnumber.product_id.id, 'output_qty': 1.0,
+                'output_date': fields.Datetime.to_china_today(), 'mesline_id': mesline.id,
+                'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id,
+                'workstation_id': workstation.id, 'equipment_id': equipmentid,
+                'pass_onetime': False, 'qualified': False,
+                'employee_id': employeeid, 'employee_name': employeename, 'serialnumber_id': tserialnumber.id
+            })
 
 
     @api.model

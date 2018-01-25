@@ -29,6 +29,9 @@
                     <header>
                         <button name="action_update_serialnumber" type="object" string="更新序列号" class="oe_highlight"
                                 groups="aas_mes.group_aas_manufacture_foreman"/>
+
+                        <button name="action_destroy" type="object" string="解除绑定" class="oe_highlight"
+                                groups="aas_mes.group_aas_manufacture_foreman"/>
                     </header>
                     <sheet>
                         <div class="oe_right oe_button_box" style="width: 300px;" name="buttons">
@@ -393,6 +396,33 @@
                             </field>
                         </page>
                     </notebook>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="view_form_aas_mes_production_label_destroy_wizard" model="ir.ui.view">
+            <field name="name">aas.mes.production.label.destroy.wizard</field>
+            <field name="model">aas.mes.production.label.destroy.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="plabel_id" readonly="1"/>
+                            <field name="product_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="lot_id" readonly="1"/>
+                            <field name="product_qty" readonly="1"/>
+                        </group>
+                    </group>
+                    <div>
+                        <span>您确认解绑此标签？解绑后当前标签库存也随即被消除;并且产品需要重新进行GP12检测！</span>
+                    </div>
                     <footer>
                         <button name="action_done" string="确认" type="object" class="btn-primary"/>
                         <button string="取消" class="btn-default" special="cancel"/>
