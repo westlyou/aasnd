@@ -436,7 +436,7 @@ class AASMESWorkorder(models.Model):
         return result
 
     @api.model
-    def action_consume(self, workorder_id, product_id):
+    def action_consume(self, workorder_id, product_id, workstation_id=None):
         """
         工单消耗
         :param workorder_id:
@@ -444,26 +444,25 @@ class AASMESWorkorder(models.Model):
         :return:
         """
         values = {'success': True, 'message': '', 'tracelist':[]}
-        outputmodel = self.env['aas.mes.workorder.product']
+        outputmodel, tworkorder = self.env['aas.mes.workorder.product'], False
         outputdomain = [('workorder_id', '=', workorder_id), ('product_id', '=', product_id)]
         outputdomain.append(('waiting_qty', '>', 0.0))
         outputlist = outputmodel.search(outputdomain)
         if outputlist and len(outputlist) > 0:
-            meslineids  = []
             for output in outputlist:
-                meslineids.append(output.mesline_id.id)
+                tworkorder = output.workorder_id
                 result = outputmodel.action_output_consume(output)
                 if result['tracelist'] and len(result['tracelist']) > 0:
                     values['tracelist'].extend(result['tracelist'])
                 if not result['success']:
                     values.update(result)
                     return values
-            if meslineids and len(meslineids) > 0:
-                # 刷新一下上料清单库存
-                feedmateriallist = self.env['aas.mes.feedmaterial'].search([('mesline_id', 'in', meslineids)])
-                if feedmateriallist and len(feedmateriallist) > 0:
-                    for feedmaterial in feedmateriallist:
-                        feedmaterial.action_refresh_stock()
+        if tworkorder:
+            meline_id = tworkorder.mesline_id.id
+            feedomain = [('mesline_id', '=', meline_id), ('workstation_id', '=', workstation_id)]
+            feedmateriallist = self.env['aas.mes.feedmaterial'].search(feedomain)
+            if feedmateriallist and len(feedmateriallist) > 0:
+                feedmateriallist.action_freshandclear()
         return values
 
 
@@ -651,7 +650,7 @@ class AASMESWorkorder(models.Model):
             return values
         else:
             values.update({'success': True, 'message': opvalues['message']})
-        csvalues = self.action_consume(workorder_id, product_id)
+        csvalues = self.action_consume(workorder_id, product_id, workstation_id=workstation_id)
         if not csvalues.get('success', False):
             values.update(csvalues)
         return values

@@ -152,12 +152,6 @@ class AASMESWorkticket(models.Model):
     def action_doing_commit(self, commit_qty, badmode_lines=[], container_id=False):
         _logger.info(u'工票%s开始报工;当前时间：%s', self.name, fields.Datetime.now())
         ticketvals, output_qty, badmode_qty = {'output_qty': self.output_qty + commit_qty}, commit_qty, 0.0
-        needcontainer = self.islastworkcenter() and self.workorder_id.output_manner == 'container'
-        if needcontainer:
-            if not container_id:
-                raise UserError(u'当前工序是最后一道工序，需要先添加产出容器！')
-            else:
-                ticketvals['container_id'] = container_id
         if badmode_lines and len(badmode_lines) > 0:
             badmodelist = []
             for badmode in badmode_lines:
@@ -167,6 +161,12 @@ class AASMESWorkticket(models.Model):
             output_qty -= badmode_qty
             ticketvals['output_qty'] -= badmode_qty
             ticketvals['badmode_qty'] = badmode_qty + self.badmode_qty
+        needcontainer = self.islastworkcenter() and self.workorder_id.output_manner == 'container'
+        if needcontainer:
+            if not container_id and float_compare(commit_qty, badmode_qty, precision_rounding=0.000001) > 0.0:
+                raise UserError(u'当前工序是最后一道工序，需要先添加产出容器！')
+            else:
+                ticketvals['container_id'] = container_id
         if float_compare(badmode_qty, commit_qty, precision_rounding=0.000001) > 0:
             raise UserError(u'不良数量不能超过上报总数！')
         self.write(ticketvals)
@@ -546,29 +546,17 @@ class AASMESWorkticket(models.Model):
             values.update({'success': False, 'message': u'当前工位上还没有员工上岗，请先让员工上岗再进行其他操作！'})
             return values
         workticket = self.env['aas.mes.workticket'].browse(workticket_id)
-        # 更新容器或不良模式
-        ticketvals, workorder = {}, workticket.workorder_id
-        if workticket.islastworkcenter():
-            manner = workorder.output_manner
-            if not manner:
-                values.update({'success': False, 'message': u'请先在工单上设置产出方式！'})
-                return values
-            if not container_id and manner == 'container':
-                values.update({'success': False, 'message': u'当前工序是工艺中最后一道工序，需要扫描产出容器！'})
-                return values
-            else:
-                ticketvals['container_id'] = container_id
-        # 验证物料消耗
-        productid, workcenterid = workorder.product_id.id, workticket.workcenter_id.id
-        cresult = workorder.action_validate_consume(workorder.id, productid, commit_qty, workstationid, workcenterid)
-        if not cresult.get('success', False):
-            values.update(cresult)
+        if not workticket:
+            values.update({'success': False, 'message': u'工票%s异常，可能已删除！'% workticket.name})
             return values
         # 消耗物料并产出
         try:
             workticket.action_doing_commit(commit_qty, badmode_lines, container_id)
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
+            return values
+        except ValidationError, ve:
+            values.update({'success': False, 'message': ve.name})
             return values
         return values
 
