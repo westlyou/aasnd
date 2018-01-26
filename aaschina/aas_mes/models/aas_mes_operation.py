@@ -374,7 +374,7 @@ class AASMESOperationRecord(models.Model):
         employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
         temployee = self.env['aas.mes.workstation.employee'].search(employeedomain, limit=1)
         if temployee:
-            employeeid, employeename = temployee.id, temployee.name
+            employeeid, employeename = temployee.employee_id.id, temployee.employee_id.name
         toperation = self.env['aas.mes.operation'].search([('serialnumber_name', '=', serialnumber)], limit=1)
         if toperation:
             operationid = toperation.id
