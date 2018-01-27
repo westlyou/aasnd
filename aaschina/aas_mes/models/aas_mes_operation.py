@@ -362,6 +362,7 @@ class AASMESOperationRecord(models.Model):
         :return:
         """
         result = {'success': True, 'message': ''}
+        _logger.info(u'序列号%s提交功能测试记录，开始时间：%s', serialnumber, fields.Datetime.now())
         equipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)
         if not equipment:
             result.update({'success': False, 'message': u'设备不存在或已经被删除，请仔细检查！'})
@@ -386,7 +387,7 @@ class AASMESOperationRecord(models.Model):
         self.env['aas.mes.operation.record'].create(functiontestvals)
         if not operation_pass:
             toperation.write({'function_test': False, 'functiontest_record_id': False})
-
+        _logger.info(u'序列号%s更新产出优率记录，开始时间：%s', serialnumber, fields.Datetime.now())
         # 添加或更新产出信息
         tserialnumber = toperation.serialnumber_id
         if not tserialnumber:
@@ -410,6 +411,7 @@ class AASMESOperationRecord(models.Model):
                 'pass_onetime': operation_pass, 'qualified': operation_pass,
                 'employee_id': employeeid, 'employee_name': employeename, 'serialnumber_id': tserialnumber.id
             })
+        _logger.info(u'序列号%s提交功能测试记录，结束时间：%s', serialnumber, fields.Datetime.now())
         return result
 
 
