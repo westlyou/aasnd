@@ -246,12 +246,12 @@ class AASMESWireOrder(models.Model):
         if not oresult['success']:
             values.update(oresult)
             return values
+        temployee = self.env['aas.hr.employee'].browse(employee_id)
+        tequipment = self.env['aas.equipment.equipment'].browse(equipment_id)
         csresult = workorder.action_consume(workorder.id, workorder.product_id.id)
         if csresult['tracelist'] and len(csresult['tracelist']) > 0:
             outputtime = fields.Datetime.now()
             tracelist = self.env['aas.mes.tracing'].browse(csresult['tracelist'])
-            temployee = self.env['aas.hr.employee'].browse(employee_id)
-            tequipment = self.env['aas.equipment.equipment'].browse(equipment_id)
             tracelist.write({
                 'employeelist': temployee.name+'['+temployee.code+']',
                 'equipmentlist': tequipment.name+'['+tequipment.code+']',
@@ -274,12 +274,41 @@ class AASMESWireOrder(models.Model):
         wireorder = workorder.wireorder_id
         if wireorder.state not in ['producing', 'done']:
             wireorder.write({'state': 'producing', 'produce_start': fields.Datetime.now()})
-        if all([temporder.state=='done' for temporder in wireorder.workorder_lines]):
+        if all([temporder.state == 'done' for temporder in wireorder.workorder_lines]):
             wireorder.write({'state': 'done', 'produce_finish': fields.Datetime.now()})
         contianeroutput = oresult.get('containerproduct', False)
         if contianeroutput:
             contianeroutput.action_stock(stock_qty)
+        # 更新产出优率记录
+        productid, mesline = workorder.product_id.id, workorder.mesline_id
+        self.action_update_productionout(productid, workstation_id, mesline, output_qty, temployee, tequipment)
         return values
+
+
+    @api.model
+    def action_update_productionout(self, productid, workstationid, mesline, output_qty, employee, equipment):
+        """更新产出优率记录
+        :param productid:
+        :param workstationid:
+        :param mesline:
+        :param output_qty:
+        :param employee:
+        :param equipment:
+        :return:
+        """
+        employeeid, employeename, equipmentid = False, False, False
+        if employee:
+            employeeid, employeename = employee.id, employee.name
+        if equipment:
+            equipmentid = equipment.id
+        scheduleid = False if not mesline.schedule_id else mesline.schedule_id.id
+        if float_compare(output_qty, 0.0, precision_rounding=0.000001) > 0.0:
+            self.env['aas.mes.production.output'].create({
+                'product_id': productid, 'output_date': mesline.workdate, 'output_qty': output_qty,
+                'mesline_id': mesline.id, 'schedule_id': scheduleid, 'workstation_id': workstationid,
+                'qualified': True, 'pass_onetime': True, 'equipment_id': equipmentid, 'employee_id': employeeid,
+                'employee_name': employeename
+            })
 
 
 

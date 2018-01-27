@@ -21,6 +21,11 @@ $(function() {
             layer.msg('扫描异常，请确认是否在扫描员工工牌条码！', {icon: 5});
             return ;
         }
+         var action = $('#workstationlist').attr('action');
+        if(action=='leave'){
+            layer.msg('当前离岗还未选择离岗原因；暂时不可以继续操作！', {icon: 5});
+            return ;
+        }
         var scanparams = {'barcode': barcode};
         var cstationid = parseInt($('#cstation').attr('stationid'));
         if(cstationid > 0){
@@ -127,6 +132,7 @@ $(function() {
     }
 
     function initleavelisthtml(attendanceid, leavelist){
+        $('#workstationlist').attr('action', 'leave');
         var tcontent = '<div class="row" style="margin-top: 10px;clear: both;zoom: 1; padding:0px 20px;">';
         $.each(leavelist, function(index, tleave){
             tcontent += '<div class="col-md-4">';
@@ -155,6 +161,7 @@ $(function() {
                 type: 'post', timeout:10000, dataType: 'json',
                 data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: lparams, id: access_id}),
                 success:function(data){
+                    $('#workstationlist').attr('action', 'working');
                     var dresult = data.result;
                     if(!dresult.success){
                         layer.msg(dresult.message, {icon: 5});
@@ -163,7 +170,10 @@ $(function() {
                     // layer.close(lindex);
                     window.location.reload(true);
                 },
-                error:function(xhr,type,errorThrown){ console.log(type); }
+                error:function(xhr,type,errorThrown){
+                    console.log(type);
+                    $('#workstationlist').attr('action', 'working');
+                }
             });
 
         });

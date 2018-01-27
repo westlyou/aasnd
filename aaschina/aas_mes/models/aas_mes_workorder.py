@@ -330,6 +330,69 @@ class AASMESWorkorder(models.Model):
             }
 
 
+    @api.model
+    def action_update_serialnumer(self, serialnumber, workorder, outputrecord):
+        """更新序列号产出信息
+        :param serialnumber:
+        :param workorder:
+        :param outputrecord:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        if not serialnumber:
+            return values
+        # 更新序列号产出信息
+        serialrecord = self.env['aas.mes.serialnumber'].search([('name', '=', serialnumber)], limit=1)
+        if not serialrecord:
+            values.update({'success': False, 'message': u'序列号异常，无法产出！'})
+            return values
+        mesline, output_time = workorder.mesline_id, fields.Datetime.now()
+        outputvals = {
+            'output_time': output_time, 'outputuser_id': self.env.user.id, 'workorder_id': workorder.id,
+            'outputrecord_id': outputrecord.id
+        }
+        if mesline.serialnumber_id:
+            outputvals['lastone_id'] = mesline.serialnumber_id.id
+            currenttime = fields.Datetime.from_string(output_time)
+            lasttime = fields.Datetime.from_string(mesline.serialnumber_id.output_time)
+            outputvals['output_internal'] = (currenttime - lasttime).seconds / 3600.0
+        serialrecord.write(outputvals)
+        mesline.write({'serialnumber_id': serialrecord.id})
+        return values
+
+    @api.model
+    def action_update_productionout(self, productid, workstationid, mesline, output_qty, badmode_qty):
+        """更新产出优率
+        :param productid:
+        :param workstationid:
+        :param mesline:
+        :param output_qty:
+        :param badmode_qty:
+        :return:
+        """
+        employeeid, employeename, equipmentid = False, False, False
+        scheduleid = False if not mesline.schedule_id else mesline.schedule_id.id
+        stationdomain = [('workstation_id', '=', workstationid), ('mesline_id', '=', mesline.id)]
+        temployee = self.env['aas.mes.workstation.employee'].search(stationdomain, limit=1)
+        if temployee:
+            employeeid, employeename = temployee.employee_id.id, temployee.employee_id.name
+        tequipment = self.env['aas.mes.workstation.equipment'].search(stationdomain, limit=1)
+        if tequipment:
+            equipmentid = tequipment.equipment_id.id
+        if float_compare(output_qty, 0.0, precision_rounding=0.000001) > 0.0:
+            self.env['aas.mes.production.output'].create({
+                'product_id': productid, 'output_date': mesline.workdate, 'output_qty': output_qty,
+                'mesline_id': mesline.id, 'schedule_id': scheduleid, 'workstation_id': workstationid,
+                'qualified': True, 'pass_onetime': True, 'equipment_id': equipmentid, 'employee_id': employeeid,
+                'employee_name': employeename
+            })
+        if float_compare(badmode_qty, 0.0, precision_rounding=0.000001) > 0.0:
+            self.env['aas.mes.production.output'].create({
+                'product_id': productid, 'output_date': mesline.workdate, 'output_qty': badmode_qty,
+                'mesline_id': mesline.id, 'schedule_id': scheduleid, 'workstation_id': workstationid,
+                'qualified': False, 'pass_onetime': False, 'equipment_id': equipmentid, 'employee_id': employeeid,
+                'employee_name': employeename
+            })
 
     @api.model
     def action_output(self, workorder_id, product_id, commit_qty, container_id=None,
@@ -396,24 +459,15 @@ class AASMESWorkorder(models.Model):
         result['outputrecord'] = outputrecord
         if tempbadlines and len(tempbadlines) > 0:
             workorder.write({'badmode_lines': tempbadlines})
-        if serialnumber:
-            # 更新序列号产出信息
-            serialrecord = self.env['aas.mes.serialnumber'].search([('name', '=', serialnumber)], limit=1)
-            if not serialrecord:
-                result.update({'success': False, 'message': u'序列号异常，无法产出！'})
-                return result
-            mesline, output_time = workorder.mesline_id, fields.Datetime.now()
-            outputvals = {
-                'output_time': output_time, 'outputuser_id': self.env.user.id, 'workorder_id': workorder_id,
-                'outputrecord_id': outputrecord.id
-            }
-            if mesline.serialnumber_id:
-                outputvals['lastone_id'] = mesline.serialnumber_id.id
-                currenttime = fields.Datetime.from_string(output_time)
-                lasttime = fields.Datetime.from_string(mesline.serialnumber_id.output_time)
-                outputvals['output_internal'] = (currenttime - lasttime).seconds / 3600.0
-            serialrecord.write(outputvals)
-            mesline.write({'serialnumber_id': serialrecord.id})
+        # 更新序列号产出信息
+        tvalues = self.action_update_serialnumer(serialnumber, workorder, outputrecord)
+        if not tvalues.get('success', False):
+            result.update(tvalues)
+            return result
+        # 更新产出优率记录
+        if not serialnumber and workstation_id:
+            mesline = workorder.mesline_id
+            self.action_update_productionout(product_id, workstation_id, mesline, output_qty, badmode_qty)
         if container_id:
             # 更新容器中物品清单信息
             cdomain = [('container_id', '=', container_id), ('product_id', '=', product_id), ('product_lot', '=', product_lot)]

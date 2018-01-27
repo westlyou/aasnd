@@ -75,7 +75,7 @@
                             <h1>当前员工：<span id="cemployee" employeeid="0" style="color:red;"></span> </h1>
                         </section>
                         <section class="content">
-                            <div id="workstationlist" class="row">
+                            <div id="workstationlist" class="row" action="working">
                                 <t t-foreach="workstations" t-as="station">
                                     <div class="col-md-3">
                                         <div class="box box-widget widget-user-2">

@@ -128,6 +128,10 @@ class AASMESGP12CheckingController(http.Controller):
         if not workstation:
             values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
             return values
+        employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        if request.env['aas.mes.workstation.employee'].search_count(employeedomain) <= 0:
+            values.update({'success': False, 'message': u'当前岗位可能没有员工在岗，请先让员工上岗再继续操作！'})
+            return values
         tempoperation = request.env['aas.mes.operation'].search([('serialnumber_name', '=', barcode)], limit=1)
         if not tempoperation:
             values.update({'result': 'NG', 'success': False, 'message': u'请检查您扫描的是否是一个有效的序列号'})

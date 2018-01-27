@@ -288,8 +288,14 @@ class AASMESWorkticket(models.Model):
         _logger.info(u'工票%s结束物料消耗;当前时间：%s', self.name, fields.Datetime.now())
 
 
-    # 工票产出和结单
+    @api.one
     def action_workticket_output(self, trace, output_qty, badmode_qty):
+        """工票产出和结单
+        :param trace:
+        :param output_qty:
+        :param badmode_qty:
+        :return:
+        """
         _logger.info(u'工票%s开始产出;当前时间：%s;产出数量%s;不良数量%s', self.name, fields.Datetime.now(), output_qty, badmode_qty)
         workorder, mesline, product = self.workorder_id, self.workorder_id.mesline_id, self.product_id
         if not mesline.workdate:
@@ -316,6 +322,43 @@ class AASMESWorkticket(models.Model):
             if float_compare(total_qty, self.input_qty, precision_rounding=0.000001) >= 0.0:
                 self.action_workticket_done()
         _logger.info(u'工票%s产出结束;当前时间：%s', self.name, fields.Datetime.now())
+        # 产出优率记录 #############################################################
+        self.action_update_productionout(product.id, self.workcenter_id.workstation_id.id, mesline, output_qty, badmode_qty)
+
+    @api.model
+    def action_update_productionout(self, productid, workstationid, mesline, output_qty, badmode_qty):
+        """更新产出优率记录
+        :param productid:
+        :param workstationid:
+        :param mesline:
+        :param output_qty:
+        :param badmode_qty:
+        :return:
+        """
+        employeeid, employeename, equipmentid = False, False, False
+        scheduleid = False if not mesline.schedule_id else mesline.schedule_id.id
+        stationdomain = [('workstation_id', '=', workstationid), ('mesline_id', '=', mesline.id)]
+        temployee = self.env['aas.mes.workstation.employee'].search(stationdomain, limit=1)
+        if temployee:
+            employeeid, employeename = temployee.employee_id.id, temployee.employee_id.name
+        tequipment = self.env['aas.mes.workstation.equipment'].search(stationdomain, limit=1)
+        if tequipment:
+            equipmentid = tequipment.equipment_id.id
+        if float_compare(output_qty, 0.0, precision_rounding=0.000001) > 0.0:
+            self.env['aas.mes.production.output'].create({
+                'product_id': productid, 'output_date': mesline.workdate, 'output_qty': output_qty,
+                'mesline_id': mesline.id, 'schedule_id': scheduleid, 'workstation_id': workstationid,
+                'qualified': True, 'pass_onetime': True, 'equipment_id': equipmentid, 'employee_id': employeeid,
+                'employee_name': employeename
+            })
+        if float_compare(badmode_qty, 0.0, precision_rounding=0.000001) > 0.0:
+            self.env['aas.mes.production.output'].create({
+                'product_id': productid, 'output_date': mesline.workdate, 'output_qty': badmode_qty,
+                'mesline_id': mesline.id, 'schedule_id': scheduleid, 'workstation_id': workstationid,
+                'qualified': False, 'pass_onetime': False, 'equipment_id': equipmentid, 'employee_id': employeeid,
+                'employee_name': employeename
+            })
+
 
     @api.one
     def action_output2container(self, product_lot, output_qty, container_id, badmode_qty=0.0):
@@ -350,6 +393,9 @@ class AASMESWorkticket(models.Model):
         containerstock.action_stock(output_qty)
         tempoutput.write({'container_id': container_id})
         _logger.info(u'工票%s容器产出到容器;当前容器：%s', self.name, tempoutput.container_id.name)
+
+
+
 
     @api.one
     def action_output2label(self, product_lot, output_qty, badmode_qty=0.0):
