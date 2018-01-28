@@ -30,7 +30,7 @@ class AASLabelWechatController(http.Controller):
     @http.route('/aaswechat/wms/labellist', type='http', auth="user")
     def aas_wechat_wms_labellist(self, limit=20):
         values = {'labels': [], 'labelindex': '0'}
-        label_list = request.env['aas.product.label'].search([], limit=limit)
+        label_list = request.env['aas.product.label'].search([('isproduction', '=', False)], limit=limit)
         if label_list:
             values['labels'] = [{
                 'label_id': label.id,
@@ -46,9 +46,10 @@ class AASLabelWechatController(http.Controller):
     @http.route('/aaswechat/wms/labelmore', type='json', auth="user")
     def aas_wechat_labelmore(self, searchkey=None, labelindex=0, limit=20):
         values = {'labels': [], 'labelindex': labelindex, 'labelcount': 0}
-        labeldomain = []
+        labeldomain = [('isproduction', '=', False)]
         if searchkey:
-            labeldomain = ['|', ('product_code', 'ilike', searchkey), ('product_lot', 'ilike', searchkey)]
+            labeldomain = ['&', ('isproduction', '=', False)]
+            labeldomain += ['|', ('product_code', 'ilike', searchkey), ('product_lotname', 'ilike', searchkey)]
         label_list = request.env['aas.product.label'].search(labeldomain, offset=labelindex, limit=limit)
         if label_list:
             values['labels'] = [{
@@ -67,7 +68,7 @@ class AASLabelWechatController(http.Controller):
         values = {'success': True, 'message': '', 'labels': [], 'labelindex': 0}
         labeldomain = []
         if searchkey:
-            labeldomain = ['|', ('product_code', 'ilike', '%'+searchkey+'%'), ('product_lot', 'ilike', '%'+searchkey+'%')]
+            labeldomain = ['|', ('product_code', 'ilike', '%'+searchkey+'%'), ('product_lotname', 'ilike', '%'+searchkey+'%')]
         label_list = request.env['aas.product.label'].search(labeldomain, limit=limit)
         if label_list:
             values['labels'] = [{
@@ -156,7 +157,7 @@ class AASLabelWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/labelsplitdone', type='json', auth="user")
-    def aas_wechat_printlabels(self, labelid, label_qty, label_count=0):
+    def aas_wechat_wms_labelsplitdone(self, labelid, label_qty, label_count=0):
         values = {'success': True, 'message': ''}
         label = request.env['aas.product.label'].browse(labelid)
         try:

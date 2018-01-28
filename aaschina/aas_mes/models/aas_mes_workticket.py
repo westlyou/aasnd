@@ -211,7 +211,7 @@ class AASMESWorkticket(models.Model):
             raise UserError(u'还未设置工位，请先设置工序工位！')
         employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
         if self.env['aas.mes.workstation.employee'].search_count(employeedomain) <= 0:
-            raise UserError(u'%s工位还没有员工在岗，请员工先上岗再继续操作！')
+            raise UserError(u'%s工位还没有员工在岗，请员工先上岗再继续操作！'% workstation.name)
         consumedomain = [
             ('workorder_id', '=', workorder.id), ('workcenter_id', '=', workcenter.id), ('product_id', '=', product.id)
         ]
