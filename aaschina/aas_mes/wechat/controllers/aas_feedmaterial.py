@@ -175,8 +175,8 @@ class AASFeedmaterialWechatController(http.Controller):
     @http.route('/aaswechat/mes/feeding/materialdetail/<string:mwmaterialid>', type='http', auth='user')
     def aas_wechat_mes_feeding_materialdetail(self, mwmaterialid):
         values = {
-            'success': True, 'message': '', 'mesline_name': '',
-            'workstation_name': '', 'product_code': '', 'materialotlist': []
+            'success': True, 'message': '',
+            'mesline_name': '', 'product_qty': 0.0, 'workstation_name': '', 'product_code': '', 'materialotlist': []
         }
         tempids = mwmaterialid.split('-')
         meslineid, workstationid, materialid = int(tempids[0]), int(tempids[1]), int(tempids[2])
@@ -189,7 +189,9 @@ class AASFeedmaterialWechatController(http.Controller):
                 'mesline_name': tempfeed.mesline_id.name,
                 'workstation_name': tempfeed.workstation_id.name, 'product_code': tempfeed.material_id.default_code
             })
-            values['materialotlist'] = [{
-                'lot_name': feeding.material_lot.name, 'lot_qty': feeding.material_qty
-            } for feeding in feedinglist]
+            for feeding in feedinglist:
+                values['materialotlist'].append({
+                    'lot_name': feeding.material_lot.name, 'lot_qty': feeding.material_qty
+                })
+                values['product_qty'] += feeding.material_qty
         return request.render('aas_mes.wechat_mes_linefeeding_materialdetail', values)

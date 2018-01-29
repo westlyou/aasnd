@@ -50,7 +50,7 @@
                                                 <t t-foreach="wkstation['materiallist']" t-as="material">
                                                     <li class="aas-material mui-table-view-cell"
                                                         t-att-id="material['mwmaterialid']" t-att-mwmaterialid="material['mwmaterialid']">
-                                                        <a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>
+                                                        <a class='mui-navigate-right' style='padding-right:40px;font-size:12px;' href='javascript:;'>
                                                             <div class='mui-table'>
                                                                 <div class="mui-table-cell mui-col-xs-6 mui-text-left">
                                                                     <div> <t t-esc="material['material_code']"/> </div>
@@ -117,6 +117,10 @@
                                 <li class="mui-table-view-cell">
                                     <span class="mui-pull-left">物料编码</span>
                                     <span class="mui-pull-right"><t t-esc="product_code"/></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">上料数量</span>
+                                    <span class="mui-pull-right"><t t-esc="product_qty"/></span>
                                 </li>
                             </ul>
 

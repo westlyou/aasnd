@@ -103,7 +103,7 @@ mui.ready(function(){
                 feedline.className = 'mui-table-view-cell';
                 feedline.setAttribute('id', dresult.mwmterialid);
                 feedline.setAttribute('mwmaterialid', dresult.mwmaterialid);
-                feedline.innerHTML = "<a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>" +
+                feedline.innerHTML = "<a class='mui-navigate-right' style='padding-right:40px;font-size:12px;' href='javascript:;'>" +
                     "<div class='mui-table'>" +
                         "<div class='mui-table-cell mui-col-xs-6 mui-text-left'>"+dresult.material_code+"</div>" +
                         "<div class='mui-table-cell mui-col-xs-6 mui-text-right'>"+dresult.material_qty+"</div>" +
@@ -152,7 +152,7 @@ mui.ready(function(){
                 feedline.className = 'mui-table-view-cell';
                 feedline.setAttribute('id', dresult.mwmterialid);
                 feedline.setAttribute('mwmaterialid', dresult.mwmaterialid);
-                feedline.innerHTML = "<a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>" +
+                feedline.innerHTML = "<a class='mui-navigate-right' style='padding-right:40px;font-size:12px;' href='javascript:;'>" +
                     "<div class='mui-table'>" +
                         "<div class='mui-table-cell mui-col-xs-6 mui-text-left'>"+dresult.material_code+"</div>" +
                         "<div class='mui-table-cell mui-col-xs-6 mui-text-right'>"+dresult.material_qty+"</div>" +
