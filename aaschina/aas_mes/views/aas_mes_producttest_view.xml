@@ -39,6 +39,7 @@
                                         <field name="sequence" required="1"/>
                                         <field name="parameter_name" required="1"/>
                                         <field name="parameter_type" required="1"/>
+                                        <field name="parameter_code"/>
                                         <field name="parameter_note"/>
                                     </tree>
                                     <form>
@@ -49,9 +50,14 @@
                                             </group>
                                             <group>
                                                 <field name="sequence" required="1"/>
-                                                <field name="parameter_note"/>
+                                                <field name="parameter_code"/>
                                             </group>
                                         </group>
+                                        <notebook>
+                                            <page string="备注信息">
+                                                <field name="parameter_note"/>
+                                            </page>
+                                        </notebook>
                                     </form>
                                 </field>
                             </page>
@@ -154,6 +160,7 @@
                                         <field name="sequence"/>
                                         <field name="parameter_name"/>
                                         <field name="parameter_type"/>
+                                        <field name="parameter_code"/>
                                         <field name="parameter_value"/>
                                         <field name="parameter_maxvalue" attrs="{'readonly':[('parameter_type','=','char')]}"/>
                                         <field name="parameter_minvalue" attrs="{'readonly':[('parameter_type','=','char')]}"/>
@@ -164,11 +171,12 @@
                                         <group>
                                             <group>
                                                 <field name="sequence"/>
-                                                <field name="parameter_name"/>
+                                                <field name="parameter_name" required="1"/>
                                                 <field name="parameter_type" required="1"/>
                                                 <field name="active" string="是否有效" required="1"/>
                                             </group>
                                             <group>
+                                                <field name="parameter_code"/>
                                                 <field name="parameter_value"/>
                                                 <field name="parameter_maxvalue" attrs="{'readonly':[('parameter_type','=','char')]}"/>
                                                 <field name="parameter_minvalue" attrs="{'readonly':[('parameter_type','=','char')]}"/>
@@ -307,6 +315,7 @@
                                     <tree editable="bottom" create="false" delete="false" decoration-danger="not qualified">
                                         <field name="parameter_id" readonly="1"/>
                                         <field name="parameter_value" required="1"/>
+                                        <field name="parameter_code"/>
                                         <field name="qualified"/>
                                         <field name="parameter_note"/>
                                     </tree>
@@ -314,6 +323,7 @@
                                         <group>
                                             <group>
                                                 <field name="parameter_id" readonly="1"/>
+                                                <field name="parameter_code"/>
                                             </group>
                                             <group>
                                                 <field name="parameter_value" required="1"/>

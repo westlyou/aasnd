@@ -84,7 +84,8 @@ class AASMESProductTestTemplateParameter(models.Model):
     template_id = fields.Many2one(comodel_name='aas.mes.producttest.template', string=u'测试', ondelete='cascade')
     sequence = fields.Integer(string=u'序号', required=True)
     active = fields.Boolean(string=u'有效', default=True, copy=False)
-    parameter_name = fields.Char(string=u'名称', required=True, copy=False)
+    parameter_name = fields.Char(string=u'名称', copy=False)
+    parameter_code = fields.Char(string=u'采集字段', copy=False)
     parameter_type = fields.Selection(selection=DATATYPES, string=u'数据类型', default='char', copy=False)
     parameter_note = fields.Text(string=u'备注说明')
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
@@ -93,6 +94,23 @@ class AASMESProductTestTemplateParameter(models.Model):
         ('uniq_sequence', 'unique (template_id, sequence)', u'请不要重复添加同一个序号！'),
         ('uniq_name', 'unique (template_id, parameter_name)', u'请不要重复添加同一个参数名称！')
     ]
+
+    @api.multi
+    def write(self, vals):
+        result = super(AASMESProductTestTemplateParameter, self).write(vals)
+        if 'parameter_code' in vals:
+            self.action_update_code()
+        return result
+
+    @api.multi
+    def action_update_code(self):
+        for record in self:
+            tempdomain = [('producttest_id.template_id', '=', record.template_id.id), ('parameter_name', '=', record.parameter_name)]
+            parameterlist = self.env['aas.mes.producttest.parameter'].search(tempdomain)
+            if parameterlist and len(parameterlist) > 0:
+                parameterlist.write({'parameter_code': record.parameter_code})
+
+
 
 
 
@@ -129,7 +147,9 @@ class AASMESProductTest(models.Model):
         testorder = self.env['aas.mes.producttest.order'].create({
             'producttest_id': self.id, 'product_id': False if not self.product_id else self.product_id.id,
             'workcenter_id': self.workcenter_id.id, 'state': 'confirm', 'test_type': 'firstone',
-            'order_lines': [(0, 0, {'parameter_id': ppline.id}) for ppline in self.parameter_lines]
+            'order_lines': [(0, 0, {
+                'parameter_id': ppline.id, 'parameter_code': ppline.parameter_code
+            }) for ppline in self.parameter_lines]
         })
         view_form = self.env.ref('aas_mes.view_form_aas_mes_producttest_order')
         return {
@@ -156,7 +176,9 @@ class AASMESProductTest(models.Model):
         testorder = self.env['aas.mes.producttest.order'].create({
             'producttest_id': self.id, 'product_id': False if not self.product_id else self.product_id.id,
             'workcenter_id': self.workcenter_id.id, 'state': 'confirm', 'test_type': 'lastone',
-            'order_lines': [(0, 0, {'parameter_id': ppline.id}) for ppline in self.parameter_lines]
+            'order_lines': [(0, 0, {
+                'parameter_id': ppline.id, 'parameter_code': ppline.parameter_code
+            }) for ppline in self.parameter_lines]
         })
         view_form = self.env.ref('aas_mes.view_form_aas_mes_producttest_order')
         return {
@@ -181,7 +203,9 @@ class AASMESProductTest(models.Model):
         testorder = self.env['aas.mes.producttest.order'].create({
             'producttest_id': self.id, 'product_id': False if not self.product_id else self.product_id.id,
             'workcenter_id': self.workcenter_id.id, 'state': 'confirm', 'test_type': 'random',
-            'order_lines': [(0, 0, {'parameter_id': ppline.id}) for ppline in self.parameter_lines]
+            'order_lines': [(0, 0, {
+                'parameter_id': ppline.id, 'parameter_code': ppline.parameter_code
+            }) for ppline in self.parameter_lines]
         })
         view_form = self.env.ref('aas_mes.view_form_aas_mes_producttest_order')
         return {
@@ -208,7 +232,8 @@ class AASMESProductTestParameter(models.Model):
     producttest_id = fields.Many2one(comodel_name='aas.mes.producttest', string=u'测试', ondelete='cascade')
     sequence = fields.Integer(string=u'序号', required=True)
     active = fields.Boolean(string=u'有效', default=True, copy=False)
-    parameter_name = fields.Char(string=u'名称', required=True, copy=False)
+    parameter_name = fields.Char(string=u'名称', copy=False)
+    parameter_code = fields.Char(string=u'采集字段', copy=False)
     parameter_type = fields.Selection(selection=DATATYPES, string=u'数据类型', default='char', copy=False)
     parameter_value = fields.Char(string=u'规格值', copy=False)
     parameter_maxvalue = fields.Float(string=u'规格上限')
@@ -363,6 +388,7 @@ class AASMESProductTestOrderLine(models.Model):
     order_id = fields.Many2one(comodel_name='aas.mes.producttest.order', string=u'首件检测', ondelete='cascade')
     parameter_id = fields.Many2one(comodel_name='aas.mes.producttest.parameter', string=u'参数名称', ondelete='restrict')
     parameter_value = fields.Char(string=u'参数数据', copy=False)
+    parameter_code = fields.Char(string=u'采集字段', copy=False)
     parameter_note = fields.Char(string=u'备注说明', copy=False)
     qualified = fields.Boolean(string=u'合格', compute="_compute_parameter_qualified", store=True)
 
@@ -440,6 +466,7 @@ class AASMESProductTestTemplatePWorkcenterWizard(models.TransientModel):
             'template_id': self.template_id.id,
             'product_id': self.product_id.id, 'workcenter_id': self.workcenter_id.id,
             'parameter_lines': [(0, 0, {
+                'parameter_code': tparameter.parameter_code,
                 'sequence': tparameter.sequence, 'parameter_name': tparameter.parameter_name,
                 'parameter_type': tparameter.parameter_type, 'parameter_note': tparameter.parameter_note
             }) for tparameter in self.template_id.parameter_lines]
