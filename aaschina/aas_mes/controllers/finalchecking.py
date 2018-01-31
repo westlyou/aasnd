@@ -153,6 +153,20 @@ class AASMESFinalCheckingController(http.Controller):
         if not tempemloyeelist or len(tempemloyeelist) <= 0:
             values.update({'success': False, 'message': u'当前岗位可能没有员工在岗，请先让员工上岗再继续操作！'})
             return values
+        scaner, checker = False, False
+        for temployee in tempemloyeelist:
+            if temployee.action_type == 'scan':
+                scaner = True
+            if checker:
+                continue
+            if temployee.action_type == 'check':
+                checker = True
+        if not scaner:
+            values.update({'success': False, 'message': u'当前岗位没有扫描员工，请先让扫描员工上岗再继续操作！'})
+            return values
+        if not checker:
+            values.update({'success': False, 'message': u'当前岗位没有检测员工，请先让检测员工上岗再继续操作！'})
+            return values
         workorder = mesline.workorder_id
         tempoperation = request.env['aas.mes.operation'].search([('serialnumber_name', '=', barcode)], limit=1)
         if not tempoperation:

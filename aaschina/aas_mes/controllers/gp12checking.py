@@ -129,8 +129,23 @@ class AASMESGP12CheckingController(http.Controller):
             values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
             return values
         employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-        if request.env['aas.mes.workstation.employee'].search_count(employeedomain) <= 0:
+        temployeelist = request.env['aas.mes.workstation.employee'].search(employeedomain)
+        if not temployeelist or len(temployeelist) <= 0:
             values.update({'success': False, 'message': u'当前岗位可能没有员工在岗，请先让员工上岗再继续操作！'})
+            return values
+        scaner, checker = False, False
+        for temployee in temployeelist:
+            if temployee.action_type == 'scan':
+                scaner = True
+            if checker:
+                continue
+            if temployee.action_type == 'check':
+                checker = True
+        if not scaner:
+            values.update({'success': False, 'message': u'当前岗位没有扫描员工，请先让扫描员工上岗再继续操作！'})
+            return values
+        if not checker:
+            values.update({'success': False, 'message': u'当前岗位没有检测员工，请先让检测员工上岗再继续操作！'})
             return values
         tempoperation = request.env['aas.mes.operation'].search([('serialnumber_name', '=', barcode)], limit=1)
         if not tempoperation:

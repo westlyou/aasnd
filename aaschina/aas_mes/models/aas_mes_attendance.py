@@ -60,13 +60,15 @@ class AASMESWorkAttendance(models.Model):
             tattendance.action_done()
             if tattendance.attend_done:
                 tattendance = False
+        equipmentid = False if not equipment else equipment.id
         if tattendance:
             values.update({'attendance_id': tattendance.id})
-            linedomain = [('attendance_id', '=', tattendance.id), ('attend_done', '=', False)]
+            linedomain = [('attendance_id', '=', tattendance.id)]
+            linedomain += [('equipment_id', '=', equipmentid), ('attend_done', '=', False)]
             if workstation:
                 attenddomain = [('workstation_id', '=', workstation.id)]
                 attenddomain += linedomain
-                attendancelines = self.env['aas.mes.work.attendance.line'].search(linedomain)
+                attendancelines = self.env['aas.mes.work.attendance.line'].search(attenddomain)
                 if not attendancelines or len(attendancelines) <= 0:
                     tresult = self.action_attend(employee, mesline, workstation, tattendance, equipment=equipment)
                     if not tresult.get('success', False):
@@ -120,17 +122,17 @@ class AASMESWorkAttendance(models.Model):
                 return values
             attendance = tvalues['attendance']
         values.update({'attendance_id': attendance.id})
-        equipment_id = False if not equipment else equipment.id
+        equipmentid = False if not equipment else equipment.id
         alinedomain = [
             ('attendance_id', '=', attendance.id), ('employee_id', '=', employee.id),
             ('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id), ('attend_done', '=', False)
         ]
-        if equipment_id:
-            alinedomain.append(('equipment_id', '=', equipment_id))
+        if equipmentid:
+            alinedomain.append(('equipment_id', '=', equipmentid))
         if self.env['aas.mes.work.attendance.line'].search_count(alinedomain) <= 0:
             self.env['aas.mes.work.attendance.line'].create({
                 'attendance_id': attendance.id, 'employee_id': employee.id,
-                'mesline_id': mesline.id, 'workstation_id': workstation.id, 'equipment_id': equipment_id
+                'mesline_id': mesline.id, 'workstation_id': workstation.id, 'equipment_id': equipmentid
             })
         return values
 
@@ -351,10 +353,10 @@ class AASMESWorkAttendanceLine(models.Model):
             linevals['attendance_date'] = mesline.workdate
         if linevals and len(linevals) > 0:
             self.write(linevals)
-        tempdomain = [('employee_id', '=', employee.id)]
+        equipment_id = False if not self.equipment_id else self.equipment_id.id
+        tempdomain = [('employee_id', '=', employee.id), ('equipment_id', '=', equipment_id)]
         tempdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
         if self.env['aas.mes.workstation.employee'].search_count(tempdomain) <= 0:
-            equipment_id = False if not self.equipment_id else self.equipment_id.id
             self.env['aas.mes.workstation.employee'].create({
                 'employee_id': self.employee_id.id, 'equipment_id': equipment_id,
                 'mesline_id': self.mesline_id.id, 'workstation_id': self.workstation_id.id
