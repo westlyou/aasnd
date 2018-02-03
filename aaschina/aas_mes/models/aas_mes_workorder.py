@@ -781,6 +781,25 @@ class AASMESWorkorder(models.Model):
             'domain': tempdomain
         }
 
+    @api.multi
+    def action_show_wireorder(self):
+        self.ensure_one()
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_workorder')
+        return {
+            'name': u"生产工单",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.mes.workorder',
+            'res_id': self.id,
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'self',
+            'context': self.env.context,
+            'flags': {'initial_mode': 'view'}
+        }
+
+
 
 
 # 工单产出明细

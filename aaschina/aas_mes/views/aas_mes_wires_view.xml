@@ -195,6 +195,8 @@
                                         <field name="produce_start"/>
                                         <field name="produce_finish"/>
                                         <field name="state"/>
+                                        <button name="action_show_wireorder"
+                                                string="生产工单" type="object" icon="fa-expand"/>
                                     </tree>
                                     <form>
                                         <group>
