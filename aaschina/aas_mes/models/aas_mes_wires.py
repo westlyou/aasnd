@@ -242,10 +242,13 @@ class AASMESWireOrder(models.Model):
         if not cresult['success']:
             values.update(cresult)
             return values
-        oresult = workorder.action_output(workorder.id, workorder.product_id.id, output_qty, container_id)
+        oresult = workorder.action_output(workorder.id, workorder.product_id.id, output_qty, container_id, workstation_id)
         if not oresult['success']:
             values.update(oresult)
             return values
+        outputrecord = oresult.get('outputrecord', False)
+        if outputrecord:
+            outputrecord.write({'container_id': container_id})
         temployee = self.env['aas.hr.employee'].browse(employee_id)
         tequipment = self.env['aas.equipment.equipment'].browse(equipment_id)
         csresult = workorder.action_consume(workorder.id, workorder.product_id.id)
@@ -301,10 +304,11 @@ class AASMESWireOrder(models.Model):
             employeeid, employeename = employee.id, employee.name
         if equipment:
             equipmentid = equipment.id
+        outputdate = fields.Datetime.to_china_today()
         scheduleid = False if not mesline.schedule_id else mesline.schedule_id.id
         if float_compare(output_qty, 0.0, precision_rounding=0.000001) > 0.0:
             self.env['aas.mes.production.output'].create({
-                'product_id': productid, 'output_date': mesline.workdate, 'output_qty': output_qty,
+                'product_id': productid, 'output_date': outputdate, 'output_qty': output_qty,
                 'mesline_id': mesline.id, 'schedule_id': scheduleid, 'workstation_id': workstationid,
                 'qualified': True, 'pass_onetime': True, 'equipment_id': equipmentid, 'employee_id': employeeid,
                 'employee_name': employeename
