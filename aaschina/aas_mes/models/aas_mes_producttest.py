@@ -223,6 +223,111 @@ class AASMESProductTest(models.Model):
         }
 
 
+    @api.model
+    def loading_producttest(self, productid, workcenterid):
+        """获取检测参数信息
+        :param productid:
+        :param workcenterid:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'producttestid': 0, 'parameters': []}
+        tdomain = [('product_id', '=', productid), ('workcenter_id', '=', workcenterid)]
+        producttest = self.env['aas.mes.producttest'].search(tdomain)
+        if not producttest:
+            values.update({'success': False, 'message': u'请仔细检查，系统可能还未设置相关质检信息！'})
+            return values
+        values['producttestid'] = producttest.id
+        if not producttest.parameter_lines or len(producttest.parameter_lines) <= 0:
+            values.update({'success': False, 'message': u'请仔细检查，检测信息中可能还未设置任何参数！'})
+            return values
+        values['parameters'] = [{
+            'id': tparameter.id,
+            'name': tparameter.parameter_name, 'code': tparameter.parameter_code,
+            'type': tparameter.parameter_type, 'value': tparameter.parameter_value,
+            'maxvalue': tparameter.parameter_maxvalue, 'minvalue': tparameter.parameter_minvalue
+        } for tparameter in producttest.parameter_lines]
+        return values
+
+
+
+    @api.model
+    def action_producttest(self, equipmentid, producttestid, parameters, testtype='firstone', instrument=False, fixture=False):
+        """添加首末件抽检操作
+        :param equipmentid:
+        :param producttestid:
+        :param parameters:
+        :param testtype:
+        :param instrument:
+        :param fixture:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        equipment = self.env['aas.equipment.equipment'].browse(equipmentid)
+        if not equipment:
+            values.update({'success': False, 'message': u'请仔细检查，设备异常！'})
+            return values
+        mesline, workstation = equipment.mesline_id, equipment.workstation_id
+        if not mesline or not workstation:
+            values.update({'success': False, 'message': u'当前设备可能还未设置产线和工位！'})
+            return values
+        empdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        employeelist = self.env['aas.mes.workstation.employee'].search(empdomain)
+        if not employeelist or len(employeelist) <= 0:
+            values.update({'success': False, 'message': u'当前设备上还没有员工在岗！'})
+            return values
+        employee = employeelist[0].employee_id
+        producttest = self.env['aas.mes.producttest'].browse(producttestid)
+        if not producttest:
+            values.update({'success': False, 'message': u'检测信息异常，请仔细检查！'})
+            return values
+        if not producttest.parameter_lines or len(producttest.parameter_lines) <= 0:
+            values.update({'success': False, 'message': u'请仔细检查，检测信息中可能还未设置任何参数！'})
+            return values
+        if not parameters or len(parameters) <= 0:
+            values.update({'success': False, 'message': u'请仔细检查，您还未设置任何检测参数规格值！'})
+            return values
+        paramdict = {}
+        for ppline in producttest.parameter_lines:
+            pkey = 'P'+str(ppline.id)
+            paramdict[pkey] = {
+                'id': ppline.id, 'name': ppline.parameter_name,
+                'type': ppline.parameter_type, 'value': ppline.parameter_value,
+                'maxvalue': ppline.parameter_maxvalue, 'minvalue': ppline.parameter_minvalue
+            }
+        orderlines = []
+        for tparameter in parameters:
+            pkey = 'P'+str(tparameter['id'])
+            if pkey not in paramdict:
+                values.update({'success': False, 'message': u'请仔细检查，检测参数可能有误！'})
+                return values
+            pname, pvalue = paramdict.get('name'), tparameter.get('value', False)
+            if not pvalue:
+                values.update({'success': False, 'message': u'参数%s未设置检测值！'% pname})
+                return values
+            ptype = paramdict.get('type', 'char')
+            if ptype == 'number' and not isfloat(pvalue):
+                values.update({'success': False, 'message': u'参数%s检测值必须是一个数值！'% pname})
+                return values
+            orderlines.append((0, 0, {
+                'parameter_id': tparameter['id'], 'parameter_value': pvalue,
+                'parameter_code': tparameter['code'], 'parameter_note': tparameter['note']
+            }))
+            del paramdict[pkey]
+        if paramdict and len(paramdict) > 0:
+            values.update({'success': False, 'message': u'请仔细检查，还有某些参数未设置检测值！'})
+            return values
+        testorder = {
+            'producttest_id': producttestid, 'product_id': producttest.product_id.id,
+            'workcenter_id': producttest.workcenter_id.id, 'mesline_id': mesline.id,
+            'equipment_id': equipment.id, 'order_date': fields.Datetime.to_china_today(),
+            'test_type': testtype, 'instrument_code': instrument, 'fixture_code': fixture,
+            'employee_id': employee.id, 'state': 'confirm', 'order_lines': orderlines,
+            'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id
+        }
+        self.env['aas.mes.producttest.order'].create(testorder)
+        return values
+
+
 
 class AASMESProductTestParameter(models.Model):
     _name = 'aas.mes.producttest.parameter'

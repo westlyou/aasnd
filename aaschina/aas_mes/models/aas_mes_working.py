@@ -244,6 +244,30 @@ class AASEquipmentEquipment(models.Model):
             return values
         return self.env[res_model].action_print_label(printerid, res_ids)
 
+    @api.model
+    def loading_producttest_onclient(self, productid, workcenterid):
+        """客户端获取检测参数信息
+        :param productid:
+        :param workcenterid:
+        :return:
+        """
+        return self.env['aas.mes.producttest'].loading_producttest(productid, workcenterid)
+
+    @api.model
+    def action_producttest_onclient(self, equipmentid, producttestid, parameters,
+                                    testtype='firstone', instrument=False, fixture=False):
+        """客户端添加首末件抽检操作
+        :param equipmentid:
+        :param producttestid:
+        :param parameters:
+        :param testtype:
+        :param instrument:
+        :param fixture:
+        :return:
+        """
+        return self.env['aas.mes.producttest'].action_producttest(equipmentid, producttestid, parameters,
+                                                                  testtype=testtype, instrument=instrument, fixture=fixture)
+
 
 
 
