@@ -628,6 +628,7 @@ class AASMESWorkorder(models.Model):
         if not workcenter:
             values.update({'success': False, 'message': u'工位%s上未设置相应工序，请仔细检查！'% workcenter.name})
             return values
+        values['workcenter_id'] = workcenter.id
         # 获取BOM上虚拟件信息
         productdict = {}
         bomdomain = [('bom_id', '=', workorder.aas_bom_id.id), ('workcenter_id', '=', workcenter.id)]
