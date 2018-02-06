@@ -379,16 +379,17 @@ class AASMESWorkorder(models.Model):
         tequipment = self.env['aas.mes.workstation.equipment'].search(stationdomain, limit=1)
         if tequipment:
             equipmentid = tequipment.equipment_id.id
+        outputdate = fields.Datetime.to_china_today()
         if float_compare(output_qty, 0.0, precision_rounding=0.000001) > 0.0:
             self.env['aas.mes.production.output'].create({
-                'product_id': productid, 'output_date': mesline.workdate, 'output_qty': output_qty,
+                'product_id': productid, 'output_date': outputdate, 'output_qty': output_qty,
                 'mesline_id': mesline.id, 'schedule_id': scheduleid, 'workstation_id': workstationid,
                 'qualified': True, 'pass_onetime': True, 'equipment_id': equipmentid, 'employee_id': employeeid,
                 'employee_name': employeename
             })
         if float_compare(badmode_qty, 0.0, precision_rounding=0.000001) > 0.0:
             self.env['aas.mes.production.output'].create({
-                'product_id': productid, 'output_date': mesline.workdate, 'output_qty': badmode_qty,
+                'product_id': productid, 'output_date': outputdate, 'output_qty': badmode_qty,
                 'mesline_id': mesline.id, 'schedule_id': scheduleid, 'workstation_id': workstationid,
                 'qualified': False, 'pass_onetime': False, 'equipment_id': equipmentid, 'employee_id': employeeid,
                 'employee_name': employeename
