@@ -194,6 +194,7 @@ class AASMESWireCuttingController(http.Controller):
         feeddomain.extend([('material_id', '=', label.product_id.id), ('material_lot', '=', label.product_lot.id)])
         feedmaterial = request.env['aas.mes.feedmaterial'].search(feeddomain, limit=1)
         if feedmaterial:
+            feedmaterial.action_refresh_stock()
             values.update({'success': False, 'message': u'此物料的相同批次已经上料，请不要重复操作！'})
             return values
         else:
