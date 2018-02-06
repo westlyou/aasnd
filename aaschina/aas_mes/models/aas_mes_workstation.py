@@ -178,7 +178,7 @@ class AASMESWorkstationEmployee(models.Model):
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     _sql_constraints = [
-        ('uniq_employee', 'unique (workstation_id, mesline_id, employee_id)', u'请不要重复添加员工！')
+        ('uniq_employee', 'unique (workstation_id, mesline_id, employee_id, equipment_id)', u'请不要重复添加员工！')
     ]
 
 
