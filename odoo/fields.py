@@ -1577,6 +1577,13 @@ class Datetime(Field):
         return Datetime.to_timezone_string(value, 'Asia/Shanghai')
 
     @staticmethod
+    def to_china_date(value):
+        chinastr = Datetime.to_timezone_string(value, 'Asia/Shanghai')
+        if not chinastr:
+            return ''
+        return chinastr[0:10]
+
+    @staticmethod
     def to_china_today():
         china_time = Datetime.to_china_string(Datetime.now())
         if not china_time:

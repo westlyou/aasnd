@@ -95,7 +95,8 @@
                                                 <li> <a href="javascript:void(0);">当前PN <span id="mes_currentpn" class="pull-right" customercode=""/></a> </li>
                                                 <li>
                                                     <a href="javascript:void(0);">扫描员工
-                                                        <span id="mes_scanner" class="pull-right" t-esc="scanner_name" t-att-employeeid="scanner_id"/>
+                                                        <span id="mes_scanner" class="pull-right" t-esc="scanner_name"
+                                                              t-att-employeeid="scanner_id" t-att-employeename="scanner_name"/>
                                                     </a>
                                                 </li>
                                             </ul>
@@ -512,7 +513,7 @@
                         </section>
                         <section class="content">
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="box box-solid">
                                         <div class="box-header with-border">
                                             <h3 class="box-title">序列号列表</h3>
@@ -522,7 +523,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-8">
+                                <div class="col-md-9">
                                     <div class="box box-primary">
                                         <div class="box-header with-border">
                                             <h3 class="box-title">
@@ -536,31 +537,32 @@
                                         </div>
                                         <div class="box-body">
                                             <div class="row" style="margin-top:10px;">
-                                                <div class="col-md-6">
+                                                <div class="col-md-4">
                                                     <div class="input-group">
                                                         <span class="input-group-addon">工位</span>
                                                         <input id="mes_workstation" type="text" class="form-control"
                                                            readonly="readonly" t-att-workstationid="workstation_id" t-att-value="workstation_name"/>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6">
+                                                <div class="col-md-4">
                                                     <div class="input-group">
                                                         <span class="input-group-addon">操作员</span>
-                                                        <input id="mes_employee" type="text" class="form-control"  readonly="readonly" employeeid="0"/>
+                                                        <input id="mes_employee" type="text" class="form-control"
+                                                               readonly="readonly" t-att-employeeid="scanner_id" t-att-value="scanner_name"/>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div class="row" style="margin-top:10px;">
-                                                <div class="col-md-12">
-                                                    <select id="mes_badmode" class="form-control select2" style="width: 100%;" value="0"></select>
+                                                <div class="col-md-4">
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon">不良模式</span>
+                                                        <select id="mes_badmode" class="form-control select2" style="width: 100%;" value="0"></select>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="row" style="margin-top:10px;">
                                                 <section class="col-md-12">
                                                     <div class="box box-primary">
-                                                        <div class="box-header">
-                                                            <i class="fa fa-list"></i>
-                                                            <h3 class="box-title">返工记录</h3>
+                                                        <div class="box-header with-border">
+                                                            <h3 class="box-title">不良记录</h3>
                                                         </div>
                                                         <div class="box-body">
                                                             <div class="table-responsive">
@@ -577,7 +579,22 @@
                                                                             <th>维修状态</th>
                                                                         </tr>
                                                                     </thead>
-                                                                    <tbody id="rework_list"></tbody>
+                                                                    <tbody id="rework_list">
+                                                                        <t t-if="reworklist">
+                                                                            <t t-foreach="reworklist" t-as="rework">
+                                                                                <tr>
+                                                                                    <td> <t t-esc="rework['lineno']"/> </td>
+                                                                                    <td> <t t-esc="rework['serialnumber']"/> </td>
+                                                                                    <td> <t t-esc="rework['badmode_date']"/> </td>
+                                                                                    <td> <t t-esc="rework['product_code']"/> </td>
+                                                                                    <td> <t t-esc="rework['workcenter_name']"/> </td>
+                                                                                    <td> <t t-esc="rework['badmode_name']"/> </td>
+                                                                                    <td> <t t-esc="rework['commiter_name']"/> </td>
+                                                                                    <td> <t t-esc="rework['state_name']"/> </td>
+                                                                                </tr>
+                                                                            </t>
+                                                                        </t>
+                                                                    </tbody>
                                                                 </table>
                                                             </div>
                                                         </div>

@@ -188,7 +188,10 @@ class AASMESGP12CheckingController(http.Controller):
 
     @http.route('/aasmes/gp12/rework', type='http', auth="user")
     def aasmes_gp12_rework(self):
-        values = {'success': True, 'message': '', 'employeelist': []}
+        values = {
+            'success': True, 'message': '', 'reworklist': [],
+            'scanner_id': '0', 'scanner_name': '', 'workstation_id': '0', 'workstation_name': ''
+        }
         loginuser = request.env.user
         values['checker'] = loginuser.name
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
@@ -206,6 +209,26 @@ class AASMESGP12CheckingController(http.Controller):
             'mesline_id':mesline.id, 'mesline_name': mesline.name,
             'workstation_id': workstation.id, 'workstation_name': workstation.name
         })
+        employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        scannerdomain = employeedomain + [('action_type', '=', 'scan')]
+        scanner = request.env['aas.mes.workstation.employee'].search(scannerdomain, limit=1)
+        if not scanner:
+            values.update({'success': False, 'message': u'当前工位没有扫描员工在岗！'})
+            return request.render('aas_mes.aas_gp12_rework', values)
+        values.update({'scanner_id': scanner.employee_id.id, 'scanner_name': scanner.employee_id.name})
+        badmode_date = fields.Datetime.to_china_today()
+        reworkdomain = [('workstation_id', '=', workstation.id), ('badmode_date', '=', badmode_date)]
+        reworklist = request.env['aas.mes.rework'].search(reworkdomain)
+        if reworklist and len(reworklist) > 0:
+            tindex = 1
+            for rework in reworklist:
+                values['reworklist'].append({
+                    'lineno': tindex, 'state_name': REWORKSTATEDICT[rework.state],
+                    'serialnumber': rework.serialnumber_id.name, 'badmode_date': rework.badmode_date,
+                    'product_code': rework.customerpn, 'workcenter_name': rework.workstation_id.name,
+                    'badmode_name': rework.badmode_id.name, 'commiter_name': rework.commiter_id.name
+                })
+                tindex += 1
         return request.render('aas_mes.aas_gp12_rework', values)
 
 
@@ -220,17 +243,10 @@ class AASMESGP12CheckingController(http.Controller):
         if rework and not rework.repairer_id:
             values.update({'success': False, 'message': u'不良已上报还未维修，请不要重复上报！'})
             return values
-        values['product_code'] = serialnumber.customer_product_code
-        # 返工记录
-        reworklist = request.env['aas.mes.rework'].search([('serialnumber_id', '=', serialnumber.id)])
-        if reworklist and len(reworklist) > 0:
-            values['reworklist'] = [{
-                'serialnumber': serialnumber.name, 'badmode_date': rework.badmode_date,
-                'product_code': rework.customerpn, 'workcenter_name': rework.workstation_id.name,
-                'badmode_name': rework.badmode_id.name, 'commiter_name': rework.commiter_id.name,
-                'state_name': REWORKSTATEDICT[rework.state]
-            } for rework in reworklist]
-        values.update({'serialnumber_id': serialnumber.id, 'serialnumber_name': serialnumber.name})
+        values.update({
+            'product_code': serialnumber.customer_product_code,
+            'serialnumber_id': serialnumber.id, 'serialnumber_name': serialnumber.name
+        })
         return values
 
 

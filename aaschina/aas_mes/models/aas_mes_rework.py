@@ -46,7 +46,7 @@ class AASMESRework(models.Model):
     def _compute_badmode_date(self):
         for record in self:
             if record.commit_time:
-                record.badmode_date = fields.Datetime.to_timezone_string(record.commit_time, 'Asia/Shanghai')
+                record.badmode_date = fields.Datetime.to_china_date(record.commit_time)
             else:
                 record.badmode_date = False
 

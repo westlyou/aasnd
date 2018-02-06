@@ -366,6 +366,12 @@ $(function() {
     $('#action_badmode').click(function(){
         layer.confirm('您确认上报不良？', {'btn': ['确定', '取消']}, function(index){
             layer.close(index);
+            var gp12scanner = $('#mes_scanner');
+            var scannerid = gp12scanner.attr('employeeid');
+            if(scannerid==null || scannerid=='0' || scannerid==''){
+                layer.msg('当前扫描员工还没上岗，请扫描员工先上岗再操作！', {icon: 5});
+                return ;
+            }
             window.open('/aasmes/gp12/rework');
         }, function(){});
     });

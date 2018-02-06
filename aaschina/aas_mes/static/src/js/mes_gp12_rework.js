@@ -11,50 +11,8 @@ $(function() {
             layer.msg('扫描条码异常！', {icon: 5});
             return;
         }
-        var prefix = barcode.substring(0,2);
-        if(prefix=='AM'){
-            action_scan_employee(barcode);
-        }else{
-            action_scan_serialnumber(barcode);
-        }
+        action_scan_serialnumber(barcode);
     });
-
-    //扫描员工卡
-    function action_scan_employee(barcode){
-        if(!scanable){
-            layer.msg('操作正在处理，请耐心等待！', {icon: 5});
-            return ;
-        }
-        scanable = false;
-        var scanparams = {'barcode': barcode};
-        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
-        $.ajax({
-            url: '/aasmes/gp12/scanemployee',
-            headers:{'Content-Type':'application/json'},
-            type: 'post', timeout:10000, dataType: 'json',
-            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scanparams, id: access_id}),
-            success:function(data){
-                scanable = true;
-                var dresult = data.result;
-                if(!dresult.success){
-                    layer.msg(dresult.message, {icon: 5});
-                    return ;
-                }
-                if(dresult.message!=null && dresult.message!=''){
-                    layer.msg(dresult.message, {icon: 1});
-                }
-                if(dresult.action=='leave'){
-                    return ;
-                }
-                $('#mes_employee').attr('employeeid', dresult.employee_id);
-                $('#mes_employee').val(dresult.employee_name);
-            },
-            error:function(xhr,type,errorThrown){
-                scanable = true;
-                console.log(type);
-            }
-        });
-    }
 
 
     //扫描隔离板
@@ -64,6 +22,18 @@ $(function() {
             return ;
         }
         scanable = false;
+        var workstationid = $('#mes_workstation').attr('workstationid');
+        if (workstationid==null || workstationid=='0' || workstationid==''){
+            layer.msg('当前未绑定工位，请绑定工位再继续操作！', {icon: 5});
+            scanable = true;
+            return ;
+        }
+        var scannerid = $('#mes_employee').attr('employeeid');
+        if (scannerid==null || scannerid=='0' || scannerid==''){
+            layer.msg('当前工位没有扫描员在岗，请先让扫描员上岗再操作！', {icon: 5});
+            scanable = true;
+            return ;
+        }
         var scanparams = {'barcode': barcode};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
@@ -87,23 +57,10 @@ $(function() {
                 if(dresult.message!=null && dresult.message!=''){
                     $('#checkwarning').html(dresult.message);
                 }
-                if(dresult.reworklist.length > 0){
-                    $.each(dresult.reworklist, function(index, record){
-                        var lineno = index + 1;
-                        var reworktr = $('<tr></tr>').appendTo($('#rework_list'));
-                        $('<td></td>').html(lineno).appendTo(reworktr);
-                        $('<td></td>').html(record.serialnumber).appendTo(reworktr);
-                        $('<td></td>').html(record.badmode_date).appendTo(reworktr);
-                        $('<td></td>').html(record.product_code).appendTo(reworktr);
-                        $('<td></td>').html(record.workcenter_name).appendTo(reworktr);
-                        $('<td></td>').html(record.badmode_name).appendTo(reworktr);
-                        $('<td></td>').html(record.commiter_name).appendTo(reworktr);
-                        $('<td></td>').html(record.state_name).appendTo(reworktr);
-                    });
-                }
-                $('<li class="aas-serialnumber"></li>').attr({'serialnumberid': dresult.serialnumber_id, 'id': 'serialnumber_'+dresult.serialnumber_id})
-                    .html('<a href="javascript:void(0);">'+dresult.serialnumber_name+'</a>')
-                    .prependTo($('#serialnumberlist'));
+                var serialnumberli = $('<li class="aas-serialnumber"></li>').prependTo($('#serialnumberlist'));
+                serialnumberli.attr({
+                    'serialnumberid': dresult.serialnumber_id, 'id': 'serialnumber_'+dresult.serialnumber_id
+                }).html('<a href="javascript:void(0);">'+dresult.serialnumber_name+'</a>');
             },
             error:function(xhr,type,errorThrown){
                 scanable = true;
@@ -183,12 +140,7 @@ $(function() {
                         layer.msg(dresult.message, {icon: 5});
                         return ;
                     }
-                    $('#serialnumberlist').html('');
-                    $('#rework_list').html('');
-                    $('#mes_serialnumber').html('');
-                    $('#mes_productcode').html('');
-                    $('option', '#mes_badmode').remove();
-                    $('#mes_badmode').val('0');
+                    window.location.reload(true);
                 },
                 error:function(xhr,type,errorThrown){
                     scanable = true;
