@@ -113,7 +113,8 @@ class AASMESSerialnumberController(http.Controller):
             })
             lastserialnumber = tserialnumber.name
         values.update({'lastserialnumber': lastserialnumber})
-        values['serial_count'] = request.env['aas.mes.serialnumber'].search_count([('regular_code', '=', regular_code)])
+        countdoamin = [('regular_code', '=', regular_code), ('mesline_id', '=', values.get('mesline_id', False))]
+        values['serial_count'] = request.env['aas.mes.serialnumber'].search_count(countdoamin)
         return values
 
 
