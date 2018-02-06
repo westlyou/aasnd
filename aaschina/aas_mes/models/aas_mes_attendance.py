@@ -76,13 +76,13 @@ class AASMESWorkAttendance(models.Model):
                     else:
                         values.update({'message': u'您已经在%s上岗，祝您工作愉快！'% workstation.name})
                 else:
-                    attendancelines.action_done()
+                    self.action_attendance_leave(tattendance.id)
                     values['action'] = 'leave'
                 return values
             else:
                 attendancelines = self.env['aas.mes.work.attendance.line'].search(linedomain)
                 if attendancelines and len(attendancelines) > 0:
-                    attendancelines.action_done()
+                    self.action_attendance_leave(tattendance.id)
                     values['action'] = 'leave'
                 else:
                     values.update({'success': False, 'message': u'您还未选择上岗工位！'})
@@ -98,6 +98,13 @@ class AASMESWorkAttendance(models.Model):
                 return values
             values['attendance_id'] = tvalues['attendance_id']
         return values
+
+    @api.model
+    def action_attendance_leave(self, attendanceid):
+        tempdomain = [('attendance_id', '=', attendanceid), ('attend_done', '=', False)]
+        templines = self.env['aas.mes.work.attendance.line'].search(tempdomain)
+        if templines and len(templines) > 0:
+            templines.action_done()
 
 
 

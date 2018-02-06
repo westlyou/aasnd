@@ -121,10 +121,8 @@
                                                         </span>
                                                     </a>
                                                 </li>
-                                                <li>
-                                                    <a href="javascript:void(0);">
-                                                        <select id="mes_printer" class="form-control select2" style="width: 100%;"></select>
-                                                    </a>
+                                                <li style="padding:5px;">
+                                                    <select id="mes_printer" class="form-control select2" style="width: 100%;"></select>
                                                 </li>
                                                 <li> <a id="mes_label" href="javascript:void(0);">显示当前标签</a></li>
                                                 <li> <button id="mes_printbtn" class="btn btn-block btn-primary" waitcount="0">打印标签</button></li>
