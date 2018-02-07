@@ -71,21 +71,6 @@ $(function(){
                 $('#mes_serialnumber').html(dresult.serialnumber_name).attr('serialnumberid', dresult.serialnumber_id);
                 $('#mes_customerpn').html(dresult.customerpn);
                 $('#mes_internalpn').html(dresult.internalpn);
-                $('#rework_list').html('');
-                if(dresult.reworklist.length > 0){
-                    $.each(dresult.reworklist, function(index, record){
-                        var lineno = index + 1;
-                        var reworktr = $('<tr></tr>').appendTo($('#rework_list'));
-                        $('<td></td>').html(lineno).appendTo(reworktr);
-                        $('<td></td>').html(record.serialnumber).appendTo(reworktr);
-                        $('<td></td>').html(record.badmode_date).appendTo(reworktr);
-                        $('<td></td>').html(record.product_code).appendTo(reworktr);
-                        $('<td></td>').html(record.workcenter_name).appendTo(reworktr);
-                        $('<td></td>').html(record.badmode_name).appendTo(reworktr);
-                        $('<td></td>').html(record.commiter_name).appendTo(reworktr);
-                        $('<td></td>').html(record.state_name).appendTo(reworktr);
-                    });
-                }
             },
             error:function(xhr,type,errorThrown){
                 scanable = true;
@@ -127,6 +112,8 @@ $(function(){
                 $('#mes_customerpn').html('');
                 $('#mes_internalpn').html('');
                 $('#rework_list').html('');
+                //刷新待处理列表
+                loadcheckinglist();
             },
             error:function(xhr,type,errorThrown){
                 scanable = true;
@@ -142,5 +129,44 @@ $(function(){
             $('#mes_employee').attr('employeeid', '0').html('');
         },function(){});
     });
+
+    function loadcheckinglist(){
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        $.ajax({
+            url: '/aasmes/ipqcchecking/loadcheckinglist',
+            headers:{'Content-Type':'application/json'},
+            type: 'post', timeout:10000, dataType: 'json',
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {}, id: access_id}),
+            success:function(data){
+                scanable = true;
+                var dresult = data.result;
+                if(!dresult.success){
+                    layer.msg(dresult.message, {icon: 5});
+                    return ;
+                }
+                $('#rework_list').html('');
+                if(dresult.reworklist.length > 0){
+                    $.each(dresult.reworklist, function(index, record){
+                        var lineno = index + 1;
+                        var reworktr = $('<tr></tr>').appendTo($('#rework_list'));
+                        $('<td></td>').html(lineno).appendTo(reworktr);
+                        $('<td></td>').html(record.serialnumber).appendTo(reworktr);
+                        $('<td></td>').html(record.badmode_date).appendTo(reworktr);
+                        $('<td></td>').html(record.product_code).appendTo(reworktr);
+                        $('<td></td>').html(record.workcenter_name).appendTo(reworktr);
+                        $('<td></td>').html(record.badmode_name).appendTo(reworktr);
+                        $('<td></td>').html(record.commiter_name).appendTo(reworktr);
+                        $('<td></td>').html(record.state_name).appendTo(reworktr);
+                    });
+                }
+            },
+            error:function(xhr,type,errorThrown){
+                scanable = true;
+                console.log(type);
+            }
+        });
+    }
+
+    loadcheckinglist();
 
 });

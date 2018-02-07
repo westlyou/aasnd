@@ -151,7 +151,7 @@ class AASMESReworkingController(http.Controller):
 
     @http.route('/aasmes/ipqcchecking/scanserialnumber', type='json', auth="user")
     def aasmes_ipqcchecking_scanserialnumber(self, barcode):
-        values = {'success': True, 'message': '', 'reworklist': []}
+        values = {'success': True, 'message': ''}
         serialnumber = request.env['aas.mes.serialnumber'].search([('name', '=', barcode)])
         if not serialnumber:
             values.update({'success': False, 'message': u'扫描序列号异常，请仔细检查当前扫描的条码是否是序列号条码！'})
@@ -163,15 +163,6 @@ class AASMESReworkingController(http.Controller):
         if rework.state != 'ipqc':
             values.update({'success': False, 'message': u'%s可能还未维修或已经IPQC确认完成，暂时不需要IPQC确认！'% barcode})
             return values
-        # 返工记录
-        reworklist = request.env['aas.mes.rework'].search([('serialnumber_id', '=', serialnumber.id)], order='id desc')
-        if reworklist and len(reworklist) > 0:
-            values['reworklist'] = [{
-                'serialnumber': serialnumber.name, 'badmode_date': rework.badmode_date,
-                'product_code': rework.customerpn, 'workcenter_name': rework.workstation_id.name,
-                'badmode_name': rework.badmode_id.name, 'commiter_name': rework.commiter_id.name,
-                'state_name': REWORKSTATEDICT[rework.state]
-            } for rework in reworklist]
         values.update({
             'serialnumber_id': serialnumber.id, 'serialnumber_name': serialnumber.name,
             'customerpn': serialnumber.customer_product_code,
@@ -191,4 +182,21 @@ class AASMESReworkingController(http.Controller):
             values.update({'success': False, 'message': u'%s可能还未维修或已经IPQC确认完成，暂时不需要IPQC确认'% rework.serialnumber_id.name})
             return values
         rework.action_ipqcchecking(ipqccheckerid, checkresult)
+        return values
+
+
+
+    @http.route('/aasmes/ipqcchecking/loadcheckinglist', type='json', auth="user")
+    def aasmes_ipqcchecking_loadcheckinglist(self):
+        values = {'success': True, 'message': '', 'reworklist': []}
+        chinadate = fields.Datetime.to_china_today()
+        tempdomain = [('badmode_date', '=', chinadate), ('state', '=', 'ipqc')]
+        reworklist = request.env['aas.mes.rework'].search(tempdomain)
+        if reworklist and len(reworklist) > 0:
+            values['reworklist'] = [{
+                'serialnumber': rework.serialnumber_id.name, 'badmode_date': rework.badmode_date,
+                'product_code': rework.customerpn, 'workcenter_name': rework.workstation_id.name,
+                'badmode_name': rework.badmode_id.name, 'commiter_name': rework.commiter_id.name,
+                'state_name': REWORKSTATEDICT[rework.state]
+            } for rework in reworklist]
         return values

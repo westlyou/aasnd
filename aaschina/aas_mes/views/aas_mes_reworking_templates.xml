@@ -35,6 +35,9 @@
 
                                 <div class="navbar-custom-menu">
                                     <ul class="nav navbar-nav">
+                                        <li id="action_clearemployee" class="notifications-menu">
+                                            <a href="javascript:void(0);"> <i class="fa fa-trash"></i> 清理员工 </a>
+                                        </li>
                                         <li id="action_commit" class="notifications-menu">
                                             <a href="javascript:void(0);"> <i class="fa fa-send"></i> 上报不良 </a>
                                         </li>
@@ -64,7 +67,20 @@
                         </section>
                         <section class="content">
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
+                                    <div class="box box-solid">
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">基础信息</h3>
+                                        </div>
+                                        <div class="box-body no-padding">
+                                            <ul class="nav nav-pills nav-stacked">
+                                                <li> <a href="javascript:void(0);">操作员 <span id="mes_employee" class="pull-right" employeeid="0"/></a> </li>
+                                                <li style="padding:5px;"> <select id="mes_workstation" class="form-control select2" style="width: 100%;"></select> </li>
+                                                <li style="padding:5px;"> <select id="mes_badmode" class="form-control select2" style="width: 100%;"></select> </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
                                     <div class="box box-solid">
                                         <div class="box-header with-border">
                                             <h3 class="box-title">序列号列表</h3>
@@ -74,7 +90,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-8">
+                                <div class="col-md-9">
                                     <div class="box box-primary">
                                         <div class="box-header with-border">
                                             <h3 class="box-title">
@@ -87,25 +103,6 @@
                                             </div>
                                         </div>
                                         <div class="box-body">
-                                            <div class="row" style="margin-top:10px;">
-                                                <div class="col-md-10">
-                                                    <div class="input-group">
-                                                        <span class="input-group-addon">操作员</span>
-                                                        <input id="mes_employee" type="text" class="form-control"  readonly="readonly" employeeid="0"/>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-2" style="margin-top:-10px;">
-                                                    <button id="action_clearemployee" type="button" class="btn bg-blue margin">清理员工</button>
-                                                </div>
-                                            </div>
-                                            <div class="row" style="margin-top:10px;">
-                                                <div class="col-md-6">
-                                                    <select id="mes_workstation" class="form-control select2" style="width: 100%;"></select>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <select id="mes_badmode" class="form-control select2" style="width: 100%;"></select>
-                                                </div>
-                                            </div>
                                             <div class="row" style="margin-top:10px;">
                                                 <section class="col-md-12">
                                                     <div class="box box-primary">
@@ -392,8 +389,15 @@
                                         <div class="box-body no-padding">
                                             <ul class="nav nav-pills nav-stacked">
                                                 <li> <a href="javascript:void(0);">IPQC员工 <span id="mes_employee" class="pull-right" employeeid="0"/></a></li>
+                                                <li> <a href="javascript:void(0);">当前SN <span id="mes_serialnumber" class="pull-right" serialnumberid="0"/></a> </li>
                                                 <li> <a href="javascript:void(0);">客户料号 <span id="mes_customerpn" class="pull-right"/></a> </li>
                                                 <li> <a href="javascript:void(0);">内部料号 <span id="mes_internalpn" class="pull-right"/></a> </li>
+                                                <li style="padding:5px;">
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon">操作结果</span>
+                                                        <input id="mes_result" type="text" class="form-control" value="OK" style="text-align:right;"/>
+                                                    </div>
+                                                </li>
                                             </ul>
                                         </div>
                                     </div>
@@ -401,50 +405,26 @@
                                 <div class="col-md-9">
                                     <div class="box box-primary">
                                         <div class="box-header with-border">
-                                            <h3 class="box-title">当前SN: </h3>
-                                            <div class="box-tools pull-right">
-                                                <div style="font-size:22px; font-weight:bold;">
-                                                    <span id="mes_serialnumber" style="color:#72AFD2;" serialnumberid="0"/>
-                                                </div>
-                                            </div>
+                                            <i class="fa fa-list"></i>
+                                            <h3 class="box-title">待处理清单</h3>
                                         </div>
                                         <div class="box-body">
-                                            <div class="row" style="margin-top:10px;">
-                                                <div class="col-md-12">
-                                                    <div class="input-group">
-                                                        <span class="input-group-addon">操作结果</span>
-                                                        <input id="mes_result" type="text" class="form-control" value="OK"/>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="row" style="margin-top:10px;">
-                                                <section class="col-md-12">
-                                                    <div class="box box-primary">
-                                                        <div class="box-header">
-                                                            <i class="fa fa-list"></i>
-                                                            <h3 class="box-title">返工记录</h3>
-                                                        </div>
-                                                        <div class="box-body">
-                                                            <div class="table-responsive">
-                                                                <table class="table no-margin">
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th>No</th>
-                                                                            <th>SN</th>
-                                                                            <th>不良日期</th>
-                                                                            <th>料号</th>
-                                                                            <th>工序</th>
-                                                                            <th>不良模式</th>
-                                                                            <th>作业员</th>
-                                                                            <th>维修状态</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody id="rework_list"></tbody>
-                                                                </table>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </section>
+                                            <div class="table-responsive">
+                                                <table class="table no-margin">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>No</th>
+                                                            <th>SN</th>
+                                                            <th>不良日期</th>
+                                                            <th>料号</th>
+                                                            <th>工序</th>
+                                                            <th>不良模式</th>
+                                                            <th>作业员</th>
+                                                            <th>维修状态</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="rework_list"></tbody>
+                                                </table>
                                             </div>
                                         </div>
                                     </div>

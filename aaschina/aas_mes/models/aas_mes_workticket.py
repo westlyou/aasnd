@@ -583,7 +583,7 @@ class AASMESWorkticket(models.Model):
         :param container_id:
         :return:
         """
-        values = {'success': True, 'message': ''}
+        values = {'success': True, 'message': '', 'label_id': 0}
         equipment = self.env['aas.equipment.equipment'].browse(equipment_id)
         meslineid, workstationid = equipment.mesline_id.id, equipment.workstation_id.id
         tempdomain = [('mesline_id', '=', meslineid), ('workstation_id', '=', workstationid)]
@@ -604,6 +604,8 @@ class AASMESWorkticket(models.Model):
         except ValidationError, ve:
             values.update({'success': False, 'message': ve.name})
             return values
+        if workticket.label_id:
+            values['label_id'] = workticket.label_id.id
         return values
 
 

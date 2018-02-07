@@ -341,7 +341,7 @@
 
                     <div class="content-wrapper">
                         <section class="content-header">
-                            <h1> GP12产出查询 </h1>
+                            <h3> GP12产出查询 </h3>
                             <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;color:red;">
                                 <span id="checkwarning" t-esc="message"/>
                             </div>

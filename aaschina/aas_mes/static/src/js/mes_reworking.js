@@ -39,7 +39,7 @@ $(function(){
                     layer.msg(dresult.message, {icon: 5});
                     return ;
                 }
-                $('#mes_employee').attr('employeeid', dresult.employee_id).val(dresult.employee_name);
+                $('#mes_employee').attr('employeeid', dresult.employee_id).html(dresult.employee_name);
             },
             error:function(xhr,type,errorThrown){
                 scanable = true;
@@ -227,7 +227,7 @@ $(function(){
     $('#action_clearemployee').click(function(){
         layer.confirm('您确定清理员工信息？', {'btn': ['确定', '取消']}, function(index){
             layer.close(index);
-            $('#mes_employee').val('').attr('employeeid', '0');
+            $('#mes_employee').html('').attr('employeeid', '0');
         },function(){});
     });
 

@@ -145,6 +145,11 @@ $(function() {
             layer.msg('请先设置扫描员工！', {icon: 5});
             return ;
         }
+        var labelqty = $('#mes_labelqty').val();
+        if(!isAboveZeroInteger(labelqty)){
+            layer.msg('请先设置好数量信息！', {icon: 5});
+            return ;
+        }
         var scanparams = {'barcode': barcode};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         var customercode = $('#mes_currentpn').attr('customercode');
@@ -494,7 +499,7 @@ $(function() {
                 $('#gp12_result_content').attr('serialcount', dresult.serialcount).html(dresult.serialcount);
                 $('#pass_list').html('');
                 $('#mes_printbtn').attr('waitcount', dresult.serialcount);
-                $('#functiontest_list').html('');
+                $('#operation_list').html('');
                 $('#rework_list').html('');
                 if(dresult.serialnumberlist.length < 0){
                     return ;
@@ -572,6 +577,7 @@ $(function() {
     $('li.aas-qty').click(function(){
         var tempqty = $(this).attr('qty');
         $('#mes_labelqty').val(tempqty);
+        $('#mes_labelqty').attr('readonly', 'readonly');
         var cdate = new Date();
         var cyear = cdate.getFullYear();
         var cmonth = cdate.getMonth()+1;
