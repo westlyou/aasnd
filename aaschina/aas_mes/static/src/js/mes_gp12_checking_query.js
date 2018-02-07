@@ -4,13 +4,45 @@
 
 $(function(){
 
-    function loadinglabelist(){
+    function todaydate(){
+        var today = new Date();
+        var tyear = today.getFullYear();
+        var tmonth = today.getMonth() + 1;
+        var tdate = today.getDate();
+        if (tmonth<10){
+            tmonth = '0'+tmonth;
+        }
+        if(tdate<10){
+            tdate = '0'+tdate;
+        }
+        return tyear+'-'+tmonth+'-'+tdate;
+    }
+
+
+    $('#querydate').val(todaydate());
+
+    $('#querydate').datepicker({clearBtn: true, autoclose: true, language: 'zh-CN', format: 'yyyy-mm-dd'});
+
+    $('#querybtn').click(function(){
+        var checkdate = $('#querydate').val();
+        if(checkdate==undefined || checkdate==null || checkdate==''){
+            loadinglabelist();
+        }else{
+            loadinglabelist(checkdate);
+        }
+    });
+
+    function loadinglabelist(checkdate){
+        if(checkdate==undefined || checkdate==null || checkdate==''){
+            checkdate = todaydate();
+        }
+        var tparams = {'checkdate': checkdate};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
             url: '/aasmes/gp12/checking/query/labelist',
             headers:{'Content-Type':'application/json'},
             type: 'post', timeout:10000, dataType: 'json',
-            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {}, id: access_id}),
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: tparams, id: access_id}),
             success:function(data){
                 var dresult = data.result;
                 $('#checkwarning').html(dresult.message);
@@ -22,6 +54,7 @@ $(function(){
                     return ;
                 }
                 var firstlabelid = 0;
+                $('#gp12labelist').html('');
                 $.each(dresult.labelist, function(index, tlabel){
                     var templi = $('<li class="aas-label"></li>').attr('labelid', tlabel.label_id).appendTo($('#gp12labelist'));
                     var tempcontent = '<a href="javascript:void(0);" style="padding:5px 15px;">'+tlabel.label_name;

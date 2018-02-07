@@ -295,6 +295,7 @@
                 <meta name="apple-mobile-web-app-capable" content="yes"/>
                 <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/datepicker/datepicker3.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/select2/select2.min.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
@@ -341,10 +342,31 @@
 
                     <div class="content-wrapper">
                         <section class="content-header">
-                            <h3> GP12产出查询 </h3>
-                            <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;color:red;">
-                                <span id="checkwarning" t-esc="message"/>
+                            <div t-if="message" class="row">
+                                <div class="col-xs-12">
+                                    <h3> GP12产出查询 </h3>
+                                    <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;color:red;">
+                                        <span id="checkwarning" t-esc="message"/>
+                                    </div>
+                                </div>
                             </div>
+                            <div t-if="not message" class="row">
+                                <div class="col-xs-4" style="font-size:20px;font-weiht:bold;">
+                                    <span style="height:34px;line-height:34px;">GP12产出查询 </span>
+                                </div>
+                                <div class="col-xs-3 col-xs-offset-4">
+                                    <div class="form-group">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">产出日期</div>
+                                            <input type="text" class="form-control pull-right" id="querydate"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xs-1">
+                                    <button id="querybtn" type="button" class="btn btn-block btn-primary">查询</button>
+                                </div>
+                            </div>
+
                         </section>
                         <section class="content">
                             <div class="row">
@@ -442,6 +464,8 @@
                 <script src="/aas_base/static/libs/select2/select2.min.js"></script>
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
+                <script src="/aas_base/static/libs/datepicker/bootstrap-datepicker.js"></script>
+                <script src="/aas_base/static/libs/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>
                 <script src="/aas_mes/static/src/js/mes_gp12_checking_query.js"></script>
             </body>
         </html>

@@ -465,10 +465,9 @@ class AASMESGP12CheckingController(http.Controller):
 
 
     @http.route('/aasmes/gp12/checking/query/labelist', type='json', auth="user")
-    def aasmes_gp12_checking_query_labelist(self):
+    def aasmes_gp12_checking_query_labelist(self, checkdate):
         values = {'success': True, 'message': '', 'labelist': []}
-        current_date = fields.Datetime.to_china_today()
-        templabelist = request.env['aas.mes.production.label'].search([('action_date', '=', current_date)])
+        templabelist = request.env['aas.mes.production.label'].search([('action_date', '=', checkdate)])
         if not templabelist or len(templabelist) <= 0:
             return values
         values['labelist'] = [{
