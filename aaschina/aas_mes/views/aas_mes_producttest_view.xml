@@ -114,7 +114,7 @@
             <field name="arch" type="xml">
                 <tree>
                     <field name="product_id"/>
-                    <field name="workcenter_id"/>
+                    <field name="workstation_id"/>
                     <field name="operator_id"/>
                     <field name="operate_time"/>
                     <field name="template_id"/>
@@ -145,7 +145,7 @@
                             <group>
                                 <field name="name" required="1"/>
                                 <field name="product_id" options="{'no_create':true}"/>
-                                <field name="workcenter_id" options="{'no_create': true}" required="1"/>
+                                <field name="workstation_id" options="{'no_create': true}" required="1"/>
                             </group>
                             <group>
                                 <field name="template_id" readonly="1"/>
@@ -201,14 +201,14 @@
             <field name="model">aas.mes.producttest</field>
             <field name="arch" type="xml">
                 <search>
-                    <field name="workcenter_id" string="工序" filter_domain="[('workcenter_id','ilike',self)]"/>
+                    <field name="workstation_id" string="工位" filter_domain="[('workstation_id','ilike',self)]"/>
                     <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
                     <field name="template_id" string="分类" filter_domain="[('template_id','ilike',self)]"/>
                     <separator/>
                     <filter string="线下PN" domain="[('product_id','=',False)]" />
                     <filter string="待确认" domain="[('state','=','draft')]" />
                     <group expand="0" string="分组">
-                        <filter string="工序" context="{'group_by':'workcenter_id'}"/>
+                        <filter string="工位" context="{'group_by':'workstation_id'}"/>
                         <filter string="产品" context="{'group_by':'product_id'}"/>
                         <filter string="分类" context="{'group_by':'template_id'}"/>
                     </group>
@@ -253,7 +253,7 @@
             <field name="arch" type="xml">
                 <tree>
                     <field name="name"/>
-                    <field name="workcenter_id"/>
+                    <field name="workstation_id"/>
                     <field name="product_id"/>
                     <field name="mesline_id"/>
                     <field name="equipment_id"/>
@@ -292,7 +292,7 @@
                                 <field name="name" readonly="1"/>
                                 <field name="product_id" options="{'no_create':true}"
                                        attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
-                                <field name="workcenter_id" options="{'no_create':true}"
+                                <field name="workstation_id" options="{'no_create':true}"
                                        attrs="{'readonly':[('state','not in',['draft','confirm'])]}" required="1"/>
                                 <field name="mesline_id" options="{'no_create':true}"
                                        attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
@@ -375,14 +375,14 @@
                 <search>
                     <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
                     <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
-                    <field name="workcenter_id" string="工序" filter_domain="[('workcenter_id','ilike',self)]"/>
+                    <field name="workstation_id" string="工位" filter_domain="[('workstation_id','ilike',self)]"/>
                     <field name="mesline_id" string="产线" filter_domain="[('mesline_id','ilike',self)]"/>
                     <field name="equipment_id" string="设备" filter_domain="[('equipment_id','ilike',self)]"/>
                     <field name="employee_id" string="员工" filter_domain="[('employee_id','ilike',self)]"/>
                     <field name="order_date" string="日期" filter_domain="[('equipment_id','ilike',self)]"/>
                     <separator/>
                     <group expand="0" string="分组">
-                        <filter string="工序" context="{'group_by':'workcenter_id'}"/>
+                        <filter string="工序" context="{'group_by':'workstation_id'}"/>
                         <filter string="产品" context="{'group_by':'product_id'}"/>
                         <filter string="产线" context="{'group_by':'mesline_id'}"/>
                         <filter string="设备" context="{'group_by':'equipment_id'}"/>
@@ -502,7 +502,7 @@
                             <field name="product_id" options="{'no_create':true}" required="1"/>
                         </group>
                         <group>
-                            <field name="workcenter_id" options="{'no_create':true}" required="1"/>
+                            <field name="workstation_id" options="{'no_create':true}" required="1"/>
                         </group>
                     </group>
                     <footer>

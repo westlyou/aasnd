@@ -4,13 +4,6 @@
 
 $(function() {
 
-    $('input[type="radio"].flat-blue').iCheck({ checkboxClass: 'icheckbox_flat-blue', radioClass: 'iradio_flat-blue'});
-
-    $('input[type="radio"].flat-blue').on('ifChecked', function(event){
-        var labelqty = $(this).attr('qty');
-        $('#mes_labelqty').attr('qty', labelqty);
-    });
-
     var scanable = true; //是否可以继续扫描
     new VScanner(function(barcode) {
         if (barcode == null || barcode == '') {
@@ -210,7 +203,7 @@ $(function() {
                 }
                 $('#mes_serialnumber').html(barcode);
                 var waitcount = parseInt($('#mes_printbtn').attr('waitcount'));
-                var labelqty = parseInt($('#mes_labelqty').attr('qty'));
+                var labelqty = parseInt($('#mes_labelqty').val());
                 if(waitcount >= labelqty){
                     action_print_label(labelqty);
                 }else{
@@ -351,7 +344,12 @@ $(function() {
             layer.msg('当前还无法打印标签', {icon: 5});
             return ;
         }
-        var labelqty = parseInt($('#mes_labelqty').attr('qty'));
+        var labelqty = $('#mes_labelqty').val();
+        if(!isAboveZeroInteger(labelqty)){
+            layer.msg('请先设置有效的数量信息', {icon: 5});
+            return ;
+        }
+        labelqty = parseInt(labelqty);
         var tipmessage = '您确认要打印标签吗？';
         if(waitcount < labelqty){
             tipmessage = '当前成品数量少于'+labelqty+',您确认要打印标签吗？';
@@ -408,40 +406,6 @@ $(function() {
             }
         }
     });
-
-    $('#mes_printer').on('select2:select', function(event){
-        var selectedatas = $('#mes_printer').select2('data');
-        var printerobj = selectedatas[0];
-        var cdate = new Date();
-        var cyear = cdate.getFullYear();
-        var cmonth = cdate.getMonth()+1;
-        var cday = cdate.getDate();
-        var currentdate = cyear+'-'+cmonth+'-'+cday;
-        localStorage.setItem('printer_date', currentdate);
-        localStorage.setItem('printer_id', printerobj.id);
-        localStorage.setItem('printer_name', printerobj.text);
-    });
-
-    function setdefault_printer(){
-        var printer_id = localStorage.getItem('printer_id');
-        var printer_name = localStorage.getItem('printer_name');
-        var printer_date = localStorage.getItem('printer_date');
-        if(printer_id==null || printer_name==null || printer_date==null){
-            return ;
-        }
-        var cdate = new Date();
-        var cyear = cdate.getFullYear();
-        var cmonth = cdate.getMonth()+1;
-        var cday = cdate.getDate();
-        var currentdate = cyear+'-'+cmonth+'-'+cday;
-        if(printer_date!=currentdate){
-            return ;
-        }
-        $('#mes_printer').val(printer_id);
-        $('#mes_printer').html("<option value="+printer_id+">"+printer_name+"</option>");
-    }
-    //设置默认打印机
-    setdefault_printer();
 
 
     function action_leave(attendanceid){
@@ -550,6 +514,97 @@ $(function() {
 
     // 加载未打包序列号
     action_loading_unpacklist();
+
+    $('#mes_printer').on('select2:select', function(event){
+        var selectedatas = $('#mes_printer').select2('data');
+        var printerobj = selectedatas[0];
+        var cdate = new Date();
+        var cyear = cdate.getFullYear();
+        var cmonth = cdate.getMonth()+1;
+        var cday = cdate.getDate();
+        var currentdate = cyear+'-'+cmonth+'-'+cday;
+        localStorage.setItem('check_date', currentdate);
+        localStorage.setItem('printer_id', printerobj.id);
+        localStorage.setItem('printer_name', printerobj.text);
+    });
+
+    function setdefault_printer(){
+        var printer_id = localStorage.getItem('printer_id');
+        var printer_name = localStorage.getItem('printer_name');
+        var check_date = localStorage.getItem('check_date');
+        if(printer_id==null || printer_name==null || check_date==null){
+            return ;
+        }
+        var cdate = new Date();
+        var cyear = cdate.getFullYear();
+        var cmonth = cdate.getMonth()+1;
+        var cday = cdate.getDate();
+        var currentdate = cyear+'-'+cmonth+'-'+cday;
+        if(check_date!=currentdate){
+            return ;
+        }
+        $('#mes_printer').val(printer_id);
+        $('#mes_printer').html("<option value="+printer_id+">"+printer_name+"</option>");
+    }
+    //设置默认打印机
+    setdefault_printer();
+
+    function setdefault_labelqty(){
+        var label_qty = localStorage.getItem('label_qty');
+        var check_date = localStorage.getItem('check_date');
+        if(label_qty==null || check_date==null){
+            return ;
+        }
+        var cdate = new Date();
+        var cyear = cdate.getFullYear();
+        var cmonth = cdate.getMonth()+1;
+        var cday = cdate.getDate();
+        var currentdate = cyear+'-'+cmonth+'-'+cday;
+        if(check_date!=currentdate){
+            return ;
+        }
+        $('#mes_labelqty').val(label_qty);
+    }
+
+    //设置默认标签数量
+    setdefault_labelqty();
+
+    $('li.aas-qty').click(function(){
+        var tempqty = $(this).attr('qty');
+        $('#mes_labelqty').val(tempqty);
+        var cdate = new Date();
+        var cyear = cdate.getFullYear();
+        var cmonth = cdate.getMonth()+1;
+        var cday = cdate.getDate();
+        var currentdate = cyear+'-'+cmonth+'-'+cday;
+        localStorage.setItem('check_date', currentdate);
+        localStorage.setItem('label_qty', tempqty);
+    });
+
+    $('#other_qty').click(function(){
+        $('#mes_labelqty').removeAttr('readonly').val('');
+    });
+
+    function isAboveZeroInteger(val){
+        var reg = /^[1-9]\d*$/;
+        if(reg.test(val)){ return true; }
+        return false;
+    }
+
+    $('#mes_labelqty').change(function(){
+        var labelqty = $(this).val();
+        if(!isAboveZeroInteger(labelqty)){
+            layer.msg('请设置有效的数量！例如：90、180', {icon: 5});
+            return ;
+        }
+        var cdate = new Date();
+        var cyear = cdate.getFullYear();
+        var cmonth = cdate.getMonth()+1;
+        var cday = cdate.getDate();
+        var currentdate = cyear+'-'+cmonth+'-'+cday;
+        localStorage.setItem('check_date', currentdate);
+        localStorage.setItem('label_qty', labelqty);
+    });
 
 
 });

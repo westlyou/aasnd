@@ -245,13 +245,13 @@ class AASEquipmentEquipment(models.Model):
         return self.env[res_model].action_print_label(printerid, res_ids)
 
     @api.model
-    def loading_producttest_onclient(self, productid, workcenterid):
+    def loading_producttest_onclient(self, productid, workstationid):
         """客户端获取检测参数信息
         :param productid:
-        :param workcenterid:
+        :param workstationid:
         :return:
         """
-        return self.env['aas.mes.producttest'].loading_producttest(productid, workcenterid)
+        return self.env['aas.mes.producttest'].loading_producttest(productid, workstationid)
 
     @api.model
     def action_producttest_onclient(self, equipmentid, producttestid, parameters,

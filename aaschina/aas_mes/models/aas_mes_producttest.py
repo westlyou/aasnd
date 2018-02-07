@@ -122,6 +122,7 @@ class AASMESProductTest(models.Model):
     name = fields.Char(string=u'名称', copy=False)
     template_id = fields.Many2one(comodel_name='aas.mes.producttest.template', string=u'测试分类', ondelete='restrict')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict', index=True)
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict', index=True)
     workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='restrict', index=True)
     active = fields.Boolean(string=u'有效', default=True, copy=False)
     state = fields.Selection(selection=TESTSTATES, string=u'状态', default='draft', copy=False)
@@ -145,8 +146,9 @@ class AASMESProductTest(models.Model):
         if not self.parameter_lines or len(self.parameter_lines) <= 0:
             raise UserError(u'请先设置检测参数信息')
         testorder = self.env['aas.mes.producttest.order'].create({
-            'producttest_id': self.id, 'product_id': False if not self.product_id else self.product_id.id,
-            'workcenter_id': self.workcenter_id.id, 'state': 'confirm', 'test_type': 'firstone',
+            'producttest_id': self.id, 'state': 'confirm', 'test_type': 'firstone',
+            'product_id': False if not self.product_id else self.product_id.id,
+            'workstation_id': False if not self.workstation_id else self.workstation_id.id,
             'order_lines': [(0, 0, {
                 'parameter_id': ppline.id, 'parameter_code': ppline.parameter_code
             }) for ppline in self.parameter_lines]
@@ -174,8 +176,9 @@ class AASMESProductTest(models.Model):
         if not self.parameter_lines or len(self.parameter_lines) <= 0:
             raise UserError(u'请先设置检测参数信息')
         testorder = self.env['aas.mes.producttest.order'].create({
-            'producttest_id': self.id, 'product_id': False if not self.product_id else self.product_id.id,
-            'workcenter_id': self.workcenter_id.id, 'state': 'confirm', 'test_type': 'lastone',
+            'producttest_id': self.id, 'state': 'confirm', 'test_type': 'lastone',
+            'product_id': False if not self.product_id else self.product_id.id,
+            'workstation_id': False if not self.workstation_id else self.workstation_id.id,
             'order_lines': [(0, 0, {
                 'parameter_id': ppline.id, 'parameter_code': ppline.parameter_code
             }) for ppline in self.parameter_lines]
@@ -201,8 +204,9 @@ class AASMESProductTest(models.Model):
         if not self.parameter_lines or len(self.parameter_lines) <= 0:
             raise UserError(u'请先设置检测参数信息')
         testorder = self.env['aas.mes.producttest.order'].create({
-            'producttest_id': self.id, 'product_id': False if not self.product_id else self.product_id.id,
-            'workcenter_id': self.workcenter_id.id, 'state': 'confirm', 'test_type': 'random',
+            'producttest_id': self.id, 'state': 'confirm', 'test_type': 'random',
+            'product_id': False if not self.product_id else self.product_id.id,
+            'workstation_id': False if not self.workstation_id else self.workstation_id.id,
             'order_lines': [(0, 0, {
                 'parameter_id': ppline.id, 'parameter_code': ppline.parameter_code
             }) for ppline in self.parameter_lines]
@@ -224,14 +228,14 @@ class AASMESProductTest(models.Model):
 
 
     @api.model
-    def loading_producttest(self, productid, workcenterid):
+    def loading_producttest(self, productid, workstationid):
         """获取检测参数信息
         :param productid:
-        :param workcenterid:
+        :param workstationid:
         :return:
         """
         values = {'success': True, 'message': '', 'producttestid': 0, 'parameters': []}
-        tdomain = [('product_id', '=', productid), ('workcenter_id', '=', workcenterid)]
+        tdomain = [('product_id', '=', productid), ('workstation_id', '=', workstationid)]
         producttest = self.env['aas.mes.producttest'].search(tdomain)
         if not producttest:
             values.update({'success': False, 'message': u'请仔细检查，系统可能还未设置相关质检信息！'})
@@ -318,7 +322,7 @@ class AASMESProductTest(models.Model):
             return values
         testorder = {
             'producttest_id': producttestid, 'product_id': producttest.product_id.id,
-            'workcenter_id': producttest.workcenter_id.id, 'mesline_id': mesline.id,
+            'workstation_id': producttest.workstation_id.id, 'mesline_id': mesline.id,
             'equipment_id': equipment.id, 'order_date': fields.Datetime.to_china_today(),
             'test_type': testtype, 'instrument_code': instrument, 'fixture_code': fixture,
             'employee_id': employee.id, 'state': 'confirm', 'order_lines': orderlines,
@@ -369,6 +373,7 @@ class AASMESProductTestOrder(models.Model):
     producttest_id = fields.Many2one(comodel_name='aas.mes.producttest', string=u'测试', ondelete='restrict')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict', index=True)
     workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='restrict', index=True)
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict', index=True)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', ondelete='restrict')
     order_date = fields.Char(string=u'日期', copy=False)
@@ -559,7 +564,7 @@ class AASMESProductTestTemplatePWorkcenterWizard(models.TransientModel):
 
     template_id = fields.Many2one(comodel_name='aas.mes.producttest.template', string=u'测试分类', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade', index=True)
-    workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='cascade', index=True)
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='cascade', index=True)
 
 
     @api.multi
@@ -569,7 +574,7 @@ class AASMESProductTestTemplatePWorkcenterWizard(models.TransientModel):
             raise UserError(u'检测分类还未设置参数明细！')
         producttest = self.env['aas.mes.producttest'].create({
             'template_id': self.template_id.id,
-            'product_id': self.product_id.id, 'workcenter_id': self.workcenter_id.id,
+            'product_id': self.product_id.id, 'workstation_id': self.workstation_id.id,
             'parameter_lines': [(0, 0, {
                 'parameter_code': tparameter.parameter_code,
                 'sequence': tparameter.sequence, 'parameter_name': tparameter.parameter_name,
