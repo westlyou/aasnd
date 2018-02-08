@@ -246,8 +246,9 @@ class AASMESProductTest(models.Model):
             return values
         values['parameters'] = [{
             'id': tparameter.id,
-            'name': tparameter.parameter_name, 'code': tparameter.parameter_code,
-            'type': tparameter.parameter_type, 'value': tparameter.parameter_value,
+            'name': tparameter.parameter_name, 'type': tparameter.parameter_type,
+            'code': '' if not tparameter.parameter_code else tparameter.parameter_code,
+            'value': '' if not tparameter.parameter_value else tparameter.parameter_value,
             'maxvalue': tparameter.parameter_maxvalue, 'minvalue': tparameter.parameter_minvalue
         } for tparameter in producttest.parameter_lines]
         return values

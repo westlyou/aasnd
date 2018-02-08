@@ -30,10 +30,12 @@ class AASMESRouting(models.Model):
     active = fields.Boolean(string=u'有效', default=True, copy=False)
     version = fields.Char(string=u'版本', copy=False)
     note = fields.Text(string=u'描述')
+
     workticket = fields.Boolean(string=u'是否生成工票', default=True, copy=False)
     state = fields.Selection(selection=ROUTSTATE, string=u'状态', default='draft', copy=False)
     create_time = fields.Datetime(string=u'创建时间', default=fields.Datetime.now, copy=False)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
+    standard_hours = fields.Float(string=u'标准工时(秒)', compute="_compute_standard_hours", store=True)
     origin_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'源工艺', ondelete='restrict')
     owner_id = fields.Many2one(comodel_name='res.users', string=u'负责人', default=lambda self: self.env.user)
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
@@ -75,6 +77,12 @@ class AASMESRouting(models.Model):
         }
 
 
+    @api.depends('routing_lines.standard_hours')
+    def _compute_standard_hours(self):
+        for record in self:
+            record.standard_hours = sum([rline.standard_hours for rline in record.routing_lines])
+
+
 # 工艺工序
 class AASMESRoutingLine(models.Model):
     _name = 'aas.mes.routing.line'
@@ -85,6 +93,7 @@ class AASMESRoutingLine(models.Model):
     name = fields.Char(string=u'名称', required=True, copy=False)
     sequence = fields.Integer(string=u'序号')
     note = fields.Text(string=u'描述')
+    standard_hours = fields.Float(string=u'标准工时(秒)', default=0.0)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
