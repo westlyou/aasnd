@@ -129,22 +129,12 @@ class AASMESGP12CheckingController(http.Controller):
             values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
             return values
         employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-        temployeelist = request.env['aas.mes.workstation.employee'].search(employeedomain)
-        if not temployeelist or len(temployeelist) <= 0:
-            values.update({'success': False, 'message': u'当前岗位可能没有员工在岗，请先让员工上岗再继续操作！'})
-            return values
-        scaner, checker = False, False
-        for temployee in temployeelist:
-            if temployee.action_type == 'scan':
-                scaner = True
-            if checker:
-                continue
-            if temployee.action_type == 'check':
-                checker = True
-        if not scaner:
+        scandomain = employeedomain + [('action_type', '=', 'scan')]
+        if request.env['aas.mes.workstation.employee'].search_count(scandomain) <= 0:
             values.update({'success': False, 'message': u'当前岗位没有扫描员工，请先让扫描员工上岗再继续操作！'})
             return values
-        if not checker:
+        checkdomain = employeedomain + [('action_type', '=', 'check')]
+        if request.env['aas.mes.workstation.employee'].search_count(checkdomain) <= 0:
             values.update({'success': False, 'message': u'当前岗位没有检测员工，请先让检测员工上岗再继续操作！'})
             return values
         tempoperation = request.env['aas.mes.operation'].search([('serialnumber_name', '=', barcode)], limit=1)
@@ -152,15 +142,16 @@ class AASMESGP12CheckingController(http.Controller):
             values.update({'result': 'NG', 'success': False, 'message': u'请检查您扫描的是否是一个有效的序列号'})
             return values
         serialnumber = tempoperation.serialnumber_id
-        if tempoperation.gp12_check:
-            values.update({'message': u'已扫描 请不要重复操作', 'done': True})
-        values['serialnumber_id'] = serialnumber.id
-        values['productcode'] = serialnumber.customer_product_code.replace('-', '')
+        values.update({
+            'serialnumber_id': serialnumber.id, 'productcode': serialnumber.customer_product_code.replace('-', '')
+        })
         if productcode and productcode != values['productcode']:
             values.update({'success': False, 'message': u'序列号异常，请确认可能混入其他型号'})
             return values
         serialnumber_name = serialnumber.name
         operation_time = fields.Datetime.to_china_string(fields.Datetime.now())
+        if tempoperation.gp12_check:
+            values.update({'message': u'已扫描 请不要重复操作', 'done': True})
         # 返工件
         if tempoperation.serialnumber_id.reworked:
             if not tempoperation.dorework:
@@ -302,6 +293,13 @@ class AASMESGP12CheckingController(http.Controller):
         tlabel.action_stock(srclocation.id)
         values['label_name'] = tlabel.name
         printvals = request.env['aas.product.label'].action_print_label(printer_id, [tlabel.id])
+        values.update(printvals)
+        return values
+
+    @http.route('/aasmes/gp12/printlabel', type='json', auth="user")
+    def aasmes_gp12_printlabel(self, labelid, printer_id):
+        values = {'success': True, 'message': ''}
+        printvals = request.env['aas.product.label'].action_print_label(printer_id, [labelid])
         values.update(printvals)
         return values
 

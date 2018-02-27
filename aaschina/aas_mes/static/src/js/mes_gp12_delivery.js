@@ -35,11 +35,17 @@ $(function(){
                     return ;
                 }
                 var label = dresult.label;
+                var temptr = $('#label_'+label.id);
+                if (temptr!=undefined && temptr.length > 0){
+                    layer.msg("标签已存在，请不要重复扫描！", {icon: 5});
+                    return ;
+                }
                 var totalqty = parseFloat($('#mes_totalqty').attr('qty'));
                 totalqty += label.product_qty;
                 $('#mes_label').html(label.name);
                 $('#mes_totalqty').attr('qty', totalqty).html(totalqty);
-                var labeltr = $('<tr class="aaslabel"></tr>').prependTo($('#label_list')).attr('labelid', label.id);
+                var labeltr = $('<tr class="aaslabel"></tr>').prependTo($('#label_list'));
+                labeltr.attr({'labelid': label.id, 'id': 'label_'+label.id});
                 $('<td></td>').html(label.name).appendTo(labeltr);
                 $('<td></td>').html(label.customerpn).appendTo(labeltr);
                 $('<td></td>').html(label.internalpn).appendTo(labeltr);

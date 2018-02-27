@@ -320,6 +320,9 @@
 
                                 <div class="navbar-custom-menu">
                                     <ul class="nav navbar-nav">
+                                        <li id="action_print" class="notifications-menu">
+                                            <a href="javascript:void(0);"> <i class="fa fa-printer"></i> 标签打印 </a>
+                                        </li>
                                         <li class="dropdown notifications-menu">
                                             <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">
                                                 <i class="fa fa-user"></i> <span t-esc="checker"/>
@@ -376,7 +379,7 @@
                                             <h3 class="box-title">标签清单</h3>
                                         </div>
                                         <div class="box-body no-padding" style="height:700px;overflow-y:scroll;">
-                                            <ul id="gp12labelist" class="nav nav-pills nav-stacked"></ul>
+                                            <ul id="gp12labelist" class="nav nav-pills nav-stacked" labelid="0"></ul>
                                         </div>
                                     </div>
                                 </div>

@@ -169,10 +169,12 @@ $(function() {
                     layer.msg(dresult.message, {icon: 5});
                     return ;
                 }
+                $('#mes_serialnumber').html(barcode);
                 $('#check_result').html(dresult.result);
                 if(dresult.done){
                     $('#gp12_result_content').html($('#gp12_result_content').attr('serialcount'));
                     $('#speechcontent').speech({"speech": false, "speed": 6, 'content': '已扫描，请不要重复操作'});
+                    return ;
                 }
                 if(dresult.result=='OK'){
                     $('#gp12_result_box').removeClass('bg-red').addClass('bg-green');
@@ -206,7 +208,6 @@ $(function() {
                 if(customercode==null || customercode==''){
                     custmoercodespan.attr('customercode', dresult.productcode).html(dresult.productcode);
                 }
-                $('#mes_serialnumber').html(barcode);
                 var waitcount = parseInt($('#mes_printbtn').attr('waitcount'));
                 var labelqty = parseInt($('#mes_labelqty').val());
                 if(waitcount >= labelqty){

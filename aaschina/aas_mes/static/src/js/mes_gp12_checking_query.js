@@ -64,6 +64,7 @@ $(function(){
                         firstlabelid = tlabel.label_id;
                     }
                 });
+                $('#gp12labelist').attr('labelid', firstlabelid);
                 loadinglabelserialnumberlist(firstlabelid);
             },
             error:function(xhr,type,errorThrown){
@@ -170,6 +171,7 @@ $(function(){
     //单击标签
     $('#gp12labelist').on('click', 'li.aas-label', function(){
         var labelid = parseInt($(this).attr('labelid'));
+        $('#gp12labelist').attr('labelid', labelid);
         loadinglabelserialnumberlist(labelid);
     });
 
@@ -177,6 +179,46 @@ $(function(){
     $('#serialnumberlist').on('click', 'li.aas-serialnumber', function(){
         var serialnumberid = parseInt($(this).attr('serialnumberid'));
         action_show_operationandreworklist(serialnumberid);
+    });
+
+    //标签打印
+    $('#action_print').on('click', function(){
+        var labelid = parseInt($('#gp12labelist').attr('labelid'));
+        if(labelid == 0){
+            layer.msg('请现在标签清单中选中需要打印的标签！', {icon: 5});
+            return ;
+        }
+        var printer_id = localStorage.getItem('printer_id');
+        var printer_name = localStorage.getItem('printer_name');
+        if(printer_id == null || printer_name==null){
+            layer.msg('请先在GP12检测页面设置好标签打印机！', {icon: 5});
+            return ;
+        }
+        var printparams = {'labelid': labelid, 'printer_id': parseInt(printer_id)};
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        $.ajax({
+            url: '/aasmes/gp12/printlabel',
+            headers:{'Content-Type':'application/json'},
+            type: 'post', timeout:10000, dataType: 'json',
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: printparams, id: access_id}),
+            success:function(data){
+                var dresult = data.result;
+                if(!dresult.success){
+                    layer.msg(dresult.message, {icon: 5});
+                    return ;
+                }
+                $.each(dresult.records, function(index, record){
+                    var params = {'label_name': dresult.printer, 'label_count': 1, 'label_content':record};
+                    $.ajax({type:'post', dataType:'script', url:'http://'+dresult.serverurl, data: params,
+                        success: function (result) { },
+                        error:function(XMLHttpRequest,textStatus,errorThrown){}
+                    });
+                });
+            },
+            error:function(xhr,type,errorThrown){
+                console.log(type);
+            }
+        });
     });
 
 });
