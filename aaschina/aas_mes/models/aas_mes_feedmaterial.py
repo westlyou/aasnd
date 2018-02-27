@@ -26,7 +26,6 @@ class AASMESFeedmaterial(models.Model):
     _order = 'feed_time asc'
 
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
-    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
     material_id = fields.Many2one(comodel_name='product.product', string=u'原料', ondelete='restrict')
     material_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     material_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
@@ -36,7 +35,7 @@ class AASMESFeedmaterial(models.Model):
 
 
     _sql_constraints = [
-        ('uniq_materiallot', 'unique (mesline_id, workstation_id, material_id, material_lot)', u'请不要在工位上重复添加同一批次的物料！')
+        ('uniq_materiallot', 'unique (mesline_id, material_id, material_lot)', u'请不要在产线上重复添加同一批次的物料！')
     ]
 
 
