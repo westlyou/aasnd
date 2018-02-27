@@ -172,9 +172,12 @@ class AASMESFinalCheckingController(http.Controller):
         if not tempoperation:
             values.update({'success': False, 'message': u'请仔细检查是否是有效条码'})
             return values
+        serialnumber = tempoperation.serialnumber_id
+        if serialnumber.product_id.id != workorder.product_id.id:
+            values.update({'success': False, 'message': u'扫描序列号异常，此序列号产品与当前产线上生产的产品不相符！'})
+            return values
         tempvalues = request.env['aas.mes.operation'].action_loading_operation_rework_list(tempoperation.id)
         values.update({'recordlist': tempvalues['recordlist'], 'reworklist': tempvalues['reworklist']})
-        serialnumber = tempoperation.serialnumber_id
         values.update({
             'rework': serialnumber.reworked, 'internal_code': serialnumber.internal_product_code,
             'customer_code': serialnumber.customer_product_code, 'operationid': tempoperation.id
