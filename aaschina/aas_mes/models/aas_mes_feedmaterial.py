@@ -96,52 +96,68 @@ class AASMESFeedmaterial(models.Model):
 
 
     @api.model
-    def get_workstation_materiallist(self, equipment_code, withlots=False):
-        """
-        根据设备获取相应产线工位的上料清单
+    def get_workstation_materiallist(self, equipment_code, workorder_id=False):
+        """根据设备获取相应产线工位的上料清单
         :param equipment_code:
+        :param workorder_id:
         :return:
         """
         values = {'success': True, 'message': '', 'materiallist': []}
+        if not workorder_id:
+            return values
         equipment = self.env['aas.equipment.equipment'].search([('code', '=', equipment_code)], limit=1)
         if not equipment:
             values.update({'success': False, 'message': u'请仔细检查设备编码是否正确，系统中未搜索到此设备！'})
             return values
-        if not equipment.mesline_id or not equipment.workstation_id:
+        mesline, workstation = equipment.mesline_id, equipment.workstation_id
+        if not mesline or not workstation:
             values.update({'success': False, 'message': u'设备当前还未绑定产线和工位，请联系相关人员设置产线和工位！'})
             return values
-        feeddomain = [('mesline_id', '=', equipment.mesline_id.id), ('workstation_id', '=', equipment.workstation_id.id)]
+        workorder = self.env['aas.mes.workorder'].browse(workorder_id)
+        if not workorder:
+            values.update({'success': False, 'message': u'当前工单是否为有效工单！'})
+            return values
+        bom, routing = workorder.aas_bom_id, workorder.routing_id
+        if not bom or not routing:
+            return values
+        routingdomain = [('routing_id', '=', routing.id)]
+        routingdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        routinglines = self.env['aas.mes.routing.line'].search(routingdomain)
+        if not routinglines or len(routinglines) <= 0:
+            return values
+        bomdomain = [('bom_id', '=', bom.id), ('workcenter_id', 'in', routinglines.ids)]
+        bomworkcenters = self.env['aas.mes.bom.workcenter'].search(bomdomain)
+        if not bomworkcenters or len(bomworkcenters) <= 0:
+            return values
+        materialids = [bworkcenter.product_id.id for bworkcenter in bomworkcenters]
+        feeddomain = [('mesline_id', '=', equipment.mesline_id.id), ('material_id', 'in', materialids)]
         feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
         if feedmateriallist and len(feedmateriallist) > 0:
-            if withlots:
-                values['materiallist'] = [{
-                    'material_id': feedmaterial.material_id.id, 'material_code': feedmaterial.material_id.default_code,
-                    'materiallot_id': feedmaterial.material_lot.id, 'materiallot_name': feedmaterial.material_lot.name,
-                    'material_qty': feedmaterial.material_qty
-                } for feedmaterial in feedmateriallist]
-            else:
-                materialdict = {}
-                for feedmaterial in feedmateriallist:
-                    mkey = 'M'+str(feedmaterial.material_id.id)
-                    if mkey not in materialdict:
-                        materialdict[mkey] = {
-                            'material_id': feedmaterial.material_id.id,
-                            'material_qty': feedmaterial.material_qty,
-                            'materiallots': [feedmaterial.material_lot.name],
-                            'material_code': feedmaterial.material_id.default_code
-                        }
-                    else:
-                        materialdict[mkey]['material_qty'] += feedmaterial.material_qty
-                        if feedmaterial.material_lot.name not in materialdict[mkey]['materiallots']:
-                            materialdict[mkey]['materiallots'].append(feedmaterial.material_lot.name)
-                tmateriallist = []
-                for tmaterial in materialdict.values():
-                    tmateriallist.append({
-                        'material_id': tmaterial['material_id'], 'material_qty': tmaterial['material_qty'],
-                        'materiallot_id': 0, 'materiallot_name': ','.join(tmaterial['materiallots']),
-                        'material_code': tmaterial['material_code']
-                    })
-                values['materiallist'] = tmateriallist
+            todelfeedinglist = self.env['aas.mes.feedmaterial']
+            materialids, materiallotids, materialdict = [], [], {}
+            for feedmaterial in feedmateriallist:
+                materialid, materiallotid = feedmaterial.material_id.id, feedmaterial.material_lot.id
+                mkey = 'M'+str(materialid)
+                if materialid not in materialids:
+                    materialdict[mkey] = {
+                        'materiallot_id': 0,
+                        'material_id': feedmaterial.material_id.id,
+                        'material_qty': feedmaterial.material_qty,
+                        'materiallot_name': feedmaterial.material_lot.name,
+                        'material_code': feedmaterial.material_id.default_code
+                    }
+                    materialids.append(materialid)
+                    materiallotids.append(materiallotid)
+                elif materiallotid not in materiallotids:
+                    templotcode = ','+feedmaterial.material_lot.name
+                    materialdict[mkey]['materiallot_name'] += templotcode
+                    materialdict[mkey]['material_qty'] += feedmaterial.material_qty
+                    materiallotids.append(materiallotid)
+                else:
+                    todelfeedinglist |= feedmaterial
+            values['materiallist'] = materialdict.values()
+            if todelfeedinglist and len(todelfeedinglist) > 0:
+                todelfeedinglist.unlink()
         return values
 
     @api.model
@@ -168,14 +184,14 @@ class AASMESFeedmaterial(models.Model):
             values.update({'success': False, 'message': u'设备还未绑定工位，请联系相关人员设置！'})
             return values
         if barcode.startswith('AT'):
-            return self.action_feeding_withcontainer(mesline, workstation, barcode)
+            return self.action_feeding_withcontainer(mesline, barcode)
         else:
-            return self.action_feeding_withlabel(mesline, workstation, barcode)
+            return self.action_feeding_withlabel(mesline, barcode)
 
 
     @api.model
-    def action_feeding_withcontainer(self, mesline, workstation, barcode):
-        values = {'success': True, 'message': '', 'materiallist': []}
+    def action_feeding_withcontainer(self, mesline, barcode):
+        values = {'success': True, 'message': ''}
         container = self.env['aas.container'].search([('barcode', '=', barcode)], limit=1)
         if not container:
             values.update({'success': False, 'message': u'未搜索到容器，请仔细检查是否是有效的容器条码！'})
@@ -203,40 +219,35 @@ class AASMESFeedmaterial(models.Model):
                     'material_id': pline.product_id.id, 'material_lot': pline.product_lot.id,
                     'material_uom': pline.product_id.uom_id.id, 'material_qty': pline.stock_qty
                 }
-        materialist = []
         for mline in productdict.values():
-            feeddomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-            feeddomain += [('material_id', '=', mline['material_id']), ('material_lot', '=', mline['material_lot'])]
-            feedmaterial = self.env['aas.mes.feedmaterial'].search(feeddomain, limit=1)
-            if not feedmaterial:
-                feedmaterial = self.env['aas.mes.feedmaterial'].create({
-                    'mesline_id': mesline.id, 'workstation_id': workstation.id,
-                    'material_id': mline['material_id'], 'material_lot': mline['material_lot']
-                })
-            else:
-                feedmaterial.action_refresh_stock()
-            materialist.append({
-                'feeding_id': feedmaterial.id, 'material_code': feedmaterial.material_id.default_code,
-                'material_lot': feedmaterial.material_lot.name, 'material_qty': feedmaterial.material_qty
+            temp_qty,  = mline['material_qty']
+            material_id, material_lot = mline['material_id'], mline['material_lot']
+            feeddomain = [('mesline_id', '=', mesline.id)]
+            feeddomain += [('material_id', '=', material_id), ('material_lot', '=', material_lot)]
+            feedinglist = self.env['aas.mes.feedmaterial'].search(feeddomain)
+            if feedinglist and len(feedinglist) > 0:
+                feedinglist.unlink()
+            self.env['aas.mes.feedmaterial'].create({
+                'mesline_id': mesline.id,
+                'material_id': material_id, 'material_lot': material_lot, 'material_qty': temp_qty
             })
             # 将库存自动移动到线边库上
             movelist |= self.env['stock.move'].create({
                 'name': container.name, 'product_id': mline['material_id'], 'product_uom': mline['material_uom'],
                 'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id,
                 'restrict_lot_id': mline['material_lot'], 'location_id': container.stock_location_id.id,
-                'location_dest_id': materiallocation.id, 'product_uom_qty': mline['material_qty']
+                'location_dest_id': materiallocation.id, 'product_uom_qty': temp_qty
             })
         movelist.action_done()
         if container.product_lines and len(container.product_lines) > 0:
             # 库存移动之后清理容器内容
             container.product_lines.unlink()
-        values['materiallist'] = materialist
         return values
 
 
 
     @api.model
-    def action_feeding_withlabel(self, mesline, workstation, barcode):
+    def action_feeding_withlabel(self, mesline, barcode):
         values = {'success': True, 'message': ''}
         label = self.env['aas.product.label'].search([('barcode', '=', barcode)], limit=1)
         if not label:
@@ -254,19 +265,15 @@ class AASMESFeedmaterial(models.Model):
         if label.location_id.id not in locationlist.ids:
             values.update({'success': False, 'message': u'标签%s不在产线%s的线边库下，不可以投料！'% (label.name, mesline.name)})
             return values
-        feeddomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-        feeddomain.extend([('material_id', '=', label.product_id.id), ('material_lot', '=', label.product_lot.id)])
-        feedmaterial = self.env['aas.mes.feedmaterial'].search(feeddomain, limit=1)
-        if not feedmaterial:
-            feedmaterial = self.env['aas.mes.feedmaterial'].create({
-                'mesline_id': mesline.id, 'workstation_id': workstation.id,
-                'material_id': label.product_id.id, 'material_lot': label.product_lot.id
-            })
-        else:
-            feedmaterial.action_refresh_stock()
-        values.update({
-            'feeding_id': feedmaterial.id, 'material_code': label.product_code,
-            'material_lot': label.product_lotname, 'material_qty': feedmaterial.material_qty
+        feeddomain = [('mesline_id', '=', mesline.id)]
+        feeddomain += [('material_id', '=', label.product_id.id), ('material_lot', '=', label.product_lot.id)]
+        feedmaterialist = self.env['aas.mes.feedmaterial'].search(feeddomain)
+        if feedmaterialist and len(feedmaterialist) > 0:
+            feedmaterialist.unlink()
+        self.env['aas.mes.feedmaterial'].create({
+            'mesline_id': mesline.id,
+            'material_id': label.product_id.id, 'material_uom': label.product_id.uom_id.id,
+            'material_lot': label.product_lot.id, 'material_qty': label.product_qty
         })
         return values
 
