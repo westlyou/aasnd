@@ -40,6 +40,8 @@ $(function(){
                     return ;
                 }
                 $('#mes_employee').attr('employeeid', dresult.employee_id).html(dresult.employee_name);
+                localStorage.setItem('ipqc_employeeid', dresult.employee_id);
+                localStorage.setItem('ipqc_employeename', dresult.employee_name);
             },
             error:function(xhr,type,errorThrown){
                 scanable = true;
@@ -108,12 +110,7 @@ $(function(){
                     layer.msg(dresult.message, {icon: 5});
                     return ;
                 }
-                $('#mes_serialnumber').html('').attr('serialnumberid', '0');
-                $('#mes_customerpn').html('');
-                $('#mes_internalpn').html('');
-                $('#rework_list').html('');
-                //刷新待处理列表
-                loadcheckinglist();
+                window.location.reload(true);
             },
             error:function(xhr,type,errorThrown){
                 scanable = true;
@@ -127,46 +124,16 @@ $(function(){
         layer.confirm('您确定清理员工信息？', {'btn': ['确定', '取消']}, function(index){
             layer.close(index);
             $('#mes_employee').attr('employeeid', '0').html('');
+            localStorage.setItem('ipqc_employeeid', '0');
+            localStorage.setItem('ipqc_employeename', '');
         },function(){});
     });
 
-    function loadcheckinglist(){
-        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
-        $.ajax({
-            url: '/aasmes/ipqcchecking/loadcheckinglist',
-            headers:{'Content-Type':'application/json'},
-            type: 'post', timeout:10000, dataType: 'json',
-            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {}, id: access_id}),
-            success:function(data){
-                scanable = true;
-                var dresult = data.result;
-                if(!dresult.success){
-                    layer.msg(dresult.message, {icon: 5});
-                    return ;
-                }
-                $('#rework_list').html('');
-                if(dresult.reworklist.length > 0){
-                    $.each(dresult.reworklist, function(index, record){
-                        var lineno = index + 1;
-                        var reworktr = $('<tr></tr>').appendTo($('#rework_list'));
-                        $('<td></td>').html(lineno).appendTo(reworktr);
-                        $('<td></td>').html(record.serialnumber).appendTo(reworktr);
-                        $('<td></td>').html(record.badmode_date).appendTo(reworktr);
-                        $('<td></td>').html(record.product_code).appendTo(reworktr);
-                        $('<td></td>').html(record.workcenter_name).appendTo(reworktr);
-                        $('<td></td>').html(record.badmode_name).appendTo(reworktr);
-                        $('<td></td>').html(record.commiter_name).appendTo(reworktr);
-                        $('<td></td>').html(record.state_name).appendTo(reworktr);
-                    });
-                }
-            },
-            error:function(xhr,type,errorThrown){
-                scanable = true;
-                console.log(type);
-            }
-        });
-    }
 
-    loadcheckinglist();
+    var employeeid = localStorage.getItem('ipqc_employeeid');
+    var employeename = localStorage.getItem('ipqc_employeename');
+    if(employeeid!=null && employeeid!='0'){
+       $('#mes_employee').attr('employeeid', employeeid).html(employeename);
+    }
 
 });
