@@ -50,7 +50,7 @@ mui.ready(function(){
 
     //单击扫描上料按钮
     var feeding_flag = false;
-    mui('div.mui-scroll').on('tap', 'button.aas-feeding', function(event){
+    document.getElementById('action_scan').addEventListener('tap', function(){
         if (feeding_flag){
             mui.toast('上料操作正在执行，请耐心等待！');
             return ;
@@ -62,13 +62,12 @@ mui.ready(function(){
             desc: '扫描上料',
             scanType: ["qrCode"],
             success: function (result) {
-                var workstationid = parseInt(self.getAttribute('workstationid'));
                 var barcode = result.resultStr;
                 var prefix = barcode.substring(0,2);
                 if(prefix=='AT'){
-                    action_scancontainer(barcode, workstationid);
+                    action_scancontainer(barcode);
                 }else{
-                    action_scanlabel(barcode, workstationid);
+                    action_scanlabel(barcode);
                 }
             },
             fail: function(result){  mui.toast(result.errMsg); }
@@ -76,8 +75,8 @@ mui.ready(function(){
     });
 
     //标签上料
-    function action_scanlabel(barcode, workstationid){
-        var scanparams = {'barcode': barcode, 'workstationid': workstationid};
+    function action_scanlabel(barcode){
+        var scanparams = {'barcode': barcode};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         var scanmask = aas_feeding_loading();
         mui.ajax('/aaswechat/mes/feeding/materialscan',{
@@ -95,25 +94,25 @@ mui.ready(function(){
                 if(dresult.tips!=undefined && dresult.tips!=''){
                     mui.toast(dresult.tips);
                 }
-                var mwmaterialli = document.getElementById(dresult.mwmterialid);
-                if(mwmaterialli!=undefined && mwmaterialli!=null){
-                    mwmaterialli.parentNode.removeChild(mwmaterialli);
+                var materialli = document.getElementById(dresult.tmaterial_id);
+                if(materialli!=undefined && materialli!=null){
+                    materialli.parentNode.removeChild(materialli);
                 }
                 var feedline = document.createElement('li');
                 feedline.className = 'mui-table-view-cell';
-                feedline.setAttribute('id', dresult.mwmterialid);
-                feedline.setAttribute('mwmaterialid', dresult.mwmaterialid);
+                feedline.setAttribute('id', dresult.tmaterial_id);
+                feedline.setAttribute('material_id', dresult.material_id);
                 feedline.innerHTML = "<a class='mui-navigate-right' style='padding-right:40px;font-size:12px;' href='javascript:;'>" +
                     "<div class='mui-table'>" +
                         "<div class='mui-table-cell mui-col-xs-6 mui-text-left'>"+dresult.material_code+"</div>" +
                         "<div class='mui-table-cell mui-col-xs-6 mui-text-right'>"+dresult.material_qty+"</div>" +
                     "</div>";
-                var scanbtn = document.getElementById('workstation_'+dresult.workstation_id+'_scanbtn');
-                var workstationul = scanbtn.parentNode;
-                if(workstationul.lastChild == scanbtn){
-                    workstationul.appendChild(feedline);
+                var feedinglist = document.getElementById('feedinglist');
+                var feedchildren = feedinglist.children;
+                if(feedchildren==null || feedchildren.length<=0){
+                    feedinglist.appendChild(feedline);
                 }else{
-                    workstationul.insertBefore(feedline, scanbtn.nextSibling);
+                    feedinglist.insertBefore(feedline, feedinglist.children[0]);
                 }
             },
             error:function(xhr,type,errorThrown){
@@ -125,8 +124,8 @@ mui.ready(function(){
     }
 
     //容器上料
-    function action_scancontainer(barcode, workstationid){
-        var scanparams = {'barcode': barcode, 'workstationid': workstationid};
+    function action_scancontainer(barcode){
+        var scanparams = {'barcode': barcode};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         var scanmask = aas_feeding_loading();
         mui.ajax('/aaswechat/mes/feeding/containerscan',{
@@ -144,25 +143,25 @@ mui.ready(function(){
                 if(dresult.tips!=undefined && dresult.tips!=''){
                     mui.toast(dresult.tips);
                 }
-                var mwmaterialli = document.getElementById(dresult.mwmterialid);
-                if(mwmaterialli!=undefined && mwmaterialli!=null){
-                    mwmaterialli.parentNode.removeChild(mwmaterialli);
+                var materialli = document.getElementById(dresult.tmaterial_id);
+                if(materialli!=undefined && materialli!=null){
+                    materialli.parentNode.removeChild(materialli);
                 }
                 var feedline = document.createElement('li');
                 feedline.className = 'mui-table-view-cell';
-                feedline.setAttribute('id', dresult.mwmterialid);
-                feedline.setAttribute('mwmaterialid', dresult.mwmaterialid);
+                feedline.setAttribute('id', dresult.tmaterial_id);
+                feedline.setAttribute('materialid', dresult.material_id);
                 feedline.innerHTML = "<a class='mui-navigate-right' style='padding-right:40px;font-size:12px;' href='javascript:;'>" +
                     "<div class='mui-table'>" +
                         "<div class='mui-table-cell mui-col-xs-6 mui-text-left'>"+dresult.material_code+"</div>" +
                         "<div class='mui-table-cell mui-col-xs-6 mui-text-right'>"+dresult.material_qty+"</div>" +
                     "</div>";
-                var scanbtn = document.getElementById('workstation_'+dresult.workstation_id+'_scanbtn');
-                var workstationul = scanbtn.parentNode;
-                if(workstationul.lastChild == scanbtn){
-                    workstationul.appendChild(feedline);
+                var feedinglist = document.getElementById('feedinglist');
+                var feedchildren = feedinglist.children;
+                if(feedchildren==null || feedchildren.length<=0){
+                    feedinglist.appendChild(feedline);
                 }else{
-                    workstationul.insertBefore(feedline, scanbtn.nextSibling);
+                    feedinglist.insertBefore(feedline, feedinglist.children[0]);
                 }
             },
             error:function(xhr,type,errorThrown){
@@ -176,8 +175,9 @@ mui.ready(function(){
 
     //查看上料详情
     mui('div.mui-scroll').on('tap', 'li.aas-material', function(event){
-        var mwmaterialid = this.getAttribute('mwmaterialid');
-        mui.openWindow({'url': '/aaswechat/mes/feeding/materialdetail/'+mwmaterialid, 'id': 'feedingdetail'});
+        var materialid = this.getAttribute('materialid');
+        var meslineid = document.getElementById('linefeeding_pullrefresh').getAttribute('meslineid');
+        mui.openWindow({'url': '/aaswechat/mes/feeding/materialdetail/'+meslineid+'/'+materialid, 'id': 'feedingdetail'});
     });
 
 
