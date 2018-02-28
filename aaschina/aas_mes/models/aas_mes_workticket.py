@@ -218,15 +218,16 @@ class AASMESWorkticket(models.Model):
         consumelist = self.env['aas.mes.workorder.consume'].search(consumedomain)
         if not consumelist or len(consumelist) <= 0:
             return
+        materialids, materiallist = [], []
+        movevallist, consumelines, movelist = [], [], self.env['stock.move']
         destlocationid, companyid = self.env.ref('stock.location_production').id, self.env.user.company_id.id
-        movevallist, consumelines, materiallist, movelist = [], [], [], self.env['stock.move']
         for tempconsume in consumelist:
             want_qty, material = tempconsume.consume_unit * commit_qty, tempconsume.material_id
-            feeddomain = [('mesline_id', '=', mesline.id)]
-            feeddomain += [('workstation_id', '=', workstation.id), ('material_id', '=', material.id)]
+            feeddomain = [('mesline_id', '=', mesline.id), ('material_id', '=', material.id)]
             feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
             if not feedmateriallist or len(feedmateriallist) <= 0:
                 raise UserError(u'当前工位上原料%s还没投料，请先投料再继续操作！'% material.default_code)
+            materialids.append(material.id)
             quant_qty, quantdict = 0.0, {}
             for feedmaterial in feedmateriallist:
                 if float_compare(want_qty, 0.0, precision_rounding=0.000001) <= 0.0:
@@ -241,11 +242,9 @@ class AASMESWorkticket(models.Model):
                             quantdict[qkey]['product_qty'] += quant.qty
                         else:
                             quantdict[qkey] = {
-                                'material_id': product.id,
-                                'material_uom': product.uom_id.id,
-                                'material_code': product.default_code,
-                                'product_lot': quantlot.id, 'lot_name': quantlot.name,
-                                'product_qty': quant.qty, 'location_id': quant.location_id.id
+                                'material_id': product.id, 'material_uom': product.uom_id.id,
+                                'material_code': product.default_code, 'product_lot': quantlot.id,
+                                'lot_name': quantlot.name, 'product_qty': quant.qty, 'location_id': quant.location_id.id
                             }
             if float_compare(quant_qty, want_qty, precision_rounding=0.000001) < 0.0:
                 raise UserError(u'当前工位上原料%s投料不足，请先继续投料再进行其他操作！'% material.default_code)
@@ -281,7 +280,7 @@ class AASMESWorkticket(models.Model):
         workorder.write({'consume_lines': consumelines})
         _logger.info(u'工票%s更新消耗明细;当前时间：%s', self.name, fields.Datetime.now())
         # 刷新上料记录库存
-        feeddomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        feeddomain = [('mesline_id', '=', mesline.id), ('material_id', 'in', materialids)]
         feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
         if feedmateriallist and len(feedmateriallist) > 0:
             feedmateriallist.action_freshandclear()

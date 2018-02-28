@@ -129,15 +129,7 @@ class AASFeedmaterialWechatController(http.Controller):
         values = {'success': True, 'message': ''}
         feedinglist = request.env['aas.mes.feedmaterial'].search([('mesline_id', '=', meslineid)])
         if feedinglist and len(feedinglist) > 0:
-            feedinglist, todelfeedinglist = [], request.env['aas.mes.feedmaterial']
-            for feeding in feedinglist:
-                fkey = 'F-'+str(feeding.material_id.id)+'-'+str(feeding.material_lot.id)
-                if fkey in feedinglist:
-                    todelfeedinglist |= feeding
-                else:
-                    feeding.action_refresh_stock()
-            if todelfeedinglist and len(todelfeedinglist) > 0:
-                todelfeedinglist.unlink()
+            feedinglist.action_freshandclear()
         return values
 
 

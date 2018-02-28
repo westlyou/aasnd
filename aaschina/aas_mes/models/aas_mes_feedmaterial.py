@@ -283,8 +283,14 @@ class AASMESFeedmaterial(models.Model):
         """刷新上料库存信息；若是库存小于等于零，则清理掉
         :return:
         """
+        feedinglist = []
         todellist = self.env['aas.mes.feedmaterial']
         for record in self:
+            fkey = 'F-'+str(record.mesline_id.id)+'-'+str(record.material_id.id)+'-'+str(record.material_lot.id)
+            if fkey in feedinglist:
+                todellist |= record
+                continue
+            feedinglist.append(fkey)
             record.action_refresh_stock()
             if float_compare(record.material_qty, 0.0, precision_rounding=0.000001) <= 0.0:
                 todellist |= record
