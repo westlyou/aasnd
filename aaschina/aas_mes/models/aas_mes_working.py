@@ -268,6 +268,21 @@ class AASEquipmentEquipment(models.Model):
         return self.env['aas.mes.producttest'].action_producttest(equipmentid, producttestid, parameters,
                                                                   testtype=testtype, instrument=instrument, fixture=fixture)
 
+    @api.model
+    def action_loading_finallist(self, productid):
+        """获取半成品的最终产品清单
+        :param productid:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'finallist': []}
+        finallist = self.env['aas.mes.bom'].get_finallist(productid)
+        if not finallist or len(finallist) <= 0:
+            values.update({'success': False, 'message': u'当前产品没有最终产品！'})
+            return values
+        values['finallist'] = finallist
+        return values
+
+
 
 
 
