@@ -341,7 +341,7 @@ class AASMESGP12CheckingController(http.Controller):
         if not mesline.location_production_id or (not mesline.location_material_list or len(mesline.location_material_list) <= 0):
             values.update({'success': False, 'message': u'当前产线还未设置成品和原料库位！'})
             return values
-        label = request.env['aas.product.label'].search([('barcode', '=', barcode)], limit=1)
+        label = request.env['aas.product.label'].search([('barcode', '=', barcode.upper())], limit=1)
         if not label:
             values.update({'success': False, 'message': u'未搜索到相应标签，请检查是否扫描了无效标签！'})
             return values
