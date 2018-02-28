@@ -65,8 +65,6 @@ class AASMESMainorder(models.Model):
             raise ValidationError(u'请仔细检查，当前物料清单和产品不匹配！')
         if not self.start_index or self.start_index < 1:
             raise ValidationError(u'开始序号必须是一个大于等于1的整数！')
-        if not self.split_unit_qty or float_compare(self.split_unit_qty, 0,0, precision_rounding=0.000001) <= 0.0:
-            raise ValidationError(u'拆分批次数量必须是一个有效的正数！')
         if float_compare(self.split_unit_qty, self.actual_qty, precision_rounding=0.000001) > 0.0:
             raise ValidationError(u'拆分批次数量不能大于实际生产数量')
 
@@ -151,14 +149,15 @@ class AASMESMainorder(models.Model):
 
     @api.one
     def action_split(self):
+        if not self.split_unit_qty or float_compare(self.split_unit_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+            raise UserError(u'拆分批次数量必须是一个有效的正数！')
         tempqty, sequence = self.actual_qty, self.start_index
         while float_compare(tempqty, 0.0, precision_rounding=0.000001) > 0:
-            if float_compare(tempqty, self.split_unit_qty, precision_rounding=0.000001) >= 0:
-                self.action_building_workorder(sequence, self.split_unit_qty)
-                tempqty -= self.split_unit_qty
-            else:
-                self.action_building_workorder(sequence, tempqty)
-                tempqty = 0.0
+            order_qty = self.split_unit_qty
+            if float_compare(tempqty, order_qty, precision_rounding=0.000001) < 0:
+                order_qty = tempqty
+            self.action_building_workorder(sequence, order_qty)
+            tempqty -= order_qty
             sequence += 1
         self.write({'state': 'splited', 'splited': True})
 
@@ -185,5 +184,8 @@ class AASMESMainorder(models.Model):
         treeview = self.env.ref('aas_mes.view_tree_aas_mes_workorder')
         result = {'name': u'拆分明细', 'help': action.help, 'type': action.type}
         result.update({'views': [[treeview.id, 'tree'], [formview.id, 'form']]})
-        result.update({'target': action.target, 'context': action.context, 'res_model': action.res_model, 'domain': "[('id','in',%s)]" % productionids})
+        result.update({
+            'target': action.target, 'context': action.context,
+            'res_model': action.res_model, 'domain': "[('id','in',%s)]" % productionids
+        })
         return result
