@@ -223,12 +223,17 @@ class AASMESProductionOutput(models.Model):
     _description = 'AAS MES Production Output'
 
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict', index=True)
+    product_code = fields.Char(string=u'产品编码', copy=False)
+    customer_pn = fields.Char(string=u'客方编码', copy=False)
     output_time = fields.Datetime(string=u'产出时间', default=fields.Datetime.now, copy=False)
     output_date = fields.Char(string=u'产出日期', copy=False)
     output_qty = fields.Float(string=u'产出数量', default=1.0)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict', index=True)
+    mesline_name = fields.Char(string=u'产线名称', copy=False)
     schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', ondelete='restrict', index=True)
+    schedule_name = fields.Char(string=u'班次名称', copy=False)
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict', index=True)
+    workstation_name = fields.Char(string=u'工位名称', copy=False)
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', ondelete='restrict',index=True)
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', ondelete='restrict', index=True)
     employee_name = fields.Char(string=u'员工', copy=False, index=True)
@@ -239,6 +244,15 @@ class AASMESProductionOutput(models.Model):
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', default=lambda self:self.env.user.company_id)
 
 
+    @api.model
+    def create(self, vals):
+        record = super(AASMESProductionOutput, self).create(vals)
+        record.write({
+            'product_code': record.product_id.default_code, 'schedule_name': record.schedule_id.name,
+            'customer_pn': record.product_id.customer_product_code, 'mesline_name': record.mesline_id.name,
+            'workstation_name': record.workstation_id.name
+        })
+        return record
 
     @api.model
     def action_building_outputrecords(self, meslineid, starttime, finishtime, workstationid=None,
