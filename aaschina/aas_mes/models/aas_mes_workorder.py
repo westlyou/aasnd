@@ -60,6 +60,7 @@ class AASMESWorkorder(models.Model):
     output_time = fields.Datetime(string=u'产出时间', copy=False, help=u'最近一次产出的时间')
     scrap_qty = fields.Float(string=u'报废数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     output_manner = fields.Selection(selection=OUTPUTMANNERS, string=u'产出方式', copy=False)
+    finalproduct_id = fields.Many2one(comodel_name='product.product', string=u'最终产品')
 
     workticket_lines = fields.One2many(comodel_name='aas.mes.workticket', inverse_name='workorder_id', string=u'工票明细')
     product_lines = fields.One2many(comodel_name='aas.mes.workorder.product', inverse_name='workorder_id', string=u'产出明细')
@@ -801,6 +802,39 @@ class AASMESWorkorder(models.Model):
             'flags': {'initial_mode': 'view'}
         }
 
+    @api.multi
+    def action_set_finalproduct(self):
+        self.ensure_one()
+        finallist = self.env['aas.mes.bom'].get_finallist(self.product_id.id)
+        if not finallist or len(finallist) <= 0:
+            return
+        if len(finallist) == 1:
+            self.write({'finalproduct_id': finallist[0]['product_id']})
+        else:
+            wizard = self.env['aas.mes.workorder.finalproduct.setting.wizard'].create({
+                'workorder_id': self.id,
+                'action_message': u'请在下方最终产品清单中选择一个产品作为此工单的最终产品，提供首末检时使用！',
+                'product_lines': [(0, 0, {'product_id': tfinal['product_id']}) for tfinal in finallist]
+            })
+            view_form = self.env.ref('aas_mes.view_form_aas_mes_workorder_finalproduct_setting_wizard')
+            return {
+                'name': u"设置最终产品",
+                'type': 'ir.actions.act_window',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_model': 'aas.mes.workorder.finalproduct.setting.wizard',
+                'views': [(view_form.id, 'form')],
+                'view_id': view_form.id,
+                'target': 'new',
+                'res_id': wizard.id,
+                'context': self.env.context
+            }
+
+
+
+
+
+
 
 
 
@@ -1098,3 +1132,42 @@ class AASMESWorkorderCloseWizard(models.TransientModel):
         workorder = self.workorder_id
         workorder.action_done()
         workorder.write({'time_finish': fields.Datetime.now(), 'closer_id': self.env.user.id})
+
+
+
+class AASMESWorkorderFinalProductSettingWizard(models.TransientModel):
+    _name = 'aas.mes.workorder.finalproduct.setting.wizard'
+    _description = 'AAS MES Workorder FinalProduct Setting Wizard'
+
+    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='cascade')
+    action_message = fields.Char(string=u'提示信息', copy=False)
+    product_lines = fields.One2many(comodel_name='aas.mes.workorder.finalproduct.setting.product.wizard', inverse_name='wizard_id', string=u'最终产品')
+
+    @api.one
+    def action_done(self):
+        if not self.product_lines or len(self.product_lines) <= 0:
+            raise UserError(u'操作异常，请检查当前产品是否有多个最终产品！')
+        finalproduct = False
+        for fproduct in self.product_lines:
+            if not fproduct.finalchecked:
+                continue
+            if not finalproduct:
+                finalproduct = fproduct.product_id
+            else:
+                raise UserError(u'最终产品只能设置一个！')
+        if not finalproduct:
+            raise UserError(u'请选择一个产品作为当前工单的最终产品！')
+        self.workorder_id.write({'finalproduct_id': finalproduct.id})
+
+
+
+
+
+class AASMESWorkorderFianlProductSettingProductWizard(models.TransientModel):
+    _name = 'aas.mes.workorder.finalproduct.setting.product.wizard'
+    _description = 'AAS MES Workorder FinalProduct Setting Product Wizard'
+
+    wizard_id = fields.Many2one(comodel_name='aas.mes.workorder.finalproduct.setting.wizard', string='Wizard', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    finalchecked = fields.Boolean(string=u'确认', default=False, copy=False)
+

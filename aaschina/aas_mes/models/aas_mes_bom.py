@@ -155,14 +155,13 @@ class AASMESBOM(models.Model):
         :param productid:
         :return:
         """
-        finallist = []
+        finallist, finalids = [], []
         aasbom = self.env['aas.mes.bom'].search([('product_id', '=', productid), ('active', '=', True)], limit=1)
         if not aasbom:
             return finallist
         productlist = aasbom.loading_final_products()
         if not productlist or len(productlist) <= 0:
             return finallist
-        finalids = []
         for tproduct in productlist:
             if tproduct['product_id'] in finalids:
                 continue
