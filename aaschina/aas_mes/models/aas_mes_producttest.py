@@ -97,10 +97,33 @@ class AASMESProductTestTemplateParameter(models.Model):
 
     @api.multi
     def write(self, vals):
+        templist = []
+        for record in self:
+            tempdict = {}
+            if 'parameter_name' in vals:
+                tempdict['parameter_name'] = vals['parameter_name']
+            if 'parameter_code' in vals:
+                tempdict['parameter_code'] = vals['parameter_code']
+            if tempdict and len(tempdict) > 0:
+                tempdict.update({'template_id': record.template_id.id, 'sequence': record.sequence})
+                templist.append(tempdict)
         result = super(AASMESProductTestTemplateParameter, self).write(vals)
-        if 'parameter_code' in vals:
-            self.action_update_code()
+        # 自动更新参数名称和编码
+        if templist and len(templist) > 0:
+            for tempval in templist:
+                tempdomain = [('producttest_id.template_id', '=', tempval['template_id']), ('sequence', '=', tempval['sequence'])]
+                parameterlist = self.env['aas.mes.producttest.parameter'].search(tempdomain)
+                if not parameterlist or len(parameterlist) <= 0:
+                    continue
+                paramvals = {}
+                if 'parameter_name' in tempval:
+                    paramvals['parameter_name'] = tempval.get('parameter_name', False)
+                if 'parameter_code' in tempval:
+                    paramvals['parameter_code'] = tempval.get('parameter_code', False)
+                if paramvals and len(paramvals) > 0:
+                    parameterlist.write(paramvals)
         return result
+
 
     @api.multi
     def action_update_code(self):
@@ -109,6 +132,20 @@ class AASMESProductTestTemplateParameter(models.Model):
             parameterlist = self.env['aas.mes.producttest.parameter'].search(tempdomain)
             if parameterlist and len(parameterlist) > 0:
                 parameterlist.write({'parameter_code': record.parameter_code})
+
+    @api.multi
+    def unlink(self):
+        templist = []
+        for record in self:
+            templist.append({'template_id': record.template_id.id, 'sequence': record.sequence})
+        delresult = super(AASMESProductTestTemplateParameter, self).unlink()
+        for templateseq in templist:
+            paramdomain = [('sequence', '=', templateseq['sequence']),
+                           ('producttest_id.template_id', '=', templateseq['template_id'])]
+            parameterlist = self.env['aas.mes.producttest.parameter'].search(paramdomain)
+            if parameterlist and len(parameterlist) > 0:
+                parameterlist.unlink()
+        return delresult
 
 
 
