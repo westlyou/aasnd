@@ -296,7 +296,7 @@
                         <button name="action_prdcheck" type="object" string="PRD检查" class="oe_highlight"
                                 attrs="{'invisible':[('state','!=','confirm')]}" groups="aas_mes.group_aas_manufacture_user"/>
 
-                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,prdcheck,frmcheck,ipqcheck,done"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,prdcheck,ipqcheck,done"/>
                     </header>
                     <sheet>
                         <group>

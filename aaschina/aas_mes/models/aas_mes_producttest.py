@@ -23,8 +23,7 @@ DATATYPES = [('char', 'Char'), ('number', 'Number')]
 TESTSTATES = [('draft', u'草稿'), ('confirm', u'确认')]
 
 PRODUCTTESTSTATES = [
-    ('draft', u'草稿'), ('confirm', u'确认'),
-    ('prdcheck', u'PRD检查'), ('frmcheck', u'领班检查'), ('ipqcheck', u'IPQC检查'), ('done', u'完成')
+    ('draft', u'草稿'), ('confirm', u'确认'), ('prdcheck', u'PRD检查'), ('ipqcheck', u'IPQC检查'), ('done', u'完成')
 ]
 TESTTYPES = [('firstone', u'首件'), ('lastone', u'末件'), ('random', u'抽检')]
 DETERMINETYPES = [('prdcheck', u'PRD检查'), ('ipqcheck', u'IPQC检查')]
@@ -260,7 +259,7 @@ class AASMESProductTest(models.Model):
             raise UserError(u'请先设置检测参数信息')
         parameterlist = []
         for ppline in self.parameter_lines:
-            if not ppline.lastone:
+            if not ppline.random:
                 continue
             parameterlist.append((0, 0, {'parameter_id': ppline.id, 'parameter_code': ppline.parameter_code}))
         if not parameterlist or len(parameterlist) <= 0:
@@ -598,11 +597,6 @@ class AASMESProductTestOrderLine(models.Model):
                     record.qualified = False
                     continue
                 record.qualified = True
-
-
-
-
-
 
 
 
