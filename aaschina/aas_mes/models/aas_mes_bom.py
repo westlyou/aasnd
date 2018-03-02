@@ -135,6 +135,42 @@ class AASMESBOM(models.Model):
             'context': self.env.context
         }
 
+    @api.multi
+    def loading_final_products(self):
+        self.ensure_one()
+        productlist = []
+        bomdomain = [('product_id', '=', self.product_id.id), ('bom_id.active', '=', True)]
+        bomlines = self.env['aas.mes.bom.line'].search(bomdomain)
+        if not bomlines and len(bomlines) <= 0:
+            productlist = [{'product_id': self.product_id.id, 'product_code': self.product_id.default_code}]
+        else:
+            for bline in bomlines:
+                productlist += bline.bom_id.loading_final_products()
+        return productlist
+
+
+    @api.model
+    def get_finallist(self, productid):
+        """获取半成品的最终产品清单
+        :param productid:
+        :return:
+        """
+        finallist, finalids = [], []
+        aasbom = self.env['aas.mes.bom'].search([('product_id', '=', productid), ('active', '=', True)], limit=1)
+        if not aasbom:
+            return finallist
+        productlist = aasbom.loading_final_products()
+        if not productlist or len(productlist) <= 0:
+            return finallist
+        for tproduct in productlist:
+            if tproduct['product_id'] in finalids:
+                continue
+            finalids.append(tproduct['product_id'])
+            finallist.append(tproduct)
+        return finallist
+
+
+
 
 
 

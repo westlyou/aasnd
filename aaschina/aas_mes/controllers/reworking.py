@@ -136,7 +136,30 @@ class AASMESReworkingController(http.Controller):
 
     @http.route('/aasmes/ipqcchecking', type='http', auth="user")
     def aasmes_ipqcchecking(self):
-        values = {'success': True, 'message': '', 'checker': request.env.user.name}
+        values = {'success': True, 'message': '', 'checker': request.env.user.name, 'todolist': [], 'donelist': []}
+        todolist = request.env['aas.mes.rework'].search([('state', '=', 'ipqc')])
+        if todolist and len(todolist) > 0:
+            tsequence = 1
+            for rework in todolist:
+                values['todolist'].append({
+                    'lineno': tsequence, 'state_name': REWORKSTATEDICT[rework.state],
+                    'serialnumber': rework.serialnumber_id.name, 'badmode_date': rework.badmode_date,
+                    'product_code': rework.customerpn, 'workcenter_name': rework.workstation_id.name,
+                    'badmode_name': rework.badmode_id.name, 'commiter_name': rework.commiter_id.name
+                })
+                tsequence += 1
+        chinatoday = fields.Datetime.to_china_today()
+        donelist = request.env['aas.mes.rework'].search([('state', '=', 'done'), ('badmode_date', '=', chinatoday)])
+        if donelist and len(donelist) > 0:
+            tsequence = 1
+            for rework in donelist:
+                values['donelist'].append({
+                    'lineno': tsequence, 'state_name': REWORKSTATEDICT[rework.state],
+                    'serialnumber': rework.serialnumber_id.name, 'badmode_date': rework.badmode_date,
+                    'product_code': rework.customerpn, 'workcenter_name': rework.workstation_id.name,
+                    'badmode_name': rework.badmode_id.name, 'commiter_name': rework.commiter_id.name
+                })
+                tsequence += 1
         return request.render('aas_mes.aas_ipqcchecking', values)
 
     @http.route('/aasmes/ipqcchecking/scanemployee', type='json', auth="user")
@@ -182,21 +205,4 @@ class AASMESReworkingController(http.Controller):
             values.update({'success': False, 'message': u'%s可能还未维修或已经IPQC确认完成，暂时不需要IPQC确认'% rework.serialnumber_id.name})
             return values
         rework.action_ipqcchecking(ipqccheckerid, checkresult)
-        return values
-
-
-
-    @http.route('/aasmes/ipqcchecking/loadcheckinglist', type='json', auth="user")
-    def aasmes_ipqcchecking_loadcheckinglist(self):
-        values = {'success': True, 'message': '', 'reworklist': []}
-        chinadate = fields.Datetime.to_china_today()
-        tempdomain = [('badmode_date', '=', chinadate), ('state', '=', 'ipqc')]
-        reworklist = request.env['aas.mes.rework'].search(tempdomain)
-        if reworklist and len(reworklist) > 0:
-            values['reworklist'] = [{
-                'serialnumber': rework.serialnumber_id.name, 'badmode_date': rework.badmode_date,
-                'product_code': rework.customerpn, 'workcenter_name': rework.workstation_id.name,
-                'badmode_name': rework.badmode_id.name, 'commiter_name': rework.commiter_id.name,
-                'state_name': REWORKSTATEDICT[rework.state]
-            } for rework in reworklist]
         return values

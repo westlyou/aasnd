@@ -173,7 +173,7 @@ class AASMESFinalCheckingController(http.Controller):
             values.update({'success': False, 'message': u'请仔细检查是否是有效条码'})
             return values
         serialnumber = tempoperation.serialnumber_id
-        if serialnumber.product_id.id != workorder.product_id.id:
+        if workorder and (serialnumber.product_id.id != workorder.product_id.id):
             values.update({'success': False, 'message': u'扫描序列号异常，此序列号产品与当前产线上生产的产品不相符！'})
             return values
         tempvalues = request.env['aas.mes.operation'].action_loading_operation_rework_list(tempoperation.id)
@@ -196,10 +196,11 @@ class AASMESFinalCheckingController(http.Controller):
                 values['badmode_name'] = currentrework.badmode_id.name
             values['message'] = u'%s重工，请仔细检查确认'% values['badmode_name']
             return values
-        tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, barcode)
-        if not tvalues.get('success', False):
-            values.update(tvalues)
-            return values
+        if workorder:
+            tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, barcode)
+            if not tvalues.get('success', False):
+                values.update(tvalues)
+                return values
         tempoperation.action_finalcheck(mesline, workstation)
         orvalues = request.env['aas.mes.operation'].action_loading_operation_rework_list(tempoperation.id)
         values.update({'recordlist': orvalues['recordlist'], 'reworklist': orvalues['reworklist']})

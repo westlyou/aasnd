@@ -35,6 +35,8 @@
                         <button name="action_producing" type="object" string="开始生产" class="oe_highlight"
                                 attrs="{'invisible':['|','|',('mesline_type','=','station'),('isproducing','=',True),('state','in',['draft','done'])]}"/>
                         <button name="action_waitconsume" type="object" string="原料消耗" class="oe_highlight" attrs="{'invisible':[('waitconsume','=',False)]}"/>
+                        <button name="action_set_finalproduct" type="object" string="最终产品" class="oe_highlight"
+                                attrs="{'invisible':[('finalproduct_id','!=',False)]}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,producing,pause,done"/>
                     </header>
                     <sheet>
@@ -86,6 +88,7 @@
                                         attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
                                 <field name="workcenter_finish" readonly="1"
                                         attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
+                                <field name="finalproduct_id" readonly="1"/>
                             </group>
                         </group>
                         <notebook>
@@ -304,6 +307,43 @@
                     <div>
                         <field name="action_message" readonly="1"/>
                     </div>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_workorder_finalproduct_setting_wizard" model="ir.ui.view">
+            <field name="name">aas.mes.workorder.finalproduct.setting.wizard</field>
+            <field name="model">aas.mes.workorder.finalproduct.setting.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="workorder_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <div>
+                        <field name="action_message" readonly="1"/>
+                    </div>
+                    <notebook>
+                        <page string="最终产品清单">
+                            <field name="product_lines">
+                                <tree create="false" delete="false">
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="finalchecked"/>
+                                </tree>
+                                <form create="false" delete="false">
+                                    <group>
+                                        <group> <field name="product_id" readonly="1"/> </group>
+                                        <group> <field name="finalchecked"/> </group>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
                     <footer>
                         <button name="action_done" string="确认" type="object" class="btn-primary"/>
                         <button string="取消" class="btn-default" special="cancel"/>

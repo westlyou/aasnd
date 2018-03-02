@@ -403,28 +403,83 @@
                                     </div>
                                 </div>
                                 <div class="col-md-9">
-                                    <div class="box box-primary">
-                                        <div class="box-header with-border">
-                                            <i class="fa fa-list"></i>
-                                            <h3 class="box-title">待处理清单</h3>
-                                        </div>
-                                        <div class="box-body">
-                                            <div class="table-responsive">
-                                                <table class="table no-margin">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>No</th>
-                                                            <th>SN</th>
-                                                            <th>不良日期</th>
-                                                            <th>料号</th>
-                                                            <th>工序</th>
-                                                            <th>不良模式</th>
-                                                            <th>作业员</th>
-                                                            <th>维修状态</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="rework_list"></tbody>
-                                                </table>
+                                    <div class="nav-tabs-custom">
+                                        <ul class="nav nav-tabs">
+                                            <li id="menu_todo" class="active">
+                                                <a href="#rework_todolist" data-toggle="tab">待处理清单</a>
+                                            </li>
+                                            <li id="menu_done">
+                                                <a href="#rework_donelist" data-toggle="tab">已完成清单</a>
+                                            </li>
+                                        </ul>
+                                        <div class="tab-content">
+                                            <div class="tab-pane active" id="rework_todolist">
+                                                <div class="table-responsive">
+                                                    <table class="table no-margin">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>No</th>
+                                                                <th>SN</th>
+                                                                <th>不良日期</th>
+                                                                <th>料号</th>
+                                                                <th>工序</th>
+                                                                <th>不良模式</th>
+                                                                <th>作业员</th>
+                                                                <th>维修状态</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <t t-if="todolist">
+                                                                <t t-foreach="todolist" t-as="trework">
+                                                                    <tr>
+                                                                        <td> <t t-esc="trework['lineno']"/> </td>
+                                                                        <td> <t t-esc="trework['serialnumber']"/> </td>
+                                                                        <td> <t t-esc="trework['badmode_date']"/> </td>
+                                                                        <td> <t t-esc="trework['product_code']"/> </td>
+                                                                        <td> <t t-esc="trework['workcenter_name']"/> </td>
+                                                                        <td> <t t-esc="trework['badmode_name']"/> </td>
+                                                                        <td> <t t-esc="trework['commiter_name']"/> </td>
+                                                                        <td> <t t-esc="trework['state_name']"/> </td>
+                                                                    </tr>
+                                                                </t>
+                                                            </t>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane" id="rework_donelist">
+                                                <div class="table-responsive">
+                                                    <table class="table no-margin">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>No</th>
+                                                                <th>SN</th>
+                                                                <th>不良日期</th>
+                                                                <th>料号</th>
+                                                                <th>工序</th>
+                                                                <th>不良模式</th>
+                                                                <th>作业员</th>
+                                                                <th>维修状态</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <t t-if="donelist">
+                                                                <t t-foreach="donelist" t-as="trework">
+                                                                    <tr>
+                                                                        <td> <t t-esc="trework['lineno']"/> </td>
+                                                                        <td> <t t-esc="trework['serialnumber']"/> </td>
+                                                                        <td> <t t-esc="trework['badmode_date']"/> </td>
+                                                                        <td> <t t-esc="trework['product_code']"/> </td>
+                                                                        <td> <t t-esc="trework['workcenter_name']"/> </td>
+                                                                        <td> <t t-esc="trework['badmode_name']"/> </td>
+                                                                        <td> <t t-esc="trework['commiter_name']"/> </td>
+                                                                        <td> <t t-esc="trework['state_name']"/> </td>
+                                                                    </tr>
+                                                                </t>
+                                                            </t>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
