@@ -37,10 +37,13 @@ class AASFeedmaterialWechatController(http.Controller):
         feedinglist = request.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline.id)])
         if not feedinglist or len(feedinglist) <= 0:
             return values
-        materialdict, todelfeedlist = {}, request.env['aas.mes.feedmaterial']
+        keylist, materialdict, todelfeedlist = [], {}, request.env['aas.mes.feedmaterial']
         for feedmaterial in feedinglist:
+            fkey = 'F-'+str(mesline.id)+'-'+str(feedmaterial.material_id.id)+'-'+str(feedmaterial.material_lot.id)
+            if fkey in keylist:
+                todelfeedlist |= feedmaterial
+                continue
             mkey = 'material_'+str(feedmaterial.material_id.id)
-            # fkey = 'F-'+str(mesline.id)+'-'+str(feedmaterial.material_id.id)+'-'+str(feedmaterial.material_lot.id)
             if mkey not in materialdict:
                 materialdict[mkey] = {
                     'tmaterial_id': mkey,
@@ -48,7 +51,7 @@ class AASFeedmaterialWechatController(http.Controller):
                     'material_code': feedmaterial.material_id.default_code, 'material_qty': feedmaterial.material_qty
                 }
             else:
-                todelfeedlist |= feedmaterial
+                materialdict[mkey]['material_qty'] += feedmaterial.material_qty
         values['materialist'] = materialdict.values()
         if todelfeedlist and len(todelfeedlist) > 0:
             todelfeedlist.unlink()
