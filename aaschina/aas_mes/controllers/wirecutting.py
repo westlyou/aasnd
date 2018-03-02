@@ -38,16 +38,24 @@ class AASMESWireCuttingController(http.Controller):
             values.update({'success': False, 'message': u'当前登录账号还未绑定切线工位！'})
             return request.render('aas_mes.aas_wirecutting', values)
         values.update({'mesline_name': mesline.name, 'workstation_name': workstation.name})
-        employeelist = request.env['aas.mes.workstation.employee'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
+        employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        employeelist = request.env['aas.mes.workstation.employee'].search(employeedomain)
         if employeelist and len(employeelist) > 0:
             temployee = employeelist[0].employee_id
             values.update({'employee_id': temployee.id, 'employee_name': temployee.name+'['+temployee.code+']'})
-        feedmateriallist = request.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
+        feedmateriallist = request.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline.id)])
         if feedmateriallist and len(feedmateriallist) > 0:
-            values['materiallist'] = [{
-                'material_name': feedmaterial.material_id.default_code+'['+feedmaterial.material_lot.name+']',
-                'material_qty': feedmaterial.material_qty
-            } for feedmaterial in feedmateriallist]
+            materialdict = {}
+            for feedmaterial in feedmateriallist:
+                mkey = 'M'+str(feedmaterial.material_id.id)
+                if mkey not in materialdict:
+                    materialdict[mkey] = {
+                        'material_name': feedmaterial.material_id.default_code,
+                        'material_qty': feedmaterial.material_qty
+                    }
+                else:
+                    materialdict[mkey]['material_qty'] += feedmaterial.material_qty
+            values['materiallist'] = materialdict.values()
         return request.render('aas_mes.aas_wirecutting', values)
 
 
@@ -153,11 +161,6 @@ class AASMESWireCuttingController(http.Controller):
         if not container.isempty:
             values.update({'success': False, 'message': u'容器已被占用，暂不可以使用！'})
             return values
-        feedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-        feedmateriallist = request.env['aas.mes.feedmaterial'].search(feedomain)
-        if not feedmateriallist or len(feedmateriallist) <= 0:
-            values.update({'success': False, 'message': u'当前工位还未上料，请上料再操作产出！'})
-            return values
         container.action_domove(mesline.location_production_id.id, movenote=u'线材产出容器自动调拨')
         values.update({'container_id': container.id, 'container_name': container.name})
         return values
@@ -190,8 +193,8 @@ class AASMESWireCuttingController(http.Controller):
         if label.location_id.id not in locationlist.ids:
             values.update({'success': False, 'message': u'当前标签不在产线%s的线边库，请不要扫描此标签！'% mesline.name})
             return values
-        feeddomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-        feeddomain.extend([('material_id', '=', label.product_id.id), ('material_lot', '=', label.product_lot.id)])
+        feeddomain = [('mesline_id', '=', mesline.id)]
+        feeddomain += [('material_id', '=', label.product_id.id), ('material_lot', '=', label.product_lot.id)]
         feedmaterial = request.env['aas.mes.feedmaterial'].search(feeddomain, limit=1)
         if feedmaterial:
             feedmaterial.action_refresh_stock()
@@ -199,7 +202,7 @@ class AASMESWireCuttingController(http.Controller):
             return values
         else:
             feedmaterial = request.env['aas.mes.feedmaterial'].create({
-                'mesline_id': mesline.id, 'workstation_id': workstation.id,
+                'mesline_id': mesline.id,
                 'material_id': label.product_id.id, 'material_lot': label.product_lot.id
             })
         values.update({
@@ -298,10 +301,17 @@ class AASMESWireCuttingController(http.Controller):
             'output_qty': workorder.output_qty, 'state_name': ORDERSTATESDICT[workorder.state], 'scrap_qty': workorder.scrap_qty
         } for workorder in wireorder.workorder_lines]
         values['workorderlist'] = workorderlist
-        feedmateriallist = request.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)])
+        feedmateriallist = request.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline.id)])
         if feedmateriallist and len(feedmateriallist) > 0:
-            values['materiallist'] = [{
-                'material_name': feedmaterial.material_id.default_code+'['+feedmaterial.material_lot.name+']',
-                'material_qty': feedmaterial.material_qty
-            } for feedmaterial in feedmateriallist]
+            materialdict = {}
+            for feedmaterial in feedmateriallist:
+                mkey = 'M'+str(feedmaterial.material_id.id)
+                if mkey in materialdict:
+                    materialdict[mkey]['material_qty'] += feedmaterial.material_qty
+                else:
+                    materialdict[mkey] = {
+                        'material_name': feedmaterial.material_id.default_code,
+                        'material_qty': feedmaterial.material_qty
+                    }
+            values['materiallist'] = materialdict.values()
         return values

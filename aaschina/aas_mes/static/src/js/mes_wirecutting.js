@@ -162,7 +162,7 @@ $(function(){
                 }
                 var materialstr = '<a href="javascript:void(0);">'+dresult.material_name+'<span class="pull-right">' +
                     dresult.material_qty+'</span></a>';
-                $('<li></li>').html(materialstr).appendTo($('#wirecut_materiallist'));
+                $('<li></li>').html(materialstr).prependTo($('#wirecut_materiallist'));
             },
             error:function(xhr,type,errorThrown){ console.log(type);}
         });

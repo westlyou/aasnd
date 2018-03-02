@@ -499,26 +499,35 @@ class AASMESWorkorder(models.Model):
         :param product_id:
         :return:
         """
+        tworkorder, productids, materialids = False, [], []
         values = {'success': True, 'message': '', 'tracelist':[]}
-        outputmodel, tworkorder = self.env['aas.mes.workorder.product'], False
-        outputdomain = [('workorder_id', '=', workorder_id), ('product_id', '=', product_id)]
-        outputdomain.append(('waiting_qty', '>', 0.0))
-        outputlist = outputmodel.search(outputdomain)
+        outputdomain = [('workorder_id', '=', workorder_id)]
+        outputdomain += [('product_id', '=', product_id), ('waiting_qty', '>', 0.0)]
+        outputlist = self.env['aas.mes.workorder.product'].search(outputdomain)
         if outputlist and len(outputlist) > 0:
             for output in outputlist:
+                productid = output.product_id.id
+                if productid not in productids:
+                    productids.append(productid)
                 tworkorder = output.workorder_id
-                result = outputmodel.action_output_consume(output)
+                result = self.env['aas.mes.workorder.product'].action_output_consume(output)
                 if result['tracelist'] and len(result['tracelist']) > 0:
                     values['tracelist'].extend(result['tracelist'])
                 if not result['success']:
                     values.update(result)
                     return values
         if tworkorder:
+            # 刷新上料信息
             meline_id = tworkorder.mesline_id.id
-            feedomain = [('mesline_id', '=', meline_id), ('workstation_id', '=', workstation_id)]
-            feedmateriallist = self.env['aas.mes.feedmaterial'].search(feedomain)
-            if feedmateriallist and len(feedmateriallist) > 0:
-                feedmateriallist.action_freshandclear()
+            consumedomain = [('workorder_id', '=', tworkorder.id), ('product_id', 'in', productids)]
+            consumelist = self.env['aas.mes.workorder.consume'].search(consumedomain)
+            if consumelist and len(consumelist) > 0:
+                materialids = [tconsume.material_id.id for tconsume in consumelist]
+            if materialids and len(materialids) > 0:
+                feedomain = [('mesline_id', '=', meline_id), ('material_id', 'in', materialids)]
+                feedmateriallist = self.env['aas.mes.feedmaterial'].search(feedomain)
+                if feedmateriallist and len(feedmateriallist) > 0:
+                    feedmateriallist.action_freshandclear()
         return values
 
 
@@ -543,18 +552,21 @@ class AASMESWorkorder(models.Model):
         consumelist = self.env['aas.mes.workorder.consume'].search(consumedomain)
         if not consumelist or len(consumelist) <= 0:
             return values
-        consumedict, feedmaterialdict = {}, {}
+        consumedict, feedmaterialdict, materialids = {}, {}, []
         for tempconsume in consumelist:
-            pkey = 'P-'+str(tempconsume.material_id.id)
+            materialid = tempconsume.material_id.id
+            pkey = 'P-'+str(materialid)
             consume_qty = tempconsume.consume_unit * product_qty
             if pkey not in consumedict:
                 consumedict[pkey] = {'code': tempconsume.material_id.default_code, 'qty': consume_qty}
             else:
                 consumedict[pkey]['qty'] += consume_qty
-        feeddomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation_id)]
+            if materialid not in materialids:
+                materialids.append(materialid)
+        feeddomain = [('mesline_id', '=', mesline.id), ('material_id', 'in', materialids)]
         feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
         if not feedmateriallist or len(feedmateriallist) <= 0:
-            values.update({'success': False, 'message': u'工位%s还未上料，请联系上料员上料！'% workstation.name})
+            values.update({'success': False, 'message': u'当前还未上料，请联系上料员上料！'})
             return values
         for feedmaterial in feedmateriallist:
             pkey = 'P-'+str(feedmaterial.material_id.id)
@@ -802,6 +814,77 @@ class AASMESWorkorder(models.Model):
             'flags': {'initial_mode': 'view'}
         }
 
+    @api.one
+    def action_refresh_consumelist(self):
+        """刷新消耗清单
+        :return:
+        """
+        consumedict, workcenterdict = {}, {}
+        if self.consume_lines and len(self.consume_lines) > 0:
+            for tconsume in self.consume_lines:
+                ckey = 'C-'+str(tconsume.product_id.id)+'-'+str(tconsume.material_id.id)
+                consumedict[ckey] = {
+                    'consumeid': tconsume.id, 'product_id': tconsume.product_id.id,
+                    'material_id': tconsume.material_id.id, 'consume_unit': tconsume.consume_unit,
+                    'input_qty': tconsume.input_qty, 'consume_qty': tconsume.consume_qty,
+                    'workcenter_id': tconsume.workcenter_id.id
+                }
+        if not self.aas_bom_id:
+            return
+        workcenterlines = self.aas_bom_id.workcenter_lines
+        if not workcenterlines or len(workcenterlines) <= 0:
+            return
+        for bworkcenter in workcenterlines:
+            consume_unit = bworkcenter.product_qty / self.aas_bom_id.product_qty
+            if not bworkcenter.product_id.virtual_material:
+                ckey = 'C-'+str(self.product_id.id)+'-'+str(bworkcenter.product_id.id)
+                workcenterdict[ckey] = {
+                    'product_id': self.product_id.id, 'material_id': bworkcenter.product_id.id,
+                    'consume_unit': consume_unit, 'input_qty': consume_unit * self.product_qty,
+                    'consume_qty': 0.0, 'workcenter_id': bworkcenter.workcenter_id.id
+                }
+            else:
+                tempproduct = bworkcenter.product_id
+                bomdomain = [('product_id', '=', tempproduct.id), ('active', '=', True)]
+                virtualbom = self.env['aas.mes.bom'].search(bomdomain, limit=1)
+                if not virtualbom:
+                    raise UserError(u'虚拟物料%s还未设置有效BOM清单，请通知相关人员设置BOM清单！'% tempproduct.default_code)
+                if not virtualbom.bom_lines or len(virtualbom.bom_lines) <= 0:
+                    raise UserError(u'请先仔细检查虚拟物料%s的BOM清单是否正确设置！'% tempproduct.default_code)
+                for virtualbomline in virtualbom.bom_lines:
+                    if virtualbomline.product_id.virtual_material:
+                        continue
+                    ckey = 'C-'+str(tempproduct.id)+'-'+str(virtualbomline.product_id.id)
+                    virtual_consume_unit = virtualbomline.product_qty / virtualbom.product_qty
+                    total_consume_unit = consume_unit * virtual_consume_unit
+                    workcenterdict[ckey] = {
+                        'product_id': tempproduct.id, 'material_id': virtualbomline.product_id.id,
+                        'consume_unit': virtual_consume_unit, 'input_qty': self.input_qty * total_consume_unit,
+                        'workcenter_id': False if not bworkcenter.workcenter_id else bworkcenter.workcenter_id.id
+                    }
+        consumelist = []
+        for wkey, wval in workcenterdict.items():
+            if wkey not in consumedict:
+                consumelist.append((0, 0, wval))
+            else:
+                consumevals = {}
+                orderunit, bomunit = consumedict[wkey]['consume_unit'], wval['consume_unit']
+                if float_compare(orderunit, bomunit, precision_rounding=0.000001) != 0.0:
+                    consumevals['consume_unit'] = bomunit
+                orderinput_qty, bominput_qty = consumedict[wkey]['input_qty'], wval['input_qty']
+                if float_compare(orderinput_qty, bominput_qty, precision_rounding=0.000001) != 0.0:
+                    consumevals['input_qty'] = bominput_qty
+                if consumevals and len(consumevals) > 0:
+                    consumelist.append((1, consumedict[wkey]['consumeid'], consumevals))
+                del consumedict[wkey]
+        if consumedict and len(consumedict) > 0:
+            for cskey, csval in consumedict.items():
+                consumelist.append((2, csval['consumeid'], False))
+        if consumelist and len(consumelist) > 0:
+            self.write({'consume_lines': consumelist})
+
+
+
     @api.multi
     def action_set_finalproduct(self):
         self.ensure_one()
@@ -930,22 +1013,26 @@ class AASMESWorkorderProduct(models.Model):
         product_id, output_qty = outputrecord.product_id.id, outputrecord.waiting_qty
         product_qty = outputrecord.product_qty + outputrecord.waiting_qty
         workordervals = {'product_lines': [(1, outputrecord.id, {'product_qty': product_qty, 'waiting_qty': 0.0})]}
-        consumelist = []
+        consumelist, materialids = [], []
         consumedomain = [('workorder_id', '=', workorder.id), ('product_id', '=', product_id)]
         workorder_consume_list = self.env['aas.mes.workorder.consume'].search(consumedomain)
         for wkconsume in workorder_consume_list:
             consume_qty = wkconsume.consume_qty + (wkconsume.consume_unit * output_qty)
             consumelist.append((1, wkconsume.id, {'consume_qty': consume_qty}))
+            materialids.append(wkconsume.material_id.id)
         workordervals['consume_lines'] = consumelist
         workorder.write(workordervals)
         # 序列号设置为已追溯
-        seriallist = self.env['aas.mes.serialnumber'].search([('outputrecord_id', '=', outputrecord.id), ('traced', '=', False)])
+        seraildomain = [('outputrecord_id', '=', outputrecord.id), ('traced', '=', False)]
+        seriallist = self.env['aas.mes.serialnumber'].search(seraildomain)
         if seriallist and len(seriallist) > 0:
             seriallist.write({'traced': True})
         if outputrecord.container_id:
             # 容器中相应数量物品入库存
-            productdomain = [('container_id', '=', outputrecord.container_id.id), ('product_id', '=', outputrecord.product_id.id)]
-            productdomain.append(('product_lot', '=', False if not outputrecord.product_lot else outputrecord.product_lot.id))
+            containerid, productid = outputrecord.container_id.id, outputrecord.product_id.id
+            plotid = False if not outputrecord.product_lot else outputrecord.product_lot.id
+            productdomain = [('container_id', '=', containerid)]
+            productdomain += [('product_id', '=', productid), ('product_lot', '=', plotid)]
             productline = self.env['aas.container.product'].search(productdomain, limit=1)
             if productline:
                 productline.action_stock(outputrecord.waiting_qty)
@@ -983,23 +1070,20 @@ class AASMESWorkorderProduct(models.Model):
         for tempconsume in workorder_consume_list:
             material, want_qty = tempconsume.material_id, waiting_qty * tempconsume.consume_unit
             workcenter, workcenter_id, workstation, workstation_id = False, 0, False, 0
-            feeddomain = [('mesline_id', '=', mesline.id), ('material_id', '=', material.id)]
             if tempconsume.workcenter_id:
                 workcenter, workcenter_id = tempconsume.workcenter_id, tempconsume.workcenter_id.id
                 if workcenter.workstation_id:
                     workstation, workstation_id = workcenter.workstation_id, workcenter.workstation_id.id
-                    feeddomain.append(('workstation_id', '=', workstation_id))
             if workstation_id not in workstationdict:
                 stationvals = {'workstation_id': workstation_id, 'workcenter_id': workcenter_id, 'materiallines': []}
                 stationvals.update(maintracevals)
                 workstationdict[workstation_id] = stationvals
             workstationvals = workstationdict[workstation_id]
             materialvals = {
-                'material_id': material.id,
-                'material_uom': material.uom_id.id,
-                'material_code': material.default_code,
+                'material_id': material.id, 'material_uom': material.uom_id.id, 'material_code': material.default_code
             }
             # 检查投料明细
+            feeddomain = [('mesline_id', '=', mesline.id), ('material_id', '=', material.id)]
             feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
             if not feedmateriallist or len(feedmateriallist) <= 0:
                 message = u'原料%s还没有投料记录！'% material.default_code
@@ -1015,9 +1099,9 @@ class AASMESWorkorderProduct(models.Model):
                     for tempquant in quants:
                         qkey = 'Q-'+str(tempquant.lot_id.id)+'-'+str(tempquant.location_id.id)
                         if qkey in quantdict:
-                            quantdict['qkey']['product_qty'] += tempquant.qty
+                            quantdict[qkey]['product_qty'] += tempquant.qty
                         else:
-                            quantdict['qkey'] = {
+                            quantdict[qkey] = {
                                 'location_id': tempquant.location_id.id, 'product_qty': tempquant.qty,
                                 'material_lot': tempquant.lot_id.id, 'material_lot_name': tempquant.lot_id.name
                             }

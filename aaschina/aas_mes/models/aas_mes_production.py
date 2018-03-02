@@ -29,6 +29,7 @@ class AASMESProductionLabel(models.Model):
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', index=True)
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', index=True)
     lot_id = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', index=True)
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', index=True)
     action_time = fields.Datetime(string=u'时间', default=fields.Datetime.now, copy=False)
     action_date = fields.Char(string=u'日期', copy=False, index=True)
     customer_code = fields.Char(string=u'客户编码', copy=False)
@@ -50,7 +51,8 @@ class AASMESProductionLabel(models.Model):
         self.env['aas.mes.production.label'].create({
             'label_id': label.id, 'product_id': product_id,  'product_qty': product_qty,
             'lot_id': productlot_id, 'product_code': product_code, 'customer_code': customer_code,
-            'operator_id': self.env.user.id, 'action_date': chinadate, 'equipment_id': equipment_id
+            'operator_id': self.env.user.id, 'action_date': chinadate, 'equipment_id': equipment_id,
+            'location_id': location_id
         })
         return label
 
@@ -97,6 +99,8 @@ class AASMESProductionLabel(models.Model):
     @api.multi
     def action_destroy(self):
         self.ensure_one()
+        if self.location_id.id != self.label_id.location_id.id:
+            raise UserError(u'标签库位已发生变化，不可以解绑！')
         wizard = self.env['aas.mes.production.label.destroy.wizard'].create({
             'plabel_id': self.id, 'product_qty': self.label_id.product_qty,
             'product_id': self.label_id.product_id.id, 'lot_id': self.label_id.product_lot.id

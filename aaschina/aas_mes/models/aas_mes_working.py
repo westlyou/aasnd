@@ -75,12 +75,13 @@ class AASEquipmentEquipment(models.Model):
         return self.env['aas.mes.work.attendance'].action_workstation_scanning(equipment_code, employee_barcode)
 
     @api.model
-    def get_workstation_materiallist(self, equipment_code):
+    def get_workstation_materiallist(self, equipment_code, workorder_id=False):
         """工位获取上料清单
         :param equipment_code:
+        :param workorder_id:
         :return:
         """
-        return self.env['aas.mes.feedmaterial'].get_workstation_materiallist(equipment_code)
+        return self.env['aas.mes.feedmaterial'].get_workstation_materiallist(equipment_code, workorder_id)
 
     @api.model
     def action_feed_onstationclient(self, equipment_code, barcode):
