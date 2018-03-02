@@ -27,7 +27,7 @@ PRODUCTTESTSTATES = [
     ('prdcheck', u'PRD检查'), ('frmcheck', u'领班检查'), ('ipqcheck', u'IPQC检查'), ('done', u'完成')
 ]
 TESTTYPES = [('firstone', u'首件'), ('lastone', u'末件'), ('random', u'抽检')]
-DETERMINETYPES = [('prdcheck', u'PRD检查'), ('frmcheck', u'领班检查'), ('ipqcheck', u'IPQC检查')]
+DETERMINETYPES = [('prdcheck', u'PRD检查'), ('ipqcheck', u'IPQC检查')]
 
 
 def isfloat(value):
@@ -190,13 +190,18 @@ class AASMESProductTest(models.Model):
         self.ensure_one()
         if not self.parameter_lines or len(self.parameter_lines) <= 0:
             raise UserError(u'请先设置检测参数信息')
+        parameterlist = []
+        for ppline in self.parameter_lines:
+            if not ppline.firstone:
+                continue
+            parameterlist.append((0, 0, {'parameter_id': ppline.id, 'parameter_code': ppline.parameter_code}))
+        if not parameterlist or len(parameterlist) <= 0:
+            raise UserError(u'请仔细检查可能您还未设置首件检测参数！')
         testorder = self.env['aas.mes.producttest.order'].create({
             'producttest_id': self.id, 'state': 'confirm', 'test_type': 'firstone',
             'product_id': False if not self.product_id else self.product_id.id,
             'workstation_id': False if not self.workstation_id else self.workstation_id.id,
-            'order_lines': [(0, 0, {
-                'parameter_id': ppline.id, 'parameter_code': ppline.parameter_code
-            }) for ppline in self.parameter_lines]
+            'order_lines': parameterlist
         })
         view_form = self.env.ref('aas_mes.view_form_aas_mes_producttest_order')
         return {
@@ -220,13 +225,18 @@ class AASMESProductTest(models.Model):
         self.ensure_one()
         if not self.parameter_lines or len(self.parameter_lines) <= 0:
             raise UserError(u'请先设置检测参数信息')
+        parameterlist = []
+        for ppline in self.parameter_lines:
+            if not ppline.lastone:
+                continue
+            parameterlist.append((0, 0, {'parameter_id': ppline.id, 'parameter_code': ppline.parameter_code}))
+        if not parameterlist or len(parameterlist) <= 0:
+            raise UserError(u'请仔细检查可能您还未设置末件检测参数！')
         testorder = self.env['aas.mes.producttest.order'].create({
             'producttest_id': self.id, 'state': 'confirm', 'test_type': 'lastone',
             'product_id': False if not self.product_id else self.product_id.id,
             'workstation_id': False if not self.workstation_id else self.workstation_id.id,
-            'order_lines': [(0, 0, {
-                'parameter_id': ppline.id, 'parameter_code': ppline.parameter_code
-            }) for ppline in self.parameter_lines]
+            'order_lines': parameterlist
         })
         view_form = self.env.ref('aas_mes.view_form_aas_mes_producttest_order')
         return {
@@ -248,13 +258,18 @@ class AASMESProductTest(models.Model):
         self.ensure_one()
         if not self.parameter_lines or len(self.parameter_lines) <= 0:
             raise UserError(u'请先设置检测参数信息')
+        parameterlist = []
+        for ppline in self.parameter_lines:
+            if not ppline.lastone:
+                continue
+            parameterlist.append((0, 0, {'parameter_id': ppline.id, 'parameter_code': ppline.parameter_code}))
+        if not parameterlist or len(parameterlist) <= 0:
+            raise UserError(u'请仔细检查可能您还未设置抽样检测参数！')
         testorder = self.env['aas.mes.producttest.order'].create({
             'producttest_id': self.id, 'state': 'confirm', 'test_type': 'random',
             'product_id': False if not self.product_id else self.product_id.id,
             'workstation_id': False if not self.workstation_id else self.workstation_id.id,
-            'order_lines': [(0, 0, {
-                'parameter_id': ppline.id, 'parameter_code': ppline.parameter_code
-            }) for ppline in self.parameter_lines]
+            'order_lines': parameterlist
         })
         view_form = self.env.ref('aas_mes.view_form_aas_mes_producttest_order')
         return {
@@ -273,13 +288,16 @@ class AASMESProductTest(models.Model):
 
 
     @api.model
-    def loading_producttest(self, productid, workstationid):
+    def loading_producttest(self, productid, workstationid, testtype='firstone'):
         """获取检测参数信息
         :param productid:
         :param workstationid:
         :return:
         """
         values = {'success': True, 'message': '', 'producttestid': 0, 'parameters': []}
+        if testtype not in ['firstone', 'lastone', 'random']:
+            values.update({'success': False, 'message': u'检测分类异常，分类值只能是(firstone|lastone|random)'})
+            return values
         tdomain = [('product_id', '=', productid), ('workstation_id', '=', workstationid)]
         producttest = self.env['aas.mes.producttest'].search(tdomain)
         if not producttest:
@@ -289,13 +307,30 @@ class AASMESProductTest(models.Model):
         if not producttest.parameter_lines or len(producttest.parameter_lines) <= 0:
             values.update({'success': False, 'message': u'请仔细检查，检测信息中可能还未设置任何参数！'})
             return values
-        values['parameters'] = [{
-            'id': tparameter.id,
-            'name': tparameter.parameter_name, 'type': tparameter.parameter_type,
-            'code': '' if not tparameter.parameter_code else tparameter.parameter_code,
-            'value': '' if not tparameter.parameter_value else tparameter.parameter_value,
-            'maxvalue': tparameter.parameter_maxvalue, 'minvalue': tparameter.parameter_minvalue
-        } for tparameter in producttest.parameter_lines]
+        parameterlist = []
+        for tparameter in producttest.parameter_lines:
+            tempval = {
+                'id': tparameter.id,
+                'name': tparameter.parameter_name, 'type': tparameter.parameter_type,
+                'code': '' if not tparameter.parameter_code else tparameter.parameter_code,
+                'value': '' if not tparameter.parameter_value else tparameter.parameter_value,
+                'maxvalue': tparameter.parameter_maxvalue, 'minvalue': tparameter.parameter_minvalue
+            }
+            if testtype == 'firstone' and tparameter.firstone:
+                parameterlist.append(tempval)
+            elif testtype == 'lastone' and tparameter.lastone:
+                parameterlist.append(tempval)
+            elif testtype == 'random' and tparameter.random:
+                parameterlist.append(tempval)
+        if not parameterlist or len(parameterlist) <= 0:
+            values['success'] = False
+            if testtype == 'firstone':
+                values['message'] = u'您还未设置首件检测参数！'
+            elif testtype == 'lastone':
+                values['message'] = u'您还未设置末件检测参数！'
+            elif testtype == 'random':
+                values['message'] = u'您还未设置抽样检测参数！'
+            return values
         return values
 
 
@@ -496,27 +531,6 @@ class AASMESProductTestOrder(models.Model):
         }
 
     @api.multi
-    def action_frmcheck(self):
-        self.ensure_one()
-        wizard = self.env['aas.mes.producttest.order.checking.wizard'].create({
-            'order_id': self.id, 'check_type': 'frmcheck',
-            'action_message': u'请仔细确认各项参数是否合格，再做判定！'
-        })
-        view_form = self.env.ref('aas_mes.view_form_aas_mes_producttest_order_checking_wizard')
-        return {
-            'name': u"领班检查",
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'aas.mes.producttest.order.checking.wizard',
-            'views': [(view_form.id, 'form')],
-            'view_id': view_form.id,
-            'target': 'new',
-            'res_id': wizard.id,
-            'context': self.env.context
-        }
-
-    @api.multi
     def action_ipqcheck(self):
         self.ensure_one()
         wizard = self.env['aas.mes.producttest.order.checking.wizard'].create({
@@ -671,8 +685,6 @@ class AASMESProductTestOrderCheckingWizard(models.TransientModel):
             return
         if self.check_type == 'prdcheck':
             tempvals['state'] = 'prdcheck'
-        elif self.check_type == 'frmcheck':
-            tempvals['state'] = 'frmcheck'
         elif self.check_type == 'ipqcheck':
             tempvals['state'] = 'done'
         self.order_id.write(tempvals)

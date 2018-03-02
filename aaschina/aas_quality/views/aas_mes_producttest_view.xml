@@ -28,7 +28,7 @@
                 <form create="false" edit="false" delete="false">
                     <header>
                         <button name="action_ipqcheck" type="object" string="IPQC检查" class="oe_highlight"
-                                attrs="{'invisible':[('state','!=','frmcheck')]}" groups="aas_quality.group_aas_quality_user"/>
+                                attrs="{'invisible':[('state','!=','prdcheck')]}" groups="aas_quality.group_aas_quality_user"/>
 
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,prdcheck,frmcheck,ipqcheck,done"/>
                     </header>
