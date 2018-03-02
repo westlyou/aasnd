@@ -102,10 +102,6 @@
                                     <span class="mui-pull-right"><t t-esc="mesline_name"/></span>
                                 </li>
                                 <li class="mui-table-view-cell">
-                                    <span class="mui-pull-left">库位名称</span>
-                                    <span class="mui-pull-right"><t t-esc="workstation_name"/></span>
-                                </li>
-                                <li class="mui-table-view-cell">
                                     <span class="mui-pull-left">物料编码</span>
                                     <span class="mui-pull-right"><t t-esc="product_code"/></span>
                                 </li>
@@ -123,15 +119,15 @@
                                         <div class="mui-table-cell mui-col-xs-6 mui-text-right"> 数量 </div>
                                     </div>
                                 </li>
-                                <t t-if="materialotlist">
-                                    <t t-foreach="materialotlist" t-as="mlot">
+                                <t t-if="feedinglist">
+                                    <t t-foreach="feedinglist" t-as="feed">
                                         <li class="mui-table-view-cell" >
                                             <div class="mui-table">
                                                 <div class="mui-table-cell mui-col-xs-6 mui-text-left">
-                                                    <t t-esc="mlot['lot_name']"/>
+                                                    <t t-esc="feed['material_lot']"/>
                                                 </div>
                                                 <div class="mui-table-cell mui-col-xs-6 mui-text-right">
-                                                    <t t-esc="mlot['lot_qty']"/>
+                                                    <t t-esc="feed['material_qty']"/>
                                                 </div>
                                             </div>
                                         </li>

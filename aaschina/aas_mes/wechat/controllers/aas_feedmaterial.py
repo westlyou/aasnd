@@ -40,10 +40,11 @@ class AASFeedmaterialWechatController(http.Controller):
         materialdict, todelfeedlist = {}, request.env['aas.mes.feedmaterial']
         for feedmaterial in feedinglist:
             mkey = 'material_'+str(feedmaterial.material_id.id)
-            fkey = 'F-'+str(mesline.id)+'-'+str(feedmaterial.material_id.id)+'-'+str(feedmaterial.material_lot.id)
-            if fkey not in materialdict:
+            # fkey = 'F-'+str(mesline.id)+'-'+str(feedmaterial.material_id.id)+'-'+str(feedmaterial.material_lot.id)
+            if mkey not in materialdict:
                 materialdict[mkey] = {
                     'tmaterial_id': mkey,
+                    'material_id': feedmaterial.material_id.id,
                     'material_code': feedmaterial.material_id.default_code, 'material_qty': feedmaterial.material_qty
                 }
             else:
@@ -78,7 +79,10 @@ class AASFeedmaterialWechatController(http.Controller):
             values.update({'success': False, 'message': tvalues.get('message', '')})
             return values
         product = materiallabel.product_id
-        values.update({'material_code': product.default_code, 'tmaterial_id': 'material_'+str(product.id)})
+        values.update({
+            'material_id': product.id,
+            'material_code': product.default_code, 'tmaterial_id': 'material_'+str(product.id)
+        })
         tempdomain = [('mesline_id', '=', mesline.id), ('material_id', '=', product.id)]
         tempfeedlist = request.env['aas.mes.feedmaterial'].search(tempdomain)
         if tempfeedlist and len(tempfeedlist) > 0:
@@ -144,11 +148,10 @@ class AASFeedmaterialWechatController(http.Controller):
         if feedinglist and len(feedinglist) > 0:
             tempfeeding = feedinglist[0]
             values.update({
-                'mesline_name': tempfeeding.mesline_id.name,'product_code': tempfeeding.material_id.default_code
+                'mesline_name': tempfeeding.mesline_id.name, 'product_code': tempfeeding.material_id.default_code
             })
             for feeding in feedinglist:
-                values['feedinglist'].append({
-                    'material_lot': feeding.material_lot.name, 'material_qty': feeding.material_qty
-                })
+                feedvals = {'material_lot': feeding.material_lot.name, 'material_qty': feeding.material_qty}
+                values['feedinglist'].append(feedvals)
                 values['product_qty'] += feeding.material_qty
         return request.render('aas_mes.wechat_mes_linefeeding_materialdetail', values)
