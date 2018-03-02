@@ -201,12 +201,14 @@ class AASMESWireCuttingController(http.Controller):
             values.update({'success': False, 'message': u'此物料的相同批次已经上料，请不要重复操作！'})
             return values
         else:
-            feedmaterial = request.env['aas.mes.feedmaterial'].create({
-                'mesline_id': mesline.id,
-                'material_id': label.product_id.id, 'material_lot': label.product_lot.id
+            request.env['aas.mes.feedmaterial'].create({
+                'mesline_id': mesline.id, 'material_id': label.product_id.id, 'material_lot': label.product_lot.id
             })
+        tempdomain = [('mesline_id', '=', mesline.id), ('material_id', '=', label.product_id.id)]
+        feedmateriallist = request.env['aas.mes.feedmaterial'].search(tempdomain)
         values.update({
-            'material_name': label.product_code+'['+label.product_lotname+']', 'material_qty': feedmaterial.material_qty
+            'material_name': label.product_code,
+            'material_qty': sum([feedmaterial.material_qty for feedmaterial in feedmateriallist])
         })
         return values
 
