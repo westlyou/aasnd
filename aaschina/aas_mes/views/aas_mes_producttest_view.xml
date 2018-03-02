@@ -40,6 +40,9 @@
                                         <field name="parameter_name" required="1"/>
                                         <field name="parameter_type" required="1"/>
                                         <field name="parameter_code"/>
+                                        <field name="firstone"/>
+                                        <field name="lastone"/>
+                                        <field name="random"/>
                                         <field name="parameter_note"/>
                                     </tree>
                                     <form>
@@ -51,6 +54,13 @@
                                             <group>
                                                 <field name="sequence" required="1"/>
                                                 <field name="parameter_code"/>
+                                            </group>
+                                        </group>
+                                        <group>
+                                            <group>
+                                                <field name="firstone"/>
+                                                <field name="lastone"/>
+                                                <field name="random"/>
                                             </group>
                                         </group>
                                         <notebook>
@@ -161,6 +171,9 @@
                                         <field name="parameter_name"/>
                                         <field name="parameter_type"/>
                                         <field name="parameter_code"/>
+                                        <field name="firstone"/>
+                                        <field name="lastone"/>
+                                        <field name="random"/>
                                         <field name="parameter_value"/>
                                         <field name="parameter_maxvalue" attrs="{'readonly':[('parameter_type','=','char')]}"/>
                                         <field name="parameter_minvalue" attrs="{'readonly':[('parameter_type','=','char')]}"/>
@@ -180,6 +193,13 @@
                                                 <field name="parameter_value"/>
                                                 <field name="parameter_maxvalue" attrs="{'readonly':[('parameter_type','=','char')]}"/>
                                                 <field name="parameter_minvalue" attrs="{'readonly':[('parameter_type','=','char')]}"/>
+                                            </group>
+                                        </group>
+                                        <group>
+                                            <group>
+                                                <field name="firstone"/>
+                                                <field name="lastone"/>
+                                                <field name="random"/>
                                             </group>
                                         </group>
                                         <notebook>

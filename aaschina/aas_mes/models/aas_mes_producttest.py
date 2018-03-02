@@ -87,6 +87,9 @@ class AASMESProductTestTemplateParameter(models.Model):
     parameter_name = fields.Char(string=u'名称', copy=False)
     parameter_code = fields.Char(string=u'采集字段', copy=False)
     parameter_type = fields.Selection(selection=DATATYPES, string=u'数据类型', default='char', copy=False)
+    firstone = fields.Boolean(string=u'首件', default=False, copy=False)
+    lastone = fields.Boolean(string=u'末件', default=False, copy=False)
+    random = fields.Boolean(string=u'抽检', default=False, copy=False)
     parameter_note = fields.Text(string=u'备注说明')
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
@@ -97,6 +100,8 @@ class AASMESProductTestTemplateParameter(models.Model):
 
     @api.multi
     def write(self, vals):
+        if 'sequence' in vals:
+            raise UserError(u'序号是检测清单参数同步依据，不可以随意修改！')
         templist = []
         for record in self:
             tempdict = {}
@@ -104,6 +109,12 @@ class AASMESProductTestTemplateParameter(models.Model):
                 tempdict['parameter_name'] = vals['parameter_name']
             if 'parameter_code' in vals:
                 tempdict['parameter_code'] = vals['parameter_code']
+            if 'firstone' in vals:
+                tempdict['firstone'] = vals['firstone']
+            if 'lastone' in vals:
+                tempdict['lastone'] = vals['lastone']
+            if 'random' in vals:
+                tempdict['random'] = vals['random']
             if tempdict and len(tempdict) > 0:
                 tempdict.update({'template_id': record.template_id.id, 'sequence': record.sequence})
                 templist.append(tempdict)
@@ -120,18 +131,15 @@ class AASMESProductTestTemplateParameter(models.Model):
                     paramvals['parameter_name'] = tempval.get('parameter_name', False)
                 if 'parameter_code' in tempval:
                     paramvals['parameter_code'] = tempval.get('parameter_code', False)
+                if 'firstone' in tempval:
+                    paramvals['firstone'] = tempval.get('firstone', False)
+                if 'lastone' in tempval:
+                    paramvals['lastone'] = tempval.get('lastone', False)
+                if 'random' in tempval:
+                    paramvals['random'] = tempval.get('random', False)
                 if paramvals and len(paramvals) > 0:
                     parameterlist.write(paramvals)
         return result
-
-
-    @api.multi
-    def action_update_code(self):
-        for record in self:
-            tempdomain = [('producttest_id.template_id', '=', record.template_id.id), ('parameter_name', '=', record.parameter_name)]
-            parameterlist = self.env['aas.mes.producttest.parameter'].search(tempdomain)
-            if parameterlist and len(parameterlist) > 0:
-                parameterlist.write({'parameter_code': record.parameter_code})
 
     @api.multi
     def unlink(self):
@@ -382,6 +390,9 @@ class AASMESProductTestParameter(models.Model):
     parameter_name = fields.Char(string=u'名称', copy=False)
     parameter_code = fields.Char(string=u'采集字段', copy=False)
     parameter_type = fields.Selection(selection=DATATYPES, string=u'数据类型', default='char', copy=False)
+    firstone = fields.Boolean(string=u'首件', default=False, copy=False)
+    lastone = fields.Boolean(string=u'末件', default=False, copy=False)
+    random = fields.Boolean(string=u'抽检', default=False, copy=False)
     parameter_value = fields.Char(string=u'规格值', copy=False)
     parameter_maxvalue = fields.Float(string=u'规格上限')
     parameter_minvalue = fields.Float(string=u'规格下限')
@@ -616,7 +627,8 @@ class AASMESProductTestTemplatePWorkcenterWizard(models.TransientModel):
             'parameter_lines': [(0, 0, {
                 'parameter_code': tparameter.parameter_code,
                 'sequence': tparameter.sequence, 'parameter_name': tparameter.parameter_name,
-                'parameter_type': tparameter.parameter_type, 'parameter_note': tparameter.parameter_note
+                'parameter_type': tparameter.parameter_type, 'parameter_note': tparameter.parameter_note,
+                'firstone': tparameter.firstone, 'lastone': tparameter.lastone, 'random': tparameter.random
             }) for tparameter in self.template_id.parameter_lines]
         })
         view_form = self.env.ref('aas_mes.view_form_aas_mes_producttest')
