@@ -330,6 +330,7 @@ class AASMESProductTest(models.Model):
             elif testtype == 'random':
                 values['message'] = u'您还未设置抽样检测参数！'
             return values
+        values['parameters'] = parameterlist
         return values
 
 
