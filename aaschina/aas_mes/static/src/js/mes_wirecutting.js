@@ -469,4 +469,23 @@ $(function(){
         });
     }
 
+    /*function action_producttest(testtype){
+
+    }
+
+    //首件检测
+    $('#action_test_firstone').click(function(){
+        action_producttest('firstone');
+    });
+
+    //末件检测
+    $('#action_test_lastone').click(function(){
+        action_producttest('lastone');
+    });
+
+    //抽样检测
+    $('#action_test_random').click(function(){
+        action_producttest('random');
+    });*/
+
 });

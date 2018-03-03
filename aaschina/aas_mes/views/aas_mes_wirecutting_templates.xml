@@ -40,6 +40,15 @@
                                         <li id="wire_refresh" class="notifications-menu">
                                             <a href="javascript:void(0);"> <i class="fa fa-refresh"></i> 刷新 </a>
                                         </li>
+                                        <!--<li id="action_test_firstone" class="notifications-menu">
+                                            <a href="javascript:void(0);"> <i class="fa fa-refresh"></i> 首件 </a>
+                                        </li>
+                                        <li id="action_test_lastone" class="notifications-menu">
+                                            <a href="javascript:void(0);"> <i class="fa fa-refresh"></i> 末件 </a>
+                                        </li>
+                                        <li id="action_test_random" class="notifications-menu">
+                                            <a href="javascript:void(0);"> <i class="fa fa-refresh"></i> 抽检 </a>
+                                        </li>-->
                                         <li id="wire_scrap" class="notifications-menu">
                                             <a href="javascript:void(0);"> <i class="fa fa-times-circle-o"></i> 报废 </a>
                                         </li>

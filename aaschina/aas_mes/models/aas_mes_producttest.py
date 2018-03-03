@@ -374,11 +374,20 @@ class AASMESProductTest(models.Model):
         paramdict = {}
         for ppline in producttest.parameter_lines:
             pkey = 'P'+str(ppline.id)
-            paramdict[pkey] = {
+            tempval = {
                 'id': ppline.id, 'name': ppline.parameter_name,
                 'type': ppline.parameter_type, 'value': ppline.parameter_value,
                 'maxvalue': ppline.parameter_maxvalue, 'minvalue': ppline.parameter_minvalue
             }
+            if testtype=='firstone' and ppline.firstone:
+                paramdict[pkey] = tempval
+            elif testtype=='lastone' and ppline.lastone:
+                paramdict[pkey] = tempval
+            elif testtype=='random' and ppline.random:
+                paramdict[pkey] = tempval
+        if not paramdict or len(paramdict) <= 0:
+            values.update({'success': False, 'message': u'请仔细检查，是否已经设置了检测参数！'})
+            return values
         orderlines = []
         for tparameter in parameters:
             pkey = 'P'+str(tparameter['id'])
