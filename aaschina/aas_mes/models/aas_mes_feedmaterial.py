@@ -120,8 +120,7 @@ class AASMESFeedmaterial(models.Model):
         bom, routing = workorder.aas_bom_id, workorder.routing_id
         if not bom or not routing:
             return values
-        routingdomain = [('routing_id', '=', routing.id)]
-        routingdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        routingdomain = [('routing_id', '=', routing.id), ('workstation_id', '=', workstation.id)]
         routinglines = self.env['aas.mes.routing.line'].search(routingdomain)
         if not routinglines or len(routinglines) <= 0:
             return values

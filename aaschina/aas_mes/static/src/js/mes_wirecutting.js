@@ -469,8 +469,12 @@ $(function(){
         });
     }
 
-    /*function action_producttest(testtype){
-
+    function action_producttest(testtype){
+        var wireorderid = $('#mes_wireorder').attr('wireorderid');
+        if(wireorderid=='0' || wireorderid=='' || wireorderid==null){
+            layer.msg('', {icon: 5});
+            return ;
+        }
     }
 
     //首件检测
@@ -486,6 +490,6 @@ $(function(){
     //抽样检测
     $('#action_test_random').click(function(){
         action_producttest('random');
-    });*/
+    });
 
 });

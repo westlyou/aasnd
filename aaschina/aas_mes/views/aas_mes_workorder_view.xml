@@ -35,8 +35,8 @@
                         <button name="action_producing" type="object" string="开始生产" class="oe_highlight"
                                 attrs="{'invisible':['|','|',('mesline_type','=','station'),('isproducing','=',True),('state','in',['draft','done'])]}"/>
                         <button name="action_waitconsume" type="object" string="原料消耗" class="oe_highlight" attrs="{'invisible':[('waitconsume','=',False)]}"/>
-                        <button name="action_set_finalproduct" type="object" string="最终产品" class="oe_highlight"
-                                attrs="{'invisible':[('finalproduct_id','!=',False)]}"/>
+                        <!--<button name="action_set_finalproduct" type="object" string="最终产品" class="oe_highlight"
+                                attrs="{'invisible':[('finalproduct_id','!=',False)]}"/>-->
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,producing,pause,done"/>
                     </header>
                     <sheet>

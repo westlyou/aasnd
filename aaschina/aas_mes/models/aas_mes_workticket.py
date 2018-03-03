@@ -532,7 +532,6 @@ class AASMESWorkticket(models.Model):
         todo_qty = workticket.input_qty - actual_qty
         if float_compare(todo_qty, 0.0, precision_rounding=0.000001) < 0.0:
             todo_qty = 0.0
-        finalproduct = workorder.finalproduct_id
         values.update({
             'workorder_id': workorder.id, 'workorder_name': workorder.name,
             'workcenter_id': workcenter.id,'workcenter_name': workcenter.name,
@@ -547,8 +546,8 @@ class AASMESWorkticket(models.Model):
             'time_start': fields.Datetime.to_china_string(workticket.time_start),
             'time_finish': fields.Datetime.to_china_string(workticket.time_finish),
             'output_manner': workorder.output_manner,
-            'finalproduct_id': 0 if not finalproduct else finalproduct.id,
-            'finalproduct_code': '' if not finalproduct else finalproduct.default_code
+            'finalproduct_id': workticket.product_id.id,
+            'finalproduct_code': workticket.product_id.default_code
         })
         return values
 
