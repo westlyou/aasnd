@@ -220,7 +220,7 @@ class AASMESFeedmaterial(models.Model):
                     'material_uom': pline.product_id.uom_id.id, 'material_qty': pline.stock_qty
                 }
         for mline in productdict.values():
-            temp_qty,  = mline['material_qty']
+            temp_qty = mline['material_qty']
             material_id, material_lot = mline['material_id'], mline['material_lot']
             feeddomain = [('mesline_id', '=', mesline.id)]
             feeddomain += [('material_id', '=', material_id), ('material_lot', '=', material_lot)]
