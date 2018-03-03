@@ -242,55 +242,55 @@
                         </section>
                         <section class="content">
                             <div class="row">
-                                <div class="col-md-3">
-                                    <a id="wire_output" href="javascript:void(0);" class="btn btn-primary btn-block margin-bottom">产出</a>
+                                <div class="col-md-4">
                                     <div class="box box-solid">
                                         <div class="box-header with-border">
                                             <h3 class="box-title">基础信息</h3>
                                         </div>
                                         <div class="box-body no-padding">
                                             <ul class="nav nav-pills nav-stacked">
-                                                <li> <a href="javascript:void(0);">产线 <span id="mes_mesline" class="pull-right" t-esc="mesline_name"/></a> </li>
-                                                <li> <a href="javascript:void(0);">工位 <span id="mes_workstation" class="pull-right" t-esc="workstation_name"/></a> </li>
-                                                <li> <a href="javascript:void(0);">设备 <span id="mes_equipment" class="pull-right" equipmentid="0"/></a> </li>
                                                 <li>
-                                                    <a href="javascript:void(0);">员工
-                                                        <span id="mes_employee" class="pull-right" t-att-employeeid="employee_id" t-esc="employee_name"/>
+                                                    <a href="javascript:void(0);">
+                                                        产线 <span id="mes_mesline" class="pull-right" t-att-meslineid="mesline_id" t-esc="mesline_name"/>
                                                     </a>
                                                 </li>
-                                                <li> <a href="javascript:void(0);">容器 <span id="mes_container" class="pull-right" containerid="0"/></a> </li>
-                                                <li> <a href="javascript:void(0);">工单 <span id="mes_wireorder" class="pull-right" wireorderid="0"></span></a> </li>
-                                                <li> <a href="javascript:void(0);">产品 <span id="mes_product" class="pull-right"></span></a> </li>
-                                                <li> <a href="javascript:void(0);">数量 <span id="mes_pqty" class="pull-right"></span></a> </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        工位 <span id="mes_workstation" class="pull-right" t-att-workstationid="workstation_id" t-esc="workstation_name"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        设备 <span id="mes_equipment" class="pull-right" t-att-equipmentid="equipment_id" t-esc="equipment_name"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        员工 <span id="mes_employee" class="pull-right" t-att-employeeid="employee_id" t-esc="employee_name"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        产品 <span id="mes_product" class="pull-right" t-att-productid="product_id" t-esc="product_code"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        线材 <span id="mes_wire" class="pull-right" t-att-wireid="wire_id" t-esc="wire_code"/>
+                                                    </a>
+                                                </li>
                                             </ul>
                                         </div>
                                     </div>
 
-                                    <div class="box box-solid">
-                                        <div class="box-header with-border">
-                                            <h3 class="box-title">上料清单</h3>
-                                        </div>
-                                        <div class="box-body no-padding">
-                                            <ul id="wirecut_materiallist" class="nav nav-pills nav-stacked">
-                                                <t t-foreach="materiallist" t-as="tmaterial">
-                                                    <li>
-                                                        <a href="javascript:void(0);">
-                                                            <t t-esc="tmaterial['material_name']"/>
-                                                            <span class="pull-right" t-esc="tmaterial['material_qty']"/>
-                                                        </a>
-                                                    </li>
-                                                </t>
-                                            </ul>
-                                        </div>
-                                    </div>
                                 </div>
-                                <div class="col-md-9">
+                                <div class="col-md-8">
                                     <div class="box box-primary">
                                         <div class="box-header with-border">
-                                            <h3 class="box-title">线材工单</h3>
+                                            <h3 class="box-title">检测参数</h3>
                                             <div class="box-tools pull-right">
                                                 <div style="font-size:22px; font-weight:bold;">
-                                                    <span id="mes_workorder" workorderid="0" style="color:#72AFD2;"></span>
+                                                    <span id="mes_producttest" t-att-producttestid="producttest_id" style="color:#72AFD2;"/>
                                                 </div>
                                             </div>
                                         </div>
@@ -299,17 +299,25 @@
                                                 <table class="table table-hover table-striped">
                                                     <thead>
                                                         <tr>
-                                                            <td></td>
-                                                            <td>工单</td>
-                                                            <td>产品</td>
-                                                            <td>单位</td>
-                                                            <td>数量</td>
-                                                            <td>产出</td>
-                                                            <td>报废</td>
-                                                            <td>状态</td>
+                                                            <td>参数名称</td>
+                                                            <td>参数类型</td>
+                                                            <td>参数值</td>
                                                         </tr>
                                                     </thead>
-                                                    <tbody id="workorderlist"></tbody>
+                                                    <tbody id="parameterlist">
+                                                        <t t-if="parameters">
+                                                            <t t-foreach="parameters" t-as="param">
+                                                                <tr>
+                                                                    <td> <t t-esc="param['name']"/> </td>
+                                                                    <td> <t t-esc="param['type']"/> </td>
+                                                                    <td t-att-pid="param['id']" t-att-pname="param['name']" t-att-type="param['type']"
+                                                                        t-att-val="param['value']" t-att-max="param['maxvalue']" t-att-min="param['minvalue']">
+                                                                        <input class="aas-parameter"/>
+                                                                    </td>
+                                                                </tr>
+                                                            </t>
+                                                        </t>
+                                                    </tbody>
                                                 </table>
                                             </div>
                                         </div>
@@ -331,8 +339,7 @@
                 <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
-                <script src="/aas_base/static/libs/vscanner.js"></script>
-                <script src="/aas_mes/static/src/js/mes_wirecutting.js"></script>
+                <script src="/aas_mes/static/src/js/mes_wirecutting_producttest.js"></script>
             </body>
         </html>
     </template>
