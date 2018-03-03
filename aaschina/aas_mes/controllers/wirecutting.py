@@ -344,3 +344,59 @@ class AASMESWireCuttingController(http.Controller):
             values.update(paramvals)
             return values
         return values
+
+
+    @http.route('/aasmes/wirecutting/producttest/<string:testtype>/<string:testid>', type='http', auth="user")
+    def aasmes_wirecutting_producttest(self, testtype, testid):
+        values = {
+            'success': True, 'message': '', 'producttest_id': '0', 'parameters': [],
+            'product_id': '0', 'product_code': '', 'wire_id': '0', 'wire_code': '',
+            'equipment_id': '0', 'equipment_code': '', 'employee_id': '0', 'employee_code': '',
+            'workstation_id': '0', 'workstation_name': '', 'mesline_id': '0', 'mesline_name': ''
+        }
+        loginuser = request.env.user
+        values['checker'] = loginuser.name
+        if testtype not in ['firstone', 'lastone', 'random']:
+            values.update({'success': False, 'message': u'检测分类值异常，请确认是否是从有效的途径打开此页面！'})
+            return request.render('aas_mes.aas_wirecutting_producttest', values)
+        userdomain = [('lineuser_id', '=', loginuser.id), ('mesrole', '=', 'wirecutter')]
+        lineuser = request.env['aas.mes.lineusers'].search(userdomain, limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return request.render('aas_mes.aas_wirecutting_producttest', values)
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定工位，无法继续其他操作！'})
+            return request.render('aas_mes.aas_wirecutting_producttest', values)
+        testids = testid.split('-')
+        workorderid, equipmentid, employeeid = int(testids[0]), int(testids[1]), int(testids[2])
+        workorder = request.env['aas.mes.workorder'].browse(workorderid)
+        if not workorder or not workorder.wireorder_id:
+            values.update({'success': False, 'message': u'请仔细检查确认，当前工单是否是有效的线材工单！'})
+            return request.render('aas_mes.aas_wirecutting_producttest', values)
+        equipment = request.env['aas.equipment.equipment'].browse(equipmentid)
+        if not equipment:
+            values.update({'success': False, 'message': u'请仔细检查确认，当前设备是否是一个有效的下线设备！'})
+            return request.render('aas_mes.aas_wirecutting_producttest', values)
+        employee = request.env['aas.hr.employee'].browse(employeeid)
+        if not employee:
+            values.update({'success': False, 'message': u'请仔细检查确认，当前员工信息无效！'})
+            return request.render('aas_mes.aas_wirecutting_producttest', values)
+        wireorder = workorder.wireorder_id
+        values.update({
+            'product_id': wireorder.product_id.id, 'product_code': wireorder.product_code,
+            'wire_id': workorder.product_id.id, 'wire_code': workorder.product_id.default_code,
+            'equipment_id': equipment.id, 'equipment_code': equipment.code,
+            'employee_id': employee.id, 'employee_code': employee.code,
+            'workstation_id': workstation.id, 'workstation_name': workstation.name,
+            'mesline_id': mesline.id, 'mesline_name': mesline.name
+        })
+        testdomain = [('product_id', '=', wireorder.product_id.id), ('workstation_id', '=', workstation.id)]
+        producttest = request.env['aas.mes.producttest'].search(testdomain, limit=1)
+        if not producttest:
+            values.update({'success': False, 'message': u'请仔细检查确认，当前还未设置检测信息！'})
+            return request.render('aas_mes.aas_wirecutting_producttest', values)
+        values['producttest_id'] = producttest.id
+        paramvals = request.env['aas.mes.producttest'].action_loading_parameters(producttest, testtype)
+        values.update(paramvals)
+        return request.render('aas_mes.aas_wirecutting_producttest', values)
