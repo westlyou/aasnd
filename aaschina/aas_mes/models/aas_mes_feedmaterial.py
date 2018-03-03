@@ -124,11 +124,11 @@ class AASMESFeedmaterial(models.Model):
         routinglines = self.env['aas.mes.routing.line'].search(routingdomain)
         if not routinglines or len(routinglines) <= 0:
             return values
-        bomdomain = [('bom_id', '=', bom.id), ('workcenter_id', 'in', routinglines.ids)]
-        bomworkcenters = self.env['aas.mes.bom.workcenter'].search(bomdomain)
-        if not bomworkcenters or len(bomworkcenters) <= 0:
+        consumedomain = [('workorder_id', '=', workorder.id), ('workcenter_id', 'in', routinglines.ids)]
+        consumelist = self.env['aas.mes.workorder.consume'].search(consumedomain)
+        if not consumelist or len(consumelist) <= 0:
             return values
-        materialids = [bworkcenter.product_id.id for bworkcenter in bomworkcenters]
+        materialids = [tconsume.material_id.id for tconsume in consumelist]
         feeddomain = [('mesline_id', '=', equipment.mesline_id.id), ('material_id', 'in', materialids)]
         feedmateriallist = self.env['aas.mes.feedmaterial'].search(feeddomain)
         if feedmateriallist and len(feedmateriallist) > 0:

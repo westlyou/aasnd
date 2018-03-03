@@ -88,7 +88,6 @@
                                         attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
                                 <field name="workcenter_finish" readonly="1"
                                         attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
-                                <field name="finalproduct_id" readonly="1"/>
                             </group>
                         </group>
                         <notebook>
