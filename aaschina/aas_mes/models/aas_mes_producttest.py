@@ -336,7 +336,7 @@ class AASMESProductTest(models.Model):
 
 
     @api.model
-    def action_producttest(self, equipmentid, producttestid, parameters, testtype='firstone', instrument=False, fixture=False):
+    def action_producttest(self, equipmentid, producttestid, parameters, testtype='firstone', workorderid=False, instrument=False, fixture=False):
         """添加首末件抽检操作
         :param equipmentid:
         :param producttestid:
@@ -379,11 +379,11 @@ class AASMESProductTest(models.Model):
                 'type': ppline.parameter_type, 'value': ppline.parameter_value,
                 'maxvalue': ppline.parameter_maxvalue, 'minvalue': ppline.parameter_minvalue
             }
-            if testtype=='firstone' and ppline.firstone:
+            if testtype == 'firstone' and ppline.firstone:
                 paramdict[pkey] = tempval
-            elif testtype=='lastone' and ppline.lastone:
+            elif testtype == 'lastone' and ppline.lastone:
                 paramdict[pkey] = tempval
-            elif testtype=='random' and ppline.random:
+            elif testtype == 'random' and ppline.random:
                 paramdict[pkey] = tempval
         if not paramdict or len(paramdict) <= 0:
             values.update({'success': False, 'message': u'请仔细检查，是否已经设置了检测参数！'})
@@ -418,7 +418,35 @@ class AASMESProductTest(models.Model):
             'employee_id': employee.id, 'state': 'confirm', 'order_lines': orderlines,
             'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id
         }
+        if workorderid:
+            testorder['workorder_id'] = workorderid
         self.env['aas.mes.producttest.order'].create(testorder)
+        return values
+
+
+    @api.model
+    def action_loading_parameters(self, producttest, testtype):
+        values = {'success': True, 'message': '', 'parameters': []}
+        if not producttest.parameter_lines or len(producttest.parameter_lines) <= 0:
+            values.update({'success': False, 'message': u'请仔细检查当前还未设置检测参数！'})
+            return values
+        parameterlist = []
+        for ppline in producttest.parameter_lines:
+            tempval = {
+                'id': ppline.id, 'name': ppline.parameter_name,
+                'type': ppline.parameter_type, 'value': ppline.parameter_value,
+                'maxvalue': ppline.parameter_maxvalue, 'minvalue': ppline.parameter_minvalue
+            }
+            if testtype == 'firstone' and ppline.firstone:
+                parameterlist.append(tempval)
+            elif testtype == 'lastone' and ppline.lastone:
+                parameterlist.append(tempval)
+            elif testtype == 'random' and ppline.random:
+                parameterlist.append(tempval)
+        if not parameterlist or len(parameterlist) <= 0:
+            values.update({'success': False, 'message': u'请仔细检查当前还未设置检测参数！'})
+            return values
+        values['parameters'] = parameterlist
         return values
 
 
@@ -480,6 +508,8 @@ class AASMESProductTestOrder(models.Model):
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
 
     qualified = fields.Boolean(string=u'合格', default=True, copy=False)
+    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', index=True)
+    wireorder_id = fields.Many2one(comodel_name='aas.mes.wireorder', string=u'线材工单', index=True)
     order_lines = fields.One2many(comodel_name='aas.mes.producttest.order.line', inverse_name='order_id', string=u'参数明细')
     determine_lines = fields.One2many(comodel_name='aas.mes.producttest.order.determine', inverse_name='order_id', string=u'检查明细')
 

@@ -317,3 +317,30 @@ class AASMESWireCuttingController(http.Controller):
                     }
             values['materiallist'] = materialdict.values()
         return values
+
+
+    @http.route('/aasmes/wirecutting/validate/producttest', type='json', auth="user")
+    def aasmes_wirecutting_validate_producttest(self, workorderid, testtype):
+        values = {'success': True, 'message': '', 'producttest_id': '0'}
+        loginuser = request.env.user
+        userdomain = [('lineuser_id', '=', loginuser.id), ('mesrole', '=', 'wirecutter')]
+        lineuser = request.env['aas.mes.lineusers'].search(userdomain, limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        workstation = lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定切线工位！'})
+            return values
+        workorder = request.env['aas.mes.workorder'].browse(workorderid)
+        tdomain = [('product_id', '=', workorder.wireorder_id.product_id.id), ('workstation_id', '=', workstation.id)]
+        producttest = request.env['aas.mes.producttest'].search(tdomain, limit=1)
+        if not producttest:
+            product_code = workorder.wireorder_id.product_code
+            values.update({'success': False, 'message': u'%s还未设置检测参数，请联系相关人员设置！'% product_code})
+            return values
+        paramvals = request.env['aas.mes.producttest'].action_loading_parameters(producttest, testtype)
+        if not paramvals.get('success', False):
+            values.update(paramvals)
+            return values
+        return values

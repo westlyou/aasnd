@@ -257,18 +257,20 @@ class AASEquipmentEquipment(models.Model):
 
     @api.model
     def action_producttest_onclient(self, equipmentid, producttestid, parameters,
-                                    testtype='firstone', instrument=False, fixture=False):
+                                    testtype='firstone', workorderid=False, instrument=False, fixture=False):
         """客户端添加首末件抽检操作
         :param equipmentid:
         :param producttestid:
         :param parameters:
         :param testtype:
+        :param workorderid:
         :param instrument:
         :param fixture:
         :return:
         """
         return self.env['aas.mes.producttest'].action_producttest(equipmentid, producttestid, parameters,
-                                                                  testtype=testtype, instrument=instrument, fixture=fixture)
+                                                                  testtype=testtype, workorderid=workorderid,
+                                                                  instrument=instrument, fixture=fixture)
 
 
 

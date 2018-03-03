@@ -472,12 +472,45 @@ $(function(){
     function action_producttest(testtype){
         var wireorderid = $('#mes_wireorder').attr('wireorderid');
         if(wireorderid=='0' || wireorderid=='' || wireorderid==null){
-            layer.msg('', {icon: 5});
+            layer.msg('您还未扫描工单，请先扫描即将生产的工单！', {icon: 5});
             return ;
         }
+        var workorderid = $('#mes_workorder').attr('workorderid');
+        if(workorderid=='0' || workorderid=='' || workorderid==null){
+            layer.msg('请先选择即将生产的线材！', {icon: 5});
+            return ;
+        }
+        var employeeid = $('#mes_employee').attr('employeeid');
+        if(employeeid=='0' || employeeid=='' || employeeid==null){
+            layer.msg('请先扫描员工上岗！', {icon: 5});
+            return ;
+        }
+        var equipmentid = $('#mes_equipment').attr('equipmentid');
+        if(equipmentid=='0' || equipmentid=='' || equipmentid==null){
+            layer.msg('请先扫描下线设备！', {icon: 5});
+            return ;
+        }
+        var vparams = {'workorderid': parseInt(workorderid), 'testtype': testtype};
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        $.ajax({
+            url: '/aasmes/wirecutting/validate/producttest',
+            headers:{'Content-Type':'application/json'},
+            type: 'post', timeout:10000, dataType: 'json',
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: vparams, id: access_id}),
+            success:function(data){
+                var dresult = data.result;
+                if(!dresult.success){
+                    layer.msg(dresult.message, {icon: 5});
+                    return ;
+                }
+            },
+            error:function(xhr,type,errorThrown){
+                console.log(type);
+            }
+        });
     }
 
-    //首件检测
+    /*//首件检测
     $('#action_test_firstone').click(function(){
         action_producttest('firstone');
     });
@@ -490,6 +523,6 @@ $(function(){
     //抽样检测
     $('#action_test_random').click(function(){
         action_producttest('random');
-    });
+    });*/
 
 });
