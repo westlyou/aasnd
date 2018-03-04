@@ -32,6 +32,15 @@
                         <nav class="navbar navbar-static-top">
                             <div class="navbar-custom-menu">
                                 <ul class="nav navbar-nav">
+                                    <li id="action_test_firstone" class="notifications-menu">
+                                        <a target="_blank" href="/aasmes/producttest/dotest/firstone"> <i class="fa fa-send"></i> 首件 </a>
+                                    </li>
+                                    <li id="action_test_lastone" class="notifications-menu">
+                                        <a target="_blank" href="/aasmes/producttest/dotest/lastone"> <i class="fa fa-send"></i> 末件 </a>
+                                    </li>
+                                    <li id="action_test_random" class="notifications-menu">
+                                        <a target="_blank" href="/aasmes/producttest/dotest/random"> <i class="fa fa-send"></i> 抽检 </a>
+                                    </li>
                                     <li id="action_reprint" class="messages-menu">
                                         <a href="javascript:void(0);">
                                             <i class="fa fa-qrcode"></i><span style="margin-left:5px;">条码重打</span>

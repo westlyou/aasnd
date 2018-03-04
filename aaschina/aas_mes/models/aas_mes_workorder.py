@@ -532,19 +532,17 @@ class AASMESWorkorder(models.Model):
 
 
     @api.model
-    def action_validate_consume(self, workorder_id, product_id, product_qty, workstation_id, workcenter_id=False):
+    def action_validate_consume(self, workorder_id, product_id, product_qty, workcenter_id=False):
         """
         物料消耗验证
         :param workorder_id:
         :param product_id:
         :param product_qty:
-        :param workstation_id:
         :param workcenter_id:
         :return:
         """
         values = {'success': True, 'message': ''}
         workorder = self.env['aas.mes.workorder'].browse(workorder_id)
-        workstation = self.env['aas.mes.workstation'].browse(workstation_id)
         mesline = workorder.mesline_id
         consumedomain = [('workorder_id', '=', workorder_id), ('product_id', '=', product_id)]
         if workcenter_id:
@@ -912,11 +910,6 @@ class AASMESWorkorder(models.Model):
                 'res_id': wizard.id,
                 'context': self.env.context
             }
-
-
-
-
-
 
 
 

@@ -503,6 +503,8 @@ $(function(){
                     layer.msg(dresult.message, {icon: 5});
                     return ;
                 }
+                var testid = workorderid+'-'+equipmentid+'-'+employeeid;
+                window.open('/aasmes/wirecutting/producttest/'+testtype+'/'+testid);
             },
             error:function(xhr,type,errorThrown){
                 console.log(type);
@@ -510,7 +512,7 @@ $(function(){
         });
     }
 
-    /*//首件检测
+    //首件检测
     $('#action_test_firstone').click(function(){
         action_producttest('firstone');
     });
@@ -523,6 +525,6 @@ $(function(){
     //抽样检测
     $('#action_test_random').click(function(){
         action_producttest('random');
-    });*/
+    });
 
 });

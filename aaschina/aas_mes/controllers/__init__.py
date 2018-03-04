@@ -15,3 +15,4 @@ import wirecutting
 import finalchecking
 import allocation
 import reworking
+import producttest

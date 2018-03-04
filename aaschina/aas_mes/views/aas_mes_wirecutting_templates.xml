@@ -40,15 +40,15 @@
                                         <li id="wire_refresh" class="notifications-menu">
                                             <a href="javascript:void(0);"> <i class="fa fa-refresh"></i> 刷新 </a>
                                         </li>
-                                        <!--<li id="action_test_firstone" class="notifications-menu">
-                                            <a href="javascript:void(0);"> <i class="fa fa-refresh"></i> 首件 </a>
+                                        <li id="action_test_firstone" class="notifications-menu">
+                                            <a href="javascript:void(0);"> <i class="fa fa-send"></i> 首件 </a>
                                         </li>
                                         <li id="action_test_lastone" class="notifications-menu">
-                                            <a href="javascript:void(0);"> <i class="fa fa-refresh"></i> 末件 </a>
+                                            <a href="javascript:void(0);"> <i class="fa fa-send"></i> 末件 </a>
                                         </li>
                                         <li id="action_test_random" class="notifications-menu">
-                                            <a href="javascript:void(0);"> <i class="fa fa-refresh"></i> 抽检 </a>
-                                        </li>-->
+                                            <a href="javascript:void(0);"> <i class="fa fa-send"></i> 抽检 </a>
+                                        </li>
                                         <li id="wire_scrap" class="notifications-menu">
                                             <a href="javascript:void(0);"> <i class="fa fa-times-circle-o"></i> 报废 </a>
                                         </li>
@@ -172,6 +172,377 @@
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
                 <script src="/aas_mes/static/src/js/mes_wirecutting.js"></script>
+            </body>
+        </html>
+    </template>
+
+
+    <template id="aas_wirecutting_producttest" name="AAS MES Wire Cutting Producttest">
+        &lt;!DOCTYPE html&gt;
+        <html>
+            <head>
+                <meta charset="utf-8" />
+                <title>安费诺先进传感器</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                <meta name="apple-mobile-web-app-capable" content="yes"/>
+                <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/skins/skin-blue.min.css"/>
+                <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+                <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+                <!--[if lt IE 9]>
+                   <script src="/aas_base/static/libs/html5shiv.min.js"></script>
+                   <script src="/aas_base/static/libs/respond.min.js"></script>
+                <![endif]-->
+                <style>
+                    .cutting{ color:#72AFD2; font-size:18px; }
+                </style>
+            </head>
+            <body class="hold-transition skin-blue layout-top-nav">
+                <div class="wrapper">
+                    <header class="main-header">
+                        <nav class="navbar navbar-static-top">
+                            <div class="container">
+                                <div class="navbar-header">
+                                    <a href="javascript:void(0);" class="navbar-brand">
+                                        <span><b>安费诺先进传感器</b></span>
+                                    </a>
+                                </div>
+
+                                <div class="navbar-custom-menu">
+                                    <ul class="nav navbar-nav">
+                                        <li id="action_commit" class="notifications-menu" t-att-testtype="testtype">
+                                            <a href="javascript:void(0);"> <i class="fa fa-send"></i> 提交检测 </a>
+                                        </li>
+                                        <li class="dropdown notifications-menu">
+                                            <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fa fa-user"></i> <span t-esc="checker"/>
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                <li class="header">欢迎您，<t t-esc="checker"/></li>
+                                                <li>
+                                                    <ul class="menu">
+                                                        <li> <a href="/web/session/logout">注销</a> </li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </nav>
+
+                    </header>
+
+                    <div class="content-wrapper">
+                        <section class="content-header">
+                            <h1>下线检测</h1>
+                            <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;color:red;">
+                                <span t-esc="message"/>
+                            </div>
+                        </section>
+                        <section class="content">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="box box-solid">
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">基础信息</h3>
+                                        </div>
+                                        <div class="box-body no-padding">
+                                            <ul class="nav nav-pills nav-stacked">
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        产线 <span id="mes_mesline" class="pull-right" t-att-meslineid="mesline_id" t-esc="mesline_name"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        工位 <span id="mes_workstation" class="pull-right" t-att-workstationid="workstation_id" t-esc="workstation_name"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        设备 <span id="mes_equipment" class="pull-right" t-att-equipmentid="equipment_id" t-esc="equipment_code"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        员工 <span id="mes_employee" class="pull-right" t-att-employeeid="employee_id" t-esc="employee_name"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        产品 <span id="mes_product" class="pull-right" t-att-productid="product_id" t-esc="product_code"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        线材 <span id="mes_wire" class="pull-right" t-att-wireid="wire_id" t-esc="wire_code"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        工单 <span id="mes_wireorder" class="pull-right" t-att-wireorderid="wireorder_id" t-att-workorderid="workorder_id" t-esc="wireorder_name"/>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="box box-primary">
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">检测参数</h3>
+                                            <div class="box-tools pull-right">
+                                                <div style="font-size:22px; font-weight:bold;">
+                                                    <span id="mes_producttest" t-att-producttestid="producttest_id" style="color:#72AFD2;"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="box-body no-padding">
+                                            <div class="table-responsive mailbox-messages">
+                                                <table class="table table-hover table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <td>参数名称</td>
+                                                            <td>参数类型</td>
+                                                            <td>参数值</td>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="parameterlist">
+                                                        <t t-if="parameters">
+                                                            <t t-foreach="parameters" t-as="param">
+                                                                <tr>
+                                                                    <td><span t-esc="param['name']"/></td>
+                                                                    <td><span t-esc="param['type']"/></td>
+                                                                    <td>
+                                                                        <div class="form-group">
+                                                                          <div class="col-sm-12"
+                                                                               t-att-pid="param['id']" t-att-pname="param['name']" t-att-ptype="param['type']">
+                                                                              <input type="text" class="form-control aas-parameter"/>
+                                                                          </div>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            </t>
+                                                        </t>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="main-footer">
+                        <div class="container" style="text-align:center;">
+                            <span>
+                                Copyright © 安费诺先进传感器 &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <a href="http://www.miitbeian.gov.cn" target="_blank">苏ICP备16061622</a>
+                            </span>
+                        </div>
+                    </footer>
+                </div>
+                <script src="/aas_base/static/libs/jquery/jquery-2.2.4.min.js"></script>
+                <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
+                <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
+                <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
+                <script src="/aas_base/static/libs/layer/layer.js"></script>
+                <script src="/aas_mes/static/src/js/mes_wirecutting_producttest.js"></script>
+            </body>
+        </html>
+    </template>
+
+
+    <template id="aas_wirecutting_producttest_orderdetail" name="AAS MES Wire Cutting Producttest Orderdetail">
+        &lt;!DOCTYPE html&gt;
+        <html>
+            <head>
+                <meta charset="utf-8" />
+                <title>安费诺先进传感器</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                <meta name="apple-mobile-web-app-capable" content="yes"/>
+                <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/skins/skin-blue.min.css"/>
+                <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+                <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+                <!--[if lt IE 9]>
+                   <script src="/aas_base/static/libs/html5shiv.min.js"></script>
+                   <script src="/aas_base/static/libs/respond.min.js"></script>
+                <![endif]-->
+                <style>
+                    .cutting{ color:#72AFD2; font-size:18px; }
+                </style>
+            </head>
+            <body class="hold-transition skin-blue layout-top-nav">
+                <div class="wrapper">
+                    <header class="main-header">
+                        <nav class="navbar navbar-static-top">
+                            <div class="container">
+                                <div class="navbar-header">
+                                    <a href="javascript:void(0);" class="navbar-brand">
+                                        <span><b>安费诺先进传感器</b></span>
+                                    </a>
+                                </div>
+
+                                <div class="navbar-custom-menu">
+                                    <ul class="nav navbar-nav">
+                                        <li class="dropdown notifications-menu">
+                                            <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fa fa-user"></i> <span t-esc="checker"/>
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                <li class="header">欢迎您，<t t-esc="checker"/></li>
+                                                <li>
+                                                    <ul class="menu">
+                                                        <li> <a href="/web/session/logout">注销</a> </li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </nav>
+
+                    </header>
+
+                    <div class="content-wrapper">
+                        <section class="content-header">
+                            <h1> <t t-esc="testtype_name"/> </h1>
+                            <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;color:red;">
+                                <span t-esc="message"/>
+                            </div>
+                        </section>
+                        <section class="content">
+                            <div class="row">
+                                <div class="col-md-3">
+
+                                    <div t-if="qualified" class="small-box bg-green" style="min-height:142px;">
+                                        <div class="inner">
+                                            <h3 style="font-size:120px;text-align:center;">OK</h3>
+                                        </div>
+                                    </div>
+                                    <div t-if="not qualified" class="small-box bg-red" style="min-height:142px;">
+                                        <div class="inner">
+                                            <h3 style="font-size:120px;text-align:center;">NG</h3>
+                                        </div>
+                                    </div>
+
+                                    <div class="box box-solid">
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">基础信息</h3>
+                                        </div>
+                                        <div class="box-body no-padding">
+                                            <ul class="nav nav-pills nav-stacked">
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        产线 <span class="pull-right" t-esc="mesline_name"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        工位 <span class="pull-right" t-esc="workstation_name"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        设备 <span class="pull-right" t-esc="equipment_code"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        员工 <span class="pull-right" t-esc="employee_name"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        产品 <span class="pull-right" t-esc="product_code"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        线材 <span class="pull-right" t-esc="wire_code"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        工单 <span class="pull-right" t-esc="workorder_name"/>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:void(0);">
+                                                        线材工单 <span class="pull-right" t-esc="wireorder_name"/>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="box box-primary">
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">检测参数</h3>
+                                            <div class="box-tools pull-right">
+                                                <div style="font-size:22px; font-weight:bold;">
+                                                    <span id="mes_producttest" style="color:#72AFD2;" t-esc="order_name"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="box-body no-padding">
+                                            <div class="table-responsive mailbox-messages">
+                                                <table class="table table-hover table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <td>名称</td>
+                                                            <td>检测值</td>
+                                                            <td>是否合格</td>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <t t-if="paramlines">
+                                                            <t t-foreach="paramlines" t-as="param">
+                                                                <tr t-if="param['qualified']">
+                                                                    <td><span t-esc="param['pname']"/></td>
+                                                                    <td><span t-esc="param['pvalue']"/></td>
+                                                                    <td> <span>合格</span> </td>
+                                                                </tr>
+                                                                <tr t-if="not param['qualified']" style="color:red;">
+                                                                    <td><span t-esc="param['pname']"/></td>
+                                                                    <td><span t-esc="param['pvalue']"/></td>
+                                                                    <td> <span>不合格</span> </td>
+                                                                </tr>
+                                                            </t>
+                                                        </t>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="main-footer">
+                        <div class="container" style="text-align:center;">
+                            <span>
+                                Copyright © 安费诺先进传感器 &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <a href="http://www.miitbeian.gov.cn" target="_blank">苏ICP备16061622</a>
+                            </span>
+                        </div>
+                    </footer>
+                </div>
+                <script src="/aas_base/static/libs/jquery/jquery-2.2.4.min.js"></script>
+                <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
+                <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
+                <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
+                <script src="/aas_base/static/libs/layer/layer.js"></script>
             </body>
         </html>
     </template>

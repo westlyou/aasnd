@@ -325,7 +325,7 @@
                                 <field name="fixture_code" attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
                                 <field name="schedule_id" options="{'no_create':true}" readonly="1"/>
                                 <field name="workorder_id" readonly="1"/>
-                                <field name="wireorder_id" invisible="1"/>
+                                <field name="wireorder_id" readonly="1"/>
                             </group>
                         </group>
                         <notebook>
