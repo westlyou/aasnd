@@ -177,7 +177,7 @@ class AASMESProductTest(models.Model):
 
 
     _sql_constraints = [
-        ('uniq_test', 'unique (workcenter_id, product_id)', u'请不要重复添加同一个测试信息！')
+        ('uniq_test', 'unique (workstation_id, product_id)', u'请不要重复添加同一个测试信息！')
     ]
 
     @api.one
@@ -433,8 +433,8 @@ class AASMESProductTest(models.Model):
         parameterlist = []
         for ppline in producttest.parameter_lines:
             tempval = {
-                'id': ppline.id, 'name': ppline.parameter_name,
-                'type': ppline.parameter_type, 'value': ppline.parameter_value,
+                'id': ppline.id, 'name': ppline.parameter_name, 'type': ppline.parameter_type,
+                'value': ppline.parameter_value,
                 'maxvalue': ppline.parameter_maxvalue, 'minvalue': ppline.parameter_minvalue
             }
             if testtype == 'firstone' and ppline.firstone:
@@ -507,7 +507,7 @@ class AASMESProductTestOrder(models.Model):
     schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'当前班次', ondelete='restrict')
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
 
-    qualified = fields.Boolean(string=u'合格', default=True, copy=False)
+    qualified = fields.Boolean(string=u'合格', default=False, copy=False)
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', index=True)
     wireorder_id = fields.Many2one(comodel_name='aas.mes.wireorder', string=u'线材工单', index=True)
     order_lines = fields.One2many(comodel_name='aas.mes.producttest.order.line', inverse_name='order_id', string=u'参数明细')
@@ -516,8 +516,8 @@ class AASMESProductTestOrder(models.Model):
     @api.model
     def create(self, vals):
         vals.update({
-            'name': self.env['ir.sequence'].next_by_code('aas.mes.producttest.order'),
-            'order_date': fields.Datetime.to_china_string(fields.Datetime.now())[0:10]
+            'order_date': fields.Datetime.to_china_today(),
+            'name': self.env['ir.sequence'].next_by_code('aas.mes.producttest.order')
         })
         return super(AASMESProductTestOrder, self).create(vals)
 

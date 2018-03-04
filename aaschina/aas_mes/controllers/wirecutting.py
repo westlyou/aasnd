@@ -351,8 +351,9 @@ class AASMESWireCuttingController(http.Controller):
         values = {
             'success': True, 'message': '', 'producttest_id': '0', 'parameters': [],
             'product_id': '0', 'product_code': '', 'wire_id': '0', 'wire_code': '',
-            'equipment_id': '0', 'equipment_code': '', 'employee_id': '0', 'employee_code': '',
-            'workstation_id': '0', 'workstation_name': '', 'mesline_id': '0', 'mesline_name': ''
+            'equipment_id': '0', 'equipment_code': '', 'employee_id': '0', 'employee_name': '',
+            'workstation_id': '0', 'workstation_name': '', 'mesline_id': '0', 'mesline_name': '',
+            'wireorder_id': '0', 'wireorder_name': '', 'workorder_id': '0', 'testtype': testtype
         }
         loginuser = request.env.user
         values['checker'] = loginuser.name
@@ -387,9 +388,10 @@ class AASMESWireCuttingController(http.Controller):
             'product_id': wireorder.product_id.id, 'product_code': wireorder.product_code,
             'wire_id': workorder.product_id.id, 'wire_code': workorder.product_id.default_code,
             'equipment_id': equipment.id, 'equipment_code': equipment.code,
-            'employee_id': employee.id, 'employee_code': employee.code,
+            'employee_id': employee.id, 'employee_name': employee.name,
             'workstation_id': workstation.id, 'workstation_name': workstation.name,
-            'mesline_id': mesline.id, 'mesline_name': mesline.name
+            'mesline_id': mesline.id, 'mesline_name': mesline.name,
+            'wireorder_id': wireorder.id, 'wireorder_name': wireorder.name, 'workorder_id': workorder.id
         })
         testdomain = [('product_id', '=', wireorder.product_id.id), ('workstation_id', '=', workstation.id)]
         producttest = request.env['aas.mes.producttest'].search(testdomain, limit=1)
@@ -400,3 +402,71 @@ class AASMESWireCuttingController(http.Controller):
         paramvals = request.env['aas.mes.producttest'].action_loading_parameters(producttest, testtype)
         values.update(paramvals)
         return request.render('aas_mes.aas_wirecutting_producttest', values)
+
+
+    @http.route('/aasmes/wirecutting/producttest/docommit', type='json', auth="user")
+    def aasmes_wirecutting_producttest_docommit(self, testtype, workorderid, producttestid, equipmentid, employeeid, parameters):
+        values = {'success': True, 'message': '', 'orderid': '0'}
+        loginuser = request.env.user
+        userdomain = [('lineuser_id', '=', loginuser.id), ('mesrole', '=', 'wirecutter')]
+        lineuser = request.env['aas.mes.lineusers'].search(userdomain, limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
+            return values
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定切线工位！'})
+            return values
+        workorder = request.env['aas.mes.workorder'].browse(workorderid)
+        if not workorder.wireorder_id:
+            values.update({'success': False, 'message': u'工单异常，当前工单可能不是一个有效的线材工单！'})
+            return values
+        if not parameters or len(parameters) <= 0:
+            values.update({'success': False, 'message': u'工单异常，检测参数异常，未获取到检测参数信息！'})
+            return values
+        productid = workorder.product_id.id
+        vdtvals = request.env['aas.mes.workorder'].action_validate_consume(workorderid, productid, 1.0)
+        if not vdtvals.get('success', False):
+            values.update(vdtvals)
+            return values
+        badmodedict = {'random': 'T0053', 'firstone': 'T0054', 'lastone': 'T0055'}
+        badmode = request.env['aas.mes.badmode'].search([('code', '=', badmodedict[testtype])], limit=1)
+        if badmode:
+            badlines = [{'badmode_id': badmode.id, 'badmode_qty': 1.0}]
+            optvals = request.env['aas.mes.workorder'].action_output(workorderid, productid, 1.0, badmode_lines=badlines)
+            if not optvals.get('success', False):
+                values.update(optvals)
+                return values
+            request.env['aas.mes.workorder'].action_consume(workorderid, productid)
+        wireorder = workorder.wireorder_id
+        testorder = request.env['aas.mes.producttest.order'].create({
+            'producttest_id': producttestid, 'product_id': wireorder.product_id.id,
+            'workstation_id': workstation.id, 'mesline_id': mesline.id, 'equipment_id': equipmentid,
+            'test_type': testtype, 'employee_id': employeeid, 'workorder_id': workorder.id,
+            'wireorder_id': wireorder.id, 'state': 'confirm',
+            'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id,
+            'order_lines': [(0, 0, tparam) for tparam in parameters]
+        })
+        testorder.write({'qualified': all([orderline.qualified for orderline in testorder.order_lines])})
+        values['orderid'] = testorder.id
+        return values
+
+
+    @http.route('/aasmes/wirecutting/producttest/orderdetail/<int:orderid>', type='http', auth="user")
+    def aasmes_wirecutting_orderdetail(self, orderid):
+        values = {'success': True, 'message': '', 'checker': request.env.user.name}
+        testdict = {'firstone': u'首件检测', 'lastone': u'末件检测', 'random': u'抽样检测'}
+        testorder = request.env['aas.mes.producttest.order'].browse(orderid)
+        values.update({
+            'order_name': testorder.name, 'testtype_name': testdict[testorder.test_type],
+            'mesline_name': testorder.mesline_id.name, 'workstation_name': testorder.workstation_id.name,
+            'equipment_code': testorder.equipment_id.code, 'employee_name': testorder.employee_id.name,
+            'qualified': testorder.qualified, 'workorder_name': testorder.workorder_id.name,
+            'wireorder_name': testorder.wireorder_id.name, 'product_code': testorder.wireorder_id.product_code,
+            'wire_code': testorder.workorder_id.product_id.default_code,
+            'paramlines': [{
+                'pname': temparam.parameter_id.parameter_name,
+                'pvalue': temparam.parameter_value, 'qualified': temparam.qualified
+            } for temparam in testorder.order_lines]
+        })
+        return request.render('aas_mes.aas_wirecutting_producttest_orderdetail', values)
