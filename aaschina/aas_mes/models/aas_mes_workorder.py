@@ -456,7 +456,7 @@ class AASMESWorkorder(models.Model):
             outputrecord = self.env['aas.mes.workorder.product'].create(outputvals)
         outputrecord.write({
             'waiting_qty': outputrecord.waiting_qty + output_qty,
-            'badmode_qty': outputrecord.badmode_qty + badmode_qty
+            'waiting_badmode_qty': outputrecord.waiting_badmode_qty + badmode_qty
         })
         result['outputrecord'] = outputrecord
         if tempbadlines and len(tempbadlines) > 0:
@@ -501,8 +501,8 @@ class AASMESWorkorder(models.Model):
         """
         tworkorder, productids, materialids = False, [], []
         values = {'success': True, 'message': '', 'tracelist':[]}
-        outputdomain = [('workorder_id', '=', workorder_id)]
-        outputdomain += [('product_id', '=', product_id), ('waiting_qty', '>', 0.0)]
+        outputdomain = ['&', '&', ('workorder_id', '=', workorder_id), ('product_id', '=', product_id)]
+        outputdomain += ['|', ('waiting_qty', '>', 0.0), ('waiting_badmode_qty', '>', 0.0)]
         outputlist = self.env['aas.mes.workorder.product'].search(outputdomain)
         if outputlist and len(outputlist) > 0:
             for output in outputlist:
@@ -929,6 +929,7 @@ class AASMESWorkorderProduct(models.Model):
     product_qty = fields.Float(string=u'已产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     waiting_qty = fields.Float(string=u'待消耗数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    waiting_badmode_qty = fields.Float(string=u'待消耗不良', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     total_qty = fields.Float(string=u'总数量', digits=dp.get_precision('Product Unit of Measure'), compute='_compute_total_qty', store=True)
     container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='restrict', help=u'产出成品到容器')
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict', help=u'产出成品到标签')
@@ -1003,9 +1004,12 @@ class AASMESWorkorderProduct(models.Model):
             tracerecord.write({'materiallist': ','.join(materiallist)})
             values['tracelist'].append(tracerecord.id)
         # 更新产出记录信息
-        product_id, output_qty = outputrecord.product_id.id, outputrecord.waiting_qty
+        product_id, output_qty = outputrecord.product_id.id, outputrecord.waiting_qty + outputrecord.waiting_badmode_qty
         product_qty = outputrecord.product_qty + outputrecord.waiting_qty
-        workordervals = {'product_lines': [(1, outputrecord.id, {'product_qty': product_qty, 'waiting_qty': 0.0})]}
+        temp_badmode_qty = outputrecord.badmode_qty + outputrecord.waiting_badmode_qty
+        workordervals = {'product_lines': [(1, outputrecord.id, {
+            'product_qty': product_qty, 'waiting_qty': 0.0, 'badmode_qty': temp_badmode_qty, 'waiting_badmode_qty': 0.0
+        })]}
         consumelist, materialids = [], []
         consumedomain = [('workorder_id', '=', workorder.id), ('product_id', '=', product_id)]
         workorder_consume_list = self.env['aas.mes.workorder.consume'].search(consumedomain)
@@ -1040,7 +1044,7 @@ class AASMESWorkorderProduct(models.Model):
         :return:
         """
         values = {'success': True, 'message': '', 'records': []}
-        waiting_qty, recordlist = outputrecord.waiting_qty, []
+        waiting_qty, recordlist = outputrecord.waiting_qty+outputrecord.waiting_badmode_qty, []
         if float_is_zero(waiting_qty, precision_rounding=0.000001):
             return values
         workorder, mesline, product = outputrecord.workorder_id, outputrecord.mesline_id, outputrecord.product_id

@@ -100,6 +100,7 @@
                                         <field name="product_qty"/>
                                         <field name="waiting_qty"/>
                                         <field name="badmode_qty"/>
+                                        <field name="waiting_badmode_qty"/>
                                         <field name="output_date"/>
                                         <field name="container_id"/>
                                         <field name="label_id"/>

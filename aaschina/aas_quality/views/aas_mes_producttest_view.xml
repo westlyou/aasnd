@@ -30,7 +30,7 @@
                         <button name="action_ipqcheck" type="object" string="IPQC检查" class="oe_highlight"
                                 attrs="{'invisible':[('state','!=','prdcheck')]}" groups="aas_quality.group_aas_quality_user"/>
 
-                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,prdcheck,frmcheck,ipqcheck,done"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,prdcheck,ipqcheck,done"/>
                     </header>
                     <sheet>
                         <group>
@@ -147,7 +147,7 @@
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="view_tree_aas_mes_producttest_order_quality"/>
             <field name="search_view_id" ref="view_search_aas_mes_producttest_order_quality"/>
-            <field name="domain">[('test_type','=','firstone'),('state','in',['frmcheck','ipqcheck','done'])]</field>
+            <field name="domain">[('test_type','=','firstone'),('state','in',['prdcheck','ipqcheck','done'])]</field>
         </record>
 
         <record id="act_view_tree_aas_mes_producttest_order_firstone_quality" model="ir.actions.act_window.view">
@@ -176,7 +176,7 @@
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="view_tree_aas_mes_producttest_order_quality"/>
             <field name="search_view_id" ref="view_search_aas_mes_producttest_order_quality"/>
-            <field name="domain">[('test_type','=','lastone'),('state','in',['frmcheck','ipqcheck','done'])]</field>
+            <field name="domain">[('test_type','=','lastone'),('state','in',['prdcheck','ipqcheck','done'])]</field>
         </record>
 
         <record id="act_view_tree_aas_mes_producttest_order_lastone_quality" model="ir.actions.act_window.view">
@@ -205,7 +205,7 @@
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="view_tree_aas_mes_producttest_order_quality"/>
             <field name="search_view_id" ref="view_search_aas_mes_producttest_order_quality"/>
-            <field name="domain">[('test_type','=','random'),('state','in',['frmcheck','ipqcheck','done'])]</field>
+            <field name="domain">[('test_type','=','random'),('state','in',['prdcheck','ipqcheck','done'])]</field>
         </record>
 
         <record id="act_view_tree_aas_mes_producttest_order_random_quality" model="ir.actions.act_window.view">
