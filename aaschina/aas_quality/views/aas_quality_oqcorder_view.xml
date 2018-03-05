@@ -2,24 +2,111 @@
 <odoo>
     <data>
 
-        <record id="view_form_model" model="ir.ui.view">
-            <field name="name">model.name.form</field>
-            <field name="model">model.name</field>
+        <record id="view_tree_aas_quality_oqcorder" model="ir.ui.view">
+            <field name="name">aas.quality.oqcorder.tree</field>
+            <field name="model">aas.quality.oqcorder</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="product_id"/>
+                    <field name="product_qty"/>
+                    <field name="commit_user"/>
+                    <field name="commit_time"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_quality_oqcorder" model="ir.ui.view">
+            <field name="name">aas.quality.oqcorder.form</field>
+            <field name="model">aas.quality.oqcorder</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form>
+                <form create="false" edit="false" delete="false">
                     <header>
-                        <button name="button_name" type="object" string="按钮名称" class="oe_highlight"/>
-                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done"/>
+                        <button name="action_oqccheck" type="object" string="检测" class="oe_highlight"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,checking,done"/>
                     </header>
                     <sheet>
                         <group>
-                            <group> <field name="name"/> </group>
-                            <group> <field name="order_date"/> </group>
+                            <group>
+                                <field name="name"/>
+                                <field name="commit_user"/>
+                                <field name="commit_time"/>
+                            </group>
+                            <group>
+                                <field name="product_id"/>
+                                <field name="product_uom"/>
+                                <field name="product_qty"/>
+                            </group>
                         </group>
+                        <notebook>
+                            <page string="报检清单">
+                                <field name="label_lines">
+                                    <tree>
+                                        <field name="label_id"/>
+                                        <field name="product_id"/>
+                                        <field name="product_lot"/>
+                                        <field name="product_qty"/>
+                                        <field name="checked"/>
+                                        <field name="checker_id"/>
+                                        <field name="checking_time"/>
+                                        <field name="qualified"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                               <field name="label_id"/>
+                                                <field name="product_id"/>
+                                                <field name="product_lot"/>
+                                                <field name="product_qty"/>
+                                            </group>
+                                            <group>
+                                                <field name="checked"/>
+                                                <field name="checker_id"/>
+                                                <field name="checking_time"/>
+                                                <field name="qualified"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>
+        </record>
+
+        <record id="view_search_aas_quality_oqcorder" model="ir.ui.view">
+            <field name="name">aas.quality.oqcorder.search</field>
+            <field name="model">aas.quality.oqcorder</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="commit_user" string="报检人" filter_domain="[('commit_user','ilike',self)]"/>
+                    <separator/>
+                    <filter string="待检测" domain="[('state','=','confirm')]" />
+                    <filter string="检测中" domain="[('state','=','checking')]" />
+                    <filter string="已完成" domain="[('state','=','done')]" />
+                    <group expand="0" string="分组">
+                        <filter string="状态" context="{'group_by':'state'}"/>
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="报检人" context="{'group_by':'commit_user'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_quality_oqcorder" model="ir.actions.act_window">
+            <field name="name"></field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.quality.oqcorder</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_quality_oqcorder"/>
+            <field name="search_view_id" ref="view_search_aas_quality_oqcorder"/>
         </record>
 
     </data>

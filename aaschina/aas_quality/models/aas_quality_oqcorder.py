@@ -31,18 +31,50 @@ class AASQualityOQCOrder(models.Model):
     commit_user = fields.Many2one(comodel_name='res.users', string=u'报检人员', ondelete='restrict')
     commit_time = fields.Datetime(string=u'报检时间', default=fields.Datetime.now, copy=False)
     remark = fields.Text(string=u'备注', copy=False)
+    state = fields.Selection(selection=OQCCHECKSTATES, string=u'状态', default='draft', copy=False)
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     label_lines = fields.One2many(comodel_name='aas.quality.oqcorder.label', inverse_name='order_id', string=u'标签清单')
+
+
+    @api.multi
+    def action_oqccheck(self):
+        """
+        向导，触发此方法弹出向导并进行业务处理
+        :return:
+        """
+        self.ensure_one()
+        wizard = self.env['wizard.name'].create({})
+        view_form = self.env.ref('moudle_name.view_name')
+        return {
+            'name': u"向导名称",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'wizard.name',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
+    @api.multi
+    def unlink(self):
+        for record in self:
+            if record.state in ['checking', 'done']:
+                raise UserError(u'OQC质检单%s已经在执行或已完成，不可以删除！'% record.name)
+        return super(AASQualityOQCOrder, self).unlink()
 
 
 
 class AASQualityOQCOrder(models.Model):
     _name = 'aas.quality.oqcorder.label'
     _description = 'AAS Quality OQCOrder Label'
+    _rec_name = 'label_id'
 
-    order_id = fields.Many2one(comodel_name='aas.quality.oqcorder', string='Order', ondelete='cascade')
-    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict')
+    order_id = fields.Many2one(comodel_name='aas.quality.oqcorder', string='Order', ondelete='cascade', index=True)
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict', index=True)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
@@ -64,3 +96,50 @@ class AASQualityOQCOrder(models.Model):
         })
         if qualified:
             self.label_id.write({'oqcpass': True})
+        checkedcount, totalcount = 0, 0
+        if self.order_id.label_lines and len(self.order_id.label_lines) > 0:
+            totalcount = len(self.order_id.label_lines)
+            for oqclabel in self.order_id.label_lines:
+                if oqclabel.checked:
+                    checkedcount += 1
+        if checkedcount == 0:
+            self.order_id.write({'state': 'confirm'})
+        elif checkedcount < totalcount:
+            self.order_id.write({'state': 'checking'})
+        elif checkedcount == totalcount:
+            self.order_id.write({'state': 'done'})
+
+
+
+
+
+
+
+
+
+
+##################################向导Wizard#################################
+
+
+class AASMESQualityOQCCheckingWizard(models.TransientModel):
+    _name = 'aas.mes.quality.oqcchecking.wizard'
+    _description = 'AAS MES Quality OQCChecking Wizard'
+
+    oqcorder_id = fields.Many2one(comodel_name='aas.quality.oqcorder', string=u'检验单', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
+    commit_user = fields.Many2one(comodel_name='res.users', string=u'报检人员', ondelete='restrict')
+    commit_time = fields.Datetime(string=u'报检时间', default=fields.Datetime.now, copy=False)
+
+    label_lines = fields.One2many('aas.mes.quality.oqcchecking.label.wizard', inverse_name='wizard_id', string=u'标签清单')
+
+
+class AASMESQualityOQCCheckingLabelWizard(models.TransientModel):
+    _name = 'aas.mes.quality.oqcchecking.label.wizard'
+    _description = 'AAS MES Quality OQCChecking Label Wizard'
+
+    wizard_id = fields.Many2one('aas.mes.quality.oqcchecking.wizard', string='Wizard', ondelete='cascade')
+    label_id = fields.Many2one(comodel_name='aas.quality.oqcorder.label', string=u'标签', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
+    product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    qualified = fields.Boolean(string=u'是否合格', default=False, copy=False)
