@@ -152,7 +152,7 @@ class AASMESSerialnumberController(http.Controller):
         if not tserialnumber:
             values.update({'success': False, 'message': u'请检查是否输入有效条码！'})
             return values
-        return request.env['aas.mes.serialnumber'].action_print_label(printerid, [tserialnumber.id])
+        return request.env['aas.mes.serialnumber'].action_print_label(int(printerid), [tserialnumber.id])
 
 
 
