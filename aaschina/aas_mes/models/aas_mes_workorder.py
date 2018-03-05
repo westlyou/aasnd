@@ -706,7 +706,7 @@ class AASMESWorkorder(models.Model):
         :return:
         """
         values = {'success': True, 'message': ''}
-        vdvalues = self.action_validate_consume(workorder_id, product_id, output_qty, workstation_id)
+        vdvalues = self.action_validate_consume(workorder_id, product_id, output_qty)
         if not vdvalues.get('success', False):
             values.update(vdvalues)
             return values

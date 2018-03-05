@@ -238,11 +238,11 @@ class AASMESWireOrder(models.Model):
         """
         values = {'success': True, 'message': ''}
         workorder, stock_qty = self.env['aas.mes.workorder'].browse(workorder_id), output_qty
-        cresult = workorder.action_validate_consume(workorder.id, workorder.product_id.id, output_qty, workstation_id)
+        cresult = workorder.action_validate_consume(workorder.id, workorder.product_id.id, output_qty)
         if not cresult['success']:
             values.update(cresult)
             return values
-        oresult = workorder.action_output(workorder.id, workorder.product_id.id, output_qty, container_id, workstation_id)
+        oresult = workorder.action_output(workorder.id, workorder.product_id.id, output_qty, container_id)
         if not oresult['success']:
             values.update(oresult)
             return values
@@ -329,7 +329,7 @@ class AASMESWireOrder(models.Model):
         """
         values = {'success': True, 'message': ''}
         workorder = self.env['aas.mes.workorder'].browse(workorder_id)
-        cresult = workorder.action_validate_consume(workorder.id, workorder.product_id.id, scrap_qty, workstation_id)
+        cresult = workorder.action_validate_consume(workorder.id, workorder.product_id.id, scrap_qty)
         if not cresult['success']:
             values.update(cresult)
             return values

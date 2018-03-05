@@ -171,7 +171,7 @@ class AASWorkorderWechatController(http.Controller):
             return values
         # 验证投料是否足够消耗
         cresult = request.env['aas.mes.workorder'].action_validate_consume(workorder.id, workticket.product_id.id,
-                                                                           commit_qty, workstation.id, workcenter.id)
+                                                                           commit_qty, workcenter_id=workcenter.id)
         if not cresult.get('success', False):
             values.update(cresult)
             return values
