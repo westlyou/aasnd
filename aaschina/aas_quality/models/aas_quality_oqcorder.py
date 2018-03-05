@@ -28,13 +28,18 @@ class AASQualityOQCOrder(models.Model):
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     product_qty = fields.Float(string=u'报检数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    commit_user = fields.Many2one(comodel_name='res.users', string=u'报检人员', ondelete='restrict')
+    commit_user = fields.Many2one('res.users', string=u'报检人员', ondelete='restrict', default=lambda self:self.env.user)
     commit_time = fields.Datetime(string=u'报检时间', default=fields.Datetime.now, copy=False)
     remark = fields.Text(string=u'备注', copy=False)
     state = fields.Selection(selection=OQCCHECKSTATES, string=u'状态', default='draft', copy=False)
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     label_lines = fields.One2many(comodel_name='aas.quality.oqcorder.label', inverse_name='order_id', string=u'标签清单')
+
+    @api.model
+    def create(self, vals):
+        vals['name'] = self.env['ir.sequence'].next_by_code('aas.quality.oqcorder')
+        return super(AASQualityOQCOrder, self).create(vals)
 
 
     @api.multi

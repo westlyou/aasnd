@@ -4,10 +4,7 @@
 @version: 1.0
 @author: luforn
 @license: LGPL V3
-@time: 2017-7-6 09:24
+@time: 2018-3-5 14:34
 """
 
-import models
-import wizard
-import wechat
-import controllers
+import oqcchecking
