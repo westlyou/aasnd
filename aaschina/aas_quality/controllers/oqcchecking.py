@@ -46,6 +46,7 @@ class AASQualityOQCCheckingController(http.Controller):
         values.update({
             'label_id': label.id, 'label_name': label.name, 'product_qty': label.product_qty,
             'product_id': label.product_id.id, 'product_code': label.product_id.default_code,
+            'product_lot': label.product_lot.name,
             'customer_pn': '' if not label.product_id.customer_product_code else label.product_id.customer_product_code
         })
         return values
@@ -53,6 +54,7 @@ class AASQualityOQCCheckingController(http.Controller):
 
     @http.route('/aasquality/oqcchecking/docommit', type='json', auth="user")
     def aasquality_oqcchecking_docommit(self, labelids):
+        print labelids
         values = {'success': True, 'message': '', 'oqcorderid': '0'}
         if not labelids or len(labelids) <= 0:
             values.update({'success': False, 'message': u'报检异常，请检查是否有提交了待检测的标签！'})
@@ -71,7 +73,7 @@ class AASQualityOQCCheckingController(http.Controller):
                 'label_id': tlabel.id, 'product_id': tlabel.product_id.id,
                 'product_lot': tlabel.product_lot.id, 'product_qty': tlabel.product_qty
             }))
-        oqcordervals['label_lines'] = labellines
+        oqcordervals.update({'product_qty': product_qty, 'label_lines': labellines, 'state': 'confirm'})
         try:
             oqcorder = request.env['aas.quality.oqcorder'].create(oqcordervals)
             values['oqcorderid'] = oqcorder.id

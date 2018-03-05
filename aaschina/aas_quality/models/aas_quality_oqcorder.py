@@ -49,14 +49,17 @@ class AASQualityOQCOrder(models.Model):
         :return:
         """
         self.ensure_one()
-        wizard = self.env['wizard.name'].create({})
-        view_form = self.env.ref('moudle_name.view_name')
+        wizard = self.env['aas.quality.oqcchecking.wizard'].create({
+            'oqcorder_id': self.id, 'product_id': self.product_id.id,
+            'commit_user': self.commit_user.id, 'commit_time': self.commit_time
+        })
+        view_form = self.env.ref('aas_quality.view_form_aas_quality_oqcchecking_wizard')
         return {
-            'name': u"向导名称",
+            'name': u"OQC检测",
             'type': 'ir.actions.act_window',
             'view_type': 'form',
             'view_mode': 'form',
-            'res_model': 'wizard.name',
+            'res_model': 'aas.quality.oqcchecking.wizard',
             'views': [(view_form.id, 'form')],
             'view_id': view_form.id,
             'target': 'new',
@@ -73,7 +76,7 @@ class AASQualityOQCOrder(models.Model):
 
 
 
-class AASQualityOQCOrder(models.Model):
+class AASQualityOQCOrderLabel(models.Model):
     _name = 'aas.quality.oqcorder.label'
     _description = 'AAS Quality OQCOrder Label'
     _rec_name = 'label_id'
@@ -126,25 +129,54 @@ class AASQualityOQCOrder(models.Model):
 ##################################向导Wizard#################################
 
 
-class AASMESQualityOQCCheckingWizard(models.TransientModel):
-    _name = 'aas.mes.quality.oqcchecking.wizard'
-    _description = 'AAS MES Quality OQCChecking Wizard'
+class AASQualityOQCCheckingWizard(models.TransientModel):
+    _name = 'aas.quality.oqcchecking.wizard'
+    _description = 'AAS Quality OQCChecking Wizard'
 
     oqcorder_id = fields.Many2one(comodel_name='aas.quality.oqcorder', string=u'检验单', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     commit_user = fields.Many2one(comodel_name='res.users', string=u'报检人员', ondelete='restrict')
     commit_time = fields.Datetime(string=u'报检时间', default=fields.Datetime.now, copy=False)
 
-    label_lines = fields.One2many('aas.mes.quality.oqcchecking.label.wizard', inverse_name='wizard_id', string=u'标签清单')
+    label_lines = fields.One2many('aas.quality.oqcchecking.label.wizard', inverse_name='checking_id', string=u'标签清单')
+
+    @api.one
+    def action_done(self):
+        if not self.label_lines or len(self.label_lines) <= 0:
+            raise UserError(u'请先添加检测标签信息！')
+        for lline in self.label_lines:
+            lline.label_id.action_checking(lline.qualified)
 
 
-class AASMESQualityOQCCheckingLabelWizard(models.TransientModel):
-    _name = 'aas.mes.quality.oqcchecking.label.wizard'
-    _description = 'AAS MES Quality OQCChecking Label Wizard'
 
-    wizard_id = fields.Many2one('aas.mes.quality.oqcchecking.wizard', string='Wizard', ondelete='cascade')
+
+
+class AASQualityOQCCheckingLabelWizard(models.TransientModel):
+    _name = 'aas.quality.oqcchecking.label.wizard'
+    _description = 'AAS Quality OQCChecking Label Wizard'
+
+    checking_id = fields.Many2one('aas.quality.oqcchecking.wizard', string='Wizard', ondelete='cascade')
     label_id = fields.Many2one(comodel_name='aas.quality.oqcorder.label', string=u'标签', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     qualified = fields.Boolean(string=u'是否合格', default=False, copy=False)
+
+    @api.onchange('label_id')
+    def action_change_label(self):
+        checklabel = self.label_id
+        if checklabel:
+            self.product_id = checklabel.product_id.id
+            self.product_lot, self.product_qty = checklabel.product_lot.id, checklabel.product_qty
+        else:
+            self.product_id, self.product_lot, self.product_qty = False, False, 0.0
+
+    @api.model
+    def create(self, vals):
+        record = super(AASQualityOQCCheckingLabelWizard, self).create(vals)
+        templabel = record.label_id
+        record.write({
+            'product_id': templabel.product_id.id,
+            'product_lot': templabel.product_lot.id, 'product_qty': templabel.product_qty
+        })
+        return record

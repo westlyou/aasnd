@@ -56,6 +56,9 @@ class AASWMSDeliveryController(http.Controller):
         if label.isproduction:
             values.update({'success': False, 'message': u'产线标签，不可以扫描！'})
             return values
+        if not label.oqcpass:
+            values.update({'success': False, 'message': u'标签还没通过OQC检测，不可以扫描！'})
+            return values
         if str(label.id) in labelids:
             values.update({'success': False, 'message': u'标签已存在请不要重复扫描！'})
             return values
