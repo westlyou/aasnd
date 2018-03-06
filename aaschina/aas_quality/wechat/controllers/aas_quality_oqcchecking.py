@@ -50,7 +50,7 @@ class AASWechatQualityOQCCheckingController(http.Controller):
             'commit_user': checklabel.order_id.commit_user.name,
             'commit_time': fields.Datetime.to_china_string(checklabel.order_id.commit_time)
         })
-        return request.render('aas_quality.wechat_quality_oqcchecking_label', values)
+        return request.render('aas_quality.wechat_quality_oqcchecking', values)
 
 
     @http.route('/aaswechat/quality/oqcchecking/dochecking', type='json', auth="user")
