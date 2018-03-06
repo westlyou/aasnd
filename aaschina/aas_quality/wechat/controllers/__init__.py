@@ -26,15 +26,15 @@ class AASWechatQualityController(http.Controller):
 
     def __init__(self):
         aas_application = request.env['aas.wechat.enapplication'].sudo().search([('app_code', '=', 'aas_quality')], limit=1)
-        self.TOKEN = aas_application.app_token
-        self.EncodingAESKey = aas_application.encoding_aes_key
-        self.CorpId = aas_application.corp_id
-        self.RoleSecret = aas_application.role_secret
+        self.token = aas_application.app_token
+        self.encoding_aeskey = aas_application.encoding_aes_key
+        self.corpid = aas_application.corp_id
+        self.role_secret = aas_application.role_secret
 
         global quality_crypto
-        quality_crypto = WeChatCrypto(self.TOKEN, self.EncodingAESKey, self.CorpId)
+        quality_crypto = WeChatCrypto(self.token, self.encoding_aeskey, self.corpid)
         global quality_client
-        quality_client = WeChatClient(self.CorpId, self.RoleSecret)
+        quality_client = WeChatClient(self.corpid, self.role_secret)
 
 
     @http.route('/aaswechat/quality', type='http', auth="user", methods=['GET', 'POST'])
@@ -46,15 +46,14 @@ class AASWechatQualityController(http.Controller):
 
     @http.route('/aaswechat/quality/scaninit', type='json', auth="user")
     def aas_wechat_quality_scaninit(self, access_url=None):
-        cticket = quality_client.jsapi.get_jsapi_ticket()
-        curl = access_url
+        aasjsapi = quality_client.jsapi
+        cticket = aasjsapi.get_jsapi_ticket()
         cnoncestr = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(15))
         ctimestamp = int(time.time())
-        csignature = quality_client.jsapi.get_jsapi_signature(noncestr=cnoncestr, ticket=cticket, timestamp=ctimestamp, url=curl)
-        return {
-            'debug': False, 'appId': self.CorpId, 'timestamp': ctimestamp,
-            'nonceStr': cnoncestr, 'signature': csignature, 'jsApiList': ['scanQRCode']
-        }
+        csignature = aasjsapi.get_jsapi_signature(noncestr=cnoncestr, ticket=cticket, timestamp=ctimestamp, url=access_url)
+        wxvalues = {'debug': False, 'appId': self.corpid, 'timestamp': ctimestamp, 'nonceStr': cnoncestr}
+        wxvalues.update({'signature': csignature, 'jsApiList': ['scanQRCode']})
+        return wxvalues
 
 
     @http.route('/aaswechat/quality/printlabels', type='json', auth="user")
