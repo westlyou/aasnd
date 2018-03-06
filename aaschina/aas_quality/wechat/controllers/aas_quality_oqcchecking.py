@@ -42,4 +42,20 @@ class AASWechatQualityOQCCheckingController(http.Controller):
     def aas_wechat_quality_oqcchecking_label(self, oqclabelid):
         values = {'success': True, 'message': ''}
         checklabel = request.env['aas.quality.oqcorder.label'].browse(oqclabelid)
+        templabel = checklabel.label_id
+        values.update({
+            'order_name': checklabel.order_id.name, 'oqclabel_id': oqclabelid,
+            'label_name': templabel.name, 'product_code': templabel.product_code,
+            'product_lot': templabel.product_lot.name, 'product_qty': templabel.product_qty,
+            'commit_user': checklabel.order_id.commit_user.name,
+            'commit_time': fields.Datetime.to_china_string(checklabel.order_id.commit_time)
+        })
         return request.render('aas_quality.wechat_quality_oqcchecking_label', values)
+
+
+    @http.route('/aaswechat/quality/oqcchecking/dochecking', type='json', auth="user")
+    def aas_wechat_quality_oqcchecking_docheckingl(self, oqclabelid, qualified=False):
+        values = {'success': True, 'message': ''}
+        checklabel = request.env['aas.quality.oqcorder.label'].browse(oqclabelid)
+        checklabel.action_checking(qualified)
+        return values
