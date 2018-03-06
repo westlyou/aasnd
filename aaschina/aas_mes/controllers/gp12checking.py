@@ -345,17 +345,27 @@ class AASMESGP12CheckingController(http.Controller):
         if not label:
             values.update({'success': False, 'message': u'未搜索到相应标签，请检查是否扫描了无效标签！'})
             return values
-        locationids = [mlocation.location_id.id for mlocation in mesline.location_material_list]
-        locationids.append(mesline.location_production_id.id)
-        locationlist = request.env['stock.location'].search([('id', 'child_of', locationids)])
-        if label.location_id.id not in locationlist.ids:
-            values.update({'success': False, 'message': u'当前标签不在GP12的线边库中，不可以扫描其他库位的标签！'})
+        if not label.isproduction:
+            values.update({'success': False, 'message': u'GP12不可以扫描仓库标签！'})
             return values
-        labelvals = {
+        # 产线标签且不在GP12的标签自动调拨到GP12
+        locationids = [mesline.location_production_id.id]
+        if mesline.location_material_list and len(mesline.location_material_list) > 0:
+            locationids += [mlocation.location_id.id for mlocation in mesline.location_material_list]
+        finalocationids = request.env['stock.location'].search([('id', 'child_of', locationids)]).ids
+        if label.location_id.id not in finalocationids:
+            request.env['stock.move'].create({
+                'name': label.name,
+                'product_id': label.product_id.id, 'product_uom': label.product_uom.id,
+                'create_date': fields.Datetime.now(), 'restrict_lot_id': label.product_lot.id,
+                'product_uom_qty': label.product_qty, 'company_id': request.env.user.company_id.id,
+                'location_id': label.location_id.id, 'location_dest_id': mesline.location_production_id.id
+            }).action_done()
+            label.write({'location_id': mesline.location_production_id.id})
+        values['label'] = {
             'id': label.id, 'name': label.name, 'product_lot': label.product_lot.name, 'product_qty': label.product_qty,
             'customerpn': label.product_id.customer_product_code, 'internalpn': label.product_id.default_code
         }
-        values['label'] = labelvals
         return values
 
 

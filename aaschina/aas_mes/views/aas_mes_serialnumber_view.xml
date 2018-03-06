@@ -66,6 +66,37 @@
                             </group>
                         </group>
                         <notebook>
+                            <page string="操作记录">
+                                <field name="operation_lines" readonly="1">
+                                    <tree>
+                                        <field name="operate_type"/>
+                                        <field name="equipment_id"/>
+                                        <field name="employee_id"/>
+                                        <field name="scanning_employee"/>
+                                        <field name="checking_employee"/>
+                                        <field name="operate_time"/>
+                                        <field name="operation_pass"/>
+                                        <field name="operate_result"/>
+                                        <field name="operator_id"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="operate_type"/>
+                                                <field name="employee_id"/>
+                                                <field name="operate_time"/>
+                                                <field name="scanning_employee"/>
+                                            </group>
+                                            <group>
+                                                <field name="equipment_id"/>
+                                                <field name="operation_pass"/>
+                                                <field name="operate_result"/>
+                                                <field name="checking_employee"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
                             <page string="返工清单">
                                 <field name="rework_lines" readonly="1">
                                     <tree>
@@ -101,37 +132,6 @@
                                                 <field name="commit_time"/>
                                                 <field name="repair_time"/>
                                                 <field name="ipqccheck_time"/>
-                                            </group>
-                                        </group>
-                                    </form>
-                                </field>
-                            </page>
-                            <page string="操作记录">
-                                <field name="operation_lines" readonly="1">
-                                    <tree>
-                                        <field name="operate_type"/>
-                                        <field name="equipment_id"/>
-                                        <field name="employee_id"/>
-                                        <field name="scanning_employee"/>
-                                        <field name="checking_employee"/>
-                                        <field name="operate_time"/>
-                                        <field name="operation_pass"/>
-                                        <field name="operate_result"/>
-                                        <field name="operator_id"/>
-                                    </tree>
-                                    <form>
-                                        <group>
-                                            <group>
-                                                <field name="operate_type"/>
-                                                <field name="employee_id"/>
-                                                <field name="operate_time"/>
-                                                <field name="scanning_employee"/>
-                                            </group>
-                                            <group>
-                                                <field name="equipment_id"/>
-                                                <field name="operation_pass"/>
-                                                <field name="operate_result"/>
-                                                <field name="checking_employee"/>
                                             </group>
                                         </group>
                                     </form>
