@@ -196,7 +196,7 @@ class AASMESWorkticket(models.Model):
         _logger.info(u'工票%s报工结束;当前时间：%s', self.name, fields.Datetime.now())
 
 
-    @api.one
+    @api.multi
     def action_workticket_consume(self, trace, commit_qty):
         """
         计算物料消耗
@@ -204,6 +204,8 @@ class AASMESWorkticket(models.Model):
         :param commit_qty:
         :return:
         """
+        self.ensure_one()
+        values = {'success': True, 'message': '', 'moveids': []}
         _logger.info(u'工票%s开始物料消耗;当前时间：%s;待消耗数量%s', self.name, fields.Datetime.now(), commit_qty)
         workorder, workcenter = self.workorder_id, self.workcenter_id
         product, workstation, mesline = self.product_id, workcenter.workstation_id, self.mesline_id
@@ -219,7 +221,7 @@ class AASMESWorkticket(models.Model):
         if not consumelist or len(consumelist) <= 0:
             return
         materialids, materiallist = [], []
-        movevallist, consumelines, movelist = [], [], self.env['stock.move']
+        movevallist, consumelines, movelist, moveids = [], [], self.env['stock.move'], []
         destlocationid, companyid = self.env.ref('stock.location_production').id, self.env.user.company_id.id
         for tempconsume in consumelist:
             want_qty, material = tempconsume.consume_unit * commit_qty, tempconsume.material_id
@@ -271,7 +273,9 @@ class AASMESWorkticket(models.Model):
         _logger.info(u'工票%s消耗明细计算结束;当前时间：%s', self.name, fields.Datetime.now())
         if movevallist and len(movevallist) > 0:
             for moveval in movevallist:
-                movelist |= self.env['stock.move'].create(moveval)
+                tmove = self.env['stock.move'].create(moveval)
+                movelist |= tmove
+                moveids.append(tmove.id)
         if movelist and len(movelist) > 0:
             movelist.action_done()
             _logger.info(u'工票%s库存已消耗;当前时间：%s', self.name, fields.Datetime.now())
@@ -285,6 +289,8 @@ class AASMESWorkticket(models.Model):
         if feedmateriallist and len(feedmateriallist) > 0:
             feedmateriallist.action_freshandclear()
         _logger.info(u'工票%s结束物料消耗;当前时间：%s', self.name, fields.Datetime.now())
+        values['moveids'] = moveids
+        return values
 
 
     @api.one

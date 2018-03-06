@@ -912,6 +912,41 @@ class AASMESWorkorder(models.Model):
             }
 
 
+    @api.multi
+    def action_show_equipment_data(self):
+        self.ensure_one()
+        datadomain = [('workorder_id', '=', self.id)]
+        view_form = self.env.ref('aas_equipment.view_form_aas_equipment_data')
+        view_tree = self.env.ref('aas_equipment.view_tree_aas_equipment_data')
+        return {
+            'name': u"设备数据",
+            'type': 'ir.actions.act_window',
+            'view_mode': 'tree,form',
+            'res_model': 'aas.equipment.data',
+            'views': [(view_tree.id, 'tree'), (view_form.id, 'form')],
+            'target': 'self',
+            'context': self.env.context,
+            'domain': datadomain
+        }
+
+    @api.multi
+    def action_show_producttest_data(self):
+        self.ensure_one()
+        datadomain = [('workorder_id', '=', self.id)]
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_producttest_order')
+        view_tree = self.env.ref('aas_mes.view_tree_aas_mes_producttest_order_all')
+        return {
+            'name': u"检测数据",
+            'type': 'ir.actions.act_window',
+            'view_mode': 'tree,form',
+            'res_model': 'aas.mes.producttest.order',
+            'views': [(view_tree.id, 'tree'), (view_form.id, 'form')],
+            'target': 'self',
+            'context': self.env.context,
+            'domain': datadomain
+        }
+
+
 
 
 # 工单产出明细
@@ -947,7 +982,7 @@ class AASMESWorkorderProduct(models.Model):
         """产出物料消耗
         :return:
         """
-        values = {'success': True, 'message': '', 'tracelist': []}
+        values = {'success': True, 'message': '', 'tracelist': [], 'moveids': []}
         buildresult = self.action_build_consumerecords(outputrecord)
         if not buildresult['success']:
             values.update(buildresult)
@@ -979,7 +1014,7 @@ class AASMESWorkorderProduct(models.Model):
                 tracevals['workcenter_id'] = workcenter_id
             # 创建追溯信息
             tracerecord = self.env['aas.mes.tracing'].create(tracevals)
-            materiallist, movevallist, movelist = [], [], self.env['stock.move']
+            materiallist, movevallist, movelist, moveids = [], [], self.env['stock.move'], []
             for tempmaterial in tempconsume['materiallines']:
                 material_id = tempmaterial['material_id']
                 material_uom, material_code = tempmaterial['material_uom'], tempmaterial['material_code']
@@ -993,6 +1028,7 @@ class AASMESWorkorderProduct(models.Model):
                         'location_id': tempmove['location_id'], 'location_dest_id': destlocationid,
                         'restrict_lot_id': tempmove['material_lot'], 'product_uom_qty': tempmove['product_qty']
                     })
+                    moveids.append(moverecord.id)
                     # 如果来源库位是一个容器则需要更新容器库存信息
                     tcontainer = moverecord.location_id.container_id
                     if tcontainer:
@@ -1003,6 +1039,7 @@ class AASMESWorkorderProduct(models.Model):
             movelist.action_done()
             tracerecord.write({'materiallist': ','.join(materiallist)})
             values['tracelist'].append(tracerecord.id)
+        values['moveids'] = moveids
         # 更新产出记录信息
         product_id, output_qty = outputrecord.product_id.id, outputrecord.waiting_qty + outputrecord.waiting_badmode_qty
         product_qty = outputrecord.product_qty + outputrecord.waiting_qty

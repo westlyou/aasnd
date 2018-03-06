@@ -41,10 +41,19 @@
                     </header>
                     <sheet>
                         <div class="oe_right oe_button_box" style="width: 300px;" name="buttons">
-                            <button type="object" name="action_show_outputlabels" class="oe_stat_button" icon="fa-list"
+                            <div>
+                                <button type="object" name="action_show_outputlabels" class="oe_stat_button" icon="fa-list"
                                     string="标签清单"/>
-                            <button type="object" name="action_close" class="oe_stat_button" icon="fa-close"
-                                    string="关闭工单" attrs="{'invisible':[('state','not in',['confirm','producing','pause'])]}"/>
+                                <button type="object" name="action_close" class="oe_stat_button" icon="fa-close"
+                                        string="关闭工单" attrs="{'invisible':[('state','not in',['confirm','producing','pause'])]}"/>
+                            </div>
+                            <div>
+                                <button type="object" name="action_show_equipment_data" class="oe_stat_button" icon="fa-list"
+                                        string="设备数据"/>
+                                <button type="object" name="action_show_producttest_data" class="oe_stat_button" icon="fa-list"
+                                        string="检测数据"/>
+                            </div>
+
                         </div>
                         <group>
                             <group> <field name="name" attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/> </group>
