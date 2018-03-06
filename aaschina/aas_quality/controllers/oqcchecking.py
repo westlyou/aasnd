@@ -43,11 +43,11 @@ class AASQualityOQCCheckingController(http.Controller):
         if label.state != 'normal':
             values.update({'success': False, 'message': u'标签状态异常，只有正常状态的标签才可以报检！'})
             return values
+        customerpn = '' if not label.product_id.customer_product_code else label.product_id.customer_product_code
         values.update({
             'label_id': label.id, 'label_name': label.name, 'product_qty': label.product_qty,
             'product_id': label.product_id.id, 'product_code': label.product_id.default_code,
-            'product_lot': label.product_lot.name,
-            'customer_pn': '' if not label.product_id.customer_product_code else label.product_id.customer_product_code
+            'product_lot': label.product_lot.name, 'customer_pn': customerpn
         })
         return values
 

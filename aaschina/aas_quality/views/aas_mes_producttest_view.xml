@@ -127,6 +127,8 @@
                     <field name="employee_id" string="员工" filter_domain="[('employee_id','ilike',self)]"/>
                     <field name="order_date" string="日期" filter_domain="[('equipment_id','ilike',self)]"/>
                     <separator/>
+                    <filter string="NG" domain="[('qualified','=',False)]" />
+                    <separator/>
                     <group expand="0" string="分组">
                         <filter string="工序" context="{'group_by':'workcenter_id'}"/>
                         <filter string="产品" context="{'group_by':'product_id'}"/>
