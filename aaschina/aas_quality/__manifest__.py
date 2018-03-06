@@ -24,9 +24,12 @@
         'views/aas_product_label_view.xml',
         'views/aas_quality_frozen_view.xml',
         'views/aas_quality_concession_view.xml',
+        'views/aas_quality_oqcorder_view.xml',
+        'views/aas_quality_oqcorder_templates.xml',
 
         'wechat/views/aas_wechat_quality_template.xml',
         'wechat/views/aas_wechat_quality_order_template.xml',
+        'wechat/views/aas_wechat_quality_oqcchecking_template.xml',
 
         'views/aas_mes_producttest_view.xml',
         'views/aas_mes_rework_view.xml',

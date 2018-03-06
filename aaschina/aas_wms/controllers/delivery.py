@@ -56,15 +56,25 @@ class AASWMSDeliveryController(http.Controller):
         if label.isproduction:
             values.update({'success': False, 'message': u'产线标签，不可以扫描！'})
             return values
+        if not label.oqcpass:
+            values.update({'success': False, 'message': u'标签还没通过OQC检测，不可以扫描！'})
+            return values
         if str(label.id) in labelids:
             values.update({'success': False, 'message': u'标签已存在请不要重复扫描！'})
             return values
         if label.state != 'normal':
             values.update({'success': False, 'message': u'标签状态异常，请仔细检查！'})
             return values
+        if label.locked:
+            values.update({'success': False, 'message': u'标签锁定，标签已被%s锁定，请联系相关人员！'% label.locked_order})
+            return values
+        if not label.product_id.customer_product_code:
+            product_code = label.product_code
+        else:
+            product_code = label.product_id.customer_product_code
         values.update({
-            'label_id': label.id, 'label_name': label.name, 'product_qty': label.product_qty, 'product_id': label.product_id.id,
-            'product_code': label.product_code if not label.product_id.customer_product_code else label.product_id.customer_product_code
+            'label_id': label.id, 'label_name': label.name,
+            'product_qty': label.product_qty, 'product_id': label.product_id.id, 'product_code': product_code
         })
         return values
 

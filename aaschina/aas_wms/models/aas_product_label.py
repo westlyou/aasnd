@@ -56,6 +56,7 @@ class AASProductLabel(models.Model):
     product_name = fields.Char(string=u'产品名称')
     product_code = fields.Char(string=u'产品编码')
     product_lotname = fields.Char(string=u'批次名称')
+    oqcpass = fields.Boolean(string=u'OQC检测通过', default=False, copy=False)
     isproduction = fields.Boolean(string=u'产线标签', copy=False, related='location_id.edgelocation', store=True)
     journal_lines = fields.One2many(comodel_name='aas.product.label.journal', inverse_name='label_id', string=u'查存卡', copy=False)
 

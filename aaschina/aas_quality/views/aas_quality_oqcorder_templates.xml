@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="aas_oqcchecking" name="AAS WMS Delivery">
+        &lt;!DOCTYPE html&gt;
+        <html>
+            <head>
+                <meta charset="utf-8" />
+                <title>安费诺先进传感器</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                <meta name="apple-mobile-web-app-capable" content="yes"/>
+                <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/skins/skin-blue.min.css"/>
+                <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+                <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+                <!--[if lt IE 9]>
+                   <script src="/aas_base/static/libs/html5shiv.min.js"></script>
+                   <script src="/aas_base/static/libs/respond.min.js"></script>
+                <![endif]-->
+            </head>
+            <body class="hold-transition skin-blue layout-top-nav">
+                <div class="wrapper">
+                    <header class="main-header">
+                        <nav class="navbar navbar-static-top">
+                            <div class="container">
+                                <div class="navbar-header">
+                                    <a href="javascript:void(0);" class="navbar-brand">
+                                        <span><b>安费诺先进传感器</b></span>
+                                    </a>
+                                </div>
+
+                                <div class="navbar-custom-menu">
+                                    <ul class="nav navbar-nav">
+                                        <li id="action_commit" class="notifications-menu">
+                                            <a href="javascript:void(0);"> <i class="fa fa-send"></i> 提交报检 </a>
+                                        </li>
+                                        <li class="dropdown notifications-menu">
+                                            <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fa fa-user"></i> <span t-esc="checker"/>
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                <li class="header">欢迎您，<t t-esc="checker"/></li>
+                                                <li>
+                                                    <ul class="menu">
+                                                        <li> <a href="/web/session/logout">注销</a> </li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </nav>
+
+                    </header>
+
+                    <div class="content-wrapper">
+                        <section class="content-header">
+                            <h1>OQC报检 </h1>
+                            <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;color:red;">
+                                <span t-esc="message"/>
+                            </div>
+                        </section>
+                        <section class="content">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="box box-solid">
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">基础信息</h3>
+                                        </div>
+                                        <div class="box-body no-padding">
+                                            <ul class="nav nav-pills nav-stacked">
+                                                <li> <a href="javascript:void(0);">报检产品 <span id="quality_product" class="pull-right" pid="0"/></a> </li>
+                                                <li> <a href="javascript:void(0);">客户料号 <span id="quality_customerpn" class="pull-right"/></a> </li>
+                                                <li> <a href="javascript:void(0);">报检数量 <span id="quality_qty" class="pull-right" pqty="0.0"/></a> </li>
+                                                <li> <a href="javascript:void(0);">标签数量 <span id="quality_count" class="pull-right" count="0"/></a> </li>
+                                                <li> <a href="javascript:void(0);">当前标签 <span id="quality_label" class="pull-right"/></a> </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="box box-primary">
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">待检测</h3>
+                                        </div>
+                                        <div class="box-body no-padding">
+                                            <div class="table-responsive mailbox-messages">
+                                                <table class="table table-hover table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <td>标签</td>
+                                                            <td>产品编码</td>
+                                                            <td>产品批次</td>
+                                                            <td>产品数量</td>
+                                                            <td>操作</td>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="tochecklabellist"></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="main-footer">
+                        <div class="container" style="text-align:center;">
+                            <span>
+                                Copyright © 安费诺先进传感器 &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <a href="http://www.miitbeian.gov.cn" target="_blank">苏ICP备16061622</a>
+                            </span>
+                        </div>
+                    </footer>
+                </div>
+                <script src="/aas_base/static/libs/jquery/jquery-2.2.4.min.js"></script>
+                <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
+                <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
+                <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
+                <script src="/aas_base/static/libs/layer/layer.js"></script>
+                <script src="/aas_base/static/libs/vscanner.js"></script>
+                <script src="/aas_quality/static/src/js/aas_oqcchecking.js"></script>
+            </body>
+        </html>
+    </template>
+
+</odoo>
