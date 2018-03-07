@@ -219,9 +219,9 @@ class AASMESWorkticket(models.Model):
 
 ############################Wizard#################################
 
-class AASMESWorkdataTracingWizard(models.TransientModel):
-    _name = 'aas.mes.workdata.tracing.wizard'
-    _description = 'AAS MES Workdata Tracing Wizard'
+class AASMESWorkdataForwardTracingWizard(models.TransientModel):
+    _name = 'aas.mes.workdata.forward.tracing.wizard'
+    _description = 'AAS MES Workdata Forward Tracing Wizard'
 
 
     serialnumber = fields.Char(string=u'序列号', required=True, copy=False)
@@ -230,9 +230,9 @@ class AASMESWorkdataTracingWizard(models.TransientModel):
     @api.multi
     def action_done(self):
         self.ensure_one()
-        reportlist = self.env['aas.mes.workdata.tracing.report.wizard'].sudo().search([])
+        reportlist = self.env['aas.mes.workdata.tracing.report.wizard'].search([])
         if reportlist and len(reportlist) > 0:
-            reportlist.sudo().unlink()
+            reportlist.unlink()
         tserialnumber = self.env['aas.mes.serialnumber'].search([('name', '=', self.serialnumber)], limit=1)
         if not tserialnumber or not tserialnumber.workorder_id:
             raise UserError(u'请检查序列号是否有误，或当前隔离板还没有产出！')
@@ -255,6 +255,39 @@ class AASMESWorkdataTracingWizard(models.TransientModel):
 
 
 
+class AASMESWorkdataReverseTracingWizard(models.TransientModel):
+    _name = 'aas.mes.workdata.reverse.tracing.wizard'
+    _description = 'AAS MES Workdata Reverse Tracing Wizard'
+
+
+    material_id = fields.Many2one(comodel_name='product.product', string=u'原料', required=True)
+    material_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', required=True)
+
+
+    @api.multi
+    def action_done(self):
+        self.ensure_one()
+        reportlist = self.env['aas.mes.workdata.tracing.report.wizard'].search([])
+        if reportlist and len(reportlist) > 0:
+            reportlist.unlink()
+        materialid, matrialotid = self.material_id.id, self.material_lot.id
+        tracinglist = self.env['aas.mes.workdata.tracing.report.wizard'].action_loading_reverse_tracing(materialid, matrialotid)
+        if not tracinglist or len(tracinglist) <= 0:
+            raise UserError(u'当前未获取到追溯信息！')
+        for tempval in tracinglist:
+            self.env['aas.mes.workdata.tracing.report.wizard'].create(tempval)
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_workdata_tracing_report_wizard')
+        view_tree = self.env.ref('aas_mes.view_tree_aas_mes_workdata_tracing_report_wizard')
+        return {
+            'name': u"追溯信息",
+            'type': 'ir.actions.act_window',
+            'view_mode': 'tree,form',
+            'res_model': 'aas.mes.workdata.tracing.report.wizard',
+            'views': [(view_tree.id, 'tree'), (view_form.id, 'form')],
+            'target': 'self',
+            'context': self.env.context
+        }
+
 
 
 
@@ -267,18 +300,46 @@ class AASMESWorkdataTracingReportWizard(models.TransientModel):
 
     master_workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'上级工单')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品')
-    master_mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'上级工单产线')
+    master_mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'上级产线')
     master_output_qty = fields.Float(string=u'上级工单产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     master_input_qty = fields.Float(string=u'上级工单计划数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
 
     material_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'原料批次')
     slave_workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'下级工单')
     material_id = fields.Many2one(comodel_name='product.product', string=u'原料')
-    slave_mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'下级工单产线')
+    slave_mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'下级产线')
     slave_output_qty = fields.Float(string=u'下级工单产出', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     slave_input_qty = fields.Float(string=u'下级工单计划数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
 
 
+    @api.model
+    def action_loading_reverse_tracing(self, material_id, material_lotid):
+        tracinglist = []
+        condomain = [('material_id', '=', material_id), ('material_lot', '=', material_lotid)]
+        consumelist = self.env['aas.mes.workdata.consume'].search(condomain)
+        if consumelist and len(consumelist) > 0:
+            for tconsume in consumelist:
+                workorder = tconsume.workorder_id
+                tracinglist.append({
+                    'master_workorder_id': workorder.id, 'product_id': workorder.product_id.id,
+                    'master_mesline_id': workorder.mesline_id.id, 'master_output_qty': workorder.output_qty,
+                    'master_input_qty': workorder.input_qty,
+                    'material_lot': material_lotid, 'material_id': material_id
+                })
+                outdomain = [('workorder_id', '=', workorder.id)]
+                outputlist = self.env['aas.mes.workdata.output'].search(outdomain)
+                if not outputlist or len(outputlist) <= 0:
+                    continue
+                tempkeys = []
+                for toutput in outputlist:
+                    if not toutput.product_lot:
+                        continue
+                    tkey = 'T-'+str(toutput.workorder_id.id)+'-'+str(toutput.product_lot.id)
+                    if tkey in tempkeys:
+                        continue
+                    tracinglist += self.env['aas.mes.workdata.tracing.report.wizard'].\
+                        action_loading_reverse_tracing(toutput.product_id.id, toutput.product_lot.id)
+        return tracinglist
 
 
 

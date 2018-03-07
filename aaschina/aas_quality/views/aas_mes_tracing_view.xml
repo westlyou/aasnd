@@ -135,8 +135,8 @@
             <field name="act_window_id" ref="action_aas_mes_tracing_quality"/>
         </record>
 
-        <menuitem id="menu_aas_mes_tracing_list_quality"  name="追溯信息" action="action_aas_mes_tracing_quality"
-                          parent="menu_aas_mes_tracing_quality" sequence="1" groups="group_aas_quality_user,group_aas_quality_manager"/>
+        <!--<menuitem id="menu_aas_mes_tracing_list_quality"  name="追溯信息" action="action_aas_mes_tracing_quality"
+                          parent="menu_aas_mes_tracing_quality" sequence="1" groups="group_aas_quality_user,group_aas_quality_manager"/>-->
 
     </data>
 </odoo>

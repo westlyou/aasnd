@@ -160,7 +160,7 @@
                                     <group>
                                         <group>
                                             <field name="label_id" options="{'no_create':true}"
-                                                   domain="[('order_id','=',parent.oqcorder_id),('checked','=',False)]"/>
+                                                   domain="[('order_id','=',parent.oqcorder_id)]"/>
                                             <field name="qualified"/>
                                         </group>
                                         <group>
