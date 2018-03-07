@@ -389,8 +389,7 @@ class AASMESProductTest(models.Model):
         for tparameter in parameters:
             pkey = 'P'+str(tparameter['id'])
             if pkey not in paramdict:
-                values.update({'success': False, 'message': u'请仔细检查，检测参数可能有误！'})
-                return values
+                continue
             pname, pvalue = paramdict.get('name'), tparameter.get('value', False)
             if not pvalue:
                 values.update({'success': False, 'message': u'参数%s未设置检测值！'% pname})
