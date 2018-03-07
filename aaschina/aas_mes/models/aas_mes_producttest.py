@@ -22,11 +22,8 @@ DATATYPES = [('char', 'Char'), ('number', 'Number')]
 
 TESTSTATES = [('draft', u'草稿'), ('confirm', u'确认')]
 
-PRODUCTTESTSTATES = [
-    ('draft', u'草稿'), ('confirm', u'确认'), ('prdcheck', u'PRD检查'), ('ipqcheck', u'IPQC检查'), ('done', u'完成')
-]
+PRODUCTTESTSTATES = [('draft', u'草稿'), ('confirm', u'确认'), ('done', u'完成')]
 TESTTYPES = [('firstone', u'首件'), ('lastone', u'末件'), ('random', u'抽检')]
-DETERMINETYPES = [('prdcheck', u'PRD检查'), ('ipqcheck', u'IPQC检查')]
 
 
 def isfloat(value):
@@ -346,7 +343,7 @@ class AASMESProductTest(models.Model):
         :param fixture:
         :return:
         """
-        values = {'success': True, 'message': ''}
+        values = {'success': True, 'message': '', 'qualified': False}
         equipment = self.env['aas.equipment.equipment'].browse(equipmentid)
         if not equipment:
             values.update({'success': False, 'message': u'请仔细检查，设备异常！'})
@@ -425,6 +422,7 @@ class AASMESProductTest(models.Model):
             qualified = all([orderline.qualified for orderline in testorder.order_lines])
             if qualified:
                 testorder.write({'qualified': qualified})
+        values['qualified'] = testorder.qualified
         return values
 
 
@@ -515,7 +513,6 @@ class AASMESProductTestOrder(models.Model):
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', index=True)
     wireorder_id = fields.Many2one(comodel_name='aas.mes.wireorder', string=u'线材工单', index=True)
     order_lines = fields.One2many(comodel_name='aas.mes.producttest.order.line', inverse_name='order_id', string=u'参数明细')
-    determine_lines = fields.One2many(comodel_name='aas.mes.producttest.order.determine', inverse_name='order_id', string=u'检查明细')
 
     @api.model
     def create(self, vals):
@@ -552,47 +549,6 @@ class AASMESProductTestOrder(models.Model):
         })
 
 
-    @api.multi
-    def action_prdcheck(self):
-        self.ensure_one()
-        wizard = self.env['aas.mes.producttest.order.checking.wizard'].create({
-            'order_id': self.id, 'check_type': 'prdcheck',
-            'action_message': u'请仔细确认各项参数是否合格，再做判定！'
-        })
-        view_form = self.env.ref('aas_mes.view_form_aas_mes_producttest_order_checking_wizard')
-        return {
-            'name': u"PRD检查",
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'aas.mes.producttest.order.checking.wizard',
-            'views': [(view_form.id, 'form')],
-            'view_id': view_form.id,
-            'target': 'new',
-            'res_id': wizard.id,
-            'context': self.env.context
-        }
-
-    @api.multi
-    def action_ipqcheck(self):
-        self.ensure_one()
-        wizard = self.env['aas.mes.producttest.order.checking.wizard'].create({
-            'order_id': self.id, 'check_type': 'ipqcheck',
-            'action_message': u'请仔细确认各项参数是否合格，再做判定！'
-        })
-        view_form = self.env.ref('aas_mes.view_form_aas_mes_producttest_order_checking_wizard')
-        return {
-            'name': u"IPQC检查",
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'aas.mes.producttest.order.checking.wizard',
-            'views': [(view_form.id, 'form')],
-            'view_id': view_form.id,
-            'target': 'new',
-            'res_id': wizard.id,
-            'context': self.env.context
-        }
 
 
 
@@ -644,19 +600,6 @@ class AASMESProductTestOrderLine(models.Model):
 
 
 
-class AASMESProductTestOrderDetermine(models.Model):
-    _name = 'aas.mes.producttest.order.determine'
-    _description = 'AAS MES ProductTest Order Determine'
-
-    order_id = fields.Many2one(comodel_name='aas.mes.producttest.order', string=u'首件检测', ondelete='cascade')
-    determine_type = fields.Selection(selection=DETERMINETYPES, string=u'检查类型', copy=False)
-    determine_pass = fields.Boolean(string=u'合格', default=False, copy=False)
-    checker_code = fields.Char(string=u'检查人员')
-    determine_time = fields.Datetime(string=u'检查时间', default=fields.Datetime.now, copy=False)
-    determine_note = fields.Char(string=u'检查备注', copy=False)
-
-
-
 ##################################################向导#########################################
 
 class AASMESProductTestTemplatePWorkcenterWizard(models.TransientModel):
@@ -697,35 +640,6 @@ class AASMESProductTestTemplatePWorkcenterWizard(models.TransientModel):
             'context': self.env.context,
             'flags': {'initial_mode': 'edit'}
         }
-
-
-class AASMESProductTestOrderCheckingWizard(models.TransientModel):
-    _name = 'aas.mes.producttest.order.checking.wizard'
-    _description = "AAS MES Producttest Order Chceking Wizard"
-
-    order_id = fields.Many2one(comodel_name='aas.mes.producttest.order', string=u'检测单', ondelete='cascade')
-    action_message = fields.Char(string=u'提示信息', copy=False)
-    check_type = fields.Selection(selection=DETERMINETYPES, string=u'检测判定', copy=False)
-    checker_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'检查员工', ondelete='cascade')
-    qualified = fields.Boolean(string=u'是否合格', default=True, copy=False)
-    determine_note = fields.Text(string=u'备注')
-
-    @api.one
-    def action_done(self):
-        tempvals = {'qualified': self.qualified}
-        self.env['aas.mes.producttest.order.determine'].create({
-            'order_id': self.order_id.id, 'determine_type': self.check_type,
-            'determine_pass': self.qualified, 'checker_code': self.checker_id.code,
-            'determine_note': self.determine_note
-        })
-        if not self.qualified:
-            self.order_id.write(tempvals)
-            return
-        if self.check_type == 'prdcheck':
-            tempvals['state'] = 'prdcheck'
-        elif self.check_type == 'ipqcheck':
-            tempvals['state'] = 'done'
-        self.order_id.write(tempvals)
 
 
 
