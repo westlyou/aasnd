@@ -135,8 +135,8 @@
             <field name="act_window_id" ref="action_aas_mes_tracing"/>
         </record>
 
-        <menuitem id="menu_aas_mes_tracing"  name="生产追溯" action="action_aas_mes_tracing"
-                          parent="menu_aas_mes_manufacture" sequence="4" groups="group_aas_manufacture_user,group_aas_manufacture_planner"/>
+        <!--<menuitem id="menu_aas_mes_tracing"  name="生产追溯" action="action_aas_mes_tracing"
+                          parent="menu_aas_mes_manufacture" sequence="4" groups="group_aas_manufacture_user,group_aas_manufacture_planner"/>-->
 
     </data>
 </odoo>

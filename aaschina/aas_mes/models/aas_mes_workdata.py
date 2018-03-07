@@ -30,6 +30,8 @@ class AASMESWorkdataConsume(models.Model):
     material_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     material_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
 
+
+
 # 成品产出
 class AASMESWorkdataOutput(models.Model):
     _name = 'aas.mes.workdata.output'
@@ -80,6 +82,33 @@ class AASMESWorkorder(models.Model):
                 else:
                     workdataoutput.update({'product_qty': workdataoutput.product_qty + temp_qty})
         return tempvals
+
+
+    @api.multi
+    def action_loading_consume(self):
+        self.ensure_one()
+        consumelist = []
+        templist = self.env['aas.mes.workdata.consume'].search([('workorder_id', '=', self.id)])
+        if templist and len(templist) > 0:
+            for tconsume in templist:
+                consumelist.append({
+                    'master_workorder_id': self.id, 'product_id': self.product_id.id,
+                    'master_mesline_id': self.mesline_id.id, 'master_output_qty': self.output_qty,
+                    'master_input_qty': self.input_qty, 'material_lot': tconsume.material_lot.id,
+                    'slave_workorder_id': tconsume.workorder_id.id, 'material_id': tconsume.material_id.id,
+                    'slave_mesline_id': tconsume.workorder_id.mesline_id.id,
+                    'slave_output_qty': tconsume.workorder_id.output_qty,
+                    'slave_input_qty': tconsume.workorder_id.input_qty
+                })
+                outputdomain = [('product_id', '=', tconsume.material_id.id), ('product_lot', '=', tconsume.material_lot.id)]
+                outputlist = self.env['aas.mes.workdata.output'].search(outputdomain)
+                workorderids = []
+                for tempout in outputlist:
+                    if tempout.workorder_id.id in workorderids:
+                        continue
+                    workorderids.append(tempout.workorder_id.id)
+                    consumelist += tempout.workorder_id.action_loading_consume()
+        return consumelist
 
 
 class AASMESWorkorderProduct(models.Model):
@@ -183,6 +212,78 @@ class AASMESWorkticket(models.Model):
                 })
             else:
                 workdataoutput.update({'product_qty': workdataoutput.product_qty + product_qty})
+
+
+
+
+
+############################Wizard#################################
+
+class AASMESWorkdataTracingWizard(models.TransientModel):
+    _name = 'aas.mes.workdata.tracing.wizard'
+    _description = 'AAS MES Workdata Tracing Wizard'
+
+
+    serialnumber = fields.Char(string=u'序列号', required=True, copy=False)
+
+
+    @api.multi
+    def action_done(self):
+        self.ensure_one()
+        reportlist = self.env['aas.mes.workdata.tracing.report.wizard'].sudo().search([])
+        if reportlist and len(reportlist) > 0:
+            reportlist.sudo().unlink()
+        tserialnumber = self.env['aas.mes.serialnumber'].search([('name', '=', self.serialnumber)], limit=1)
+        if not tserialnumber or not tserialnumber.workorder_id:
+            raise UserError(u'请检查序列号是否有误，或当前隔离板还没有产出！')
+        consumelist = tserialnumber.workorder_id.action_loading_consume()
+        if not consumelist or len(consumelist) <= 0:
+            raise UserError(u'当前未获取到追溯信息！')
+        for tempval in consumelist:
+            self.env['aas.mes.workdata.tracing.report.wizard'].create(tempval)
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_workdata_tracing_report_wizard')
+        view_tree = self.env.ref('aas_mes.view_tree_aas_mes_workdata_tracing_report_wizard')
+        return {
+            'name': u"追溯信息",
+            'type': 'ir.actions.act_window',
+            'view_mode': 'tree,form',
+            'res_model': 'aas.mes.workdata.tracing.report.wizard',
+            'views': [(view_tree.id, 'tree'), (view_form.id, 'form')],
+            'target': 'self',
+            'context': self.env.context
+        }
+
+
+
+
+
+
+
+
+class AASMESWorkdataTracingReportWizard(models.TransientModel):
+    _name = 'aas.mes.workdata.tracing.report.wizard'
+    _description = 'AAS MES Workdata Tracing Report Wizard'
+    _rec_name = 'product_id'
+
+    master_workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'上级工单')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品')
+    master_mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'上级工单产线')
+    master_output_qty = fields.Float(string=u'上级工单产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    master_input_qty = fields.Float(string=u'上级工单计划数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+
+    material_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'原料批次')
+    slave_workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'下级工单')
+    material_id = fields.Many2one(comodel_name='product.product', string=u'原料')
+    slave_mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'下级工单产线')
+    slave_output_qty = fields.Float(string=u'下级工单产出', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    slave_input_qty = fields.Float(string=u'下级工单计划数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+
+
+
+
+
+
+
 
 
 

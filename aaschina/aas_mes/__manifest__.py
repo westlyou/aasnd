@@ -55,6 +55,7 @@
         'views/aas_mes_production_view.xml',
         'views/aas_mes_producttest_view.xml',
         'views/aas_mes_producttest_templates.xml',
+        'views/aas_mes_workdata_view.xml',
 
         'oracle/aas_ebs_mainorder_view.xml',
         'wechat/views/aas_wechat_mes_template.xml',
