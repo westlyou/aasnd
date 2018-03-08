@@ -225,6 +225,7 @@ class AASMESSundryinLabel(models.Model):
 class AASMESProductionOutput(models.Model):
     _name = 'aas.mes.production.output'
     _description = 'AAS MES Production Output'
+    _order = 'id desc'
 
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict', index=True)
     product_code = fields.Char(string=u'产品编码', copy=False)

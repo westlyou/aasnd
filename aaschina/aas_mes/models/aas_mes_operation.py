@@ -24,6 +24,7 @@ class AASMESOperation(models.Model):
     _name = 'aas.mes.operation'
     _description = 'AAS MES Operation'
     _rec_name = 'serialnumber_id'
+    _order = 'id desc'
 
     serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', required=True, ondelete='restrict', index=True)
     serialnumber_name = fields.Char(string=u'序列名称', copy=False, index=True)
@@ -55,6 +56,7 @@ class AASMESOperation(models.Model):
     ipqc_check = fields.Boolean(string='IPQC', default=False, copy=False)
     ipqc_check_count = fields.Integer(string=u'IPQC测试次数', default=0, copy=False)
 
+    operation_date = fields.Char(string=u'生成日期', copy=False)
     labeled = fields.Boolean(string=u'已包装', default=False, copy=False)
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签')
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', index=True)
@@ -302,6 +304,8 @@ OPERATEDICT = {'newbarcode': u'生成条码', 'embedpiece': u'置入连接片', 
 class AASMESOperationRecord(models.Model):
     _name = 'aas.mes.operation.record'
     _description = 'AAS MES Operation Record'
+    _rec_name = 'serialnumber_id'
+    _order = 'id desc'
 
     operation_id = fields.Many2one(comodel_name='aas.mes.operation', string=u'操作记录', ondelete='cascade')
     serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', index=True)

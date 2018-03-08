@@ -98,8 +98,9 @@ class AASMESSerialnumber(models.Model):
     def action_after_create(self):
         operation = self.env['aas.mes.operation'].create({
             'mesline_id': False if not self.mesline_id else self.mesline_id.id,
-            'serialnumber_id': self.id, 'serialnumber_name': self.name, 'product_id': self.product_id.id,
-            'internal_product_code': self.internal_product_code, 'customer_product_code': self.customer_product_code
+            'serialnumber_id': self.id, 'serialnumber_name': self.name,
+            'product_id': self.product_id.id, 'internal_product_code': self.internal_product_code,
+            'customer_product_code': self.customer_product_code, 'operation_date': self.operation_date
         })
         barcoderecord = self.env['aas.mes.operation.record'].create({
             'operation_id': operation.id, 'operator_id': self.operator_id.id,

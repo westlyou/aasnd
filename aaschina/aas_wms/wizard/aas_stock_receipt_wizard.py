@@ -169,7 +169,10 @@ class AASStockReceiptProductWizard(models.TransientModel):
         labelvals = {'product_id': self.product_id.id, 'product_uom': self.product_id.uom_id.id}
         labelvals.update({'location_id': location_id, 'product_qty': lot_qty, 'product_lot': lot_id, 'state': 'draft'})
         labelvals.update({'company_id': self.env.user.company_id.id, 'origin_order': self.origin_order})
-        labelvals.update({'locked': True, 'locked_order': receipt.name, 'partner_id': receipt.partner_id and receipt.partner_id.id})
+        labelvals.update({
+            'locked': True, 'locked_order': receipt.name,
+            'partner_id': False if receipt.partner_id else receipt.partner_id.id
+        })
         labelvals.update({'warranty_date': warranty_date or False})
         return self.env['aas.product.label'].create(labelvals)
 

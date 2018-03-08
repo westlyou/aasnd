@@ -191,8 +191,30 @@
         </record>
 
         <menuitem id="menu_aas_mes_serialnumber"  name="序列号" action="action_aas_mes_serialnumber"
-                  parent="menu_aas_mes_resources" sequence="9" groups="aas_mes.group_aas_manufacture_user"/>
+                  parent="menu_serialnumber" sequence="1" groups="aas_mes.group_aas_manufacture_user"/>
 
+
+        <record id="view_tree_aas_mes_operation" model="ir.ui.view">
+            <field name="name">aas.mes.operation.tree</field>
+            <field name="model">aas.mes.operation</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="serialnumber_id"/>
+                    <field name="barcode_create"/>
+                    <field name="function_test"/>
+                    <field name="final_quality_check"/>
+                    <field name="gp12_check"/>
+                    <field name="commit_badness"/>
+                    <field name="dorework"/>
+                    <field name="ipqc_check"/>
+                    <field name="internal_product_code"/>
+                    <field name="customer_product_code"/>
+                    <field name="label_id"/>
+                    <field name="mesline_id"/>
+                </tree>
+            </field>
+        </record>
 
         <record id="view_form_aas_mes_operation" model="ir.ui.view">
             <field name="name">aas.mes.operation.form</field>
@@ -258,6 +280,249 @@
                 </form>
             </field>
         </record>
+
+        <record id="view_search_aas_mes_operation" model="ir.ui.view">
+            <field name="name">aas.mes.operation.search</field>
+            <field name="model">aas.mes.operation</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="serialnumber_id" string="序列号" filter_domain="[('serialnumber_id','ilike',self)]"/>
+                    <field name="internal_product_code" string="产品编码" filter_domain="[('internal_product_code','ilike',self)]"/>
+                    <field name="customer_product_code" string="客户编码" filter_domain="[('customer_product_code','ilike',self)]"/>
+                    <field name="operation_date" string="生成日期" filter_domain="[('operation_date','ilike',self)]"/>
+                    <field name="fqccheck_date" string="FQC日期" filter_domain="[('fqccheck_date','ilike',self)]"/>
+                    <field name="gp12_date" string="GP12检测日期" filter_domain="[('gp12_date','ilike',self)]"/>
+                    <separator/>
+                    <filter string="未测试" domain="[('function_test','=',False)]" />
+                    <filter string="未终检" domain="[('final_quality_check','=',False),('function_test','=',True)]" />
+                    <filter string="未GP12检测" domain="[('gp12_check','=',False),('final_quality_check','=',True)]" />
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="标签" context="{'group_by':'label_id'}"/>
+                        <filter string="产线" context="{'group_by':'mesline_id'}"/>
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_operation" model="ir.actions.act_window">
+            <field name="name">操作记录</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.operation</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_operation"/>
+            <field name="search_view_id" ref="view_search_aas_mes_operation"/>
+        </record>
+
+        <record id="act_view_tree_aas_mes_operation" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_operation"/>
+            <field name="act_window_id" ref="action_aas_mes_operation"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_operation" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_operation"/>
+            <field name="act_window_id" ref="action_aas_mes_operation"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_operation"  name="操作记录" action="action_aas_mes_operation"
+                  parent="menu_serialnumber" sequence="2" groups="group_aas_manufacture_user"/>
+
+
+        <record id="view_tree_aas_mes_operation_record" model="ir.ui.view">
+            <field name="name">aas.mes.operation.record.tree</field>
+            <field name="model">aas.mes.operation.record</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="serialnumber_id"/>
+                    <field name="operate_type"/>
+                    <field name="scanning_employee"/>
+                    <field name="checking_employee"/>
+                    <field name="employee_id"/>
+                    <field name="operate_time"/>
+                    <field name="operator_id"/>
+                    <field name="operation_pass"/>
+                    <field name="operate_result"/>
+                    <field name="equipment_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_operation_record" model="ir.ui.view">
+            <field name="name">aas.mes.operation.record.form</field>
+            <field name="model">aas.mes.operation.record</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" edit="false" delete="false">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="serialnumber_id"/>
+                                <field name="scanning_employee"/>
+                                <field name="checking_employee"/>
+                                <field name="employee_id"/>
+                                <field name="equipment_id"/>
+                            </group>
+                            <group>
+                                <field name="operate_type"/>
+                                <field name="operator_id"/>
+                                <field name="operate_time"/>
+                                <field name="operation_pass"/>
+                                <field name="operate_result"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_operation_record" model="ir.ui.view">
+            <field name="name">aas.mes.operation.record.search</field>
+            <field name="model">aas.mes.operation.record</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="serialnumber_id" string="序列号" filter_domain="[('serialnumber_id','ilike',self)]"/>
+                    <field name="scanning_employee" string="扫描员工" filter_domain="[('scanning_employee','ilike',self)]"/>
+                    <field name="checking_employee" string="检测员工" filter_domain="[('checking_employee','ilike',self)]"/>
+                    <field name="employee_id" string="操作员工" filter_domain="[('employee_id','ilike',self)]"/>
+                    <field name="equipment_id" string="操作设置" filter_domain="[('equipment_id','ilike',self)]"/>
+                    <field name="operator_id" string="操作用户" filter_domain="[('operator_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="设备" context="{'group_by':'equipment_id'}"/>
+                        <filter string="用户" context="{'group_by':'operator_id'}"/>
+                        <filter string="操作类型" context="{'group_by':'operate_type'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_operation_record" model="ir.actions.act_window">
+            <field name="name">操作详情</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.operation.record</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_operation_record"/>
+            <field name="search_view_id" ref="view_search_aas_mes_operation_record"/>
+        </record>
+
+        <record id="act_view_tree_aas_mes_operation_record" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_operation_record"/>
+            <field name="act_window_id" ref="action_aas_mes_operation_record"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_operation_record" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_operation_record"/>
+            <field name="act_window_id" ref="action_aas_mes_operation_record"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_operation_record"  name="操作详情" action="action_aas_mes_operation_record"
+                  parent="menu_serialnumber" sequence="3" groups="group_aas_manufacture_user"/>
+
+        <record id="view_tree_aas_mes_production_output_serialnumber" model="ir.ui.view">
+            <field name="name">aas.mes.production.output.serialnumber.tree</field>
+            <field name="model">aas.mes.production.output</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="serialnumber_id"/>
+                    <field name="output_date"/>
+                    <field name="workstation_id"/>
+                    <field name="equipment_id"/>
+                    <field name="qualified"/>
+                    <field name="mesline_id"/>
+                    <field name="schedule_id"/>
+                    <field name="pass_onetime"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_production_output_serialnumber" model="ir.ui.view">
+            <field name="name">aas.mes.production.output.serialnumber.form</field>
+            <field name="model">aas.mes.production.output</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" edit="false" delete="false">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="serialnumber_id"/>
+                                <field name="workstation_id"/>
+                                <field name="equipment_id"/>
+                                <field name="qualified"/>
+                            </group>
+                            <group>
+                                <field name="output_date"/>
+                                <field name="mesline_id"/>
+                                <field name="schedule_id"/>
+                                <field name="pass_onetime"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_production_output" model="ir.ui.view">
+            <field name="name">aas.mes.production.output.search</field>
+            <field name="model">aas.mes.production.output</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="serialnumber_id" string="序列号" filter_domain="[('serialnumber_id','ilike',self)]"/>
+                    <field name="mesline_id" string="产线" filter_domain="[('mesline_id','ilike',self)]"/>
+                    <field name="workstation_id" string="工位" filter_domain="[('workstation_id','ilike',self)]"/>
+                    <field name="equipment_id" string="设备" filter_domain="[('equipment_id','ilike',self)]"/>
+                    <field name="output_date" string="产出日期" filter_domain="[('output_date','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="产线" context="{'group_by':'mesline_id'}"/>
+                        <filter string="工位" context="{'group_by':'workstation_id'}"/>
+                        <filter string="设备" context="{'group_by':'equipment_id'}"/>
+                        <filter string="日期" context="{'group_by':'output_date'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_production_output_serialnumber" model="ir.actions.act_window">
+            <field name="name">工位产出</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.production.output</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_production_output_serialnumber"/>
+            <field name="search_view_id" ref="view_search_aas_mes_production_output"/>
+            <field name="domain">[('serialnumber_id','!=',False)]</field>
+        </record>
+
+        <record id="act_view_tree_aas_mes_production_output_serialnumber" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_production_output_serialnumber"/>
+            <field name="act_window_id" ref="action_aas_mes_production_output_serialnumber"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_production_output_serialnumber" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_production_output_serialnumber"/>
+            <field name="act_window_id" ref="action_aas_mes_production_output_serialnumber"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_production_output_serialnumber"  name="工位产出"
+                  action="action_aas_mes_production_output_serialnumber"
+                  parent="menu_serialnumber" sequence="4" groups="group_aas_manufacture_user"/>
 
     </data>
 </odoo>
