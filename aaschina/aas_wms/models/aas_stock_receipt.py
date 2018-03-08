@@ -104,7 +104,9 @@ class AASStockReceipt(models.Model):
         :return:
         """
         self.ensure_one()
-        wizard = self.env['aas.stock.receipt.label.wizard'].create({'receipt_id': self.id})
+        wizard = self.env['aas.stock.receipt.label.wizard'].create({
+            'receipt_id': self.id, 'receipt_type': self.receipt_type
+        })
         view_form = self.env.ref('aas_wms.view_form_aas_stock_receipt_label_wizard')
         return {
             'name': u"标签入库",

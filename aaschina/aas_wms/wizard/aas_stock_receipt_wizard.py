@@ -10,6 +10,7 @@ import math
 import logging
 _logger = logging.getLogger(__name__)
 
+RECEIPT_TYPE = [('purchase', u'采购收货'), ('manufacture', u'成品入库'), ('manreturn', u'生产退料'), ('sundry', u'杂项入库')]
 
 # 收货同时生成标签和明细，多为仓库内部创建收货单用，生产退料也可用到
 class AASStockReceiptProductWizard(models.TransientModel):
@@ -242,6 +243,7 @@ class AASStockReceiptLabelWizard(models.TransientModel):
     _description = u"标签收货向导"
 
     receipt_id = fields.Many2one(comodel_name='aas.stock.receipt', string=u'收货单', ondelete='cascade')
+    receipt_type = fields.Selection(selection=RECEIPT_TYPE, string=u'类型', copy=False)
     order_user = fields.Many2one(comodel_name='res.users', string=u'下单人员', default=lambda self: self.env.user)
     order_time = fields.Datetime(string=u'下单时间', default=fields.Datetime.now)
     add_lines = fields.One2many(comodel_name='aas.stock.receipt.label.add.wizard', inverse_name='wizard_id', string=u'添加明细')
@@ -315,8 +317,14 @@ class AASStockReceiptLabelWizard(models.TransientModel):
         self.action_check_labels()
         self.action_add_labels()
         self.action_del_labels()
-
-
+        # 原料退库，标签和实际数量不符需要手工修改
+        if self.receipt_type == 'manreturn' and self.add_lines and len(self.add_lines) > 0:
+            for templine in self.add_lines:
+                templabel = templine.label_id
+                balance_qty = templabel.product_qty - templine.product_qty
+                if not float_is_zero(balance_qty, precision_rounding=0.000001):
+                    operate_note = u'生产退料%s'% self.receipt_id.name
+                    templabel.with_context({'operate_note': operate_note}).write({'product_qty': templine.product_qty})
 
 
 
@@ -325,6 +333,7 @@ class AASStockReceiptLabelAddWizard(models.TransientModel):
     _description = u"收货标签添加向导"
 
     wizard_id = fields.Many2one(comodel_name='aas.stock.receipt.label.wizard', string=u'标签收货', ondelete='cascade')
+    receipt_type = fields.Selection(selection=RECEIPT_TYPE, string=u'类型', copy=False)
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位')
@@ -348,14 +357,19 @@ class AASStockReceiptLabelAddWizard(models.TransientModel):
     def action_before_create(self, vals):
         label = self.env['aas.product.label'].browse(vals.get('label_id'))
         vals.update({
-            'product_id': label.product_id.id, 'product_uom': label.product_uom.id, 'product_lot': label.product_lot.id,
-            'product_qty': label.product_qty, 'location_id': label.location_id.id
+            'product_id': label.product_id.id, 'product_uom': label.product_uom.id,
+            'product_lot': label.product_lot.id, 'location_id': label.location_id.id
         })
+        if not vals.get('product_qty', 0.0):
+            vals['product_qty'] = label.product_qty
+        if float_compare(vals['product_qty'], 0.0, precision_rounding=0.000001) < 0.0:
+            raise UserError(u'标签%s的数量必须是一个大于0的数！'% label.name)
+
 
     @api.model
     def create(self, vals):
         self.action_before_create(vals)
-        super(AASStockReceiptLabelAddWizard, self).create(vals)
+        return super(AASStockReceiptLabelAddWizard, self).create(vals)
 
 
 class AASStockReceiptLabelDelWizard(models.TransientModel):

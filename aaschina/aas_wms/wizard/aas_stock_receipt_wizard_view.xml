@@ -100,23 +100,25 @@
                     <group>
                         <group>
                             <field name="receipt_id" readonly="1"/>
+                            <field name="receipt_type" readonly="1"/>
                         </group>
-                    </group>
-                    <group>
-                        <group> <field name="order_user" readonly="1"/> </group>
-                        <group> <field name="order_time" readonly="1"/> </group>
+                        <group>
+                            <field name="order_user" readonly="1"/>
+                            <field name="order_time" readonly="1"/>
+                        </group>
                     </group>
                     <notebook>
                         <page string="添加标签">
-                            <field name="add_lines">
+                            <field name="add_lines" context="{'default_receipt_type':receipt_type}">
                                 <tree editable="bottom">
                                     <field name="label_id" options="{'no_create':true}"
                                             domain="[('state','=','normal'),('stocked','=',True),('locked','=',False),('location_id.edgelocation','=',True)]"/>
                                     <field name="product_id" readonly="1"/>
                                     <field name="product_uom" readonly="1"/>
                                     <field name="product_lot" readonly="1"/>
-                                    <field name="product_qty" readonly="1"/>
+                                    <field name="product_qty" attrs="{'readonly':[('receipt_type','!=','manreturn')]}"/>
                                     <field name="location_id" readonly="1"/>
+                                    <field name="receipt_type" invisible="1"/>
                                 </tree>
                             </field>
                         </page>

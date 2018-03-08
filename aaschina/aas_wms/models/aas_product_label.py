@@ -394,6 +394,7 @@ class AASProductLabelJournal(models.Model):
     journal_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     balance_qty = fields.Float(string=u'结存', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     operate_order = fields.Char(string=u'操作单据', copy=False)
+    operate_note = fields.Char(string=u'操作备注', copy=False)
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null')
 
     @api.model
@@ -401,6 +402,8 @@ class AASProductLabelJournal(models.Model):
         context = self.env.context
         if context.get('operate_order'):
             vals['operate_order'] = context.get('operate_order')
+        if context.get('operate_note'):
+            vals['operate_note'] = context.get('operate_note')
 
     @api.model
     def create(self, vals):

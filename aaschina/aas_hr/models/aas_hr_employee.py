@@ -20,6 +20,8 @@ _logger = logging.getLogger(__name__)
 
 EMPLOYEESTATES = [('working', u'工作'), ('leave', u'离开'), ('atop', u'事假'), ('vacation', u'休假'), ('dimission', u'离职')]
 
+GENDERS = [('male', u'男'), ('female', u'女')]
+MARITALS = [('single', u'单身'), ('married', u'已婚'), ('other', u'其他')]
 
 class AASHREmployee(models.Model):
     _name = 'aas.hr.employee'
@@ -40,11 +42,9 @@ class AASHREmployee(models.Model):
     state_color = fields.Integer(string=u'状态颜色值', compute='_compute_state_color', store=True)
     birthday = fields.Date(string=u'生日', copy=False)
     identification_id = fields.Char(string=u'身份证号')
-    gender = fields.Selection(selection=[('male', u'男'), ('female', u'女')], string=u'性别', default='male', copy=False)
-    marital = fields.Selection([
-        ('single', u'单身'), ('married', u'已婚'), ('divorced', u'离异'), ('widower', u'丧偶')
-    ], string=u'婚姻状况', default='single')
-    mobile_phone = fields.Char(string=u'手机号码')
+    gender = fields.Selection(selection=GENDERS, string=u'性别', default='male', copy=False)
+    marital = fields.Selection(selection=MARITALS, string=u'婚姻状况', default='single', copy=False)
+    mobile_phone = fields.Char(string=u'手机号码', copy=False)
     address_home = fields.Char(string=u'家庭住址', copy=False)
     work_phone = fields.Char(string=u'工作电话')
     work_email = fields.Char(string=u'工作邮箱')

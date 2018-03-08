@@ -105,6 +105,7 @@
                                         <field name="balance_qty"/>
                                         <field name="operate_order"/>
                                         <field name="record_time"/>
+                                        <field name="operate_note"/>
                                     </tree>
                                     <form>
                                         <group>
@@ -117,6 +118,7 @@
                                                 <field name="journal_qty"/>
                                                 <field name="balance_qty"/>
                                                 <field name="operate_order"/>
+                                                <field name="operate_note"/>
                                             </group>
                                         </group>
                                     </form>
