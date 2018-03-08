@@ -411,6 +411,7 @@
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="view_tree_aas_mes_operation_record"/>
             <field name="search_view_id" ref="view_search_aas_mes_operation_record"/>
+            <field name="domain">[('serialnumber_id','!=',False)]</field>
         </record>
 
         <record id="act_view_tree_aas_mes_operation_record" model="ir.actions.act_window.view">
