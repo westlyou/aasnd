@@ -128,7 +128,7 @@
         </record>
 
         <menuitem id="menu_aas_mes_rework"  name="返工维修" action="action_aas_mes_rework"
-                          parent="menu_aas_mes_manufacture" sequence="8" groups="group_aas_manufacture_foreman"/>
+                          parent="menu_serialnumber" sequence="5" groups="group_aas_manufacture_foreman"/>
 
     </data>
 </odoo>
