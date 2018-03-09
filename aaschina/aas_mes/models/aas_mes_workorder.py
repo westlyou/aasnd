@@ -999,6 +999,7 @@ class AASMESWorkorderProduct(models.Model):
             date_start = firstserial.output_time if not firstserial.lastone_id else firstserial.lastone_id.output_time
             lastserial = self.env['aas.mes.serialnumber'].search(tempserialdomain, order='output_time desc', limit=1)
             date_finish = lastserial.output_time
+        moveids = []
         for tempconsume in consumerecords:
             tracevals = {
                 'mesline_id': tempconsume['mesline_id'], 'product_id': tempconsume['product_id'],
@@ -1014,7 +1015,7 @@ class AASMESWorkorderProduct(models.Model):
                 tracevals['workcenter_id'] = workcenter_id
             # 创建追溯信息
             tracerecord = self.env['aas.mes.tracing'].create(tracevals)
-            materiallist, movevallist, movelist, moveids = [], [], self.env['stock.move'], []
+            materiallist, movevallist, movelist = [], [], self.env['stock.move']
             for tempmaterial in tempconsume['materiallines']:
                 material_id = tempmaterial['material_id']
                 material_uom, material_code = tempmaterial['material_uom'], tempmaterial['material_code']

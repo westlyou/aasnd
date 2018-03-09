@@ -412,7 +412,7 @@ class AASMESProductTest(models.Model):
             'workstation_id': producttest.workstation_id.id, 'mesline_id': mesline.id,
             'equipment_id': equipment.id, 'order_date': fields.Datetime.to_china_today(),
             'test_type': testtype, 'instrument_code': instrument, 'fixture_code': fixture,
-            'employee_id': employee.id, 'state': 'confirm', 'order_lines': orderlines,
+            'employee_id': employee.id, 'state': 'done', 'order_lines': orderlines,
             'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id
         }
         if workorderid:

@@ -124,7 +124,7 @@ class AASMESProducttestController(http.Controller):
             'producttest_id': producttest.id, 'product_id': productid,
             'workstation_id': workstationid, 'mesline_id': mesline.id, 'equipment_id': equipmentid,
             'test_type': testtype, 'employee_id': employeeid, 'workorder_id': workorderid,
-            'state': 'confirm', 'order_lines': [(0, 0, tparam) for tparam in parameters],
+            'state': 'done', 'order_lines': [(0, 0, tparam) for tparam in parameters],
             'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id
         })
         testorder.write({'qualified': all([orderline.qualified for orderline in testorder.order_lines])})
