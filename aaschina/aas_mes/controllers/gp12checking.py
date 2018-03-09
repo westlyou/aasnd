@@ -407,6 +407,7 @@ class AASMESGP12CheckingController(http.Controller):
                 receiptlabels = request.env['aas.stock.receipt.label'].search([('receipt_id', '=', receipt.id), ('product_id', '=', receiptline.product_id.id)])
                 receiptlabels.write({'line_id': receiptline.id})
             receipt.action_confirm()
+            labellist.sudo().write({'locked': True, 'locked_order': receipt.name})
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
             return values

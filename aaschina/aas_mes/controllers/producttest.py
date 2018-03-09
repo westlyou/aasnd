@@ -105,14 +105,11 @@ class AASMESProducttestController(http.Controller):
 
 
     @http.route('/aasmes/producttest/docommittest', type='json', auth="user")
-    def aasmes_producttest_docommittest(self, testtype, workorderid, workstationid, employeeid, parameters, equipmentid):
+    def aasmes_producttest_docommittest(self, testtype, workorderid, workstationid, employeeid, parameters, equipmentid=False):
         values = {'success': True, 'message': '', 'orderid': '0'}
         workorder = request.env['aas.mes.workorder'].browse(workorderid)
         if not parameters or len(parameters) <= 0:
             values.update({'success': False, 'message': u'工单异常，检测参数异常，未获取到检测参数信息！'})
-            return values
-        if not equipmentid:
-            values.update({'success': False, 'message': u'您还未设置设备，请先设置设备再提交操作！'})
             return values
         if not employeeid:
             values.update({'success': False, 'message': u'您还未设置操作员工，请先设置操作员工再提交操作！'})

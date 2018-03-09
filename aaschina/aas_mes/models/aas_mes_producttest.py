@@ -352,7 +352,8 @@ class AASMESProductTest(models.Model):
         if not mesline or not workstation:
             values.update({'success': False, 'message': u'当前设备可能还未设置产线和工位！'})
             return values
-        empdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        empdomain = [('mesline_id', '=', mesline.id)]
+        empdomain += [('workstation_id', '=', workstation.id), ('equipment_id', '=', equipmentid)]
         employeelist = self.env['aas.mes.workstation.employee'].search(empdomain)
         if not employeelist or len(employeelist) <= 0:
             values.update({'success': False, 'message': u'当前设备上还没有员工在岗！'})
