@@ -486,6 +486,8 @@
                     <field name="equipment_id" string="设备" filter_domain="[('equipment_id','ilike',self)]"/>
                     <field name="output_date" string="产出日期" filter_domain="[('output_date','ilike',self)]"/>
                     <separator/>
+                    <filter string="今日产出" domain="[('output_date','=',context_today().strftime('%Y-%m-%d'))]"/>
+                    <separator/>
                     <group expand="0" string="分组">
                         <filter string="产线" context="{'group_by':'mesline_id'}"/>
                         <filter string="工位" context="{'group_by':'workstation_id'}"/>

@@ -89,6 +89,9 @@
                     <field name="repairer_id" string="维修员工" filter_domain="[('repairer_id','ilike',self)]"/>
                     <field name="ipqcchecker_id" string="IPQC员工" filter_domain="[('ipqcchecker_id','ilike',self)]"/>
                     <separator/>
+                    <filter string="今日不良" domain="[('badmode_date','=',context_today().strftime('%Y-%m-%d'))]"/>
+                    <filter string="最近七日" domain="[('badmode_date','&lt;=',context_today().strftime('%Y-%m-%d')),('badmode_date','&gt;=',((context_today() - relativedelta(days=7)).strftime('%Y-%m-%d')))]"/>
+                    <separator/>
                     <group expand="0" string="分组">
                         <filter string="序列号" context="{'group_by':'serialnumber_id'}"/>
                         <filter string="内部料号" context="{'group_by':'internalpn'}"/>
@@ -102,6 +105,8 @@
                 </search>
             </field>
         </record>
+
+
 
         <record id="action_aas_mes_rework" model="ir.actions.act_window">
             <field name="name">返工维修</field>
