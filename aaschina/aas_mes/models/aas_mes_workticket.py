@@ -621,8 +621,10 @@ class AASMESWorkticketBadmode(models.Model):
     _description = 'AAS MES Workticket Badmode'
     _rec_name = 'badmode_id'
 
+
     workticket_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'工票', ondelete='cascade', index=True)
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='cascade', index=True)
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='cascade', index=True)
     workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='restrict')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade', index=True)
@@ -638,7 +640,8 @@ class AASMESWorkticketBadmode(models.Model):
             record.write({
                 'workorder_id': tempworkticket.workorder_id.id, 'product_id': tempworkticket.product_id.id,
                 'workcenter_id': tempworkticket.workcenter_id.id,
-                'workstation_id': tempworkticket.workcenter_id.workstation_id.id
+                'workstation_id': tempworkticket.workcenter_id.workstation_id.id,
+                'mesline_id': tempworkticket.workorder_id.mesline_id.id
             })
         return record
 

@@ -18,6 +18,8 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+from odoo.tools.sql import drop_view_if_exists
+
 # 子工单
 
 ORDERSTATES = [('draft', u'草稿'), ('confirm', u'确认'), ('producing', u'生产'), ('pause', u'暂停'), ('done', u'完成')]
@@ -1290,3 +1292,39 @@ class AASMESWorkorderFianlProductSettingProductWizard(models.TransientModel):
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
     finalchecked = fields.Boolean(string=u'确认', default=False, copy=False)
 
+
+
+
+#####################################报表###########################################
+
+
+
+# class AASMESWorkorderBadmodeReport(models.Model):
+#     _auto = False
+#     _name = 'aas.mes.workorder.badmode.report'
+#     _description = 'AAS MES Workorder Badmode Report'
+#
+#
+#     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单')
+#     product_id = fields.Many2one(comodel_name='product.product', string=u'产品')
+#     badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式')
+#     badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+#
+#
+#     def _select_sql(self):
+#         _select_sql = """
+#         SELECT MIN(amwb.id) AS id,
+#         amwb.workorder_id AS workorder_id,
+#         amwb.product_id AS product_id,
+#         amwb.badmode_id AS badmode_id,
+#         sum(amwb.badmode_qty) AS badmode_qty
+#         FROM aas_mes_workticket_badmode amwb
+#         GROUP BY amwb.workorder_id, amwb.product_id, amwb.badmode_id
+#         """
+#         return _select_sql
+#
+#
+#     @api.model_cr
+#     def init(self):
+#         drop_view_if_exists(self._cr, self._table)
+#         self._cr.execute("""CREATE or REPLACE VIEW %s as ( %s )""" % (self._table, self._select_sql()))

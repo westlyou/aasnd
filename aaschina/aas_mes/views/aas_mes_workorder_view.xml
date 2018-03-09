@@ -87,7 +87,6 @@
                                        'required':[('mesline_type','=','station')],'readonly':[('state','=','done')]}"/>
                                 <field name="date_code" readonly="1"/>
                                 <field name="output_qty" readonly="1"/>
-                                <field name="scrap_qty" readonly="1"/>
                                 <field name="closer_id" readonly="1" attrs="{'invisible':[('closer_id','=',False)]}"/>
                                 <field name="workcenter_name" readonly="1" string="当前工序"
                                         attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
