@@ -1,0 +1,529 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_mes_serialnumber_quality" model="ir.ui.view">
+            <field name="name">aas.mes.serialnumber.quality.tree</field>
+            <field name="model">aas.mes.serialnumber</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="name"/>
+                    <field name="sequence_code"/>
+                    <field name="qualified"/>
+                    <field name="reworked"/>
+                    <field name="operator_id"/>
+                    <field name="operation_date"/>
+                    <field name="internal_product_code"/>
+                    <field name="customer_product_code"/>
+                    <field name="product_lot"/>
+                    <field name="mesline_id"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_serialnumber_quality" model="ir.ui.view">
+            <field name="name">aas.mes.serialnumber.quality.form</field>
+            <field name="model">aas.mes.serialnumber</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" edit="false" delete="false">
+                    <header>
+                       <field name="state" widget="statusbar" statusbar_visible="draft,normal,rework,shipped"/>
+                    </header>
+
+                    <sheet>
+                        <group>
+                            <group> <field name="name" readonly="1"/> </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="sequence_code" readonly="1"/>
+                                <field name="internal_product_code" readonly="1"/>
+                                <field name="customer_product_code" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="mesline_id" readonly="1"/>
+                                <field name="operator_id" readonly="1"/>
+                                <field name="operation_time" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="workorder_id" readonly="1"/>
+                                <field name="output_time" readonly="1"/>
+                                <field name="output_internal" readonly="1" widget="float_time"/>
+                                <field name="outputuser_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="qualified" readonly="1"/>
+                                <field name="reworked" readonly="1"/>
+                                <field name="product_lot" readonly="1"/>
+                                <field name="label_id" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="操作记录">
+                                <field name="operation_lines" readonly="1">
+                                    <tree>
+                                        <field name="operate_type"/>
+                                        <field name="equipment_id"/>
+                                        <field name="employee_id"/>
+                                        <field name="scanning_employee"/>
+                                        <field name="checking_employee"/>
+                                        <field name="operate_time"/>
+                                        <field name="operation_pass"/>
+                                        <field name="operate_result"/>
+                                        <field name="operator_id"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="operate_type"/>
+                                                <field name="employee_id"/>
+                                                <field name="operate_time"/>
+                                                <field name="scanning_employee"/>
+                                            </group>
+                                            <group>
+                                                <field name="equipment_id"/>
+                                                <field name="operation_pass"/>
+                                                <field name="operate_result"/>
+                                                <field name="checking_employee"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="返工清单">
+                                <field name="rework_lines" readonly="1">
+                                    <tree>
+                                        <field name="badmode_id"/>
+                                        <field name="badmode_date"/>
+                                        <field name="workstation_id"/>
+                                        <field name="commiter_id"/>
+                                        <field name="commit_time"/>
+                                        <field name="repairer_id"/>
+                                        <field name="repair_time"/>
+                                        <field name="ipqcchecker_id"/>
+                                        <field name="ipqccheck_time"/>
+                                        <field name="state"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                               <field name="badmode_id"/>
+                                                <field name="badmode_date"/>
+                                            </group>
+                                            <group>
+                                                <field name="workstation_id"/>
+                                                <field name="state"/>
+                                            </group>
+                                        </group>
+                                        <group>
+                                            <group>
+                                                <field name="commiter_id"/>
+                                                <field name="repairer_id"/>
+                                                <field name="ipqcchecker_id"/>
+                                            </group>
+                                            <group>
+                                                <field name="commit_time"/>
+                                                <field name="repair_time"/>
+                                                <field name="ipqccheck_time"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_serialnumber_quality" model="ir.ui.view">
+            <field name="name">aas.mes.serialnumber.quality.search</field>
+            <field name="model">aas.mes.serialnumber</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="product_lot" string="批次" filter_domain="[('product_lot','ilike',self)]"/>
+                    <field name="operator_id" string="操作人" filter_domain="[('user_id','ilike',self)]"/>
+                    <field name="internal_product_code" string="内部料号" filter_domain="[('internal_product_code','ilike',self)]"/>
+                    <field name="customer_product_code" string="客户料号" filter_domain="[('customer_product_code','ilike',self)]"/>
+                    <separator/>
+                    <filter string="不合格" domain="[('qualified','=',False)]" />
+                    <filter string="返工品" domain="[('reworked','=',True)]" />
+                    <group expand="0" string="分组">
+                        <filter string="操作人" context="{'group_by':'operator_id'}"/>
+                        <filter string="序列规则" context="{'group_by':'regular_code'}"/>
+                        <filter string="内部料号" context="{'group_by':'internal_product_code'}"/>
+                        <filter string="客户料号" context="{'group_by':'customer_product_code'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_serialnumber_quality" model="ir.actions.act_window">
+            <field name="name">序列号</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.serialnumber</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_serialnumber_quality"/>
+            <field name="search_view_id" ref="view_search_aas_mes_serialnumber_quality"/>
+        </record>
+
+        <record id="act_view_tree_aas_mes_serialnumber_quality" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_serialnumber_quality"/>
+            <field name="act_window_id" ref="action_aas_mes_serialnumber_quality"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_serialnumber_quality" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_serialnumber_quality"/>
+            <field name="act_window_id" ref="action_aas_mes_serialnumber_quality"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_serialnumber_quality"  name="序列号" action="action_aas_mes_serialnumber_quality"
+                  parent="menu_quality_serialnumber" sequence="1" groups="group_aas_quality_user,group_aas_quality_manager"/>
+
+
+        <record id="view_tree_aas_mes_operation_quality" model="ir.ui.view">
+            <field name="name">aas.mes.operation.quality.tree</field>
+            <field name="model">aas.mes.operation</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="serialnumber_id"/>
+                    <field name="barcode_create"/>
+                    <field name="function_test"/>
+                    <field name="final_quality_check"/>
+                    <field name="gp12_check"/>
+                    <field name="commit_badness"/>
+                    <field name="dorework"/>
+                    <field name="ipqc_check"/>
+                    <field name="internal_product_code"/>
+                    <field name="customer_product_code"/>
+                    <field name="label_id"/>
+                    <field name="mesline_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_operation_quality" model="ir.ui.view">
+            <field name="name">aas.mes.operation.quality.form</field>
+            <field name="model">aas.mes.operation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" edit="false" delete="false">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="barcode_create" readonly="1"/>
+                                <field name="final_quality_check" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="function_test" readonly="1"/>
+                                <field name="gp12_check" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="commit_badness" readonly="1"/>
+                                <field name="dorework" readonly="1"/>
+                                <field name="ipqc_check" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="commit_badness_count" readonly="1"/>
+                                <field name="dorework_count" readonly="1"/>
+                                <field name="ipqc_check_count" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="记录清单">
+                                <field name="record_lines" readonly="1">
+                                    <tree>
+                                        <field name="employee_id"/>
+                                        <field name="operate_time"/>
+                                        <field name="equipment_id"/>
+                                        <field name="operate_type"/>
+                                        <field name="operation_pass"/>
+                                        <field name="operate_result"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group> <field name="serialnumber"/> </group>
+                                        </group>
+                                        <group>
+                                            <group>
+                                                <field name="employee_id"/>
+                                                <field name="operate_time"/>
+                                                <field name="equipment_id"/>
+                                            </group>
+                                            <group>
+                                                <field name="operate_type"/>
+                                                <field name="operation_pass"/>
+                                                <field name="operate_result"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_operation_quality" model="ir.ui.view">
+            <field name="name">aas.mes.operation.quality.search</field>
+            <field name="model">aas.mes.operation</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="serialnumber_id" string="序列号" filter_domain="[('serialnumber_id','ilike',self)]"/>
+                    <field name="internal_product_code" string="产品编码" filter_domain="[('internal_product_code','ilike',self)]"/>
+                    <field name="customer_product_code" string="客户编码" filter_domain="[('customer_product_code','ilike',self)]"/>
+                    <field name="operation_date" string="生成日期" filter_domain="[('operation_date','ilike',self)]"/>
+                    <field name="fqccheck_date" string="FQC日期" filter_domain="[('fqccheck_date','ilike',self)]"/>
+                    <field name="gp12_date" string="GP12检测日期" filter_domain="[('gp12_date','ilike',self)]"/>
+                    <separator/>
+                    <filter string="未测试" domain="[('function_test','=',False)]" />
+                    <filter string="未终检" domain="[('final_quality_check','=',False),('function_test','=',True)]" />
+                    <filter string="未GP12检测" domain="[('gp12_check','=',False),('final_quality_check','=',True)]" />
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="标签" context="{'group_by':'label_id'}"/>
+                        <filter string="产线" context="{'group_by':'mesline_id'}"/>
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_operation_quality" model="ir.actions.act_window">
+            <field name="name">操作记录</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.operation</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_operation_quality"/>
+            <field name="search_view_id" ref="view_search_aas_mes_operation_quality"/>
+        </record>
+
+        <record id="act_view_tree_aas_mes_operation_quality" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_operation_quality"/>
+            <field name="act_window_id" ref="action_aas_mes_operation_quality"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_operation_quality" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_operation_quality"/>
+            <field name="act_window_id" ref="action_aas_mes_operation_quality"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_operation_quality"  name="操作记录" action="action_aas_mes_operation_quality"
+                  parent="menu_quality_serialnumber" sequence="2" groups="group_aas_quality_user,group_aas_quality_manager"/>
+
+
+        <record id="view_tree_aas_mes_operation_record_quality" model="ir.ui.view">
+            <field name="name">aas.mes.operation.record.quality.tree</field>
+            <field name="model">aas.mes.operation.record</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="serialnumber_id"/>
+                    <field name="operate_type"/>
+                    <field name="scanning_employee"/>
+                    <field name="checking_employee"/>
+                    <field name="employee_id"/>
+                    <field name="operate_time"/>
+                    <field name="operator_id"/>
+                    <field name="operation_pass"/>
+                    <field name="operate_result"/>
+                    <field name="equipment_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_operation_record_quality" model="ir.ui.view">
+            <field name="name">aas.mes.operation.record.quality.form</field>
+            <field name="model">aas.mes.operation.record</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" edit="false" delete="false">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="serialnumber_id"/>
+                                <field name="scanning_employee"/>
+                                <field name="checking_employee"/>
+                                <field name="employee_id"/>
+                                <field name="equipment_id"/>
+                            </group>
+                            <group>
+                                <field name="operate_type"/>
+                                <field name="operator_id"/>
+                                <field name="operate_time"/>
+                                <field name="operation_pass"/>
+                                <field name="operate_result"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_operation_record_quality" model="ir.ui.view">
+            <field name="name">aas.mes.operation.record.quality.search</field>
+            <field name="model">aas.mes.operation.record</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="serialnumber_id" string="序列号" filter_domain="[('serialnumber_id','ilike',self)]"/>
+                    <field name="scanning_employee" string="扫描员工" filter_domain="[('scanning_employee','ilike',self)]"/>
+                    <field name="checking_employee" string="检测员工" filter_domain="[('checking_employee','ilike',self)]"/>
+                    <field name="employee_id" string="操作员工" filter_domain="[('employee_id','ilike',self)]"/>
+                    <field name="equipment_id" string="操作设置" filter_domain="[('equipment_id','ilike',self)]"/>
+                    <field name="operator_id" string="操作用户" filter_domain="[('operator_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="设备" context="{'group_by':'equipment_id'}"/>
+                        <filter string="用户" context="{'group_by':'operator_id'}"/>
+                        <filter string="操作类型" context="{'group_by':'operate_type'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_operation_record_quality" model="ir.actions.act_window">
+            <field name="name">操作详情</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.operation.record</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_operation_record_quality"/>
+            <field name="search_view_id" ref="view_search_aas_mes_operation_record_quality"/>
+            <field name="domain">[('serialnumber_id','!=',False)]</field>
+        </record>
+
+        <record id="act_view_tree_aas_mes_operation_record_quality" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_operation_record_quality"/>
+            <field name="act_window_id" ref="action_aas_mes_operation_record_quality"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_operation_record_quality" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_operation_record_quality"/>
+            <field name="act_window_id" ref="action_aas_mes_operation_record_quality"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_operation_record_quality"  name="操作详情" action="action_aas_mes_operation_record_quality"
+                  parent="menu_quality_serialnumber" sequence="3" groups="group_aas_quality_user,group_aas_quality_manager"/>
+
+        <record id="view_tree_aas_mes_production_output_quality" model="ir.ui.view">
+            <field name="name">aas.mes.production.output.quality.tree</field>
+            <field name="model">aas.mes.production.output</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="serialnumber_id"/>
+                    <field name="output_date"/>
+                    <field name="workstation_id"/>
+                    <field name="equipment_id"/>
+                    <field name="qualified"/>
+                    <field name="mesline_id"/>
+                    <field name="schedule_id"/>
+                    <field name="pass_onetime"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_production_output_quality" model="ir.ui.view">
+            <field name="name">aas.mes.production.output.quality.form</field>
+            <field name="model">aas.mes.production.output</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" edit="false" delete="false">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="serialnumber_id"/>
+                                <field name="workstation_id"/>
+                                <field name="equipment_id"/>
+                                <field name="qualified"/>
+                            </group>
+                            <group>
+                                <field name="output_date"/>
+                                <field name="mesline_id"/>
+                                <field name="schedule_id"/>
+                                <field name="pass_onetime"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_production_output_quality" model="ir.ui.view">
+            <field name="name">aas.mes.production.output.quality.search</field>
+            <field name="model">aas.mes.production.output</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="serialnumber_id" string="序列号" filter_domain="[('serialnumber_id','ilike',self)]"/>
+                    <field name="mesline_id" string="产线" filter_domain="[('mesline_id','ilike',self)]"/>
+                    <field name="workstation_id" string="工位" filter_domain="[('workstation_id','ilike',self)]"/>
+                    <field name="equipment_id" string="设备" filter_domain="[('equipment_id','ilike',self)]"/>
+                    <field name="output_date" string="产出日期" filter_domain="[('output_date','ilike',self)]"/>
+                    <separator/>
+                    <filter string="今日产出" domain="[('output_date','=',context_today().strftime('%Y-%m-%d'))]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="产线" context="{'group_by':'mesline_id'}"/>
+                        <filter string="工位" context="{'group_by':'workstation_id'}"/>
+                        <filter string="设备" context="{'group_by':'equipment_id'}"/>
+                        <filter string="日期" context="{'group_by':'output_date'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_production_output_quality" model="ir.actions.act_window">
+            <field name="name">工位产出</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.production.output</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_production_output_quality"/>
+            <field name="search_view_id" ref="view_search_aas_mes_production_output_quality"/>
+            <field name="domain">[('serialnumber_id','!=',False)]</field>
+        </record>
+
+        <record id="act_view_tree_aas_mes_production_output_quality" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_production_output_quality"/>
+            <field name="act_window_id" ref="action_aas_mes_production_output_quality"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_production_output_quality" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_production_output_quality"/>
+            <field name="act_window_id" ref="action_aas_mes_production_output_quality"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_production_output_quality"  name="工位产出"
+                  action="action_aas_mes_production_output_quality"
+                  parent="menu_quality_serialnumber" sequence="4" groups="group_aas_quality_user,group_aas_quality_manager"/>
+
+    </data>
+</odoo>

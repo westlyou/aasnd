@@ -10,10 +10,13 @@
         <menuitem id="menu_aas_product_label"  name="标签" parent="menu_aas_quality" sequence="2"
                   groups="group_aas_quality_user,group_aas_quality_manager"/>
 
-        <menuitem id="menu_aas_mes_producttest_quality"  name="生产检测" parent="menu_aas_quality" sequence="3"
+        <menuitem id="menu_quality_serialnumber"  name="序列号" parent="menu_aas_quality" sequence="3"
                   groups="group_aas_quality_user,group_aas_quality_manager"/>
 
-        <menuitem id="menu_aas_mes_tracing_quality"  name="生产追溯" parent="menu_aas_quality" sequence="4"
+        <menuitem id="menu_aas_mes_producttest_quality"  name="生产检测" parent="menu_aas_quality" sequence="4"
+                  groups="group_aas_quality_user,group_aas_quality_manager"/>
+
+        <menuitem id="menu_aas_mes_tracing_quality"  name="生产追溯" parent="menu_aas_quality" sequence="5"
                   groups="group_aas_quality_user,group_aas_quality_manager"/>
 
     </data>

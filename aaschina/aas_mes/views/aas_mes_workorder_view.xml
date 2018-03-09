@@ -52,6 +52,8 @@
                                         string="设备数据"/>
                                 <button type="object" name="action_show_producttest_data" class="oe_stat_button" icon="fa-list"
                                         string="检测数据"/>
+                                <button type="object" name="action_show_serialnumbers" class="oe_stat_button" icon="fa-list"
+                                        string="序列号清单" attrs="{'invisible':[('mesline_type','!=','flowing')]}"/>
                             </div>
 
                         </div>

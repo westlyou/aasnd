@@ -796,6 +796,26 @@ class AASMESWorkorder(models.Model):
             'domain': tempdomain
         }
 
+
+    @api.multi
+    def action_show_serialnumbers(self):
+        self.ensure_one()
+        if self.env['aas.mes.serialnumber'].search_count([('workorder_id', '=', self.id)]) <= 0:
+            raise UserError(u'当前工单没有关联序列号！！')
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_serialnumber')
+        view_tree = self.env.ref('aas_mes.view_tree_aas_mes_serialnumber')
+        return {
+            'name': u"序列号清单",
+            'type': 'ir.actions.act_window',
+            'view_mode': 'tree,form',
+            'res_model': 'aas.mes.serialnumber',
+            'views': [(view_tree.id, 'tree'), (view_form.id, 'form')],
+            'target': 'self',
+            'context': self.env.context,
+            'domain': [('workorder_id', '=', self.id)]
+        }
+
+
     @api.multi
     def action_show_wireorder(self):
         self.ensure_one()

@@ -128,7 +128,7 @@
         </record>
 
         <menuitem id="menu_aas_mes_rework_quality"  name="返工维修" action="action_aas_mes_rework_quality"
-                          parent="menu_aas_mes_producttest_quality" sequence="4" groups="group_aas_quality_user"/>
+                          parent="menu_quality_serialnumber" sequence="5" groups="group_aas_quality_user"/>
 
     </data>
 </odoo>
