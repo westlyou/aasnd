@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <tree create="false" edit="false" delete="false">
                     <field name="name"/>
-                    <field name="workcenter_id"/>
+                    <field name="workstation_id"/>
                     <field name="product_id"/>
                     <field name="mesline_id"/>
                     <field name="equipment_id"/>
@@ -39,7 +39,7 @@
                             <group>
                                 <field name="name"/>
                                 <field name="product_id" options="{'no_open':true}"/>
-                                <field name="workcenter_id" options="{'no_open':true}"/>
+                                <field name="workstation_id" options="{'no_open':true}"/>
                                 <field name="mesline_id" options="{'no_open':true}"/>
                                 <field name="equipment_id" options="{'no_open':true}"/>
                                 <field name="order_time"/>
@@ -92,7 +92,7 @@
                 <search>
                     <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
                     <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
-                    <field name="workcenter_id" string="工序" filter_domain="[('workcenter_id','ilike',self)]"/>
+                    <field name="workstation_id" string="工位" filter_domain="[('workstation_id','ilike',self)]"/>
                     <field name="mesline_id" string="产线" filter_domain="[('mesline_id','ilike',self)]"/>
                     <field name="equipment_id" string="设备" filter_domain="[('equipment_id','ilike',self)]"/>
                     <field name="employee_id" string="员工" filter_domain="[('employee_id','ilike',self)]"/>
@@ -101,7 +101,7 @@
                     <filter string="NG" domain="[('qualified','=',False)]" />
                     <separator/>
                     <group expand="0" string="分组">
-                        <filter string="工序" context="{'group_by':'workcenter_id'}"/>
+                        <filter string="工位" context="{'group_by':'workstation_id'}"/>
                         <filter string="产品" context="{'group_by':'product_id'}"/>
                         <filter string="产线" context="{'group_by':'mesline_id'}"/>
                         <filter string="设备" context="{'group_by':'equipment_id'}"/>
