@@ -84,10 +84,11 @@ class AASMESAllocationController(http.Controller):
             values.update({'success': False, 'message': u'容器%s已经在产线%s线边库中，无需再调拨！'% (container.name, mesline.name)})
             return values
         values.update({'container_id': container.id, 'container_name': container.name})
-        values['productlines'] = [{
-            'product_code': cpline.product_id.default_code, 'product_uom': cpline.product_id.uom_id.name,
-            'product_lot': cpline.product_lot.name, 'product_qty': cpline.product_qty, 'container_name': container.name
-        } for cpline in container.product_lines]
+        prdocutline = container.product_lines[0]
+        values.update({
+            'product_code': prdocutline.product_id.default_code, 'product_uom': prdocutline.product_id.uom_id.name,
+            'product_lot': prdocutline.product_lot.name, 'product_qty': prdocutline.product_qty
+        })
         return values
 
 

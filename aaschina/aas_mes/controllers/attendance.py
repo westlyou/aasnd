@@ -19,7 +19,7 @@ class AASMESAttendanceController(http.Controller):
 
     @http.route('/aasmes/attendance/scanner', type='http', auth="user")
     def aasmes_attendance_scanner(self):
-        values = {'success': True, 'message': u'上岗需要先选择工位，再扫描员工卡；如果是离岗直接扫描员工卡即可！'}
+        values = {'success': True, 'message': u'上岗需要先选择工位，再扫描员工卡；如果是离岗扫描员工卡后必须选择离岗原因方可离开！'}
         login = request.env.user
         values.update({'checker': login.name, 'workstations': [], 'workstation_id': '0', 'workstation_name': '', 'mesline_name': ''})
         checkdomain = [('lineuser_id', '=', login.id)]

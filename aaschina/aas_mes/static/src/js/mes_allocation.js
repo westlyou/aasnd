@@ -81,20 +81,26 @@ $(function(){
                     layer.msg(dresult.message, {icon: 5});
                     return ;
                 }
-                var allocationtr = $('<tr></tr>').prependTo($('#allocationlist'));
+                var temptr = $('#label_'+dresult.label_id);
+                if(temptr!=undefined && temptr!=null && temptr.length>0){
+                    layer.msg('标签已存在，请不要重复扫描！', {icon: 5});
+                    return ;
+                }
+                var allocationtr = $('<tr class="aas-label"></tr>').prependTo($('#allocationlist'));
+                allocationtr.attr({'id': 'label_'+dresult.label_id, 'labelid': dresult.label_id});
                 $('<td></td>').html(dresult.product_code).appendTo(allocationtr);
                 $('<td></td>').html(dresult.product_uom).appendTo(allocationtr);
                 $('<td></td>').html(dresult.product_lot).appendTo(allocationtr);
                 $('<td></td>').html(dresult.product_qty).appendTo(allocationtr);
                 $('<td></td>').html(dresult.label_name).appendTo(allocationtr);
                 $('<td></td>').html('').appendTo(allocationtr);
-                var labelids = $('#mes_label').attr('labelids');
-                if(labelids==null||labelids==""){
-                    labelids = dresult.label_id.toString();
-                }else{
-                    labelids += ',' + dresult.label_id;
-                }
-                $('#mes_label').attr('labelids', labelids).html(dresult.label_name);
+                var operationcol = $('<td></td>').appendTo(allocationtr);
+                $('<span class="label label-danger">删除</span>').appendTo(operationcol).click(function(){
+                    allocationtr.remove();
+                    $('#mes_label').html('');
+                    $('#mes_container').html('');
+                });
+                $('#mes_label').html(dresult.label_name);
                 $('#mes_container').html('');
             },
             error:function(xhr,type,errorThrown){
@@ -130,23 +136,27 @@ $(function(){
                     layer.msg(dresult.message, {icon: 5});
                     return ;
                 }
-                $.each(dresult.productlines, function(index, record){
-                    var allocationtr = $('<tr></tr>').prependTo($('#allocationlist'));
-                    $('<td></td>').html(record.product_code).appendTo(allocationtr);
-                    $('<td></td>').html(record.product_uom).appendTo(allocationtr);
-                    $('<td></td>').html(record.product_lot).appendTo(allocationtr);
-                    $('<td></td>').html(record.product_qty).appendTo(allocationtr);
-                    $('<td></td>').html('').appendTo(allocationtr);
-                    $('<td></td>').html(record.container_name).appendTo(allocationtr);
-                });
-                var containerids = $('#mes_container').attr('containerids');
-                if(containerids==null || containerids==''){
-                    containerids = dresult.container_id.toString();
-                }else{
-                    containerids += ',' + dresult.container_id;
+                var temptr = $('#container_'+dresult.container_id);
+                if(temptr!=undefined && temptr!=null && temptr.length>0){
+                    layer.msg('容器已存在请不要重复扫描！', {icon: 5});
+                    return ;
                 }
-                $('#mes_container').attr('containerids', containerids).html(dresult.container_name);
+                var allocationtr = $('<tr class="aas-container"></tr>').prependTo($('#allocationlist'));
+                allocationtr.attr({'id': 'container_'+dresult.container_id, 'containerid': dresult.container_id});
+                $('<td></td>').html(dresult.product_code).appendTo(allocationtr);
+                $('<td></td>').html(dresult.product_uom).appendTo(allocationtr);
+                $('<td></td>').html(dresult.product_lot).appendTo(allocationtr);
+                $('<td></td>').html(dresult.product_qty).appendTo(allocationtr);
+                $('<td></td>').html('').appendTo(allocationtr);
+                $('<td></td>').html(dresult.container_name).appendTo(allocationtr);
+                var operationcol = $('<td></td>').appendTo(allocationtr);
+                $('<span class="label label-danger">删除</span>').appendTo(operationcol).click(function(){
+                    allocationtr.remove();
+                    $('#mes_label').html('');
+                    $('#mes_container').html('');
+                });
                 $('#mes_label').html('');
+                $('#mes_container').html(dresult.container_name);
             },
             error:function(xhr,type,errorThrown){
                 scanable = true;
@@ -157,9 +167,23 @@ $(function(){
 
 
     $('#action_done').click(function(){
-        var containerids = $('#mes_container').attr('containerids');
-        var labelids = $('#mes_label').attr('labelids');
-        if((containerids==null || containerids=='') && (labelids==null || labelids=='')){
+        var labellist = $('.aas-label');
+        var containerlist = $('.aas-container');
+        var labelids = [];
+        var containerids = [];
+        if(labellist!=undefined && labellist!=null && labellist.length > 0){
+            $.each(labellist, function(index, tlabel){
+                var labelid = parseInt($(tlabel).attr('labelid'));
+                labelids.push(labelid);
+            });
+        }
+        if(containerlist!=undefined && containerlist!=null && containerlist.length > 0){
+            $.each(containerlist, function(index, tcontainer){
+                var containerid = parseInt($(tcontainer).attr('containerid'));
+                containerids.push(containerid);
+            });
+        }
+        if(labelids.length<=0 && containerids.length<=0){
             layer.msg('您还未添加调拨明细，暂时不可以确认调拨！', {icon: 5});
             return ;
         }
@@ -173,21 +197,9 @@ $(function(){
             layer.msg('请先选择扫描操作员工！', {icon: 5});
             return ;
         }
-        var containeridlist = [];
-        if(containerids!=null && containerids!=""){
-            $.each(containerids.split(','), function(index, containerid){
-                containeridlist.push(parseInt(containerid));
-            });
-        }
-        var labelidlist = []
-        if(labelids!=null && labelids!=""){
-            $.each(labelids.split(','), function(index, labelid){
-                labelidlist.push(parseInt(labelid));
-            });
-        }
         layer.confirm('您确认要执行调拨？', {'btn': ['确定', '取消']}, function(index){
             layer.close(index);
-            action_doallocate(meslineid, employeeid, containeridlist, labelidlist);
+            action_doallocate(meslineid, employeeid, containerids, labelids);
         }, function(){});
     });
 

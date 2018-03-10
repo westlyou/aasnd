@@ -30,6 +30,11 @@
                         <nav class="navbar navbar-static-top">
                             <div class="navbar-custom-menu">
                                 <ul id="attendance_menus" class="nav navbar-nav">
+                                    <li id="action_allocation" class="messages-menu">
+                                        <a href="/aasmes/allocation" target="_blank">
+                                            <i class="fa fa-shopping-cart"></i> <span>生产调拨</span>
+                                        </a>
+                                    </li>
                                     <li class="dropdown messages-menu">
                                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                                             <i class="fa fa-user"></i> <span t-esc="checker"/>

@@ -21,6 +21,7 @@ _logger = logging.getLogger(__name__)
 class AASMESAllocation(models.Model):
     _name = 'aas.mes.allocation'
     _description = 'AAS MES Allocation'
+    _order = 'id desc'
 
     name = fields.Char(string=u'名称', copy=False)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
@@ -28,8 +29,7 @@ class AASMESAllocation(models.Model):
     operator_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员', ondelete='restrict')
     operation_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
     state = fields.Selection(selection=[('draft', u'草稿'), ('done', u'完成')], string=u'状态', default='draft')
-    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='restrict', index=True,
-                                 default=lambda self: self.env.user.company_id)
+    company_id = fields.Many2one('res.company', string=u'公司', index=True, default=lambda self: self.env.user.company_id)
     allocation_lines = fields.One2many(comodel_name='aas.mes.allocation.line', inverse_name='allocation_id', string=u'调拨明细')
 
     @api.model
