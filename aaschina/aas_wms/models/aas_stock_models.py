@@ -89,6 +89,7 @@ class Location(models.Model):
 
     mrblocation = fields.Boolean(string=u'MRB库位', default=False, copy=False)
     edgelocation = fields.Boolean(string=u'生产线边库', default=False, copy=False)
+    dulllocation = fields.Boolean(string=u'呆滞库位', default=False, copy=False)
     usage = fields.Selection(selection_add=[('sundry', u'杂项'), ('container', u'容器')])
     container_id = fields.Many2one(comodel_name='aas.container', string=u'容器')
 

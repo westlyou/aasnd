@@ -17,6 +17,8 @@ from odoo.exceptions import AccessDenied,UserError,ValidationError
 logger = logging.getLogger(__name__)
 
 LABELSTATEDICT = {'draft': u'草稿', 'normal': u'正常', 'frozen': u'冻结', 'over': u'消亡'}
+DELIVERYTYPEDICT = {'purchase': u'采购退货', 'manufacture': u'生产领料', 'sales': u'销售发货', 'sundry': u'杂项出库'}
+RECEIPTTYPEDICT = {'purchase': u'采购收货', 'manufacture': u'成品入库', 'manreturn': u'生产退料', 'sundry': u'杂项入库'}
 
 def get_current_time(record, timestr):
     if not timestr:
@@ -282,4 +284,135 @@ class AASLabelWechatController(http.Controller):
                     'label_id': tlabel.id, 'label_name': tlabel.name, 'product_qty': tlabel.product_qty
                 })
         return request.render('aas_wms.wechat_wms_product_stock_labels', values)
+
+
+    #########收发明细#########################################
+
+
+    @http.route('/aaswechat/wms/receiptmovelist/<int:productid>', type='http', auth="user")
+    def aas_wechat_wms_receiptmovelist(self, productid, limit=20):
+        values = {'movelist': [], 'moveindex': '0', 'product_id': productid}
+        movedomain = [('product_id', '=', productid), ('location_dest_id.edgelocation', '=', False)]
+        movelist = request.env['aas.stock.receipt.move'].search(movedomain, order="id desc", limit=limit)
+        if not movelist or len(movelist) <= 0:
+            return request.render('aas_wms.wechat_wms_receipt_move_list', values)
+        values['movelist'] = [{
+            'moveid': tmove.id, 'product_lot': tmove.product_lot.name, 'product_qty': tmove.product_qty,
+            'srclocation': tmove.location_src_id.name, 'destlocation': tmove.location_dest_id.name
+        } for tmove in movelist]
+        values['moveindex'] = len(movelist)
+        return request.render('aas_wms.wechat_wms_receipt_move_list', values)
+
+
+    @http.route('/aaswechat/wms/receiptmovemore', type='json', auth="user")
+    def aas_wechat_receiptmovemore(self, productid, searchkey=None, moveindex=0, limit=20):
+        values = {'success': True, 'message': '', 'movelist': [], 'moveindex': moveindex, 'movecount': 0}
+        movedomain = [('product_id', '=', productid), ('location_dest_id.edgelocation', '=', False)]
+        if searchkey:
+            movedomain.append(('product_lot.name', 'ilike', searchkey))
+        movelist = request.env['aas.stock.receipt.move'].search(movedomain, offset=moveindex, order="id desc", limit=limit)
+        if not movelist or len(movelist) <= 0:
+            return values
+        values['movelist'] = [{
+            'moveid': tmove.id, 'product_lot': tmove.product_lot.name, 'product_qty': tmove.product_qty,
+            'srclocation': tmove.location_src_id.name, 'destlocation': tmove.location_dest_id.name
+        } for tmove in movelist]
+        values['movecount'] = len(movelist)
+        values['moveindex'] = moveindex + values['movecount']
+        return values
+
+    @http.route('/aaswechat/wms/receiptmovesearch', type='json', auth="user")
+    def aas_wechat_receiptmovesearch(self, productid, searchkey, limit=20):
+        values = {'success': True, 'message': '', 'movelist': [], 'moveindex': 0}
+        movedomain = [('product_id', '=', productid), ('location_dest_id.edgelocation', '=', False)]
+        if searchkey:
+            movedomain.append(('product_lot.name', 'ilike', searchkey))
+        movelist = request.env['aas.stock.receipt.move'].search(movedomain, order="id desc", limit=limit)
+        values['movelist'] = [{
+            'moveid': tmove.id, 'product_lot': tmove.product_lot.name, 'product_qty': tmove.product_qty,
+            'srclocation': tmove.location_src_id.name, 'destlocation': tmove.location_dest_id.name
+        } for tmove in movelist]
+        values['moveindex'] = len(movelist)
+        return values
+
+
+    @http.route('/aaswechat/wms/receiptmovedetail/<int:moveid>', type='http', auth="user")
+    def aas_wechat_wms_receiptmovedetail(self, moveid):
+        values = {'success': True, 'message': ''}
+        tempmove = request.env['aas.stock.receipt.move'].browse(moveid)
+        values.update({
+            'receipt_name': tempmove.receipt_id.name, 'receipt_type': RECEIPTTYPEDICT[tempmove.receipt_type],
+            'product_code': tempmove.product_id.default_code, 'product_lot': tempmove.product_lot.name,
+            'origin_order': '' if not tempmove.origin_order else tempmove.origin_order,
+            'receipt_time': fields.Datetime.to_china_string(tempmove.receipt_time),
+            'receipt_user': tempmove.receipt_user.name, 'product_qty': tempmove.product_qty,
+            'srclocation': tempmove.location_src_id.name, 'destlocation': tempmove.location_dest_id.name
+        })
+        return request.render('aas_wms.wechat_wms_receipt_move_detail', values)
+
+
+
+
+    @http.route('/aaswechat/wms/deliverymovelist/<int:productid>', type='http', auth="user")
+    def aas_wechat_wms_deliverymovelist(self, productid, limit=20):
+        values = {'movelist': [], 'moveindex': '0', 'product_id': productid}
+        movedomain = [('product_id', '=', productid), ('location_dest_id.edgelocation', '=', False)]
+        movelist = request.env['aas.stock.delivery.move'].search(movedomain, order="id desc", limit=limit)
+        if not movelist or len(movelist) <= 0:
+            return request.render('aas_wms.wechat_wms_delivery_move_list', values)
+        values['movelist'] = [{
+            'moveid': tmove.id, 'product_lot': tmove.product_lot.name, 'product_qty': tmove.product_qty,
+            'srclocation': tmove.location_src_id.name, 'destlocation': tmove.location_dest_id.name
+        } for tmove in movelist]
+        values['moveindex'] = len(movelist)
+        return request.render('aas_wms.wechat_wms_delivery_move_list', values)
+
+
+    @http.route('/aaswechat/wms/deliverymovemore', type='json', auth="user")
+    def aas_wechat_deliverymovemore(self, productid, searchkey=None, moveindex=0, limit=20):
+        values = {'success': True, 'message': '', 'movelist': [], 'moveindex': moveindex, 'movecount': 0}
+        movedomain = [('product_id', '=', productid), ('location_dest_id.edgelocation', '=', False)]
+        if searchkey:
+            movedomain.append(('product_lot.name', 'ilike', searchkey))
+        movelist = request.env['aas.stock.delivery.move'].search(movedomain, offset=moveindex, order="id desc", limit=limit)
+        if not movelist or len(movelist) <= 0:
+            return values
+        values['movelist'] = [{
+            'moveid': tmove.id, 'product_lot': tmove.product_lot.name, 'product_qty': tmove.product_qty,
+            'srclocation': tmove.location_src_id.name, 'destlocation': tmove.location_dest_id.name
+        } for tmove in movelist]
+        values['movecount'] = len(movelist)
+        values['moveindex'] = moveindex + values['movecount']
+        return values
+
+    @http.route('/aaswechat/wms/deliverymovesearch', type='json', auth="user")
+    def aas_wechat_deliverymovesearch(self, productid, searchkey, limit=20):
+        values = {'success': True, 'message': '', 'movelist': [], 'moveindex': 0}
+        movedomain = [('product_id', '=', productid), ('location_dest_id.edgelocation', '=', False)]
+        if searchkey:
+            movedomain.append(('product_lot.name', 'ilike', searchkey))
+        movelist = request.env['aas.stock.delivery.move'].search(movedomain, order="id desc", limit=limit)
+        values['movelist'] = [{
+            'moveid': tmove.id, 'product_lot': tmove.product_lot.name, 'product_qty': tmove.product_qty,
+            'srclocation': tmove.location_src_id.name, 'destlocation': tmove.location_dest_id.name
+        } for tmove in movelist]
+        values['moveindex'] = len(movelist)
+        return values
+
+
+    @http.route('/aaswechat/wms/deliverymovedetail/<int:moveid>', type='http', auth="user")
+    def aas_wechat_wms_deliverymovedetail(self, moveid):
+        values = {'success': True, 'message': ''}
+        tempmove = request.env['aas.stock.delivery.move'].browse(moveid)
+        values.update({
+            'receipt_name': tempmove.delivery_id.name, 'delivery_type': DELIVERYTYPEDICT[tempmove.delivery_type],
+            'product_code': tempmove.product_id.default_code, 'product_lot': tempmove.product_lot.name,
+            'origin_order': '' if not tempmove.origin_order else tempmove.origin_order,
+            'delivery_time': fields.Datetime.to_china_string(tempmove.delivery_time),
+            'delivery_user': tempmove.delivery_user.name, 'product_qty': tempmove.product_qty,
+            'srclocation': tempmove.location_src_id.name, 'destlocation': tempmove.location_dest_id.name
+        })
+        return request.render('aas_wms.wechat_wms_delivery_move_detail', values)
+
+
 

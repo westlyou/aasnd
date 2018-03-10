@@ -593,5 +593,283 @@
             </html>
         </template>
 
+
+
+        <template id="wechat_wms_receipt_move_list" name="Wechat WMS Receipt Move List">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.picker.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+                        <h1 class="mui-title"> 收货明细 </h1>
+                    </header>
+                    <div id="receipt_movelist_pullrefresh" class="mui-content mui-scroll-wrapper"
+                         t-att-productid="product_id" t-att-moveindex="moveindex">
+                        <div class="mui-scroll">
+                            <div class="mui-input-row mui-search" style="height:34px;margin:10px;">
+                                <input id="move_search" type="search" class="mui-input-clear" placeholder="请输入产品批次"/>
+                            </div>
+                            <ul id="movelist" class="mui-table-view">
+                                <li class="mui-table-view-cell" >
+                                    <div class="mui-table">
+                                        <div class="mui-table-cell mui-col-xs-6 mui-text-left"> 产品批次 </div>
+                                        <div class="mui-table-cell mui-col-xs-6 mui-text-right"> 产品数量 </div>
+                                    </div>
+                                    <div class="mui-table">
+                                        <div class="mui-table-cell mui-col-xs-6 mui-text-left"> 来源库位 </div>
+                                        <div class="mui-table-cell mui-col-xs-6 mui-text-right"> 目标库位 </div>
+                                    </div>
+                                </li>
+                                <t t-if="movelist">
+                                    <t t-foreach="movelist" t-as="tmove">
+                                        <li class="mui-table-view-cell aas-move" t-att-moveid="tmove['moveid']">
+                                            <a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>
+                                                <div class="mui-table">
+                                                    <div class="mui-table-cell mui-col-xs-6 mui-text-left">
+                                                        <t t-esc="tmove['product_lot']"/>
+                                                    </div>
+                                                    <div class="mui-table-cell mui-col-xs-6 mui-text-right">
+                                                        <t t-esc="tmove['product_qty']"/>
+                                                    </div>
+                                                </div>
+                                                <div class="mui-table">
+                                                    <div class="mui-table-cell mui-col-xs-6 mui-text-left">
+                                                        <t t-esc="tmove['srclocation']"/>
+                                                    </div>
+                                                    <div class="mui-table-cell mui-col-xs-6 mui-text-right">
+                                                        <t t-esc="tmove['destlocation']"/>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </li>
+                                    </t>
+                                </t>
+                            </ul>
+                        </div>
+                    </div>
+                </body>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_receipt_move_list.js"></script>
+            </html>
+        </template>
+
+        <template id="wechat_wms_receipt_move_detail" name="Wechat Receipt Move Detail">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.picker.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+                        <h1 class="mui-title"> 收货详情 </h1>
+                    </header>
+                    <div id="receipt_movedetail_pullrefresh" class="mui-content mui-scroll-wrapper" t-att-moveid="move_id">
+                        <div class="mui-scroll">
+                            <ul class="mui-table-view">
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">收货单号</span>
+                                    <span class="mui-pull-right" t-esc="receipt_name"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">收货类型</span>
+                                    <span class="mui-pull-right" t-esc="receipt_type"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">产品编码</span>
+                                    <span class="mui-pull-right" t-esc="product_code"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">产品批次</span>
+                                    <span class="mui-pull-right" t-esc="product_lot"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">来源单据</span>
+                                    <span class="mui-pull-right" t-esc="origin_order"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">收货时间</span>
+                                    <span class="mui-pull-right" t-esc="receipt_time"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">收货员工</span>
+                                    <span class="mui-pull-right" t-esc="receipt_user"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">产品数量</span>
+                                    <span class="mui-pull-right" t-esc="product_qty"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">来源库位</span>
+                                    <span class="mui-pull-right" t-esc="srclocation"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">目标库位</span>
+                                    <span class="mui-pull-right" t-esc="destlocation"/>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </body>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_receipt_move_detail.js"></script>
+            </html>
+        </template>
+
+        <template id="wechat_wms_delivery_move_list" name="Wechat WMS Delivery Move List">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.picker.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+                        <h1 class="mui-title"> 发货明细 </h1>
+                    </header>
+                    <div id="delivery_movelist_pullrefresh" class="mui-content mui-scroll-wrapper"
+                         t-att-productid="product_id" t-att-moveindex="moveindex">
+                        <div class="mui-scroll">
+                            <div class="mui-input-row mui-search" style="height:34px;margin:10px;">
+                                <input id="move_search" type="search" class="mui-input-clear" placeholder="请输入产品批次"/>
+                            </div>
+                            <ul id="movelist" class="mui-table-view">
+                                <li class="mui-table-view-cell" >
+                                    <div class="mui-table">
+                                        <div class="mui-table-cell mui-col-xs-6 mui-text-left"> 产品批次 </div>
+                                        <div class="mui-table-cell mui-col-xs-6 mui-text-right"> 产品数量 </div>
+                                    </div>
+                                    <div class="mui-table">
+                                        <div class="mui-table-cell mui-col-xs-6 mui-text-left"> 来源库位 </div>
+                                        <div class="mui-table-cell mui-col-xs-6 mui-text-right"> 目标库位 </div>
+                                    </div>
+                                </li>
+                                <t t-if="movelist">
+                                    <t t-foreach="movelist" t-as="tmove">
+                                        <li class="mui-table-view-cell aas-move" t-att-moveid="tmove['moveid']">
+                                            <a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>
+                                                <div class="mui-table">
+                                                    <div class="mui-table-cell mui-col-xs-6 mui-text-left">
+                                                        <t t-esc="tmove['product_lot']"/>
+                                                    </div>
+                                                    <div class="mui-table-cell mui-col-xs-6 mui-text-right">
+                                                        <t t-esc="tmove['product_qty']"/>
+                                                    </div>
+                                                </div>
+                                                <div class="mui-table">
+                                                    <div class="mui-table-cell mui-col-xs-6 mui-text-left">
+                                                        <t t-esc="tmove['srclocation']"/>
+                                                    </div>
+                                                    <div class="mui-table-cell mui-col-xs-6 mui-text-right">
+                                                        <t t-esc="tmove['destlocation']"/>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </li>
+                                    </t>
+                                </t>
+                            </ul>
+                        </div>
+                    </div>
+                </body>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_delivery_move_list.js"></script>
+            </html>
+        </template>
+
+        <template id="wechat_wms_delivery_move_detail" name="Wechat Delivery Move Detail">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.picker.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+                        <h1 class="mui-title"> 发货详情 </h1>
+                    </header>
+                    <div id="delivery_movedetail_pullrefresh" class="mui-content mui-scroll-wrapper" t-att-moveid="move_id">
+                        <div class="mui-scroll">
+                            <ul class="mui-table-view">
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">发货单号</span>
+                                    <span class="mui-pull-right" t-esc="delivery_name"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">发货类型</span>
+                                    <span class="mui-pull-right" t-esc="delivery_type"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">产品编码</span>
+                                    <span class="mui-pull-right" t-esc="product_code"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">产品批次</span>
+                                    <span class="mui-pull-right" t-esc="product_lot"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">来源单据</span>
+                                    <span class="mui-pull-right" t-esc="origin_order"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">发货时间</span>
+                                    <span class="mui-pull-right" t-esc="delivery_time"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">发货员工</span>
+                                    <span class="mui-pull-right" t-esc="delivery_user"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">产品数量</span>
+                                    <span class="mui-pull-right" t-esc="product_qty"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">来源库位</span>
+                                    <span class="mui-pull-right" t-esc="srclocation"/>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">目标库位</span>
+                                    <span class="mui-pull-right" t-esc="destlocation"/>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </body>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_delivery_move_detail.js"></script>
+            </html>
+        </template>
+
     </data>
 </odoo>

@@ -573,7 +573,7 @@ class AASStockReceiptMove(models.Model):
     location_src_id = fields.Many2one(comodel_name='stock.location', string=u'来源库位', ondelete='restrict')
     location_dest_id = fields.Many2one(comodel_name='stock.location', string=u'目标库位', ondelete='restrict')
     product_qty = fields.Float(string=u'收货数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     @api.model
     def create(self, vals):

@@ -20,11 +20,13 @@ mui.init({
 mui.ready(function(){
 
     document.getElementById('receiptlist').addEventListener('tap', function(){
-        mui.toast('敬请期待！');
+        var productid = document.getElementById('product_stock_list_pullrefresh').getAttribute('productid');
+        mui.openWindow({'url': '/aaswechat/wms/receiptmovelist/'+productid, 'id': 'stockreceiptlist'});
     });
 
     document.getElementById('deliverylist').addEventListener('tap', function(){
-        mui.toast('敬请期待！');
+        var productid = document.getElementById('product_stock_list_pullrefresh').getAttribute('productid');
+        mui.openWindow({'url': '/aaswechat/wms/deliverymovelist/'+productid, 'id': 'stockdeliverylist'});
     });
 
     mui("#stocklist").on("tap", "li.aas-stock", function(){
