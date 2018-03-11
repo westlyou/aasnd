@@ -92,7 +92,7 @@
                     <filter string="今日不良" domain="[('badmode_date','=',context_today().strftime('%Y-%m-%d'))]"/>
                     <filter string="最近七日" domain="[('badmode_date','&lt;=',context_today().strftime('%Y-%m-%d')),('badmode_date','&gt;=',((context_today() - relativedelta(days=7)).strftime('%Y-%m-%d')))]"/>
                     <separator/>
-                    <group expand="0" string="分组">
+                    <group expand="1" string="分组">
                         <filter string="序列号" context="{'group_by':'serialnumber_id'}"/>
                         <filter string="内部料号" context="{'group_by':'internalpn'}"/>
                         <filter string="客户料号" context="{'group_by':'customerpn'}"/>
@@ -116,6 +116,7 @@
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="view_tree_aas_mes_rework"/>
             <field name="search_view_id" ref="view_search_aas_mes_rework"/>
+            <field name="context">{'search_default_badmode_date':context_today().strftime('%Y-%m-%d')}</field>
         </record>
 
         <record id="act_view_tree_aas_mes_rework" model="ir.actions.act_window.view">

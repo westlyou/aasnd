@@ -313,6 +313,7 @@ class AASMESOperationRecord(models.Model):
     scanning_employee = fields.Char(string=u'扫描员工', copy=False, index=True)
     checking_employee = fields.Char(string=u'检查员工', copy=False, index=True)
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
+    operate_date = fields.Char(string=u'操作日期', copy=False)
     operate_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
     operator_id = fields.Many2one(comodel_name='res.users', string=u'操作用户', default=lambda self: self.env.user)
     operation_pass = fields.Boolean(string=u'操作通过', default=True, copy=False)
@@ -331,10 +332,11 @@ class AASMESOperationRecord(models.Model):
 
     @api.one
     def action_after_create(self):
+        operate_date = fields.Datetime.to_china_today()
+        operationvals = {'operate_date': operate_date}
         serialnumber = self.operation_id.serialnumber_id
         if serialnumber:
             self.write({'serialnumber': serialnumber.name, 'serialnumber_id': serialnumber.id})
-        operationvals = {}
         if self.operate_type == 'newbarcode':
             operationvals.update({'barcode_create': True, 'barcode_record_id': self.id})
         elif self.operate_type == 'embedpiece':
@@ -345,12 +347,11 @@ class AASMESOperationRecord(models.Model):
                 serialnumber.write({'state': 'normal'})
         elif self.operate_type == 'fqc':
             if not serialnumber.stocked:
-                operationvals['fqccheck_date'] = fields.Datetime.to_china_today()
+                operationvals['fqccheck_date'] = operate_date
             operationvals.update({'final_quality_check': True, 'fqccheck_record_id': self.id})
         elif self.operate_type == 'gp12':
             operationvals.update({'gp12_check': True, 'gp12_record_id': self.id})
-        if operationvals and len(operationvals) > 0:
-            self.operation_id.write(operationvals)
+        self.operation_id.write(operationvals)
 
 
 

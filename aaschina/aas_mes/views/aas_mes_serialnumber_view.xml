@@ -151,12 +151,13 @@
                     <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
                     <field name="product_lot" string="批次" filter_domain="[('product_lot','ilike',self)]"/>
                     <field name="operator_id" string="操作人" filter_domain="[('user_id','ilike',self)]"/>
+                    <field name="operation_date" string="生成日期" filter_domain="[('operation_date','ilike',self)]"/>
                     <field name="internal_product_code" string="内部料号" filter_domain="[('internal_product_code','ilike',self)]"/>
                     <field name="customer_product_code" string="客户料号" filter_domain="[('customer_product_code','ilike',self)]"/>
                     <separator/>
                     <filter string="不合格" domain="[('qualified','=',False)]" />
                     <filter string="返工品" domain="[('reworked','=',True)]" />
-                    <group expand="0" string="分组">
+                    <group expand="1" string="分组">
                         <filter string="操作人" context="{'group_by':'operator_id'}"/>
                         <filter string="序列规则" context="{'group_by':'regular_code'}"/>
                         <filter string="内部料号" context="{'group_by':'internal_product_code'}"/>
@@ -174,6 +175,7 @@
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="view_tree_aas_mes_serialnumber"/>
             <field name="search_view_id" ref="view_search_aas_mes_serialnumber"/>
+            <field name="context">{'search_default_operation_date':context_today().strftime('%Y-%m-%d')}</field>
         </record>
 
         <record id="act_view_tree_aas_mes_serialnumber" model="ir.actions.act_window.view">
@@ -297,7 +299,7 @@
                     <filter string="未终检" domain="[('final_quality_check','=',False),('function_test','=',True)]" />
                     <filter string="未GP12检测" domain="[('gp12_check','=',False),('final_quality_check','=',True)]" />
                     <separator/>
-                    <group expand="0" string="分组">
+                    <group expand="1" string="分组">
                         <filter string="标签" context="{'group_by':'label_id'}"/>
                         <filter string="产线" context="{'group_by':'mesline_id'}"/>
                         <filter string="产品" context="{'group_by':'product_id'}"/>
@@ -314,6 +316,7 @@
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="view_tree_aas_mes_operation"/>
             <field name="search_view_id" ref="view_search_aas_mes_operation"/>
+            <field name="context">{'search_default_operation_date':context_today().strftime('%Y-%m-%d')}</field>
         </record>
 
         <record id="act_view_tree_aas_mes_operation" model="ir.actions.act_window.view">
@@ -393,8 +396,9 @@
                     <field name="employee_id" string="操作员工" filter_domain="[('employee_id','ilike',self)]"/>
                     <field name="equipment_id" string="操作设置" filter_domain="[('equipment_id','ilike',self)]"/>
                     <field name="operator_id" string="操作用户" filter_domain="[('operator_id','ilike',self)]"/>
+                    <field name="operate_date" string="操作日期" filter_domain="[('operate_date','ilike',self)]"/>
                     <separator/>
-                    <group expand="0" string="分组">
+                    <group expand="1" string="分组">
                         <filter string="设备" context="{'group_by':'equipment_id'}"/>
                         <filter string="用户" context="{'group_by':'operator_id'}"/>
                         <filter string="操作类型" context="{'group_by':'operate_type'}"/>
@@ -412,6 +416,7 @@
             <field name="view_id" ref="view_tree_aas_mes_operation_record"/>
             <field name="search_view_id" ref="view_search_aas_mes_operation_record"/>
             <field name="domain">[('serialnumber_id','!=',False)]</field>
+            <field name="context">{'search_default_operate_date':context_today().strftime('%Y-%m-%d')}</field>
         </record>
 
         <record id="act_view_tree_aas_mes_operation_record" model="ir.actions.act_window.view">
@@ -488,7 +493,7 @@
                     <separator/>
                     <filter string="今日产出" domain="[('output_date','=',context_today().strftime('%Y-%m-%d'))]"/>
                     <separator/>
-                    <group expand="0" string="分组">
+                    <group expand="1" string="分组">
                         <filter string="产线" context="{'group_by':'mesline_id'}"/>
                         <filter string="工位" context="{'group_by':'workstation_id'}"/>
                         <filter string="设备" context="{'group_by':'equipment_id'}"/>
@@ -507,6 +512,7 @@
             <field name="view_id" ref="view_tree_aas_mes_production_output_serialnumber"/>
             <field name="search_view_id" ref="view_search_aas_mes_production_output"/>
             <field name="domain">[('serialnumber_id','!=',False)]</field>
+            <field name="context">{'search_default_output_date':context_today().strftime('%Y-%m-%d')}</field>
         </record>
 
         <record id="act_view_tree_aas_mes_production_output_serialnumber" model="ir.actions.act_window.view">
