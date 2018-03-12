@@ -85,8 +85,8 @@
                         <group>
                             <group>
                                 <field name="output_manner" attrs="{
-                                       'invisible':[('mesline_type','=','flowing')],
-                                       'required':[('mesline_type','=','station')],'readonly':[('state','=','done')]}"/>
+                                       'invisible':[('mesline_type','=','flowing')], 'readonly':[('state','=','done')]
+                                       'required':[('mesline_type','=','station')]}"/>
                                 <field name="date_code" readonly="1"/>
                                 <field name="output_qty" readonly="1"/>
                                 <field name="closer_id" readonly="1" attrs="{'invisible':[('closer_id','=',False)]}"/>

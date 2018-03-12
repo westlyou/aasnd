@@ -217,7 +217,8 @@ class AASMESWireOrder(models.Model):
                 'name': tempname+'-'+str(tempindex), 'product_id': material.id,
                 'product_uom': material.uom_id.id, 'aas_bom_id': aasbom.id,
                 'mesline_id': self.mesline_id.id, 'wireorder_id': self.id,
-                'input_qty': (tempmaterial.material_qty / wirebom.product_qty) * self.product_qty
+                'input_qty': (tempmaterial.material_qty / wirebom.product_qty) * self.product_qty,
+                'output_manner': 'container'
             })
             workorder.action_confirm()
             tempindex += 1
