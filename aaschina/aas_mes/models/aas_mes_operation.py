@@ -326,14 +326,14 @@ class AASMESOperationRecord(models.Model):
     def create(self, vals):
         if vals.get('operate_type', False):
             vals['operate_name'] = OPERATEDICT.get(vals.get('operate_type'), False)
+        vals['operate_date'] = fields.Datetime.to_china_today()
         record = super(AASMESOperationRecord, self).create(vals)
         record.action_after_create()
         return record
 
     @api.one
     def action_after_create(self):
-        operate_date = fields.Datetime.to_china_today()
-        operationvals = {'operate_date': operate_date}
+        operationvals = {}
         serialnumber = self.operation_id.serialnumber_id
         if serialnumber:
             self.write({'serialnumber': serialnumber.name, 'serialnumber_id': serialnumber.id})
@@ -347,11 +347,12 @@ class AASMESOperationRecord(models.Model):
                 serialnumber.write({'state': 'normal'})
         elif self.operate_type == 'fqc':
             if not serialnumber.stocked:
-                operationvals['fqccheck_date'] = operate_date
+                operationvals['fqccheck_date'] = fields.Datetime.to_china_today()
             operationvals.update({'final_quality_check': True, 'fqccheck_record_id': self.id})
         elif self.operate_type == 'gp12':
             operationvals.update({'gp12_check': True, 'gp12_record_id': self.id})
-        self.operation_id.write(operationvals)
+        if operationvals and len(operationvals) > 0:
+            self.operation_id.write(operationvals)
 
 
 

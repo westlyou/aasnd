@@ -126,11 +126,11 @@ class AASStockReceiptProductWizard(models.TransientModel):
             self.write({'build_labels': True})
         self.action_check_labels()
         receipt, product, lotdict = self.receipt_id, self.product_id, {}
-        if receipt.receipt_type=='purchase':
+        if receipt.receipt_type == 'purchase':
             location_id = self.env.ref('stock.stock_location_suppliers').id
-        elif receipt.receipt_type=='sundry':
+        elif receipt.receipt_type == 'sundry':
             location_id = self.env.ref('aas_wms.stock_location_sundry').id
-        elif receipt.receipt_type=='manreturn':
+        elif receipt.receipt_type == 'manreturn':
             location_id = self.env.ref('stock.location_production').id
         else:
             location_id = self.env['stock.warehouse'].get_default_warehouse().lot_stock_id.id
