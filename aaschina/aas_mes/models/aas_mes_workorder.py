@@ -42,6 +42,7 @@ class AASMESWorkorder(models.Model):
     time_finish = fields.Datetime(string=u'完成时间', copy=False)
     creator_id = fields.Many2one(comodel_name='res.users', string=u'创建人', ondelete='restrict', default=lambda self: self.env.user)
     state = fields.Selection(selection=ORDERSTATES, string=u'状态', default='draft', copy=False)
+    produce_date = fields.Char(string=u'生产日期', copy=False)
     produce_start = fields.Datetime(string=u'开始生产', copy=False)
     produce_finish = fields.Datetime(string=u'结束生产', copy=False)
     date_code = fields.Char(string='DateCode')
@@ -1257,7 +1258,7 @@ class AASMESWorkorderProducingWizard(models.TransientModel):
         if mesline.workorder_id:
             mesline.workorder_id.write({'isproducing': False})
         mesline.write({'workorder_id': workorder.id})
-        workorder.write({'isproducing': True})
+        workorder.write({'isproducing': True, 'produce_date': fields.Datetime.to_china_today()})
 
 
 

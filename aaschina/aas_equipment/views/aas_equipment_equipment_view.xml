@@ -82,6 +82,7 @@
                     <field name="state_color"/>
                     <field name="responsible"/>
                     <field name="priority"/>
+                    <field name="sequenceno"/>
                     <templates>
                         <t t-name="kanban-box">
                             <div class="oe_kanban_vignette">
@@ -96,6 +97,7 @@
                                         <li>状态: <field name="state"/></li>
                                         <li>类别: <field name="category"/></li>
                                         <li>级别: <field name="priority" widget="priority"/></li>
+                                        <li>机台号: <field name="sequenceno"/></li>
                                         <li>
                                             责任人: <field name="responsible"/>
                                             <img t-att-src="kanban_image('res.users', 'image_small', record.responsible.raw_value)" t-att-title="record.responsible.value" width="24" height="24" class="oe_kanban_avatar"/>
@@ -123,6 +125,7 @@
                     <field name="responsible"/>
                     <field name="purchase_date"/>
                     <field name="supplier"/>
+                    <field name="sequenceno"/>
                 </tree>
             </field>
         </record>
@@ -153,6 +156,7 @@
                                 <field name="purchase_date"/>
                             </group>
                             <group>
+                                <field name="sequenceno"/>
                                 <field name="category" options="{'no_create':true}"/>
                                 <field name="responsible" options="{'no_create':true}"/>
                                 <field name="supplier" options="{'no_create':true}"/>

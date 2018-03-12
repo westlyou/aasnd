@@ -13,6 +13,7 @@ from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.tools.float_utils import float_compare, float_is_zero
 from odoo.exceptions import UserError, ValidationError
 
+import re
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -40,6 +41,7 @@ class AASEquipmentEquipment(models.Model):
 
     name = fields.Char(string=u'名称', index=True)
     code = fields.Char(string=u'编码', index=True)
+    sequenceno = fields.Char(string=u'机台号', copy=False)
     barcode = fields.Char(string=u'条码', compute='_compute_barcode', store=True, index=True)
     active = fields.Boolean(string=u'是否有效', default=True)
     supplier = fields.Many2one(comodel_name='res.partner', string=u'供应商')
