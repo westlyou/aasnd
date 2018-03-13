@@ -243,7 +243,9 @@ class AASMESWireOrder(models.Model):
         if not cresult['success']:
             values.update(cresult)
             return values
-        oresult = workorder.action_output(workorder.id, workorder.product_id.id, output_qty, container_id)
+        tequipment = self.env['aas.equipment.equipment'].browse(equipment_id)
+        oresult = workorder.action_output(workorder.id, workorder.product_id.id, output_qty,
+                                          container_id=container_id, equipment=tequipment)
         if not oresult['success']:
             values.update(oresult)
             return values
@@ -251,7 +253,6 @@ class AASMESWireOrder(models.Model):
         if outputrecord:
             outputrecord.write({'container_id': container_id})
         temployee = self.env['aas.hr.employee'].browse(employee_id)
-        tequipment = self.env['aas.equipment.equipment'].browse(equipment_id)
         csresult = workorder.action_consume(workorder.id, workorder.product_id.id)
         if csresult['tracelist'] and len(csresult['tracelist']) > 0:
             outputtime = fields.Datetime.now()

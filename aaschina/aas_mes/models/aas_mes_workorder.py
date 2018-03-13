@@ -401,7 +401,7 @@ class AASMESWorkorder(models.Model):
 
     @api.model
     def action_output(self, workorder_id, product_id, commit_qty, container_id=None,
-                      workstation_id=None, badmode_lines=[], serialnumber=None):
+                      workstation_id=None, badmode_lines=[], serialnumber=None, equipment=False):
         """工单产出
         :param workorder_id:
         :param product_id:
@@ -410,6 +410,7 @@ class AASMESWorkorder(models.Model):
         :param workstation_id:
         :param badmode_lines:
         :param serialnumber:
+        :param equipment:
         :return:
         """
         result = {'success': True, 'message': '', 'outputrecord': False, 'containerproduct': False}
@@ -440,6 +441,8 @@ class AASMESWorkorder(models.Model):
         output_qty = commit_qty - badmode_qty
         output_date = workorder.mesline_id.workdate
         lot_name = output_date.replace('-', '')
+        if equipment and equipment.sequenceno:
+            lot_name += equipment.sequenceno
         # 成品批次
         product_lot = False if serialnumber else self.env['stock.production.lot'].action_checkout_lot(product_id, lot_name).id
         container_id = False if not container_id else container_id
@@ -699,13 +702,14 @@ class AASMESWorkorder(models.Model):
         return values
 
     @api.model
-    def action_vtproduct_output(self, workstation_id, workorder_id, product_id, output_qty, badmode_lines=[]):
+    def action_vtproduct_output(self, workstation_id, workorder_id, product_id, output_qty, badmode_lines=[], equipment_id=False):
         """虚拟件半成品产出
         :param workstation_id:
         :param workorder_id:
         :param product_id:
         :param output_qty:
         :param badmode_lines:
+        :param equipment_id:
         :return:
         """
         values = {'success': True, 'message': ''}
@@ -713,8 +717,11 @@ class AASMESWorkorder(models.Model):
         if not vdvalues.get('success', False):
             values.update(vdvalues)
             return values
+        tequipment = False
+        if equipment_id:
+            tequipment = self.env['aas.equipment.equipment'].browse(equipment_id)
         opvalues = self.action_output(workorder_id, product_id, output_qty, workstation_id=workstation_id,
-                                      badmode_lines=badmode_lines)
+                                      badmode_lines=badmode_lines, equipment=tequipment)
         if not opvalues.get('success', False):
             values.update({'success': False, 'message': opvalues['message']})
             return values

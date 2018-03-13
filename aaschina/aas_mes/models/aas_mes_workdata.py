@@ -55,9 +55,12 @@ class AASMESWorkorder(models.Model):
 
     @api.model
     def action_output(self, workorder_id, product_id, commit_qty, container_id=None,
-                      workstation_id=None, badmode_lines=[], serialnumber=None):
-        tempvals = super(AASMESWorkorder, self).action_output(workorder_id, product_id, commit_qty, container_id,
-                                                              workstation_id, badmode_lines, serialnumber)
+                      workstation_id=None, badmode_lines=[], serialnumber=None, equipment=False):
+        tempvals = super(AASMESWorkorder, self).action_output(workorder_id, product_id, commit_qty,
+                                                              container_id=container_id,
+                                                              workstation_id=workstation_id,
+                                                              badmode_lines=badmode_lines,
+                                                              serialnumber=serialnumber, equipment=equipment)
         workorder = self.env['aas.mes.workorder'].browse(workorder_id)
         if serialnumber:
             tserialnumber = self.env['aas.mes.serialnumber'].search([('name', '=', serialnumber)], limit=1)
@@ -71,6 +74,8 @@ class AASMESWorkorder(models.Model):
                 temp_qty -= sum([bline['badmode_qty'] for bline in badmode_lines])
             if float_compare(temp_qty, 0.0, precision_rounding=0.000001) > 0:
                 lotname = workorder.mesline_id.workdate.replace('-', '')
+                if equipment and equipment.sequenceno:
+                    lotname += equipment.sequenceno
                 product_lot = self.env['stock.production.lot'].action_checkout_lot(product_id, lotname)
                 outputdoamin = [('workorder_id', '=', workorder_id), ('product_lot', '=', product_lot.id)]
                 workdataoutput = self.env['aas.mes.workdata.output'].search(outputdoamin, limit=1)
@@ -193,14 +198,16 @@ class AASMESWorkticket(models.Model):
 
 
     @api.one
-    def action_workticket_output(self, trace, output_qty, badmode_qty):
-        super(AASMESWorkticket, self).action_workticket_output(trace, output_qty, badmode_qty)
+    def action_workticket_output(self, trace, output_qty, badmode_qty, equipment=False):
+        super(AASMESWorkticket, self).action_workticket_output(trace, output_qty, badmode_qty, equipment)
         if float_compare(output_qty, badmode_qty, precision_rounding=0.000001) > 0.0:
             workorder, mesline = trace.workorder_id, trace.workorder_id.mesline_id
             if not mesline.workdate:
                 lotname = fields.Datetime.to_china_today().replace('-', '')
             else:
                 lotname = mesline.workdate.replace('-', '')
+            if equipment and equipment.sequenceno:
+                lotname += equipment.sequenceno
             product_qty = output_qty - badmode_qty
             product_lot = self.env['stock.production.lot'].action_checkout_lot(self.product_id.id, lotname)
             outputdoamin = [('workorder_id', '=', workorder.id), ('product_lot', '=', product_lot.id)]

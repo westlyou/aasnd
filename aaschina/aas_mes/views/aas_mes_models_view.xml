@@ -187,14 +187,14 @@
                         </group>
                         <notebook>
                             <page string="盘点明细">
-                                <field name="inventory_lines" readonly="1">
-                                    <tree editable="bottom">
-                                        <field name="location_id"/>
-                                        <field name="product_id"/>
-                                        <field name="product_lot"/>
-                                        <field name="stock_qty"/>
+                                <field name="inventory_lines">
+                                    <tree editable="bottom" create="false" delete="false">
+                                        <field name="location_id" readonly="1"/>
+                                        <field name="product_id" readonly="1"/>
+                                        <field name="product_lot" readonly="1"/>
+                                        <field name="stock_qty" readonly="1"/>
                                         <field name="actual_qty"/>
-                                        <field name="differ_qty"/>
+                                        <field name="differ_qty" readonly="1"/>
                                     </tree>
                                 </field>
                             </page>

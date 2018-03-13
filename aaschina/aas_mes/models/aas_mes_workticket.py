@@ -149,7 +149,7 @@ class AASMESWorkticket(models.Model):
 
 
     @api.one
-    def action_doing_commit(self, commit_qty, badmode_lines=[], container_id=False):
+    def action_doing_commit(self, commit_qty, badmode_lines=[], container_id=False, equipment=False):
         _logger.info(u'工票%s开始报工;当前时间：%s', self.name, fields.Datetime.now())
         ticketvals, output_qty, badmode_qty = {'output_qty': self.output_qty + commit_qty}, commit_qty, 0.0
         if badmode_lines and len(badmode_lines) > 0:
@@ -188,7 +188,7 @@ class AASMESWorkticket(models.Model):
             # 物料消耗
             self.action_workticket_consume(temptrace, commit_qty)
             # 工票产出
-            self.action_workticket_output(temptrace, output_qty, badmode_qty)
+            self.action_workticket_output(temptrace, output_qty, badmode_qty, equipment=equipment)
         except UserError, ue:
             raise UserError(ue.name)
         except ValidationError, ve:
@@ -294,11 +294,12 @@ class AASMESWorkticket(models.Model):
 
 
     @api.one
-    def action_workticket_output(self, trace, output_qty, badmode_qty):
+    def action_workticket_output(self, trace, output_qty, badmode_qty, equipment=False):
         """工票产出和结单
         :param trace:
         :param output_qty:
         :param badmode_qty:
+        :param equipment:
         :return:
         """
         _logger.info(u'工票%s开始产出;当前时间：%s;产出数量%s;不良数量%s', self.name, fields.Datetime.now(), output_qty, badmode_qty)
@@ -310,6 +311,8 @@ class AASMESWorkticket(models.Model):
             lotname = fields.Datetime.to_china_today().replace('-', '')
         else:
             lotname = mesline.workdate.replace('-', '')
+        if equipment and equipment.sequenceno:
+            lotname += equipment.sequenceno
         product_lot = self.env['stock.production.lot'].action_checkout_lot(product.id, lotname)
         trace.write({'product_lot': product_lot.id, 'product_lot_name': product_lot.name})
         if self.islastworkcenter():
@@ -604,7 +607,7 @@ class AASMESWorkticket(models.Model):
             return values
         # 消耗物料并产出
         try:
-            workticket.action_doing_commit(commit_qty, badmode_lines, container_id)
+            workticket.action_doing_commit(commit_qty, badmode_lines, container_id=container_id, equipment=equipment)
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
             return values
@@ -716,7 +719,7 @@ class AASMESWorkticketCommitWizard(models.TransientModel):
         cresult = workorder.action_validate_consume(workorderid, productid, commitqty, workcenter_id=workcenterid)
         if not cresult.get('success', False):
             raise UserError(cresult['message'])
-        workticket.action_doing_commit(commitqty, badmode_lines, container_id)
+        workticket.action_doing_commit(commitqty, badmode_lines, container_id=container_id)
 
 class AASMESWorkticketBadmodeWizard(models.TransientModel):
     _name = 'aas.mes.workticket.badmode.wizard'
