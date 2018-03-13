@@ -57,6 +57,15 @@ class AASEquipmentEquipment(models.Model):
     image_medium = fields.Binary("Medium-sized image")
     company = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
+    param_energy = fields.Char(string=u'能量')
+    param_power = fields.Char(string=u'功率')
+    param_pressure = fields.Char(string=u'压力')
+    param_amplitude = fields.Char(string=u'振幅')
+    param_time = fields.Char(string=u'时间')
+    param_height = fields.Char(string=u'高度')
+
+
+
     _sql_constraints = [
         ('uniq_code', 'unique (code)', u'设备编码已存在，请不要重复添加！')
     ]
