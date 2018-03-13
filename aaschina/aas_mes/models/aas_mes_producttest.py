@@ -404,9 +404,9 @@ class AASMESProductTest(models.Model):
                 'parameter_code': tparameter['code'], 'parameter_note': tparameter['note']
             }))
             del paramdict[pkey]
-        if paramdict and len(paramdict) > 0:
-            values.update({'success': False, 'message': u'请仔细检查，还有某些参数未设置检测值！'})
-            return values
+        # if paramdict and len(paramdict) > 0:
+        #     values.update({'success': False, 'message': u'请仔细检查，还有某些参数未设置检测值！'})
+        #     return values
         ordervals = {
             'producttest_id': producttestid, 'product_id': producttest.product_id.id,
             'workstation_id': producttest.workstation_id.id, 'mesline_id': mesline.id,
