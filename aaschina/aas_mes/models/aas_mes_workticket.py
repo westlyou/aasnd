@@ -105,12 +105,14 @@ class AASMESWorkticket(models.Model):
         self.write({'time_start': fields.Datetime.now(), 'state': 'producing'})
         workorder = self.workorder_id
         if self.id == workorder.workcenter_start.id:
-            tempvals = {'state': 'producing', 'produce_start': fields.Datetime.now()}
             # 子工单状态更新，开始生产
-            self.workorder_id.write(tempvals)
+            self.workorder_id.write({
+                'state': 'producing',
+                'produce_start': fields.Datetime.now(), 'produce_date': fields.Datetime.to_china_today()
+            })
             # 主工单状态更新，开始生产
             if self.mainorder_id and self.mainorder_id.state == 'splited':
-                self.mainorder_id.write(tempvals)
+                self.mainorder_id.write({'state': 'producing', 'produce_start': fields.Datetime.now()})
 
 
 

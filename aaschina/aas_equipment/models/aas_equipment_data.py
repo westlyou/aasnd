@@ -48,13 +48,6 @@ class AASEquipmentData(models.Model, RedisModel):
     staff_name = fields.Char(string=u'员工名称')
     material_info = fields.Text(string=u'原料信息')
 
-    energy_value = fields.Float(string=u'能量')
-    power_value = fields.Float(string=u'功率')
-    pressure_value = fields.Float(string=u'压力')
-    amplitude_value = fields.Float(string=u'振幅')
-    time_value = fields.Float(string=u'时间')
-    height_value = fields.Float(string=u'高度')
-
     @api.model
     def localtimestr2utctimestr(self, localtimestr):
         if not localtimestr:

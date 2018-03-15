@@ -162,18 +162,6 @@
                                 <field name="supplier" options="{'no_create':true}"/>
                             </group>
                         </group>
-                        <group>
-                            <group>
-                                <field name="param_energy"/>
-                                <field name="param_power"/>
-                                <field name="param_pressure"/>
-                            </group>
-                            <group>
-                                <field name="param_amplitude"/>
-                                <field name="param_time"/>
-                                <field name="param_height"/>
-                            </group>
-                        </group>
                     </sheet>
                 </form>
             </field>

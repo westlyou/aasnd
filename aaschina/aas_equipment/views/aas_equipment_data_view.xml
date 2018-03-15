@@ -21,12 +21,6 @@
                     <field name="staff_name"/>
                     <field name="material_info"/>
                     <field name="serial_number"/>
-                    <field name="energy_value"/>
-                    <field name="power_value"/>
-                    <field name="pressure_value"/>
-                    <field name="amplitude_value"/>
-                    <field name="time_value"/>
-                    <field name="height_value"/>
                 </tree>
             </field>
         </record>
@@ -67,18 +61,6 @@
                         </group>
                         <group>
                             <group colspan="4"> <field name="serial_number"/> </group>
-                        </group>
-                        <group>
-                            <group>
-                                <field name="energy_value"/>
-                                <field name="power_value"/>
-                                <field name="pressure_value"/>
-                            </group>
-                            <group>
-                                <field name="amplitude_value"/>
-                                <field name="time_value"/>
-                                <field name="height_value"/>
-                            </group>
                         </group>
                         <div>
                             <label string="设备数据" for="data"/>
