@@ -129,18 +129,15 @@ class AASQualityOQCOrderLabel(models.Model):
                 'fqccheck_record_id': False, 'fqccheck_date': False, 'gp12_check': False, 'gp12_date': False,
                 'gp12_record_id': False, 'gp12_time': False
             })
-            print 'backing...........to........functiontest'
         elif backstation == 'finalchecking':
             operationvals.update({
                 'final_quality_check': False, 'fqccheck_record_id': False, 'fqccheck_date': False,
                 'gp12_check': False, 'gp12_date': False, 'gp12_record_id': False, 'gp12_time': False
             })
-            print 'backing...........to........finalchecking'
         else:
             operationvals.update({
                 'gp12_check': False, 'gp12_date': False, 'gp12_record_id': False, 'gp12_time': False
             })
-            print 'backing...........to........gp12checking'
         operationlist.sudo().write(operationvals)
         productionlabel.sudo().unlink()
         oqcorder = self.order_id.name
@@ -153,12 +150,6 @@ class AASQualityOQCOrderLabel(models.Model):
             'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id
         }).action_done()
         label.with_context({'operate_note': u'OQC: %s回退'% oqcorder}).write({'state': 'over', 'product_qty': 0.0})
-
-
-
-
-
-
 
 
 
