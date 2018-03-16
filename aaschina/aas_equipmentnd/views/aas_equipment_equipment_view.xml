@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_form_aas_equipment_category_parameters" model="ir.ui.view">
+            <field name="name">aas.equipment.category.parameter.form</field>
+            <field name="model">aas.equipment.category</field>
+            <field name="inherit_id" ref="aas_equipment.view_form_aas_equipment_category"/>
+            <field name="arch" type="xml">
+                <xpath expr="//sheet[1]" position="before">
+                    <header>
+                        <button name="action_loading_parameters" type="object" string="加载参数" class="oe_highlight"/>
+                    </header>
+                </xpath>
+                <xpath expr="//group[1]" position="after">
+                    <notebook>
+                        <page string="参数清单">
+                            <field name="parameter_lines">
+                                <tree editable="bottom">
+                                    <field name="field_id" required="1" options="{'no_create':true}"/>
+                                    <field name="param" required="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_form_aas_equipment_equipment_parameters" model="ir.ui.view">
+            <field name="name">aas.equipment.equipment.parameter.form</field>
+            <field name="model">aas.equipment.equipment</field>
+            <field name="inherit_id" ref="aas_equipment.view_form_aas_equipment_equipment"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group[1]" position="after">
+                    <notebook>
+                        <page string="参数清单">
+                            <field name="parameter_lines">
+                                <tree editable="bottom">
+                                    <field name="field_id" required="1" options="{'no_create':true}"/>
+                                    <field name="param" required="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </xpath>
+            </field>
+        </record>
+
+
+    </data>
+</odoo>

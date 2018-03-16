@@ -29,7 +29,7 @@ class AASEquipmentData(models.Model, RedisModel):
     _order = 'operate_time desc'
     _checking = False
 
-    data = fields.Text(string=u'数据集')
+    data = fields.Text(string=u'设备参数')
     app_code = fields.Char(string=u'设备编码', index=True)
     app_secret = fields.Integer(string=u'秘钥')
     timstamp = fields.Datetime(string=u'传输时间')
@@ -72,11 +72,6 @@ class AASEquipmentData(models.Model, RedisModel):
         tz_name = self.env.context.get('tz') or self.env.user.tz or 'Asia/Shanghai'
         temptime = pytz.timezone('UTC').localize(localtime, is_dst=False)
         return fields.Datetime.to_string(temptime.astimezone(pytz.timezone(tz_name)))
-
-
-
-
-
 
 
 
@@ -133,10 +128,24 @@ class AASEquipmentData(models.Model, RedisModel):
     @api.one
     def action_push_data(self):
         record = {
-            'app_code': u'Temp-S-高温油槽-39', 'app_secret': 121232423,
-            'timstamp': '2017-09-10 14:00:00', 'data_type': 'P', 'operate_time': '2017-09-10 14:00:00',
-            'job_code': '1535530', 'product_code': 'A-1743', 'station_code': 'ST00006', 'staff_code': 'EM0002',
-            'data': {'Tempresure': 337.5, 'Presdf': 224}
+            'app_code': 'ND20160006', 'app_secret': 0,
+            'timstamp': '2018-03-16 12:00:00', 'data_type': 'Production', 'operate_time': '2018-03-16 12:00:00',
+            'job_code': '20180314123338', 'product_code': 'CTTS-301309',  'station_code': 'TW_001',
+            'staff_code': 'NC00000128', 'serial_number': '82010000125218114800290',
+            'data': {
+                u"操作时间": "2018-3-15  12:00:21", "GND": "0.053729", "V15-1": "0.012000", "mdc_state": 0,
+                "V3-1": "0.012000", u"员工编码": "ND20160022", "NTC4": "11220.186523", "NTC3": "11161.617969",
+                "NTC2": "11265.098242", "NTC1": "11329.813281", "\u6e29\u5ea6": "22.913302", "V9-1": "0.544803",
+                "V9-2": "0.000000", "NTC_GAP": "168.195312", "V12-1": "0.012000", "V12-2": "0.000000",
+                "V15-2": "0.000000", "V10-2": "0.000000", "V10-1": "0.012000", "V2-2": "0.000000", "V2-1": "0.012000",
+                "\u6d4b\u8bd5\u6b21\u6570": " ", "V11-2": "0.000000", "V14-2": "0.000000", "V14-1": "0.235593",
+                "V11-1": "0.012000", "V3-2": "0.000000", "V13-1": "2.162474", "V13-2": "0.000000", "VO": "0.093160",
+                "V4-1": "0.012000", "V4-2": "0.000000", "\u9694\u79bb\u677f\u53f7\u7801": "82010000125218114800290",
+                "V7-2": "0.000000", "V7-1": "0.012000", "PWR": "0.012000", "V6-2": "0.000000", "V6-1": "0.012000",
+                "V1-1": "0.012000", "\u64cd\u4f5c\u5458": "NC00000128", "V5-1": "0.227345", "V5-2": "0.000000",
+                "\u603b\u7ed3\u679c": "PASS", "V8-1": "0.148081", "V1-2": "0.000000", "V8-2": "0.000000",
+                "Power": "620", "Amplitude": "50", "Energy": "120", "Time1": "0.26", "Pressure": "40.0"
+            }
         }
         self.redis_push(record)
 
