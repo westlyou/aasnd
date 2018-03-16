@@ -148,7 +148,7 @@ $(function(){
 
     //返工确认
     function action_reworkconfirm(badmode){
-        var warnmessage = '返工不良模式：'+badmode+'， 是否确认PASS？';
+        var warnmessage = '不良返工， 是否确认PASS？';
         layer.confirm(warnmessage, {'btn': ['确认', '取消']}, function(index){
             layer.close(index);
             var operationid = parseInt($('#informationlist').attr('operationid'));

@@ -25,7 +25,8 @@
             <field name="arch" type="xml">
                 <form create="false" edit="false" delete="false">
                     <header>
-                        <button name="action_oqccheck" type="object" string="检测" class="oe_highlight"/>
+                        <button name="action_oqccheck" type="object" string="检测"
+                                class="oe_highlight" states="confirm,checking"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,checking,done"/>
                     </header>
                     <sheet>
@@ -143,6 +144,12 @@
                         <group>
                             <field name="commit_user" readonly="1"/>
                             <field name="commit_time" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="needback" invisible="1"/>
+                            <field name="backstation" attrs="{'invisible':[('needback','=',False)]}"/>
                         </group>
                     </group>
                     <notebook>

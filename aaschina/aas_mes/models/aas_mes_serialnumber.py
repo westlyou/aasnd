@@ -17,6 +17,7 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+REJECTTYPES = [('produce', u'产线'), ('oqccehcking', 'OQC')]
 
 SERIALSTATES = [('draft', u'草稿'), ('normal', u'正常'), ('rework', u'返工'), ('shipped', u'已发货')]
 
@@ -34,12 +35,13 @@ class AASMESSerialnumber(models.Model):
     operation_date = fields.Char(string=u'生成日期', copy=False)
     operation_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
     state = fields.Selection(selection=SERIALSTATES, string=u'状态', default='draft', copy=False)
-    operator_id = fields.Many2one(comodel_name='res.users', string=u'操作人', ondelete='restrict', default=lambda self: self.env.user)
+    operator_id = fields.Many2one('res.users', string=u'操作人', ondelete='restrict', default=lambda self: self.env.user)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     internal_product_code = fields.Char(string=u'产品编码', copy=False, help=u'在公司内部的产品编码')
     customer_product_code = fields.Char(string=u'客户编码', copy=False, help=u'在客户方的产品编码')
     reworked = fields.Boolean(string=u'是否返工', default=False, copy=False)
+    reworksource = fields.Selection(selection=REJECTTYPES, string=u'返工来源')
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'操作设备', ondelete='restrict')
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', index=True)

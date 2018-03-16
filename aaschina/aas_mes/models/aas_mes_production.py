@@ -34,6 +34,7 @@ class AASMESProductionLabel(models.Model):
     action_date = fields.Char(string=u'日期', copy=False, index=True)
     customer_code = fields.Char(string=u'客户编码', copy=False)
     product_code = fields.Char(string=u'产品编码', copy=False)
+    isserialnumber = fields.Boolean(string=u'是否序列号', default=False, copy=False)
     operator_id = fields.Many2one(comodel_name='res.users', string=u'用户', index=True)
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', index=True)
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', index=True)
@@ -52,7 +53,7 @@ class AASMESProductionLabel(models.Model):
             'label_id': label.id, 'product_id': product_id,  'product_qty': product_qty,
             'lot_id': productlot_id, 'product_code': product_code, 'customer_code': customer_code,
             'operator_id': self.env.user.id, 'action_date': chinadate, 'equipment_id': equipment_id,
-            'location_id': location_id
+            'location_id': location_id, 'isserialnumber': True
         })
         return label
 

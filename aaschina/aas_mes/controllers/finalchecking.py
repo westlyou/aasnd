@@ -191,12 +191,14 @@ class AASMESFinalCheckingController(http.Controller):
             values.update({'message': u'已扫描，请不要重复操作', 'done': True})
             return values
         if serialnumber.reworked:
-            if serialnumber.rework_lines and len(serialnumber.rework_lines) > 0:
+            if serialnumber.reworksource == 'oqcchecking':
+                values['badmode_name'] = 'OQC'
+            elif serialnumber.rework_lines and len(serialnumber.rework_lines) > 0:
                 currentrework = serialnumber.rework_lines[0]
                 values['badmode_name'] = currentrework.badmode_id.name
-            values['message'] = u'%s重工，请仔细检查确认'% values['badmode_name']
+            values['message'] = u'%s返工，请仔细检查确认'% values['badmode_name']
             return values
-        if workorder:
+        if workorder and not serialnumber.stocked:
             tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, barcode)
             if not tvalues.get('success', False):
                 values.update(tvalues)

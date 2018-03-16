@@ -153,7 +153,7 @@ class AASMESGP12CheckingController(http.Controller):
         if tempoperation.gp12_check:
             values.update({'message': u'已扫描 请不要重复操作', 'done': True})
         # 返工件
-        if tempoperation.serialnumber_id.reworked:
+        if serialnumber.reworked and serialnumber.reworksource == 'produce':
             if not tempoperation.dorework:
                 values['operate_result'] = ','.join([serialnumber_name, 'NG', operation_time])
                 values.update({'message': u'序列号异常，正在等待维修！！', 'result': 'NG'})

@@ -17,12 +17,13 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-
+BACKSTATIONS = [('functiontest', u'功能测试'), ('finalchecking', u'最终检查'), ('gp12checking', u'GP12检查')]
 OQCCHECKSTATES = [('draft', u'草稿'), ('confirm', u'确认'), ('checking', u'检验中'), ('done', u'完成')]
 
 class AASQualityOQCOrder(models.Model):
     _name = 'aas.quality.oqcorder'
     _description = 'AAS Quality OQCOrder'
+    _order = 'id desc'
 
     name = fields.Char(string=u'名称', copy=False)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
@@ -45,13 +46,18 @@ class AASQualityOQCOrder(models.Model):
     @api.multi
     def action_oqccheck(self):
         """
-        向导，触发此方法弹出向导并进行业务处理
+        OQC 出货检测
         :return:
         """
         self.ensure_one()
+        if not self.label_lines or len(self.label_lines) <= 0:
+            raise UserError(u'当前还未添加待检测标签！')
+        labelids = [templabel.label_id.id for templabel in self.label_lines]
+        tempdomain = [('label_id', 'in', labelids), ('isserialnumber', '=', True)]
+        needback = True if self.env['aas.mes.production.label'].search_count(tempdomain) > 0 else False
         wizard = self.env['aas.quality.oqcchecking.wizard'].create({
             'oqcorder_id': self.id, 'product_id': self.product_id.id,
-            'commit_user': self.commit_user.id, 'commit_time': self.commit_time
+            'commit_user': self.commit_user.id, 'commit_time': self.commit_time, 'needback': needback
         })
         view_form = self.env.ref('aas_quality.view_form_aas_quality_oqcchecking_wizard')
         return {
@@ -90,32 +96,67 @@ class AASQualityOQCOrderLabel(models.Model):
     checker_id = fields.Many2one(comodel_name='res.users', string=u'检验员', ondelete='restrict')
     checking_time = fields.Datetime(string=u'检验时间', copy=False)
     qualified = fields.Boolean(string=u'是否合格', default=False, copy=False)
+    backstation = fields.Selection(selection=BACKSTATIONS, string=u'回退站点', copy=False)
 
 
     @api.one
-    def action_checking(self, qualified=False):
-        """OQC检测判定
-        :param qualified:
-        :return:
-        """
+    def action_checking(self, qualified, backstation=False):
         self.write({
-            'checked': True, 'checker_id': self.env.user.id,
-            'checking_time': fields.Datetime.now(), 'qualified': qualified
+            'checked': True, 'qualified': qualified,
+            'checking_time': fields.Datetime.now(), 'checker_id': self.env.user.id
         })
-        if qualified:
-            self.label_id.write({'oqcpass': True})
-        checkedcount, totalcount = 0, 0
-        if self.order_id.label_lines and len(self.order_id.label_lines) > 0:
-            totalcount = len(self.order_id.label_lines)
-            for oqclabel in self.order_id.label_lines:
-                if oqclabel.checked:
-                    checkedcount += 1
-        if checkedcount == 0:
-            self.order_id.write({'state': 'confirm'})
-        elif checkedcount < totalcount:
-            self.order_id.write({'state': 'checking'})
-        elif checkedcount == totalcount:
-            self.order_id.write({'state': 'done'})
+        self.label_id.write({'oqcpass': qualified})
+        if not qualified and backstation:
+            self.action_backlabel(self.label_id, backstation)
+
+
+    @api.one
+    def action_backlabel(self, label, backstation):
+        if not label or not backstation:
+            return
+        productionlabel = self.env['aas.mes.production.label'].search([('label_id', '=', label.id)], limit=1)
+        if not productionlabel or not productionlabel.isserialnumber:
+            return
+        serialnumberlist = self.env['aas.mes.serialnumber'].search([('label_id', '=', label.id)])
+        serialnumberlist.sudo().write({'label_id': False, 'reworked': True, 'reworksource': 'oqccehcking'})
+        operationlist = self.env['aas.mes.operation']
+        for tserialnumber in serialnumberlist:
+            operationlist |= tserialnumber.operation_id
+        operationvals = {'labeled': False, 'label_id': False}
+        if backstation == 'functiontest':
+            operationvals.update({
+                'function_test': False, 'functiontest_record_id': False, 'final_quality_check': False,
+                'fqccheck_record_id': False, 'fqccheck_date': False, 'gp12_check': False, 'gp12_date': False,
+                'gp12_record_id': False, 'gp12_time': False
+            })
+            print 'backing...........to........functiontest'
+        elif backstation == 'finalchecking':
+            operationvals.update({
+                'final_quality_check': False, 'fqccheck_record_id': False, 'fqccheck_date': False,
+                'gp12_check': False, 'gp12_date': False, 'gp12_record_id': False, 'gp12_time': False
+            })
+            print 'backing...........to........finalchecking'
+        else:
+            operationvals.update({
+                'gp12_check': False, 'gp12_date': False, 'gp12_record_id': False, 'gp12_time': False
+            })
+            print 'backing...........to........gp12checking'
+        operationlist.sudo().write(operationvals)
+        productionlabel.sudo().unlink()
+        oqcorder = self.order_id.name
+        pdtlocation = self.env.ref('stock.location_production')
+        self.env['stock.move'].sudo().create({
+            'name': oqcorder,
+            'product_id': label.product_id.id,  'product_uom': label.product_uom.id,
+            'restrict_lot_id': label.product_lot.id, 'product_uom_qty': label.product_qty,
+            'location_id': label.location_id.id, 'location_dest_id': pdtlocation.id,
+            'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id
+        }).action_done()
+        label.with_context({'operate_note': u'OQC: %s回退'% oqcorder}).write({'state': 'over', 'product_qty': 0.0})
+
+
+
+
 
 
 
@@ -137,6 +178,8 @@ class AASQualityOQCCheckingWizard(models.TransientModel):
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     commit_user = fields.Many2one(comodel_name='res.users', string=u'报检人员', ondelete='restrict')
     commit_time = fields.Datetime(string=u'报检时间', default=fields.Datetime.now, copy=False)
+    needback = fields.Boolean(string=u'是否需要回退', default=False, copy=False)
+    backstation = fields.Selection(selection=BACKSTATIONS, string=u'回退站点', copy=False)
 
     label_lines = fields.One2many('aas.quality.oqcchecking.label.wizard', inverse_name='checking_id', string=u'标签清单')
 
@@ -144,8 +187,21 @@ class AASQualityOQCCheckingWizard(models.TransientModel):
     def action_done(self):
         if not self.label_lines or len(self.label_lines) <= 0:
             raise UserError(u'请先添加检测标签信息！')
-        for lline in self.label_lines:
-            lline.label_id.action_checking(lline.qualified)
+        for templabel in self.label_lines:
+            oqclabel = templabel.label_id
+            if templabel.qualified:
+                oqclabel.action_checking(True)
+            else:
+                if not self.needback:
+                    oqclabel.action_checking(False)
+                elif self.backstation:
+                    oqclabel.action_checking(False, backstation=self.backstation)
+                else:
+                    raise UserError(u'不合格标签需要指定回退站点！')
+        oqcorder = self.oqcorder_id
+        checkall = all([tlabel.checked for tlabel in oqcorder.label_lines])
+        oqcorder.write({'state': 'checking' if not checkall else 'done'})
+
 
 
 

@@ -61,6 +61,7 @@
                             <group>
                                 <field name="qualified" readonly="1"/>
                                 <field name="reworked" readonly="1"/>
+                                <field name="reworksource" readonly="1" attrs="{'invisible':[('reworked','=',False)]}"/>
                                 <field name="product_lot" readonly="1"/>
                                 <field name="label_id" readonly="1"/>
                             </group>
