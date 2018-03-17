@@ -292,7 +292,9 @@ class AASLabelWechatController(http.Controller):
     @http.route('/aaswechat/wms/receiptmovelist/<int:productid>', type='http', auth="user")
     def aas_wechat_wms_receiptmovelist(self, productid, limit=20):
         values = {'movelist': [], 'moveindex': '0', 'product_id': productid}
+        inputlocation = request.env['stock.warehouse'].get_default_warehouse().wh_input_stock_loc_id
         movedomain = [('product_id', '=', productid), ('location_dest_id.edgelocation', '=', False)]
+        movedomain += [('location_dest_id', '!=', inputlocation.id)]
         movelist = request.env['aas.stock.receipt.move'].search(movedomain, order="id desc", limit=limit)
         if not movelist or len(movelist) <= 0:
             return request.render('aas_wms.wechat_wms_receipt_move_list', values)
@@ -307,7 +309,9 @@ class AASLabelWechatController(http.Controller):
     @http.route('/aaswechat/wms/receiptmovemore', type='json', auth="user")
     def aas_wechat_receiptmovemore(self, productid, searchkey=None, moveindex=0, limit=20):
         values = {'success': True, 'message': '', 'movelist': [], 'moveindex': moveindex, 'movecount': 0}
+        inputlocation = request.env['stock.warehouse'].get_default_warehouse().wh_input_stock_loc_id
         movedomain = [('product_id', '=', productid), ('location_dest_id.edgelocation', '=', False)]
+        movedomain += [('location_dest_id', '!=', inputlocation.id)]
         if searchkey:
             movedomain.append(('product_lot.name', 'ilike', searchkey))
         movelist = request.env['aas.stock.receipt.move'].search(movedomain, offset=moveindex, order="id desc", limit=limit)
@@ -324,7 +328,9 @@ class AASLabelWechatController(http.Controller):
     @http.route('/aaswechat/wms/receiptmovesearch', type='json', auth="user")
     def aas_wechat_receiptmovesearch(self, productid, searchkey, limit=20):
         values = {'success': True, 'message': '', 'movelist': [], 'moveindex': 0}
+        inputlocation = request.env['stock.warehouse'].get_default_warehouse().wh_input_stock_loc_id
         movedomain = [('product_id', '=', productid), ('location_dest_id.edgelocation', '=', False)]
+        movedomain += [('location_dest_id', '!=', inputlocation.id)]
         if searchkey:
             movedomain.append(('product_lot.name', 'ilike', searchkey))
         movelist = request.env['aas.stock.receipt.move'].search(movedomain, order="id desc", limit=limit)
