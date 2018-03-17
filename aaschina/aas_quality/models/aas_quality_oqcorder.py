@@ -43,6 +43,41 @@ class AASQualityOQCOrder(models.Model):
         return super(AASQualityOQCOrder, self).create(vals)
 
 
+    @api.one
+    def action_confirm(self):
+        if not self.label_lines or len(self.label_lines) <= 0:
+            raise UserError(u'当前还未添加报检明细！')
+        if self.state != 'draft':
+            return
+        ## 移动库存到出货区
+        mainbase = self.env['stock.warehouse'].get_default_warehouse()
+        outputlocation = mainbase.wh_output_stock_loc_id
+        movedict, labelist = {}, self.env['aas.product.label']
+        for oqclabel in self.label_lines:
+            tlabel = oqclabel.label_id
+            if tlabel.location_id.id == outputlocation.id:
+                continue
+            mkey = 'M-'+str(tlabel.product_lot.id)+'-'+str(tlabel.location_id.id)
+            if mkey not in movedict:
+                movedict[mkey] = {
+                    'name': self.name,
+                    'product_id': self.product_id.id,  'product_uom': self.product_uom.id,
+                    'restrict_lot_id': tlabel.product_lot.id, 'product_uom_qty': tlabel.product_qty,
+                    'location_id': tlabel.location_id.id, 'location_dest_id': outputlocation.id,
+                    'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id
+                }
+            else:
+                movedict[mkey]['product_uom_qty'] += tlabel.product_qty
+            labelist |= tlabel
+        if movedict and len(movedict) > 0:
+            movelist = self.env['stock.move']
+            for mkey, mval in movedict.items():
+                movelist |= self.env['stock.move'].sudo().create(mval)
+            movelist.sudo().action_done()
+        if labelist and len(labelist) > 0:
+            labelist.with_context({'operate_order': self.name}).write({'location_id': outputlocation.id})
+        self.sudo().write({'state': 'confirm'})
+
     @api.multi
     def action_oqccheck(self):
         """

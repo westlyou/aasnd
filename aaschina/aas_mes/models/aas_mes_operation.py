@@ -35,10 +35,10 @@ class AASMESOperation(models.Model):
     embed_piece = fields.Boolean(string=u'置入连接片', default=False, copy=False)
     embed_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'置入连接片记录')
 
-    function_test = fields.Boolean(string=u'隔离板测试', default=False, copy=False)
-    functiontest_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'隔离板测试记录')
+    function_test = fields.Boolean(string=u'功能测试', default=False, copy=False)
+    functiontest_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'功能测试记录')
 
-    final_quality_check = fields.Boolean(string='最终检查', default=False, copy=False)
+    final_quality_check = fields.Boolean(string=u'最终检查', default=False, copy=False)
     fqccheck_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'最终检查记录')
     fqccheck_date = fields.Char(string=u'FQC日期', copy=False, index=True)
 
@@ -295,9 +295,9 @@ class AASMESOperation(models.Model):
 
 
 
-OPERATELIST = [('newbarcode', u'生成条码'), ('embedpiece', u'置入连接片'), ('functiontest', u'隔离板测试'),
+OPERATELIST = [('newbarcode', u'生成条码'), ('embedpiece', u'置入连接片'), ('functiontest', u'功能测试'),
                ('fqc', u'最终检查'), ('gp12', u'GP12检测'), ('ipqc', u'IPQC确认')]
-OPERATEDICT = {'newbarcode': u'生成条码', 'embedpiece': u'置入连接片', 'functiontest': u'隔离板测试',
+OPERATEDICT = {'newbarcode': u'生成条码', 'embedpiece': u'置入连接片', 'functiontest': u'功能测试',
                'fqc': u'最终检查', 'gp12': u'GP12检测', 'ipqc': u'IPQC确认'}
 
 # 生产操作记录

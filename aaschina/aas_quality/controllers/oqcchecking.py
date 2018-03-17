@@ -31,9 +31,6 @@ class AASQualityOQCCheckingController(http.Controller):
         if not label:
             values.update({'success': False, 'message': u'标签异常，你扫描的可能不是标签条码！'})
             return values
-        if label.oqcpass:
-            values.update({'success': False, 'message': u'OQC已操作过，请不要重复操作！'})
-            return values
         if label.isproduction:
             values.update({'success': False, 'message': u'请不要扫描生产线边库标签！'})
             return values
@@ -42,6 +39,10 @@ class AASQualityOQCCheckingController(http.Controller):
             return values
         if label.state != 'normal':
             values.update({'success': False, 'message': u'标签状态异常，只有正常状态的标签才可以报检！'})
+            return values
+        oqcdomain = [('label_id', '=', label.id), ('checked', '=', False)]
+        if request.env['aas.quality.oqcorder.label'].sudo().search_count(oqcdomain) > 0:
+            values.update({'success': False, 'message': u'标签已报检，还未处理；请耐心等待！'})
             return values
         customerpn = '' if not label.product_id.customer_product_code else label.product_id.customer_product_code
         values.update({
@@ -73,9 +74,10 @@ class AASQualityOQCCheckingController(http.Controller):
                 'label_id': tlabel.id, 'product_id': tlabel.product_id.id,
                 'product_lot': tlabel.product_lot.id, 'product_qty': tlabel.product_qty
             }))
-        oqcordervals.update({'product_qty': product_qty, 'label_lines': labellines, 'state': 'confirm'})
+        oqcordervals.update({'product_qty': product_qty, 'label_lines': labellines})
         try:
             oqcorder = request.env['aas.quality.oqcorder'].create(oqcordervals)
+            oqcorder.action_confirm()
             values['oqcorderid'] = oqcorder.id
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})

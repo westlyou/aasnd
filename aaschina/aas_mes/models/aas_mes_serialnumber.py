@@ -17,7 +17,7 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-REJECTTYPES = [('produce', u'产线'), ('oqccehcking', 'OQC')]
+REJECTTYPES = [('produce', u'产线'), ('oqcchecking', 'OQC')]
 
 SERIALSTATES = [('draft', u'草稿'), ('normal', u'正常'), ('rework', u'返工'), ('shipped', u'已发货')]
 
