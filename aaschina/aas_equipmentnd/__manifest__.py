@@ -14,7 +14,8 @@
     'depends': ['aas_equipment'],
     'data': [
         'security/ir.model.access.csv',
-        'views/aas_equipment_equipment_view.xml'
+        'views/aas_equipment_equipment_view.xml',
+        'views/aas_equipment_nddata_view.xml'
     ],
     'qweb':[],
     'installable': True,

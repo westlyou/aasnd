@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_equipment_ndweld_data" model="ir.ui.view">
+            <field name="name">aas.equipment.ndweld.data.tree</field>
+            <field name="model">aas.equipment.ndweld.data</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="app_code"/>
+                    <field name="operate_time"/>
+                    <field name="data_type"/>
+                    <field name="station_code"/>
+                    <field name="product_code"/>
+                    <field name="staff_code"/>
+                    <field name="serial_number"/>
+                    <field name="param_energy"/>
+                    <field name="param_power"/>
+                    <field name="param_pressure"/>
+                    <field name="param_amplitude"/>
+                    <field name="param_time"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_search_aas_equipment_ndweld_data" model="ir.ui.view">
+            <field name="name">aas.equipment.ndweld.data.search</field>
+            <field name="model">aas.equipment.ndweld.data</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="app_code" string="设备编码" filter_domain="[('app_code','ilike',self)]"/>
+                    <field name="data_type" string="数据类型" filter_domain="[('data_type','ilike',self)]"/>
+                    <field name="station_code" string="工位编码" filter_domain="[('station_code','ilike',self)]"/>
+                    <field name="product_code" string="产品编码" filter_domain="[('product_code','ilike',self)]"/>
+                    <field name="staff_code" string="员工编码" filter_domain="[('staff_code','ilike',self)]"/>
+                    <field name="serial_number" string="序列号" filter_domain="[('serial_number','ilike',self)]"/>
+                    <separator/>
+                    <group expand="1" string="分组">
+                        <filter string="设备编码" context="{'group_by':'app_code'}"/>
+                        <filter string="数据类型" context="{'group_by':'data_type'}"/>
+                        <filter string="工位编码" context="{'group_by':'station_code'}"/>
+                        <filter string="产品编码" context="{'group_by':'product_code'}"/>
+                        <filter string="员工编码" context="{'group_by':'staff_code'}"/>
+                        <filter string="序列号" context="{'group_by':'serial_number'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_equipment_ndweld_data" model="ir.actions.act_window">
+            <field name="name">焊接设备数据</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.equipment.ndweld.data</field>
+            <field name="limit">50</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_equipment_ndweld_data"/>
+            <field name="search_view_id" ref="view_search_aas_equipment_ndweld_data"/>
+        </record>
+
+        <menuitem id="menu_aas_equipment_ndweld_data"  name="焊接数据" action="action_aas_equipment_ndweld_data"
+                  sequence="11" parent="aas_equipment.menu_aas_equipment_information"
+                  groups="aas_equipment.group_aas_equipment_user,aas_equipment.group_aas_equipment_mechanic,aas_equipment.group_aas_equipment_manager"/>
+
+
+        <record id="view_tree_aas_equipment_ndfunctiontest_data" model="ir.ui.view">
+            <field name="name">aas.equipment.ndfunctiontest.data.tree</field>
+            <field name="model">aas.equipment.ndfunctiontest.data</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="app_code"/>
+                    <field name="operate_time"/>
+                    <field name="data_type"/>
+                    <field name="station_code"/>
+                    <field name="product_code"/>
+                    <field name="staff_code"/>
+                    <field name="serial_number"/>
+
+                    <field name="param_gnd"/>
+                    <field name="param_ntc1"/>
+                    <field name="param_ntc2"/>
+                    <field name="param_ntc3"/>
+                    <field name="param_ntc4"/>
+                    <field name="param_ntcgap"/>
+                    <field name="param_v11"/>
+                    <field name="param_v12"/>
+                    <field name="param_v21"/>
+                    <field name="param_v22"/>
+                    <field name="param_v31"/>
+                    <field name="param_v32"/>
+                    <field name="param_v41"/>
+                    <field name="param_v42"/>
+                    <field name="param_v51"/>
+                    <field name="param_v52"/>
+                    <field name="param_v61"/>
+                    <field name="param_v62"/>
+                    <field name="param_v71"/>
+                    <field name="param_v72"/>
+                    <field name="param_v81"/>
+                    <field name="param_v82"/>
+                    <field name="param_v91"/>
+                    <field name="param_v92"/>
+                    <field name="param_v101"/>
+                    <field name="param_v102"/>
+                    <field name="param_v111"/>
+                    <field name="param_v112"/>
+                    <field name="param_v121"/>
+                    <field name="param_v122"/>
+                    <field name="param_v131"/>
+                    <field name="param_v132"/>
+                    <field name="param_v141"/>
+                    <field name="param_v142"/>
+                    <field name="param_v151"/>
+                    <field name="param_v152"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_search_aas_equipment_ndfunctiontest_data" model="ir.ui.view">
+            <field name="name">aas.equipment.ndfunctiontest.data.search</field>
+            <field name="model">aas.equipment.ndfunctiontest.data</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="app_code" string="设备编码" filter_domain="[('app_code','ilike',self)]"/>
+                    <field name="data_type" string="数据类型" filter_domain="[('data_type','ilike',self)]"/>
+                    <field name="station_code" string="工位编码" filter_domain="[('station_code','ilike',self)]"/>
+                    <field name="product_code" string="产品编码" filter_domain="[('product_code','ilike',self)]"/>
+                    <field name="staff_code" string="员工编码" filter_domain="[('staff_code','ilike',self)]"/>
+                    <field name="serial_number" string="序列号" filter_domain="[('serial_number','ilike',self)]"/>
+                    <separator/>
+                    <group expand="1" string="分组">
+                        <filter string="设备编码" context="{'group_by':'app_code'}"/>
+                        <filter string="数据类型" context="{'group_by':'data_type'}"/>
+                        <filter string="工位编码" context="{'group_by':'station_code'}"/>
+                        <filter string="产品编码" context="{'group_by':'product_code'}"/>
+                        <filter string="员工编码" context="{'group_by':'staff_code'}"/>
+                        <filter string="序列号" context="{'group_by':'serial_number'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_equipment_ndfunctiontest_data" model="ir.actions.act_window">
+            <field name="name">测试设备数据</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.equipment.ndfunctiontest.data</field>
+            <field name="limit">50</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_equipment_ndfunctiontest_data"/>
+            <field name="search_view_id" ref="view_search_aas_equipment_ndfunctiontest_data"/>
+        </record>
+
+        <menuitem id="menu_aas_equipment_ndfunctiontest_data"  name="测试数据" action="action_aas_equipment_ndfunctiontest_data"
+                  sequence="12" parent="aas_equipment.menu_aas_equipment_information"
+                  groups="aas_equipment.group_aas_equipment_user,aas_equipment.group_aas_equipment_mechanic,aas_equipment.group_aas_equipment_manager"/>
+
+
+    </data>
+</odoo>
