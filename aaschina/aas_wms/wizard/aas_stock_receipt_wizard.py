@@ -18,10 +18,12 @@ class AASStockReceiptProductWizard(models.TransientModel):
     _description = u"收货明细产品向导"
 
     receipt_id = fields.Many2one(comodel_name='aas.stock.receipt', string=u'收货单', ondelete='cascade')
+    receipt_type = fields.Selection(selection=RECEIPT_TYPE, string=u'收货类型')
     line_id = fields.Many2one(comodel_name='aas.stock.receipt.line', string=u'收货明细', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品')
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位')
     need_warranty = fields.Boolean(string=u'质保期', default=False)
     receipt_locked = fields.Boolean(string=u'锁定', default=False)
     build_labels = fields.Boolean(string=u'是否生成标签', default=False)
@@ -79,6 +81,8 @@ class AASStockReceiptProductWizard(models.TransientModel):
     @api.multi
     def action_lot_lines_split(self):
         self.ensure_one()
+        if self.receipt_type == 'manreturn' and not self.location_id:
+            raise UserError(u'生产退料必须设置退料库位！')
         self.action_check_lots()
         for lline in self.lot_lines:
             lline.action_split_lot()
@@ -120,6 +124,8 @@ class AASStockReceiptProductWizard(models.TransientModel):
     @api.multi
     def action_done_labels(self):
         self.ensure_one()
+        if self.receipt_type == 'manreturn' and not self.location_id:
+            raise UserError(u'生产退料必须设置退料库位！')
         if self.build_labels:
             return False
         else:
@@ -131,7 +137,7 @@ class AASStockReceiptProductWizard(models.TransientModel):
         elif receipt.receipt_type == 'sundry':
             location_id = self.env.ref('aas_wms.stock_location_sundry').id
         elif receipt.receipt_type == 'manreturn':
-            location_id = self.env.ref('stock.location_production').id
+            location_id = self.location_id.id
         else:
             location_id = self.env['stock.warehouse'].get_default_warehouse().lot_stock_id.id
         receipt_labels = []
@@ -166,14 +172,14 @@ class AASStockReceiptProductWizard(models.TransientModel):
     def action_build_label(self, lot_id, lot_qty, location_id, warranty_date):
         self.ensure_one()
         receipt = self.receipt_id
-        labelvals = {'product_id': self.product_id.id, 'product_uom': self.product_id.uom_id.id}
-        labelvals.update({'location_id': location_id, 'product_qty': lot_qty, 'product_lot': lot_id, 'state': 'draft'})
-        labelvals.update({'company_id': self.env.user.company_id.id, 'origin_order': self.origin_order})
-        labelvals.update({
+        labelvals = {
+            'product_id': self.product_id.id, 'product_uom': self.product_id.uom_id.id,
+            'location_id': location_id, 'product_qty': lot_qty, 'product_lot': lot_id, 'state': 'draft',
+            'company_id': self.env.user.company_id.id, 'origin_order': self.origin_order,
             'locked': True, 'locked_order': receipt.name,
-            'partner_id': False if receipt.partner_id else receipt.partner_id.id
-        })
-        labelvals.update({'warranty_date': warranty_date or False})
+            'partner_id': False if receipt.partner_id else receipt.partner_id.id,
+            'warranty_date': warranty_date or False
+        }
         return self.env['aas.product.label'].create(labelvals)
 
 

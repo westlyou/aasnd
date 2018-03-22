@@ -76,11 +76,15 @@ class AASStockReceipt(models.Model):
         :return:
         """
         self.ensure_one()
-        wizardvals = {'receipt_id': self.id}
-        rline = self.env['aas.stock.receipt.line'].search([('receipt_id', '=', self.id), ('label_related', '=', False)], limit=1)
+        wizardvals = {'receipt_id': self.id, 'receipt_type': self.receipt_type}
+        wizardomain = [('receipt_id', '=', self.id), ('label_related', '=', False)]
+        rline = self.env['aas.stock.receipt.line'].search(wizardomain, limit=1)
         if rline:
-            wizardvals.update({'line_id': rline.id, 'product_id': rline.product_id.id, 'product_uom': rline.product_uom.id})
-            wizardvals.update({'need_warranty': rline.product_id.need_warranty, 'origin_order': rline.origin_order, 'product_qty': rline.product_qty})
+            wizardvals.update({
+                'line_id': rline.id, 'product_id': rline.product_id.id, 'product_uom': rline.product_uom.id,
+                'need_warranty': rline.product_id.need_warranty, 'origin_order': rline.origin_order,
+                'product_qty': rline.product_qty
+            })
         wizard = self.env['aas.stock.receipt.product.wizard'].create(wizardvals)
         view_form = self.env.ref('aas_wms.view_form_aas_stock_receipt_product_lot_wizard')
         return {
