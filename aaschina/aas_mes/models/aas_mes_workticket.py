@@ -168,11 +168,9 @@ class AASMESWorkticket(models.Model):
             if not container_id and float_compare(commit_qty, badmode_qty, precision_rounding=0.000001) > 0.0:
                 raise UserError(u'当前工序是最后一道工序，需要先添加产出容器！')
             else:
-                ticketvals['container_id'] = container_id
+                self.write({'container_id': container_id})
         if float_compare(badmode_qty, commit_qty, precision_rounding=0.000001) > 0:
             raise UserError(u'不良数量不能超过上报总数！')
-        self.write(ticketvals)
-        _logger.info(u'工票%s更新产出信息;当前时间：%s;产出数量%s,不良数量%s', self.name, fields.Datetime.now(), output_qty, badmode_qty)
         # 添加追溯信息
         workcenter, mesline = self.workcenter_id, self.mesline_id
         workstation, workorder = workcenter.workstation_id, self.workorder_id
@@ -191,6 +189,8 @@ class AASMESWorkticket(models.Model):
             self.action_workticket_consume(temptrace, commit_qty)
             # 工票产出
             self.action_workticket_output(temptrace, output_qty, badmode_qty, equipment=equipment)
+            self.write(ticketvals)
+            _logger.info(u'工票%s更新产出信息;当前时间：%s;产出数量%s,不良数量%s', self.name, fields.Datetime.now(), output_qty, badmode_qty)
         except UserError, ue:
             raise UserError(ue.name)
         except ValidationError, ve:
