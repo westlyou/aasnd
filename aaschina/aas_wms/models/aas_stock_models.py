@@ -108,10 +108,10 @@ class AASProductProduct(models.Model):
         :return:
         """
         tinventory = 0.0
-        tempdomain = [('location_id.edgelocation', '=', False), ('location_id.mrblocation', '=', False)]
-        tempdomain += [('location_id.usage', '=', 'internal'), ('parent_id', '=', False)]
-        tempdomain += [('product_id', '=', productid), ('state', '=', 'normal')]
-        labelist = self.env['aas.product.label'].search(tempdomain)
+        labeldomain = [('product_id', '=', productid), ('state', '=', 'normal')]
+        labeldomain += [('parent_id', '=', False), ('location_id.usage', '=', 'internal')]
+        labeldomain += [('location_id.edgelocation', '=', False), ('location_id.mrblocation', '=', False)]
+        labelist = self.env['aas.product.label'].search(labeldomain)
         if labelist and len(labelist) > 0:
             tinventory = sum([tlabel.product_qty for tlabel in labelist])
         return tinventory
