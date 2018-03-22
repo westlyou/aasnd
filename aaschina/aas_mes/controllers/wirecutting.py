@@ -65,7 +65,7 @@ class AASMESWireCuttingController(http.Controller):
             'success': True, 'message': '', 'action': 'working',
             'employee_id': '0', 'employee_name': '', 'employee_code': ''
         }
-        employee = request.env['aas.hr.employee'].search([('barcode', '=', barcode)], limit=1)
+        employee = request.env['aas.hr.employee'].search([('barcode', '=', barcode.upper())], limit=1)
         if not employee:
             values.update({'success': False, 'message': u'员工卡扫描异常，请检查系统中是否存在该员工！'})
             return values
@@ -102,7 +102,7 @@ class AASMESWireCuttingController(http.Controller):
         if not workstation:
             values.update({'success': False, 'message': u'当前登录账号还未绑定下线工位'})
             return values
-        equipment = request.env['aas.equipment.equipment'].search([('barcode', '=', barcode)], limit=1)
+        equipment = request.env['aas.equipment.equipment'].search([('barcode', '=', barcode.upper())], limit=1)
         if not equipment:
             values.update({'success': False, 'message': u'系统并未搜索到此设备，请仔细检查！'})
             return values
@@ -113,7 +113,7 @@ class AASMESWireCuttingController(http.Controller):
     @http.route('/aasmes/wirecutting/scanwireorder', type='json', auth="user")
     def aasmes_wirecutting_scanwireorder(self, barcode):
         values = {'success': True, 'message': ''}
-        wireorder = request.env['aas.mes.wireorder'].search([('name', '=', barcode)], limit=1)
+        wireorder = request.env['aas.mes.wireorder'].search([('name', '=', barcode.upper())], limit=1)
         if not wireorder:
             values.update({'success': False, 'message': u'请仔细检查确认扫描工单是否在系统中存在！'})
             return values
@@ -139,7 +139,7 @@ class AASMESWireCuttingController(http.Controller):
     @http.route('/aasmes/wirecutting/scancontainer', type='json', auth="user")
     def aasmes_wirecutting_scancontainer(self, barcode):
         values = {'success': True, 'message': ''}
-        container = request.env['aas.container'].search([('barcode', '=', barcode)], limit=1)
+        container = request.env['aas.container'].search([('barcode', '=', barcode.upper())], limit=1)
         if not container:
             values.update({'success': False, 'message': u'请仔细检查确认扫描的容器是否在系统中存在！'})
             return values
@@ -180,7 +180,7 @@ class AASMESWireCuttingController(http.Controller):
         if not workstation:
             values.update({'success': False, 'message': u'当前登录账号还未绑定切线工位！'})
             return values
-        label = request.env['aas.product.label'].search([('barcode', '=', barcode)], limit=1)
+        label = request.env['aas.product.label'].search([('barcode', '=', barcode.upper())], limit=1)
         if not label:
             values.update({'success': False, 'message': u'请仔细检查确认扫描的标签是否在系统中存在！'})
             return values

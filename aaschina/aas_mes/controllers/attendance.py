@@ -58,7 +58,7 @@ class AASMESAttendanceController(http.Controller):
     @http.route('/aasmes/attendance/actionscan', type='json', auth="user")
     def aasmes_attendance_actionscan(self, barcode, stationid=None):
         values = {'success': True, 'message': ''}
-        employee = request.env['aas.hr.employee'].search([('barcode', '=', barcode)], limit=1)
+        employee = request.env['aas.hr.employee'].search([('barcode', '=', barcode.upper())], limit=1)
         if not employee:
             values.update({'success': False, 'message': u'无效条码，请确认扫描的是否是员工卡！'})
             return values

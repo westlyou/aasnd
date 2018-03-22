@@ -29,7 +29,7 @@ class AASMESReworkingController(http.Controller):
     @http.route('/aasmes/reworking/scanemployee', type='json', auth="user")
     def aasmes_reworking_scanemployee(self, barcode):
         values = {'success': True, 'message': '', 'employee_id': '0', 'employee_name': ''}
-        employee = request.env['aas.hr.employee'].search([('barcode', '=', barcode)], limit=1)
+        employee = request.env['aas.hr.employee'].search([('barcode', '=', barcode.upper())], limit=1)
         if not employee:
             values.update({'success': False, 'message': u'员工卡扫描异常，请检查系统中是否存在该员工！'})
             return values
@@ -82,7 +82,7 @@ class AASMESReworkingController(http.Controller):
     @http.route('/aasmes/repairing/scanemployee', type='json', auth="user")
     def aasmes_repairing_scanemployee(self, barcode):
         values = {'success': True, 'message': '', 'employee_id': '0', 'employee_name': ''}
-        employee = request.env['aas.hr.employee'].search([('barcode', '=', barcode)], limit=1)
+        employee = request.env['aas.hr.employee'].search([('barcode', '=', barcode.upper())], limit=1)
         if not employee:
             values.update({'success': False, 'message': u'员工卡扫描异常，请检查系统中是否存在该员工！'})
             return values
@@ -165,7 +165,7 @@ class AASMESReworkingController(http.Controller):
     @http.route('/aasmes/ipqcchecking/scanemployee', type='json', auth="user")
     def aasmes_ipqcchecking_scanemployee(self, barcode):
         values = {'success': True, 'message': '', 'employee_id': '0', 'employee_name': ''}
-        employee = request.env['aas.hr.employee'].search([('barcode', '=', barcode)], limit=1)
+        employee = request.env['aas.hr.employee'].search([('barcode', '=', barcode.upper())], limit=1)
         if not employee:
             values.update({'success': False, 'message': u'员工卡扫描异常，请检查系统中是否存在该员工！'})
             return values

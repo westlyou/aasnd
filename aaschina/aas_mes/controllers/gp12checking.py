@@ -79,7 +79,7 @@ class AASMESGP12CheckingController(http.Controller):
         if not workstation:
             values.update({'success': False, 'message': u'当前登录账号还未绑定GP12工位'})
             return values
-        employee = request.env['aas.hr.employee'].search([('barcode', '=', barcode)], limit=1)
+        employee = request.env['aas.hr.employee'].search([('barcode', '=', barcode.upper())], limit=1)
         if not employee:
             values.update({'success': False, 'message': u'员工卡扫描异常，请检查系统中是否存在该员工！'})
             return values
