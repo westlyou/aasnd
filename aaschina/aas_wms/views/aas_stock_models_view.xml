@@ -8,6 +8,7 @@
             <field name="inherit_id" ref="product.product_template_form_view"/>
             <field name="arch" type="xml">
                 <field name="list_price" position="replace">
+                    <field name="virtual_material"/>
                     <label invisible="1" for="warranty" string="质保期"/>
                     <div invisible="1"> <field name="warranty" class="oe_inline"/> 月 </div>
                     <label for="need_warranty" string="质保期"/>
