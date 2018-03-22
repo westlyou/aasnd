@@ -185,3 +185,25 @@ class AASMESSerialnumberController(http.Controller):
 
 
 
+    @http.route('/aasmes/serialnumber/autoprint', type='json', auth="user")
+    def aasmes_serialnumber_autoprint(self, printerid):
+        values = {'success': True, 'message': ''}
+        login = request.env.user
+        tempdomain = [('lineuser_id', '=', login.id), ('mesrole', '=', 'serialnumber')]
+        lineuser = request.env['aas.mes.lineusers'].search(tempdomain, limit=1)
+        if not lineuser:
+            values.update({'success': False, 'message': u'当前登录用户还未分配序列号的权限！'})
+            return values
+        mesline, todaydate = lineuser.mesline_id, fields.Datetime.to_china_today()
+        serialdomain = [('operation_date', '=', todaydate), ('mesline_id', '=', mesline.id), ('printed', '=', False)]
+        serialnumberlist = request.env['aas.mes.serialnumber'].search(serialdomain)
+        if not serialnumberlist or len(serialnumberlist) <= 0:
+            values.update({'success': False, 'message': u'当前标签已经全部打印，不可以批量重复打印！'})
+            return values
+        pvals = request.env['aas.mes.serialnumber'].action_print_label(printerid, serialnumberlist.ids)
+        serialnumberlist.write({'printed': True})
+        values.update(pvals)
+        return values
+
+
+

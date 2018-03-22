@@ -11,6 +11,11 @@ $(function() {
     }
 
     $('#action_addserial').click(function(){
+        var printerid = $('#printerlist').val();
+        if(printerid==null || printerid=='0'){
+            layer.msg('请先设置好标签打印机！', {icon: 5});
+            return ;
+        }
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
             url: '/aasmes/serialnumber/checkingmesline',
@@ -62,6 +67,8 @@ $(function() {
                             $('#serial_count').html(dresult.serial_count);
                             $('#lastserialnumber').html(dresult.lastserialnumber);
                             loadingserialnumberlist(1, 200);
+                            //自动打印标签
+                            autoprinting();
                         },
                         error: function (xhr, type, errorThrown) {
                             console.log(type);
@@ -282,5 +289,47 @@ $(function() {
     });
 
     loadingserialnumberlist(1, 200);
+
+
+    // 自动打印标签
+    function autoprinting(){
+        var printerid = $('#printerlist').val();
+        if(printerid==null || printerid=='0'){
+            layer.msg('请先设置好标签打印机！', {icon: 5});
+            return ;
+        }
+        var tparams = {'printerid': parseInt(printerid)};
+        var tempid = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        $.ajax({
+            url: '/aasmes/serialnumber/autoprint',
+            headers: {'Content-Type': 'application/json'},
+            type: 'post', timeout: 10000, dataType: 'json',
+            data: JSON.stringify({jsonrpc: "2.0", method: 'call', params: tparams, id: tempid}),
+            success: function (data) {
+                var dresult = data.result;
+                if(!dresult.success){
+                    layer.msg(dresult.message, {icon: 5});
+                    return ;
+                }
+                var printername = dresult.printer;
+                var printerurl = dresult.serverurl;
+                var temprecords = dresult.records;
+                if(temprecords.length <= 0){
+                    layer.msg('未获取到需要打印的条码', {icon: 5});
+                    return ;
+                }
+                $.each(temprecords, function(index, record){
+                    var pparams = {'label_name': printername, 'label_count': 1, 'label_content':record};
+                    $.ajax({type:'post', dataType:'script', url:'http://'+printerurl, data: pparams,
+                        success: function (result) { },
+                        error:function(XMLHttpRequest,textStatus,errorThrown){}
+                    });
+                });
+            },
+            error: function (xhr, type, errorThrown) {
+                console.log(type);
+            }
+        });
+    }
 
 });
