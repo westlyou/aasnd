@@ -15,6 +15,7 @@
     'data': [
         'data/aas_wms_data.xml',
         'data/aas_wms_sequence.xml',
+        'security/aas_wms_security.xml',
         'security/ir.model.access.csv',
         'views/aas_stock_models_view.xml',
         'views/aas_product_label_view.xml',
@@ -34,6 +35,7 @@
         'views/aas_container_view.xml',
         'views/aas_wms_delivery_templates.xml',
         'views/aas_stock_adjust_view.xml',
+        'views/aas_stock_material_view.xml',
 
         'oracle/aas_stock_purchase_view.xml',
         'oracle/aas_stock_sales_view.xml',

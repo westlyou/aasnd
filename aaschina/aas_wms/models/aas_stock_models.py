@@ -53,6 +53,13 @@ class ProductTemplate(models.Model):
     weld_count = fields.Integer(string=u'焊接次数', default=1)
     customer_product_code = fields.Char(string=u'客户料号', copy=False, help=u'产品在客户方的料号')
 
+
+    costcenter = fields.Char(string=u'成本中心', copy=False)
+    stockmin = fields.Float(string=u'最低库存', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    stockmax = fields.Float(string=u'最高库存', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    current_qty = fields.Float(string=u'当前库存', digits=dp.get_precision('Product Unit of Measure'),
+                               compute='_compute_current_qty')
+
     _sql_constraints = [
         ('uniq_defaultcode', 'unique(default_code)', u'产品料号不可以重复！')
     ]
@@ -71,6 +78,16 @@ class ProductTemplate(models.Model):
         self.uom_po_id = self.uom_id.id
 
 
+    @api.depends('product_variant_ids')
+    def _compute_current_qty(self):
+        for record in self:
+            if not record.product_variant_ids or len(record.product_variant_ids) <= 0:
+                record.current_qty = 0.0
+            else:
+                product = record.product_variant_ids[0]
+                record.current_qty = product.loading_current_inventory(product.id)
+
+
 
 
 
@@ -82,6 +99,22 @@ class AASProductProduct(models.Model):
         if len(self) <= 0:
             return []
         return [(record.id, record.default_code) for record in self]
+
+
+    @api.model
+    def loading_current_inventory(self, productid):
+        """获取当前仓库库存
+        :param productid:
+        :return:
+        """
+        tinventory = 0.0
+        tempdomain = [('location_id.edgelocation', '=', False), ('location_id.mrblocation', '=', False)]
+        tempdomain += [('location_id.usage', '=', 'internal'), ('parent_id', '=', False)]
+        tempdomain += [('product_id', '=', productid), ('state', '=', 'normal')]
+        labelist = self.env['aas.product.label'].search(tempdomain)
+        if labelist and len(labelist) > 0:
+            tinventory = sum([tlabel.product_qty for tlabel in labelist])
+        return tinventory
 
 
 class Location(models.Model):

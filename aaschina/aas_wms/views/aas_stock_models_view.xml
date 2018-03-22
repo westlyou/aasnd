@@ -15,6 +15,9 @@
                     <label for="stock_age" string="库龄"/>
                     <div> <field name="stock_age" class="oe_inline"/> 月 </div>
                     <field name="list_price" widget='monetary' options="{'currency_field': 'currency_id'}" invisible="1"/>
+                    <field name="costcenter" readonly="1"/>
+                    <field name="stockmin" readonly="1"/>
+                    <field name="stockmax" readonly="1"/>
                 </field>
                 <label for="standard_price" position="replace">
                     <label for="standard_price" groups="base.group_user" invisible="1"/>

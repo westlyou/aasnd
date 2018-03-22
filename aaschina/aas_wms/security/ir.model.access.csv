@@ -62,6 +62,15 @@ access_aas_container_product_stock_manager,aas.container.product stock_manager,m
 access_aas_stock_adjust_stock_manager,aas.stock.adjust stock_manager,model_aas_stock_adjust,stock.group_stock_manager,1,1,1,1
 
 
+access_aas_material_planner_stock_user,aas.material.planner stock_user,model_aas_material_planner,stock.group_stock_user,1,0,0,0
+access_aas_material_planner_stock_manager,aas.material.planner stock_manager,model_aas_material_planner,stock.group_stock_manager,1,0,0,0
+access_aas_material_planner_material_planner,aas.material.planner material_planner,model_aas_material_planner,group_stock_material_planner,1,1,1,1
+access_aas_material_costcenter_stock_user,aas.material.costcenter stock_user,model_aas_material_costcenter,stock.group_stock_user,1,0,0,0
+access_aas_material_costcenter_stock_manager,aas.material.costcenter stock_manager,model_aas_material_costcenter,stock.group_stock_manager,1,0,0,0
+access_aas_material_costcenter_material_planner,aas.material.costcenter material_planner,model_aas_material_costcenter,group_stock_material_planner,1,1,1,1
+access_product_template_material_planner,product.template material_planner,product.model_product_template,group_stock_material_planner,1,1,0,0
+access_product_product_material_planner,product.product material_planner,product.model_product_product,group_stock_material_planner,1,1,0,0
+
 
 access_aas_ebs_purchase_order_stock_user,aas.ebs.purchase.order stock_user,model_aas_ebs_purchase_order,stock.group_stock_user,1,0,0,0
 access_aas_ebs_purchase_order_stock_manager,aas.ebs.purchase.order stock_manager,model_aas_ebs_purchase_order,stock.group_stock_manager,1,0,0,0

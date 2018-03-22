@@ -46,16 +46,14 @@
                                 <field name="uom_po_id" invisible="1"/>
                                 <field name="tracking"/>
                                 <field name="type"/>
-                                <field name="categ_id" string="内部分类" options="{'no_create':true}"/>
                                 <field name="customer_product_code"/>
                             </group>
                             <group>
                                 <field name="virtual_material"/>
                                 <field name="weld_count"/>
-                                <field name="need_warranty"/>
-                                <field name="stock_age"/>
                                 <field name="split_qty"/>
                                 <field name="product_yield"/>
+                                <field name="categ_id" string="内部分类" options="{'no_create':true}"/>
                             </group>
                         </group>
                     </sheet>
