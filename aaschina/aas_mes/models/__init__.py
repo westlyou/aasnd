@@ -58,6 +58,7 @@ import aas_mes_attendance
 import aas_mes_settings
 import aas_mes_container
 import aas_mes_production
+import aas_mes_sundry
 import aas_mes_producttest
 import aas_mes_report
 

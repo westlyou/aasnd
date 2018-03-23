@@ -53,6 +53,7 @@
         'views/aas_mes_settings_view.xml',
         'views/aas_mes_container_view.xml',
         'views/aas_mes_production_view.xml',
+        'views/aas_mes_sundry_view.xml',
         'views/aas_mes_producttest_view.xml',
         'views/aas_mes_producttest_templates.xml',
         'views/aas_mes_workdata_view.xml',
