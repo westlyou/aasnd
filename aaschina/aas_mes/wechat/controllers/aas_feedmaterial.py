@@ -83,7 +83,7 @@ class AASFeedmaterialWechatController(http.Controller):
             return values
         product = materiallabel.product_id
         values.update({
-            'material_id': product.id,
+            'material_id': product.id, 'current_qty': materiallabel.product_qty,
             'material_code': product.default_code, 'tmaterial_id': 'material_'+str(product.id)
         })
         tempdomain = [('mesline_id', '=', mesline.id), ('material_id', '=', product.id)]
@@ -91,7 +91,7 @@ class AASFeedmaterialWechatController(http.Controller):
         if tempfeedlist and len(tempfeedlist) > 0:
             values['material_qty'] = sum([tempfeeding.material_qty for tempfeeding in tempfeedlist])
         if values.get('success', False):
-            values['tips'] = u'%s上料成功，已上料%s'% (values['material_code'], values['material_qty'])
+            values['tips'] = u'%s上料成功，本次上料%s，总共已上料%s'% (values['material_code'], values['current_qty'], values['material_qty'])
         return values
 
 
@@ -117,7 +117,10 @@ class AASFeedmaterialWechatController(http.Controller):
             return values
         tempmaterial = materialcontainer.product_lines[0]
         product_id, product_code = tempmaterial.product_id.id, tempmaterial.product_id.default_code
-        values.update({'material_code': product_code, 'tmaterial_id': 'material_'+str(product_id)})
+        values.update({
+            'current_qty': tempmaterial.stock_qty,
+            'material_code': product_code, 'tmaterial_id': 'material_'+str(product_id)
+        })
         tvalues = request.env['aas.mes.feedmaterial'].action_feeding_withcontainer(mesline, barcode)
         if not tvalues.get('success', False):
             values.update({'success': False, 'message': tvalues.get('message', '')})
@@ -127,7 +130,7 @@ class AASFeedmaterialWechatController(http.Controller):
         if feedinglist and len(feedinglist) > 0:
             values['material_qty'] = sum([feeding.material_qty for feeding in feedinglist])
         if values.get('success', False):
-            values['tips'] = u'%s上料成功，已上料%s'% (values['material_code'], values['material_qty'])
+            values['tips'] = u'%s上料成功，本次上料%s，总共已上料%s'% (values['material_code'], values['current_qty'], values['material_qty'])
         return values
 
 
