@@ -35,3 +35,6 @@ install/win32/meta.py
 
 # pycharm
 .idea/
+
+# odoo
+/odoo.conf
