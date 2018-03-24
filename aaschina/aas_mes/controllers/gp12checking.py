@@ -57,8 +57,8 @@ class AASMESGP12CheckingController(http.Controller):
 
 
     @http.route('/aasmes/gp12/loadunpacklist', type='json', auth="user")
-    def aasmes_gp12_loadunpacklist(self):
-        values = request.env['aas.mes.operation'].action_loading_unpacking()
+    def aasmes_gp12_loadunpacklist(self, checkdate=False):
+        values = request.env['aas.mes.operation'].action_loading_unpacking(checkdate=checkdate)
         return values
 
 
@@ -115,9 +115,10 @@ class AASMESGP12CheckingController(http.Controller):
 
 
     @http.route('/aasmes/gp12/scanserialnumber', type='json', auth="user")
-    def aasmes_gp12_scan_serialnumber(self, barcode, productcode=None):
+    def aasmes_gp12_scan_serialnumber(self, barcode, productid=None):
         values = {
-            'success': True, 'message': '', 'result': 'OK',  'functiontestlist': [], 'reworklist': [], 'done': False
+            'success': True, 'message': '', 'result': 'OK',  'functiontestlist': [],
+            'reworklist': [], 'done': False, 'productid': 0, 'productcode': ''
         }
         userdomain = [('lineuser_id', '=', request.env.user.id), ('mesrole', '=', 'gp12checker')]
         lineuser = request.env['aas.mes.lineusers'].search(userdomain, limit=1)
@@ -143,9 +144,11 @@ class AASMESGP12CheckingController(http.Controller):
             return values
         serialnumber = tempoperation.serialnumber_id
         values.update({
-            'serialnumber_id': serialnumber.id, 'productcode': serialnumber.customer_product_code.replace('-', '')
+            'serialnumber_id': serialnumber.id,
+            'productid': serialnumber.product_id.id,
+            'productcode': serialnumber.customer_product_code.replace('-', '')
         })
-        if productcode and productcode != values['productcode']:
+        if productid and productid != values['productid']:
             values.update({'success': False, 'message': u'序列号异常，请确认可能混入其他型号'})
             return values
         serialnumber_name = serialnumber.name

@@ -11,6 +11,7 @@
                 <meta name="apple-mobile-web-app-capable" content="yes"/>
                 <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/datepicker/datepicker3.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/select2/select2.min.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
@@ -91,12 +92,20 @@
                                             <ul class="nav nav-pills nav-stacked">
                                                 <li> <a href="javascript:void(0);">产线 <span id="mes_mesline" class="pull-right" t-esc="mesline_name"/></a> </li>
                                                 <li> <a href="javascript:void(0);">工位 <span id="mes_workstation" class="pull-right" t-esc="workstation_name"/></a> </li>
-                                                <li> <a href="javascript:void(0);">当前PN <span id="mes_currentpn" class="pull-right" customercode=""/></a> </li>
+                                                <li> <a href="javascript:void(0);">当前PN <span id="mes_currentpn" class="pull-right" productid="0"/></a> </li>
                                                 <li>
                                                     <a href="javascript:void(0);">扫描员工
                                                         <span id="mes_scanner" class="pull-right" t-esc="scanner_name"
                                                               t-att-employeeid="scanner_id" t-att-employeename="scanner_name"/>
                                                     </a>
+                                                </li>
+                                                <li style="padding:5px;">
+                                                    <div class="input-group">
+                                                        <div class="input-group-btn">
+                                                          <button id="changedatebtn" type="button" class="btn btn-primary">切换日期</button>
+                                                        </div>
+                                                        <input id="checkdate" type="text" class="form-control" readonly="true"/>
+                                                    </div>
                                                 </li>
                                             </ul>
                                         </div>
@@ -278,6 +287,8 @@
                 <script src="/aas_base/static/libs/select2/select2.min.js"></script>
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
+                <script src="/aas_base/static/libs/datepicker/bootstrap-datepicker.js"></script>
+                <script src="/aas_base/static/libs/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>
                 <script src="/aas_base/static/libs/speech/js/jQuery.speech.min.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
                 <script src="/aas_mes/static/src/js/mes_gp12_checking.js"></script>
