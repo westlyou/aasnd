@@ -177,8 +177,7 @@ class AASMESOperation(models.Model):
         """
         values = {'success': True, 'message': '', 'serialnumberlist': []}
         values.update({'productcode': '', 'serialnumber': '', 'serialcount': '0'})
-        check_date = fields.Datetime.to_china_string(fields.Datetime.now())[0:10]
-        tempdomain = [('gp12_check', '=', True), ('labeled', '=', False), ('gp12_date', '=', check_date)]
+        tempdomain = [('gp12_check', '=', True), ('labeled', '=', False)]
         operationlist = self.env['aas.mes.operation'].search(tempdomain, order='gp12_time desc')
         if operationlist and len(operationlist) > 0:
             firstoperation = operationlist[0]
