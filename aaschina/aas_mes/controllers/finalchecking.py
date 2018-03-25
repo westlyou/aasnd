@@ -173,9 +173,6 @@ class AASMESFinalCheckingController(http.Controller):
             values.update({'success': False, 'message': u'请仔细检查是否是有效条码'})
             return values
         serialnumber = tempoperation.serialnumber_id
-        if workorder and (serialnumber.product_id.id != workorder.product_id.id):
-            values.update({'success': False, 'message': u'扫描序列号异常，此序列号产品与当前产线上生产的产品不相符！'})
-            return values
         tempvalues = request.env['aas.mes.operation'].action_loading_operation_rework_list(tempoperation.id)
         values.update({'recordlist': tempvalues['recordlist'], 'reworklist': tempvalues['reworklist']})
         values.update({
@@ -198,11 +195,15 @@ class AASMESFinalCheckingController(http.Controller):
                 values['badmode_name'] = currentrework.badmode_id.name
             values['message'] = u'%s返工，请仔细检查确认'% values['badmode_name']
             return values
-        if workorder and not serialnumber.stocked:
-            tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, barcode)
-            if not tvalues.get('success', False):
-                values.update(tvalues)
+        if workorder:
+            if serialnumber.product_id.id != workorder.product_id.id:
+                values.update({'success': False, 'message': u'扫描序列号异常，此序列号产品与当前产线上生产的产品不相符！'})
                 return values
+            if not serialnumber.stocked:
+                tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, barcode)
+                if not tvalues.get('success', False):
+                    values.update(tvalues)
+                    return values
         tempoperation.action_finalcheck(mesline, workstation)
         orvalues = request.env['aas.mes.operation'].action_loading_operation_rework_list(tempoperation.id)
         values.update({'recordlist': orvalues['recordlist'], 'reworklist': orvalues['reworklist']})
@@ -235,7 +236,10 @@ class AASMESFinalCheckingController(http.Controller):
             return values
         tempoperation = request.env['aas.mes.operation'].browse(operationid)
         workorder, tserialnumber = mesline.workorder_id, tempoperation.serialnumber_id
-        if not tserialnumber.stocked and workorder:
+        if workorder and not tserialnumber.stocked:
+            if tserialnumber.product_id.id != workorder.product_id.id:
+                values.update({'success': False, 'message': u'扫描异常，当前产品型号与产线正在生产的型号不符！'})
+                return values
             tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, tserialnumber.name)
             if not tvalues.get('success', False):
                 values.update(tvalues)

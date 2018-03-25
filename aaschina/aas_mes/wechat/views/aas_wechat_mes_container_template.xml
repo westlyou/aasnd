@@ -51,7 +51,7 @@
                     <div id="container_list_buttons" class="mui-popover mui-popover-action mui-popover-bottom">
                         <ul class="mui-table-view">
                             <li class="mui-table-view-cell"> <a id="scan_container" href="javascript:;">容器扫描</a> </li>
-                            <li class="mui-table-view-cell"> <a id="clean_container" href="javascript:;">容器清理</a> </li>
+                            <!--<li class="mui-table-view-cell"> <a id="clean_container" href="javascript:;">容器清理</a> </li>-->
                         </ul>
                         <ul class="mui-table-view">
                             <li class="mui-table-view-cell"> <a href="#container_list_buttons"><b>取消</b></a> </li>
@@ -159,9 +159,9 @@
                             <li class="mui-table-view-cell">
                                 <a id="print_container" href="javascript:;">容器打印</a>
                             </li>
-                            <li class="mui-table-view-cell">
+                            <!--<li class="mui-table-view-cell">
                                 <a id="clean_container" href="javascript:;">容器清理</a>
-                            </li>
+                            </li>-->
                         </ul>
                         <ul class="mui-table-view">
                             <li class="mui-table-view-cell"> <a href="#container_detail_buttons"><b>取消</b></a> </li>
