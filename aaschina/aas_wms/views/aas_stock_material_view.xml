@@ -110,6 +110,7 @@
                 <tree create="false" delete="false">
                     <field name="default_code" string="物料编码"/>
                     <field name="name"/>
+                    <field name="uom_id"/>
                     <field name="costcenter"/>
                     <field name="stockmin"/>
                     <field name="stockmax"/>
@@ -126,14 +127,13 @@
                 <form create="false" delete="false">
                     <sheet>
                         <group>
-                            <group> <field name="name" readonly="1"/></group>
-                        </group>
-                        <group>
                             <group>
+                                <field name="name" readonly="1"/>
                                 <field name="default_code" readonly="1" string="物料编码"/>
                                 <field name="costcenter" readonly="1"/>
                             </group>
                             <group>
+                                <field name="uom_id" readonly="1"/>
                                 <field name="stockmin"/>
                                 <field name="stockmax"/>
                             </group>
