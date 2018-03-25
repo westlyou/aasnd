@@ -145,7 +145,7 @@
             <field name="model">aas.mes.producttest.order</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree create="false" edit="false" delete="false">
+                <tree create="false" edit="false" delete="false" decoration-danger="not qualified">
                     <field name="name"/>
                     <field name="workstation_id"/>
                     <field name="product_id"/>
@@ -154,6 +154,7 @@
                     <field name="order_date"/>
                     <field name="employee_id"/>
                     <field name="state"/>
+                    <field name="qualified"/>
                 </tree>
             </field>
         </record>

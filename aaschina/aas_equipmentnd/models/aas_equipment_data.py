@@ -112,6 +112,7 @@ class AASEquipmentNDWeldData(models.Model):
     _auto = False
     _name = 'aas.equipment.ndweld.data'
     _description = 'AAS Equipment ND Weld Data'
+    _order = 'id desc'
 
     app_code = fields.Char(string=u'设备编码', index=True)
     operate_time = fields.Datetime(string=u'操作时间')
@@ -159,6 +160,7 @@ class AASEquipmentNDFunctiontestData(models.Model):
     _auto = False
     _name = 'aas.equipment.ndfunctiontest.data'
     _description = 'AAS Equipment ND Function Test Data'
+    _order = 'id desc'
 
     app_code = fields.Char(string=u'设备编码', index=True)
     operate_time = fields.Datetime(string=u'操作时间')
