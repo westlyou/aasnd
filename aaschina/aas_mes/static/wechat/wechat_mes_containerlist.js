@@ -159,8 +159,8 @@ mui.ready(function() {
     });
 
     //清理容器
-    document.getElementById('clean_container').addEventListener('tap', function(){
+    /*document.getElementById('clean_container').addEventListener('tap', function(){
         mui.openWindow({'url': '/aaswechat/mes/cleancontainers', 'id': 'cleancontainers'});
-    });
+    });*/
 
 });

@@ -171,17 +171,21 @@ class AASMESOperation(models.Model):
 
 
     @api.model
-    def action_loading_unpacking(self):
+    def action_loading_unpacking(self, checkdate=False):
         """获取GP12已检测并且还未打包标签的序列号
         :return:
         """
-        values = {'success': True, 'message': '', 'serialnumberlist': []}
-        values.update({'productcode': '', 'serialnumber': '', 'serialcount': '0'})
-        check_date = fields.Datetime.to_china_string(fields.Datetime.now())[0:10]
-        tempdomain = [('gp12_check', '=', True), ('labeled', '=', False), ('gp12_date', '=', check_date)]
+        values = {
+            'success': True, 'message': '', 'serialnumberlist': [],
+            'productid': 0, 'productcode': '', 'serialnumber': '', 'serialcount': '0'
+        }
+        if not checkdate:
+            checkdate = fields.Datetime.to_china_today()
+        tempdomain = [('gp12_check', '=', True), ('labeled', '=', False), ('gp12_date', '=', checkdate)]
         operationlist = self.env['aas.mes.operation'].search(tempdomain, order='gp12_time desc')
         if operationlist and len(operationlist) > 0:
             firstoperation = operationlist[0]
+            values['productid'] = firstoperation.product_id.id
             customer_code = firstoperation.customer_product_code
             if customer_code:
                 values['productcode'] = customer_code.replace('-', '')

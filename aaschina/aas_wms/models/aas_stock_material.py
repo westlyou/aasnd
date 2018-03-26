@@ -84,7 +84,7 @@ class AASMaterialPlanner(models.Model):
     def action_send_emails(self, messages):
         if not messages or len(messages) <= 0:
             return
-        mail_server = self.env['ir.mail_server'].search([('name', '=', 'System')], limit=1)
+        mail_server = self.env['ir.mail_server'].sudo().search([('name', '=', 'System')], limit=1)
         if not mail_server:
             _logger.info(u'管理员还未配置名称为System的smtp服务器信息，请联系管理员配置！')
             return

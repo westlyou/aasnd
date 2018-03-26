@@ -152,9 +152,9 @@ $(function() {
         }
         var scanparams = {'barcode': barcode};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
-        var customercode = $('#mes_currentpn').attr('customercode');
-        if(customercode!=null && customercode!=''){
-            scanparams['productcode'] = customercode;
+        var productid = parseInt($('#mes_currentpn').attr('productid'));
+        if(productid!=0){
+            scanparams['productid'] = productid;
         }
         $.ajax({
             url: '/aasmes/gp12/scanserialnumber',
@@ -204,9 +204,12 @@ $(function() {
                     $('#checkwarning').html(dresult.message);
                 }
                 var custmoercodespan = $('#mes_currentpn');
-                var customercode = custmoercodespan.attr('customercode');
-                if(customercode==null || customercode==''){
-                    custmoercodespan.attr('customercode', dresult.productcode).html(dresult.productcode);
+                var productid = parseInt(custmoercodespan.attr('productid'));
+                if(productid==0){
+                    custmoercodespan.attr('productid', dresult.productid).html(dresult.productcode);
+                }else if(productid != dresult.productid){
+                    layer.msg('条码异常可能混入其他型号产品，请仔细检查！', {icon: 5});
+                    return ;
                 }
                 var waitcount = parseInt($('#mes_printbtn').attr('waitcount'));
                 var labelqty = parseInt($('#mes_labelqty').val());
@@ -481,13 +484,44 @@ $(function() {
         });
     }
 
-    function action_loading_unpacklist(){
+    function gettoday(){
+        var tempdate = new Date();
+        var tyear = tempdate.getFullYear();
+        var tmonth = tempdate.getMonth() + 1;
+        var tdate = tempdate.getDate();
+        if(tmonth>=1 && tmonth<=9){
+            tmonth = "0" + tmonth;
+        }
+        if(tdate>=1 && tdate<=9){
+            tdate = "0"+tdate;
+        }
+        return tyear+'-'+tmonth+'-'+tdate;
+    }
+
+    $('#checkdate').val(gettoday());
+
+    $('#checkdate').datepicker({clearBtn: true, autoclose: true, language: 'zh-CN', format: 'yyyy-mm-dd'});
+
+    $('#changedatebtn').click(function(){
+        var checkdate = $('#checkdate').val();
+        if(checkdate==undefined || checkdate==null || checkdate==''){
+            checkdate = gettoday();
+        }
+        action_loading_unpacklist(checkdate);
+    });
+
+    function action_loading_unpacklist(checkdate){
+        if(checkdate==undefined || checkdate==null){
+            checkdate = gettoday();
+        }
+        var temparams = {'checkdate': checkdate};
         $.ajax({
             url: '/aasmes/gp12/loadunpacklist',
             headers:{'Content-Type':'application/json'},
             type: 'post', timeout:30000, dataType: 'json',
             data: JSON.stringify({
-                jsonrpc: "2.0", method: 'call', params: {}, id: Math.floor(Math.random() * 1000 * 1000 * 1000)
+                jsonrpc: "2.0", method: 'call', params: temparams,
+                id: Math.floor(Math.random() * 1000 * 1000 * 1000)
             }),
             success:function(data){
                 var dresult = data.result;
@@ -495,7 +529,7 @@ $(function() {
                     layer.msg(dresult.message, {icon: 5});
                     return ;
                 }
-                $('#mes_currentpn').attr('customercode', dresult.productcode).html(dresult.productcode);
+                $('#mes_currentpn').attr('productid', dresult.productid).html(dresult.productcode);
                 $('#mes_serialnumber').html(dresult.serialnumber);
                 $('#gp12_result_content').attr('serialcount', dresult.serialcount).html(dresult.serialcount);
                 $('#pass_list').html('');

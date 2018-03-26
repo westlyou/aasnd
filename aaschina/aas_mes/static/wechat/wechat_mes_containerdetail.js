@@ -90,7 +90,7 @@ mui.ready(function(){
 
 
     //清理容器
-    document.getElementById('clean_container').addEventListener('tap', function(){
+    /*document.getElementById('clean_container').addEventListener('tap', function(){
         mui('#container_detail_buttons').popover('toggle');
         mui.confirm('确认清理当前容器的库存清单？', '清理容器', ['确认', '取消'], function(e) {
             if (e.index != 0) {
@@ -98,7 +98,7 @@ mui.ready(function(){
             }
             action_clean();
         });
-    });
+    });*/
 
     function action_clean(){
         var containerid = parseInt(document.getElementById('container_detail_pullrefresh').getAttribute('containerid'));

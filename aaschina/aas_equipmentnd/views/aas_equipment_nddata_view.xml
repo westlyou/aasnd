@@ -56,6 +56,7 @@
             <field name="view_mode">tree</field>
             <field name="view_id" ref="view_tree_aas_equipment_ndweld_data"/>
             <field name="search_view_id" ref="view_search_aas_equipment_ndweld_data"/>
+            <field name="domain">[('param_energy','!=',False)]</field>
         </record>
 
         <menuitem id="menu_aas_equipment_ndweld_data"  name="焊接数据" action="action_aas_equipment_ndweld_data"
@@ -149,6 +150,7 @@
             <field name="view_mode">tree</field>
             <field name="view_id" ref="view_tree_aas_equipment_ndfunctiontest_data"/>
             <field name="search_view_id" ref="view_search_aas_equipment_ndfunctiontest_data"/>
+            <field name="domain">[('param_gnd','!=',False)]</field>
         </record>
 
         <menuitem id="menu_aas_equipment_ndfunctiontest_data"  name="测试数据" action="action_aas_equipment_ndfunctiontest_data"

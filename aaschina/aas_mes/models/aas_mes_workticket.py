@@ -390,6 +390,9 @@ class AASMESWorkticket(models.Model):
         })
         if float_compare(output_qty, 0.0, precision_rounding=0.000001) <= 0.0:
             return
+        tempcontainer = self.env['aas.container'].browse(container_id)
+        if tempcontainer.location_id.id != mesline.location_production_id.id:
+            tempcontainer.action_domove(mesline.location_production_id.id, movenote=u'成品产出容器自动调拨库位！')
         stockdomain = [('container_id', '=', container_id)]
         stockdomain += [('product_id', '=', product.id), ('product_lot', '=', product_lot.id)]
         containerstock = self.env['aas.container.product'].search(stockdomain, limit=1)

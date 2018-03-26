@@ -426,8 +426,9 @@ class AASMESWorkorder(models.Model):
             if self.env['aas.mes.workorder.consume'].search_count(tempdomain) <= 0:
                 result.update({'success': False, 'message': u'成品产出异常，可能不是当前工单产物！'})
                 return result
-        if not workorder.mesline_id.workdate:
-            workorder.mesline_id.action_refresh_schedule()
+        mesline = workorder.mesline_id
+        if not mesline.workdate:
+            mesline.action_refresh_schedule()
         tempbadlines, badmode_qty = [], 0.0
         if badmode_lines and len(badmode_lines) > 0:
             workstation_id = False if not workstation_id else workstation_id
@@ -478,6 +479,9 @@ class AASMESWorkorder(models.Model):
             self.action_update_productionout(product_id, workstation_id, mesline, output_qty, badmode_qty)
         if container_id:
             # 更新容器中物品清单信息
+            tempcontainer = self.env['aas.container'].browse(container_id)
+            if tempcontainer.location_id.id != mesline.location_production_id.id:
+                tempcontainer.action_domove(mesline.location_production_id.id, movenote=u'成品产出容器自动调拨库位！')
             cdomain = [('container_id', '=', container_id), ('product_id', '=', product_id), ('product_lot', '=', product_lot)]
             productline = self.env['aas.container.product'].search(cdomain, limit=1)
             if productline:
