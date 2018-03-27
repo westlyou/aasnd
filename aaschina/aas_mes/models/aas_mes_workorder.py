@@ -981,6 +981,115 @@ class AASMESWorkorder(models.Model):
         }
 
 
+    @api.model
+    def action_production_output(self, workorder, product, output_qty, workticket=False,
+                                 workstation=False, badmode_lines=[], equipment=False, serialnumber=False):
+        """工单产出
+        :param workorder:
+        :param product:
+        :param output_qty:
+        :param workticket:
+        :param workstation:
+        :param badmode_lines:
+        :param equipment:
+        :param serialnumber:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+
+
+
+        return values
+
+    @api.model
+    def action_loading_consumelist(self, workorder, product, output_qty):
+        """获取工单消耗清单
+        :param workorder:
+        :param product:
+        :param output_qty:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'consumedict': {}}
+        consumedomain = [('workorder_id', '=', workorder.id), ('product_id', '=', product.id)]
+        consumes = self.env['aas.mes.workorder.consume'].search(consumedomain)
+        if not consumes or len(consumes) <= 0:
+            return values
+        for tconsume in consumes:
+            material, wait_qty = tconsume.material_id, tconsume.consume_unit * output_qty
+            if not material.virtual_material:
+                stockvals = self.action_loading_consume_materiallist(material, wait_qty, workorder.mesline_id)
+                if stockvals.get('success', False):
+                    values.update(stockvals)
+                    return values
+                values['consumedict'][material.id] = {'virtual': False, 'stocklist': stockvals['stocklist']}
+            else:
+                pass
+
+        return values
+
+
+    @api.model
+    def action_loading_consume_materiallist(self, material, wait_qty, mesline):
+        """获取待消耗原料的可供消耗清单
+        :param material:
+        :param wait_qty:
+        :param mesline:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'stocklist': []}
+        feeddomain = [('mesline_id', '=', mesline.id), ('material_id', '=', material.id)]
+        feedlist = self.env['aas.mes.feedmaterial'].search(feeddomain, order='feed_time')
+        if not feedlist and len(feedlist) <= 0:
+            values.update({'success': False, 'message': u'物料%s还未上料，请联系上料员上料'% material.default_code})
+            return values
+        tempqty, restqty = 0.0, wait_qty
+        for feed in feedlist:
+            if float_compare(restqty, 0.0, precision_rounding=0.000001) <= 0.0:
+                break
+            quants = feed.action_checking_quants()
+            if not quants or len(quants) <= 0:
+                continue
+            if float_compare(feed.material_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+                continue
+            lotid, lotqty, locationdict = feed.material_lot.id, 0.0, {}
+            for quant in quants:
+                if float_compare(restqty, 0.0, precision_rounding=0.000001) <= 0.0:
+                    break
+                qqty = quant.qty
+                if float_compare(qqty, restqty, precision_rounding=0.000001) >= 0.0:
+                    current_qty = restqty
+                else:
+                    current_qty = qqty
+                lkey = 'L'+str(quant.location_id.id)
+                if lkey in locationdict:
+                    locationdict[lkey]['product_qty'] += current_qty
+                else:
+                    locationdict[lkey] = {'location_id': quant.location_id.id, 'product_qty': current_qty}
+                restqty -= current_qty
+                lotqty += current_qty
+            values['stocklist'].append({'lot_id': lotid, 'lot_qty': lotqty, 'locationlist': locationdict.values()})
+            tempqty += lotqty
+        balance_qty = wait_qty - tempqty
+        if float_compare(balance_qty, 0.0, precision_rounding=0.000001) > 0.0:
+            values.update({'success': False, 'message': u'物料%s上料不足，还差%s'% (material.default_code, balance_qty)})
+            return values
+        return values
+
+    @api.model
+    def action_loading_consume_virtuallist(self, material, wait_qty, workorder):
+        """获取虚拟物料可供消耗清单
+        :param material:
+        :param wait_qty:
+        :param workorder:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'stocklist': []}
+
+        return values
+
+
+
+
 
 
 # 工单产出明细
@@ -1323,40 +1432,3 @@ class AASMESWorkorderFianlProductSettingProductWizard(models.TransientModel):
     wizard_id = fields.Many2one(comodel_name='aas.mes.workorder.finalproduct.setting.wizard', string='Wizard', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
     finalchecked = fields.Boolean(string=u'确认', default=False, copy=False)
-
-
-
-
-#####################################报表###########################################
-
-
-
-# class AASMESWorkorderBadmodeReport(models.Model):
-#     _auto = False
-#     _name = 'aas.mes.workorder.badmode.report'
-#     _description = 'AAS MES Workorder Badmode Report'
-#
-#
-#     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单')
-#     product_id = fields.Many2one(comodel_name='product.product', string=u'产品')
-#     badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式')
-#     badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-#
-#
-#     def _select_sql(self):
-#         _select_sql = """
-#         SELECT MIN(amwb.id) AS id,
-#         amwb.workorder_id AS workorder_id,
-#         amwb.product_id AS product_id,
-#         amwb.badmode_id AS badmode_id,
-#         sum(amwb.badmode_qty) AS badmode_qty
-#         FROM aas_mes_workticket_badmode amwb
-#         GROUP BY amwb.workorder_id, amwb.product_id, amwb.badmode_id
-#         """
-#         return _select_sql
-#
-#
-#     @api.model_cr
-#     def init(self):
-#         drop_view_if_exists(self._cr, self._table)
-#         self._cr.execute("""CREATE or REPLACE VIEW %s as ( %s )""" % (self._table, self._select_sql()))

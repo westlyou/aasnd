@@ -295,3 +295,22 @@ class AASMESFeedmaterial(models.Model):
                 todellist |= record
         if todellist and len(todellist) > 0:
             todellist.unlink()
+
+
+
+class AASMESFeedmaterialList(models.Model):
+    _name = 'aas.mes.feedmaterial.list'
+    _description = 'AAS MES Feed Material'
+    _rec_name = 'material_id'
+    _order = 'feed_time asc'
+
+
+    feedmaterial_id = fields.Many2one(comodel_name='aas.mes.feedmaterial', string=u'上料信息')
+    material_id = fields.Many2one(comodel_name='product.product', string=u'原料', ondelete='restrict')
+    material_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    material_qty = fields.Float(string=u'本次上料数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    toatal_qty = fields.Float(string=u'已上料总数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    feed_time = fields.Datetime(string=u'上料时间', default=fields.Datetime.now, copy=False)
+    feeder_id = fields.Many2one(comodel_name='res.users', string=u'上料员')
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签')
+    container_id = fields.Many2one(comodel_name='aas.container', string=u'容器')

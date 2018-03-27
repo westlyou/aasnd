@@ -18,6 +18,99 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
+# 成品产出
+class AASProductionProduct(models.Model):
+    _name = 'aas.production.product'
+    _description = 'AAS Production Product'
+
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', index=True)
+    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', index=True)
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', index=True)
+    euipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', index=True)
+
+    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', index=True)
+    workticket_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'工票', index=True)
+    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', index=True)
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', index=True)
+    product_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    consumed_qty = fields.Float(string=u'消耗数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    finalproduct = fields.Boolean(string=u'最终产品', default=False, copy=False)
+    output_date = fields.Date(string=u'产出日期', copy=False)
+    output_time = fields.Datetime(string=u'产出时间', default=fields.Datetime.now, copy=False)
+    onepass = fields.Boolean(string=u'一次通过', default=True, copy=False)
+    qualified = fields.Boolean(string=u'是否合格', default=True, copy=False)
+    canconsume = fields.Boolean(string=u'可消耗', copy=False, compute='_compute_canconsume', store=True)
+    ccode = fields.Char(string=u'客方编码', copy=False)
+
+    @api.depends('product_qty', 'consumed_qty')
+    def _compute_canconsume(self):
+        for record in self:
+            if float_compare(record.product_qty, record.consumed_qty) <= 0.0:
+                record.canconsume = False
+            else:
+                record.canconsume = True
+
+
+# 产出原料消耗
+class AASPRoductionMaterial(models.Model):
+    _name = 'aas.production.material'
+    _description = 'AAS Production Material'
+
+    production_id = fields.Many2one(comodel_name='aas.production.product', string=u'产出成品')
+    material_id = fields.Many2one(comodel_name='product.product', string=u'原料')
+    material_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次')
+    material_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+
+# 产出时操作员工
+class AASProductionEmployee(models.Model):
+    _name = 'aas.production.employee'
+    _description = 'AAS Production Employee'
+
+    production_id = fields.Many2one(comodel_name='aas.production.product', string=u'产出成品')
+    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工')
+    employee_code = fields.Char(string=u'编码', copy=False)
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位')
+
+
+# 生产不良信息
+class AASProductionBadmode(models.Model):
+    _name = 'aas.production.badmode'
+    _description = 'AAS Production Badmode'
+
+
+    production_id = fields.Many2one(comodel_name='aas.production.product', string=u'产出成品')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', index=True)
+    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', index=True)
+    workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', index=True)
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', index=True)
+    euipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', index=True)
+
+    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', index=True)
+    workticket_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'工票', index=True)
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', index=True)
+    badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', index=True)
+    badmode_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    badmode_date = fields.Date(string=u'不良日期', copy=False)
+    badmode_time = fields.Datetime(string=u'不良时间', default=fields.Datetime.now, copy=False)
+
+
+# 生产不良的原料信息
+class AASProductionBadmodeMaterial(models.Model):
+    _name = 'aas.production.badmode.material'
+    _description = 'AAS Production Badmode Material'
+
+    production_badmode_id = fields.Many2one(comodel_name='aas.production.badmode', string=u'生产不良')
+    material_id = fields.Many2one(comodel_name='product.product', string=u'原料')
+    material_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+
+
+
+
+
+
+
 # 成品标签记录
 class AASMESProductionLabel(models.Model):
     _name = 'aas.mes.production.label'
@@ -118,18 +211,6 @@ class AASMESProductionLabel(models.Model):
             'res_id': wizard.id,
             'context': self.env.context
         }
-
-
-# 成品产出
-class AASProductionProduct(models.Model):
-    _name = 'aas.production.product'
-    _description = 'AAS Production Product'
-
-
-
-
-
-
 
 
 
