@@ -33,12 +33,15 @@ class AASMESRework(models.Model):
     badmode_date = fields.Char(string=u'不良日期', compute='_compute_badmode_date', store=True)
     commit_time = fields.Datetime(string=u'上报时间', default=fields.Datetime.now, copy=False)
     commiter_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'上报员工', ondelete='restrict')
+    commit_worktime = fields.Float(string=u'上报工时', default=0.0)
     repair_time = fields.Datetime(string=u'维修时间', copy=False)
     repairer_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'维修员工', ondelete='restrict')
     repair_note = fields.Text(string=u'维修结果')
+    repair_worktime = fields.Float(string=u'维修工时', default=0.0)
     ipqcchecker_id = fields.Many2one(comodel_name='aas.hr.employee', string='IPQC', ondelete='restrict')
     ipqccheck_time = fields.Datetime(string=u'IPQC确认时间', copy=False)
     ipqccheck_note = fields.Text(string=u'IPQC结果')
+    ipqc_worktime = fields.Float(string=u'IPQC工时', default=0.0)
     state = fields.Selection(selection=REWORKSTATES, string=u'状态', default='commit', copy=False)
 
 
