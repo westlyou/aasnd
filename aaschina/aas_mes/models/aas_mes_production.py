@@ -101,6 +101,8 @@ class AASProductionBadmode(models.Model):
     badmode_date = fields.Date(string=u'不良日期', copy=False)
     badmode_time = fields.Datetime(string=u'不良时间', default=fields.Datetime.now, copy=False)
 
+    material_lines = fields.One2many(comodel_name='aas.production.badmode.material', inverse_name='production_badmode_id', string=u'原料清单')
+
 
 # 生产不良的原料信息
 class AASProductionBadmodeMaterial(models.Model):

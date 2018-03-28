@@ -1002,7 +1002,7 @@ class AASMESWorkorder(models.Model):
         :param container:
         :return:
         """
-        values = {'success': True, 'message': ''}
+        values = {'success': True, 'message': '', 'label_id': '0'}
         _logger.info(u'工单%s开始产出时间:%s', workorder.name, fields.Datetime.now())
         mesline, ttoday = workorder.mesline_id, fields.Datetime.to_china_today()
         outputvals = {
@@ -1080,16 +1080,18 @@ class AASMESWorkorder(models.Model):
             values.update(consumevals)
             return values
         materiallist, movevallist, virtuallist = [], [], []
-        consumedict = consumevals['consumedict']
+        consumedict, feedids = consumevals['consumedict'], []
         # 加载原料消耗明细
+        production_location_id = self.env.ref('stock.location_production').id
         if consumedict and len(consumedict) > 0:
-            destlocationid = self.env.ref('stock.location_production').id
             for materialid, stockvals, in consumedict.items():
                 materiallots, uomid = stockvals['stocklist'], stockvals['uom_id']
                 for mlot in materiallots:
                     materiallist.append((0, 0, {
                         'material_id': materialid, 'material_lot': mlot['lot_id'], 'material_qty': mlot['lot_qty']
                     }))
+                    if mlot.get('feed_id', False):
+                        feedids.append(mlot.get('feed_id'))
                     locationlist = mlot.get('locationlist', [])
                     if locationlist and len(locationlist) > 0:
                         for locationval in locationlist:
@@ -1097,7 +1099,7 @@ class AASMESWorkorder(models.Model):
                                 'name': workorder.name,
                                 'product_id': materialid,  'product_uom': uomid,
                                 'restrict_lot_id': mlot['lot_id'], 'product_uom_qty': locationval['product_qty'],
-                                'location_id': locationval['location_id'], 'location_dest_id': destlocationid,
+                                'location_id': locationval['location_id'], 'location_dest_id': production_location_id,
                                 'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id
                             })
                     tempvlist = mlot.get('productionlist', [])
@@ -1121,9 +1123,27 @@ class AASMESWorkorder(models.Model):
                 temproduction.write({'consumed_qty': consumed_qty})
         # 加载原料不良详情
         if currentoutput.badmode_lines and len(currentoutput.badmode_lines) > 0:
-            materiallist = self.env['aas.mes.bom'].action_loading_materialist(product.id, 1.0)
-
-
+            badmateriallist = self.env['aas.mes.bom'].action_loading_materialist(product.id, 1.0)
+            if badmateriallist and len(badmateriallist) > 0:
+                for badline in currentoutput.badmode_lines:
+                    badline.write({
+                        'material_lines': [(0, 0, {
+                            'material_id': tmaterial['product_id'],
+                            'material_qty': badline.badmode_qty * tmaterial['product_qty']
+                        }) for tmaterial in badmateriallist]
+                    })
+        # 刷新上料记录
+        if feedids and len(feedids) > 0:
+            feedinglist = self.env['aas.mes.feedmaterial'].browse(feedids)
+            if feedinglist and len(feedinglist) > 0:
+                feedinglist.action_freshandclear()
+        # 更新产出库存
+        if workticket and workticket.islastworkcenter():
+            if workorder.output_manner == 'container' and container:
+                self.action_output2container(currentoutput, container)
+            if workorder.output_manner == 'label':
+                self.action_output2label(currentoutput)
+                values['label_id'] = currentoutput.label_id.id
         _logger.info(u'工单%s完成产出时间:%s', workorder.name, fields.Datetime.now())
         return values
 
@@ -1205,7 +1225,10 @@ class AASMESWorkorder(models.Model):
                     locationdict[lkey] = {'location_id': quant.location_id.id, 'product_qty': current_qty}
                 restqty -= current_qty
                 lotqty += current_qty
-            values['stocklist'].append({'lot_id': lotid, 'lot_qty': lotqty, 'locationlist': locationdict.values()})
+            values['stocklist'].append({
+                'feed_id': feed.id,
+                'lot_id': lotid, 'lot_qty': lotqty, 'locationlist': locationdict.values()
+            })
             tempqty += lotqty
         balance_qty = wait_qty - tempqty
         if float_compare(balance_qty, 0.0, precision_rounding=0.000001) > 0.0:
@@ -1251,6 +1274,54 @@ class AASMESWorkorder(models.Model):
                 lotdict[lkey]['productionlist'].append({'production_id': tempoutput.id, 'product_qty': current_qty})
             restqty -= current_qty
         values['stocklist'] = [lotdict['L'+str(templotid)] for templotid in lotids]
+        return values
+
+
+    @api.model
+    def action_output2container(self, production, container):
+        """产出到容器
+        :param production:
+        :param container:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        if not container.isempty:
+            _logger.info(u'产出到容器异常，容器%s已经被占用,操作时间：%s', container.name, fields.Datetime.now())
+            values.update({'success': False})
+            return values
+        if not production.product_lot:
+            _logger.info(u'产出到容器异常，当前工单%s产出没有成品批次,操作时间：%s', production.workorder_id.name, fields.Datetime.now())
+            values.update({'success': False})
+            return values
+        containerline = self.env['aas.container.product'].create({
+            'product_id': production.product_id.id,
+            'product_lot': production.product_lot.id, 'temp_qty': production.product_qty
+        })
+        containerline.action_stock(production.product_qty)
+        return values
+
+
+
+    @api.model
+    def action_output2label(self, production):
+        """产出到标签
+        :param production:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'label_id': '0'}
+        if not production.product_lot:
+            _logger.info(u'产出到标签异常，当前工单%s产出没有成品批次,操作时间：%s', production.workorder_id.name, fields.Datetime.now())
+            values.update({'success': False})
+            return values
+        label = self.env['aas.product.label'].create({
+            'product_id': production.product_id.id, 'product_lot': production.product_lot.id,
+            'product_qty': production.product_qty, 'origin_order': production.workorder_id.name,
+            'location_id': production.mesline_id.location_production_id.id
+        })
+        production_location_id = self.env.ref('stock.location_production').id
+        label.action_stock(production_location_id, origin=production.workorder_id.name)
+        production.write({'label_id': label.id})
+        values['label_id'] = label.id
         return values
 
 
