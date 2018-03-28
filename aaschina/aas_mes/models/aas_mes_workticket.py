@@ -168,6 +168,9 @@ class AASMESWorkticket(models.Model):
             if not container_id and float_compare(commit_qty, badmode_qty, precision_rounding=0.000001) > 0.0:
                 raise UserError(u'当前工序是最后一道工序，需要先添加产出容器！')
             else:
+                aascontainer = self.env['aas.container'].browse(container_id)
+                if not aascontainer.isempty:
+                    raise UserError(u'当前容器已被占用，请使用其他容器操作！')
                 self.write({'container_id': container_id})
         if float_compare(badmode_qty, commit_qty, precision_rounding=0.000001) > 0:
             raise UserError(u'不良数量不能超过上报总数！')
