@@ -84,7 +84,11 @@ class AASMESBOM(models.Model):
     @api.model
     def create(self, vals):
         self.action_before_create(vals)
-        return super(AASMESBOM, self).create(vals)
+        record = super(AASMESBOM, self).create(vals)
+        product = record.product_id
+        if product.ismaterial:
+            product.write({'ismaterial': False})
+        return record
 
     @api.model
     def action_before_create(self, vals):
@@ -168,6 +172,29 @@ class AASMESBOM(models.Model):
             finalids.append(tproduct['product_id'])
             finallist.append(tproduct)
         return finallist
+
+    @api.model
+    def action_loading_materialist(self, productid, productqty):
+        """获取成品原材料清单
+        :param productid:
+        :return:
+        """
+        materialist = []
+        aasbom = self.env['aas.mes.bom'].search([('product_id', '=', productid), ('active', '=', True)], limit=1)
+        if not aasbom:
+            return materialist
+        if aasbom.bom_lines and len(aasbom.bom_lines) > 0:
+            for bomline in aasbom.bom_lines:
+                temproduct, temp_qty = bomline.product_id, (bomline.product_qty / aasbom.product_qty) * productqty
+                if temproduct.ismaterial:
+                    materialist.append({
+                        'product_id': temproduct.id, 'product_code': temproduct.default_code,
+                        'product_uom': temproduct.uom_id.id,  'product_qty': temp_qty
+                    })
+                else:
+                    materialist += self.action_loading_materialist(temproduct.id, temp_qty)
+        return materialist
+
 
 
 

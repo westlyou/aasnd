@@ -43,6 +43,12 @@ class AASProductionProduct(models.Model):
     qualified = fields.Boolean(string=u'是否合格', default=True, copy=False)
     canconsume = fields.Boolean(string=u'可消耗', copy=False, compute='_compute_canconsume', store=True)
     ccode = fields.Char(string=u'客方编码', copy=False)
+    container_id = fields.Many2one(comodel_name='aas.container', string=u'产出容器')
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'产出标签')
+
+    material_lines = fields.One2many(comodel_name='aas.production.material', inverse_name='production_id', string=u'原料清单')
+    employee_lines = fields.One2many(comodel_name='aas.production.employee', inverse_name='production_id', string=u'员工清单')
+    badmode_lines = fields.One2many(comodel_name='aas.production.badmode', inverse_name='production_id', string=u'不良清单')
 
     @api.depends('product_qty', 'consumed_qty')
     def _compute_canconsume(self):
