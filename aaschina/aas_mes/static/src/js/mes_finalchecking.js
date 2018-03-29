@@ -237,7 +237,7 @@ $(function(){
         }
     }
 
-    $('#action_consume').click(function(){
+    /*$('#action_consume').click(function(){
         layer.confirm('您确认是要操作班次结单？', {'btn': ['确定', '取消']}, function(index){
             layer.close(index);
             var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
@@ -260,7 +260,7 @@ $(function(){
                 error:function(xhr,type,errorThrown){ console.log(type);}
             });
         }, function(){});
-    });
+    });*/
 
     function action_leave(attendanceid){
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);

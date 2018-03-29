@@ -36,15 +36,17 @@ class AASProductionProduct(models.Model):
     product_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     consumed_qty = fields.Float(string=u'消耗数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    finalproduct = fields.Boolean(string=u'最终产品', default=False, copy=False)
+    finaloutput = fields.Boolean(string=u'最终产出', default=False, copy=False, help=u'是否最终的成品产出')
     output_date = fields.Date(string=u'产出日期', copy=False)
     output_time = fields.Datetime(string=u'产出时间', default=fields.Datetime.now, copy=False)
     onepass = fields.Boolean(string=u'一次通过', default=True, copy=False)
     qualified = fields.Boolean(string=u'是否合格', default=True, copy=False)
     canconsume = fields.Boolean(string=u'可消耗', copy=False, compute='_compute_canconsume', store=True)
     ccode = fields.Char(string=u'客方编码', copy=False)
+    pcode = fields.Char(string=u'产品编码', copy=False)
     container_id = fields.Many2one(comodel_name='aas.container', string=u'产出容器')
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'产出标签')
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     material_lines = fields.One2many(comodel_name='aas.production.material', inverse_name='production_id', string=u'原料清单')
     employee_lines = fields.One2many(comodel_name='aas.production.employee', inverse_name='production_id', string=u'员工清单')
@@ -58,6 +60,380 @@ class AASProductionProduct(models.Model):
             else:
                 record.canconsume = True
 
+    @api.model
+    def action_production_output(self, workorder, product, output_qty, workticket=False,
+                                 workcenter=False, workstation=False, badmode_lines=[], employee=False,
+                                 equipment=False, serialnumber=False, container=False, finaloutput=False):
+        """工单产出
+        :param workorder:
+        :param product:
+        :param output_qty:
+        :param workticket:
+        :param workcenter:
+        :param workstation:
+        :param badmode_lines:
+        :param employee:
+        :param equipment:
+        :param serialnumber:
+        :param container:
+        :param finaloutput:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'label_id': '0', 'production_id': '0'}
+        _logger.info(u'工单%s开始产出时间:%s', workorder.name, fields.Datetime.now())
+        mesline, ttoday = workorder.mesline_id, fields.Datetime.to_china_today()
+        outputvals = {
+            'workorder_id': workorder.id, 'product_id': product.id, 'finaloutput': finaloutput,
+            'mesline_id': mesline.id, 'output_date': ttoday, 'pcode': product.default_code
+        }
+        lotcode = ttoday.replace('-', '')
+        if mesline.schedule_id:
+            outputvals['schedule_id'] = mesline.schedule_id
+        if workstation:
+            outputvals['workstation_id'] = workstation.id
+        if workticket:
+            outputvals['workticket_id'] = workticket.id
+            if workticket.islastworkcenter() and workorder.output_manner == 'container' and not container:
+                values.update({'success': False, 'message': u'当前工单产出方式为容器，您还未添加产出容器！'})
+                return values
+            if not container.isempty:
+                values.update({'success': False, 'message': u'当前容器已被占用，请使用其他容器产出！'})
+                return values
+        if equipment:
+            outputvals['euipment_id'] = equipment.id
+            if equipment.sequenceno:
+                lotcode += equipment.sequenceno
+        if serialnumber:
+            outputvals['serialnumber_id'] = serialnumber.id
+            if serialnumber.reworked:
+                outputvals['onepass'] = False
+        productlot = self.env['stock.production.lot'].action_checkout_lot(product.id, lotcode)
+        outputvals['product_lot'] = productlot.id
+        if product.customer_product_code:
+            output_qty['ccode'] = product.customer_product_code
+        product_qty = output_qty
+        # 加载不良信息
+        if badmode_lines and len(badmode_lines) > 0:
+            badmodelines, badmode_qty = []
+            for bline in badmode_lines:
+                badmode_qty += bline['badmode_qty']
+                badmodelines.append((0, 0, {
+                    'badmode_id': bline['badmode_id'],
+                    'badmode_qty': bline['badmode_qty'],
+                    'mesline_id': outputvals.get('mesline_id', False),
+                    'schedule_id': outputvals.get('schedule_id', False),
+                    'workstation_id': outputvals.get('workstation_id', False),
+                    'euipment_id': outputvals.get('euipment_id', False),
+                    'workorder_id': outputvals.get('workorder_id', False),
+                    'workticket_id': outputvals.get('workticket_id', False),
+                    'product_id': outputvals.get('product_id', False),
+                    'badmode_date': outputvals.get('output_date', False)
+                }))
+            outputvals.update({'badmode_lines': badmodelines, 'badmode_qty': badmode_qty})
+            product_qty -= badmode_qty
+        outputvals['product_qty'] = product_qty
+        # 加载工位员工
+        if workstation:
+            employeedomain = [('workstation_id', '=', workstation.id), ('mesline_id', '=', mesline.id)]
+            employeelist = self.env['aas.mes.workstation.employee'].search(employeedomain)
+            if employeelist and len(employeelist) > 0:
+                employeeids, employeelist = [], []
+                for temployee in employeelist:
+                    employeeid = temployee.employee_id.id
+                    if employeeid in employeeids:
+                        continue
+                    employeeids.append(employeeid)
+                    employeelist.append((0, 0, {
+                        'employee_id': employeeid,
+                        'workstation_id': workstation.id,
+                        'employee_code': temployee.employee_id.code
+                    }))
+                outputvals['employee_lines'] = employeelist
+                employeeids = []  # 清空数组
+        # 加载消耗清单
+        consumevals = self.action_loading_consumelist(workorder, product, output_qty, workcenter=workcenter)
+        if not consumevals.get('success', False):
+            values.update(consumevals)
+            return values
+        materiallist, movevallist, virtuallist = [], [], []
+        consumedict, feedids = consumevals['consumedict'], []
+        # 加载原料消耗明细
+        production_location_id = self.env.ref('stock.location_production').id
+        if consumedict and len(consumedict) > 0:
+            for materialid, stockvals, in consumedict.items():
+                materiallots, uomid = stockvals['stocklist'], stockvals['uom_id']
+                for mlot in materiallots:
+                    materiallist.append((0, 0, {
+                        'material_id': materialid, 'material_lot': mlot['lot_id'], 'material_qty': mlot['lot_qty']
+                    }))
+                    if mlot.get('feed_id', False):
+                        feedids.append(mlot.get('feed_id'))
+                    locationlist = mlot.get('locationlist', [])
+                    if locationlist and len(locationlist) > 0:
+                        for locationval in locationlist:
+                            movevallist.append({
+                                'name': workorder.name,
+                                'product_id': materialid,  'product_uom': uomid,
+                                'restrict_lot_id': mlot['lot_id'], 'product_uom_qty': locationval['product_qty'],
+                                'location_id': locationval['location_id'], 'location_dest_id': production_location_id,
+                                'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id
+                            })
+                    tempvlist = mlot.get('productionlist', [])
+                    if tempvlist and len(tempvlist) > 0:
+                        virtuallist += tempvlist
+            outputvals['material_lines'] = materiallist
+        currentoutput = self.env['aas.production.product'].create(outputvals)
+        values['production_id'] = currentoutput.id
+        # 消耗原材料，库存移动到生产虚库
+        if movevallist and len(movevallist) > 0:
+            movelist = self.env['stock.move']
+            for moveval in movevallist:
+                movelist |= self.env['stock.move'].create(moveval)
+            movelist.action_done()
+        # 消耗虚拟件，更新相应产出记录上的已消耗数量
+        if virtuallist and len(virtuallist) > 0:
+            for virtualvals in virtuallist:
+                temproduction = self.env['aas.production.product'].browse(virtualvals['production_id'])
+                consumed_qty = temproduction.consumed_qty + virtualvals['product_qty']
+                if float_compare(consumed_qty, temproduction.product_qty, precision_rounding=0.000001) > 0.0:
+                    consumed_qty = temproduction.product_qty
+                temproduction.write({'consumed_qty': consumed_qty})
+        # 加载原料不良详情
+        if currentoutput.badmode_lines and len(currentoutput.badmode_lines) > 0:
+            badmateriallist = self.env['aas.mes.bom'].action_loading_materialist(product.id, 1.0)
+            if badmateriallist and len(badmateriallist) > 0:
+                for badline in currentoutput.badmode_lines:
+                    badline.write({
+                        'material_lines': [(0, 0, {
+                            'material_id': tmaterial['product_id'],
+                            'material_qty': badline.badmode_qty * tmaterial['product_qty']
+                        }) for tmaterial in badmateriallist]
+                    })
+        # 刷新上料记录
+        if feedids and len(feedids) > 0:
+            feedinglist = self.env['aas.mes.feedmaterial'].browse(feedids)
+            if feedinglist and len(feedinglist) > 0:
+                feedinglist.action_freshandclear()
+        # 更新产出库存
+        if workticket and workticket.islastworkcenter():
+            if workorder.output_manner == 'container' and container:
+                self.action_output2container(currentoutput, container)
+            if workorder.output_manner == 'label':
+                self.action_output2label(currentoutput)
+                templabel = currentoutput.label_id
+                if templabel:
+                    values['label_id'] = templabel.id
+                    workticket.write({'label_id': templabel.id})
+        workordervals = {'output_time': fields.Datetime.now()}
+        # 更新生产状态
+        if workorder.state == 'confirm':
+            workordervals.update({
+                'state': 'producing',
+                'produce_start': fields.Datetime.now(), 'produce_date': fields.Datetime.to_china_today()
+            })
+        if finaloutput:
+            workordervals['output_qty'] = workorder.output_qty + currentoutput.product_qty
+        if workordervals and len(workordervals) > 0:
+            workorder.write(workordervals)
+        # 更新序列号信息
+        if serialnumber:
+            outputvals = {
+                'output_time': fields.Datetime.now(), 'outputuser_id': self.env.user.id,
+                'workorder_id': workorder.id
+            }
+            if mesline.serialnumber_id:
+                outputvals['lastone_id'] = mesline.serialnumber_id.id
+                currenttime = fields.Datetime.from_string(outputvals['output_time'])
+                lasttime = fields.Datetime.from_string(mesline.serialnumber_id.output_time)
+                outputvals['output_internal'] = (currenttime - lasttime).seconds / 3600.0
+            serialnumber.write(outputvals)
+            mesline.write({'serialnumber_id': serialnumber.id})
+        # 判断是否能工单结单
+        workorder.action_done()
+        _logger.info(u'工单%s完成产出时间:%s', workorder.name, fields.Datetime.now())
+        return values
+
+
+    @api.model
+    def action_loading_consumelist(self, workorder, product, output_qty, workcenter=False):
+        """获取工单消耗清单
+        :param workorder:
+        :param product:
+        :param output_qty:
+        :param workcenter:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'consumedict': {}}
+        consumedomain = [('workorder_id', '=', workorder.id), ('product_id', '=', product.id)]
+        if workcenter:
+            consumedomain += [('workcenter_id', '=', workcenter.id)]
+        consumes = self.env['aas.mes.workorder.consume'].search(consumedomain)
+        if not consumes or len(consumes) <= 0:
+            return values
+        tempdict = {}
+        for tconsume in consumes:
+            material, wait_qty = tconsume.material_id, tconsume.consume_unit * output_qty
+            if not material.virtual_material:
+                stockvals = self.action_loading_consume_materiallist(material, wait_qty, workorder.mesline_id)
+                if stockvals.get('success', False):
+                    values.update(stockvals)
+                    return values
+                tempdict[material.id] = {
+                    'virtual': False, 'stocklist': stockvals['stocklist'], 'uom_id': material.uom_id.id
+                }
+            else:
+                stockvals = self.action_loading_consume_virtuallist(material, wait_qty, workorder)
+                if stockvals.get('success', False):
+                    values.update(stockvals)
+                    return values
+                tempdict[material.id] = {
+                    'virtual': True, 'stocklist': stockvals['stocklist'], 'uom_id': material.uom_id.id
+                }
+        values['consumedict'] = tempdict
+        return values
+
+
+    @api.model
+    def action_loading_consume_materiallist(self, material, wait_qty, mesline):
+        """获取待消耗原料的可供消耗清单
+        :param material:
+        :param wait_qty:
+        :param mesline:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'stocklist': []}
+        feeddomain = [('mesline_id', '=', mesline.id), ('material_id', '=', material.id)]
+        feedlist = self.env['aas.mes.feedmaterial'].search(feeddomain, order='feed_time')
+        if not feedlist and len(feedlist) <= 0:
+            values.update({'success': False, 'message': u'物料%s还未上料，请联系上料员上料'% material.default_code})
+            return values
+        tempqty, restqty = 0.0, wait_qty
+        for feed in feedlist:
+            if float_compare(restqty, 0.0, precision_rounding=0.000001) <= 0.0:
+                break
+            quants = feed.action_checking_quants()
+            if not quants or len(quants) <= 0:
+                continue
+            if float_compare(feed.material_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+                continue
+            lotid, lotqty, locationdict = feed.material_lot.id, 0.0, {}
+            for quant in quants:
+                if float_compare(restqty, 0.0, precision_rounding=0.000001) <= 0.0:
+                    break
+                qqty = quant.qty
+                if float_compare(qqty, restqty, precision_rounding=0.000001) >= 0.0:
+                    current_qty = restqty
+                else:
+                    current_qty = qqty
+                lkey = 'L'+str(quant.location_id.id)
+                if lkey in locationdict:
+                    locationdict[lkey]['product_qty'] += current_qty
+                else:
+                    locationdict[lkey] = {'location_id': quant.location_id.id, 'product_qty': current_qty}
+                restqty -= current_qty
+                lotqty += current_qty
+            values['stocklist'].append({
+                'feed_id': feed.id,
+                'lot_id': lotid, 'lot_qty': lotqty, 'locationlist': locationdict.values()
+            })
+            tempqty += lotqty
+        balance_qty = wait_qty - tempqty
+        if float_compare(balance_qty, 0.0, precision_rounding=0.000001) > 0.0:
+            values.update({'success': False, 'message': u'物料%s上料不足，还差%s'% (material.default_code, balance_qty)})
+            return values
+        return values
+
+
+
+    @api.model
+    def action_loading_consume_virtuallist(self, material, wait_qty, workorder):
+        """获取虚拟物料可供消耗清单
+        :param material:
+        :param wait_qty:
+        :param workorder:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'stocklist': []}
+        tempdomain = [('workorder_id', '=', workorder.id), ('product_id', '=', material.id), ('canconsume', '=', True)]
+        outputlist = self.env['aas.production.product'].search(tempdomain, order='output_time')
+        if not outputlist or len(outputlist) <= 0:
+            return values
+        lotids, lotdict = [], {}
+        restqty = wait_qty
+        for tempoutput in outputlist:
+            if float_compare(restqty, 0.0, precision_rounding=0.000001) <= 0.0:
+                break
+            consume_qty = tempoutput.product_qty - tempoutput.consumed_qty
+            if float_compare(restqty, consume_qty, precision_rounding=0.000001) >= 0.0:
+                current_qty = consume_qty
+            else:
+                current_qty = restqty
+            lotid = tempoutput.product_lot.id
+            lkey = 'L'+str(lotid)
+            if lkey not in lotdict:
+                lotids.append(lotid)
+                lotdict[lkey] = {
+                    'lot_id': lotid, 'lot_qty': current_qty,
+                    'productionlist': [{'production_id': tempoutput.id, 'product_qty': current_qty}]
+                }
+            else:
+                lotdict[lkey]['lot_qty'] += current_qty
+                lotdict[lkey]['productionlist'].append({'production_id': tempoutput.id, 'product_qty': current_qty})
+            restqty -= current_qty
+        values['stocklist'] = [lotdict['L'+str(templotid)] for templotid in lotids]
+        return values
+
+
+    @api.model
+    def action_output2container(self, production, container):
+        """产出到容器
+        :param production:
+        :param container:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        if not container.isempty:
+            _logger.info(u'产出到容器异常，容器%s已经被占用,操作时间：%s', container.name, fields.Datetime.now())
+            values.update({'success': False})
+            return values
+        if not production.product_lot:
+            _logger.info(u'产出到容器异常，当前工单%s产出没有成品批次,操作时间：%s', production.workorder_id.name, fields.Datetime.now())
+            values.update({'success': False})
+            return values
+        mesline = production.mesline_id
+        if container.location_id.id != mesline.location_production_id.id:
+            container.action_domove(mesline.location_production_id.id, movenote=u'产出到容器自动调拨')
+        containerline = self.env['aas.container.product'].create({
+            'product_id': production.product_id.id,
+            'product_lot': production.product_lot.id, 'temp_qty': production.product_qty
+        })
+        containerline.action_stock(production.product_qty)
+        return values
+
+
+
+    @api.model
+    def action_output2label(self, production):
+        """产出到标签
+        :param production:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'label_id': '0'}
+        if not production.product_lot:
+            _logger.info(u'产出到标签异常，当前工单%s产出没有成品批次,操作时间：%s', production.workorder_id.name, fields.Datetime.now())
+            values.update({'success': False})
+            return values
+        label = self.env['aas.product.label'].create({
+            'product_id': production.product_id.id, 'product_lot': production.product_lot.id,
+            'product_qty': production.product_qty, 'origin_order': production.workorder_id.name,
+            'location_id': production.mesline_id.location_production_id.id
+        })
+        production_location_id = self.env.ref('stock.location_production').id
+        label.action_stock(production_location_id, origin=production.workorder_id.name)
+        production.write({'label_id': label.id})
+        values['label_id'] = label.id
+        return values
+
 
 # 产出原料消耗
 class AASPRoductionMaterial(models.Model):
@@ -68,6 +444,7 @@ class AASPRoductionMaterial(models.Model):
     material_id = fields.Many2one(comodel_name='product.product', string=u'原料')
     material_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次')
     material_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
 # 产出时操作员工
 class AASProductionEmployee(models.Model):
@@ -78,6 +455,7 @@ class AASProductionEmployee(models.Model):
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工')
     employee_code = fields.Char(string=u'编码', copy=False)
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位')
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
 
 # 生产不良信息
@@ -100,6 +478,7 @@ class AASProductionBadmode(models.Model):
     badmode_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     badmode_date = fields.Date(string=u'不良日期', copy=False)
     badmode_time = fields.Datetime(string=u'不良时间', default=fields.Datetime.now, copy=False)
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     material_lines = fields.One2many(comodel_name='aas.production.badmode.material', inverse_name='production_badmode_id', string=u'原料清单')
 
@@ -112,6 +491,7 @@ class AASProductionBadmodeMaterial(models.Model):
     production_badmode_id = fields.Many2one(comodel_name='aas.production.badmode', string=u'生产不良')
     material_id = fields.Many2one(comodel_name='product.product', string=u'原料')
     material_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
 
 
@@ -318,12 +698,6 @@ class AASMESProductionOutput(models.Model):
             records.append(pval)
         values['records'] = records
         return values
-
-
-
-
-
-
 
 
 

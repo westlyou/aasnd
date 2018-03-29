@@ -85,7 +85,7 @@
                                         </div>
                                     </div>
 
-                                    <a id="action_consume" href="javascript:void(0);" class="btn btn-primary btn-block margin-bottom">班次结单</a>
+                                    <!--<a id="action_consume" href="javascript:void(0);" class="btn btn-primary btn-block margin-bottom">班次结单</a>-->
                                     <div class="box box-solid">
                                         <div class="box-header with-border">
                                             <h3 class="box-title">基础信息</h3>

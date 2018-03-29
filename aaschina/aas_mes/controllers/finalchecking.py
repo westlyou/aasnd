@@ -200,7 +200,7 @@ class AASMESFinalCheckingController(http.Controller):
                 values.update({'success': False, 'message': u'扫描序列号异常，此序列号产品与当前产线上生产的产品不相符！'})
                 return values
             if not serialnumber.stocked:
-                tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, barcode)
+                tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, serialnumber)
                 if not tvalues.get('success', False):
                     values.update(tvalues)
                     return values
@@ -240,7 +240,7 @@ class AASMESFinalCheckingController(http.Controller):
             if tserialnumber.product_id.id != workorder.product_id.id:
                 values.update({'success': False, 'message': u'扫描异常，当前产品型号与产线正在生产的型号不符！'})
                 return values
-            tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, tserialnumber.name)
+            tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, tserialnumber)
             if not tvalues.get('success', False):
                 values.update(tvalues)
                 return values

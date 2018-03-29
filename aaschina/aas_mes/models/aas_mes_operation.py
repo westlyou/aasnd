@@ -123,6 +123,7 @@ class AASMESOperation(models.Model):
 
     @api.one
     def action_gp12check(self, mesline, workstation):
+        outputemployeelist = []
         tempemployeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
         tempemloyeelist = self.env['aas.mes.workstation.employee'].search(tempemployeedomain)
         scanemployeelist, scanemployeestr, checkemployeelist, checkemployeestr = [], False, [], False
@@ -133,6 +134,10 @@ class AASMESOperation(models.Model):
                     scanemployeelist.append(employee.name+'['+employee.code+']')
                 elif temployee.action_type == 'check':
                     checkemployeelist.append(employee.name+'['+employee.code+']')
+                outputemployeelist.append((0, 0, {
+                    'workstation_id': workstation.id,
+                    'employee_id': employee.id, 'employee_code': employee.code
+                }))
             scanemployeestr, checkemployeestr = ','.join(scanemployeelist), ','.join(checkemployeelist)
         employeeid, equipmentid = False, False
         equipmentdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
@@ -152,22 +157,21 @@ class AASMESOperation(models.Model):
         tserialnumber = self.serialnumber_id
         outputdomain = [('serialnumber_id', '=', tserialnumber.id)]
         outputdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-        tempout = self.env['aas.mes.production.output'].search(outputdomain, limit=1)
+        tempout = self.env['aas.production.product'].search(outputdomain, limit=1)
         if tempout:
-            tempvalues = {'qualified': True, 'pass_onetime': False}
-            if not tempout.employee_id:
-                tempvalues.update({'employee_id': employeeid, 'employee_name': checkemployeestr})
-            if not tempout.equipment_id:
-                tempvalues['equipment_id'] = equipmentid
-            tempout.write(tempvalues)
+            tempout.write({'qualified': True, 'onepass': False})
         else:
-            self.env['aas.mes.production.output'].create({
-                'product_id': tserialnumber.product_id.id, 'output_qty': 1.0,
-                'output_date': fields.Datetime.to_china_today(), 'mesline_id': mesline.id,
-                'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id,
-                'workstation_id': workstation.id, 'equipment_id': equipmentid,
-                'employee_id': employeeid, 'employee_name': checkemployeestr, 'serialnumber_id': tserialnumber.id
-            })
+            productionvals = {
+                'mesline_id': mesline.id, 'euipment_id': equipmentid,
+                'workstation_id': workstation.id, 'serialnumber_id': tserialnumber.id,
+                'product_id': tserialnumber.product_id.id, 'product_qty': 1.0,
+                'finaloutput': True, 'output_date': fields.Datetime.to_china_today(),
+                'pcode': self.internal_product_code, 'ccode': self.customer_product_code,
+                'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id
+            }
+            if outputemployeelist and len(outputemployeelist) > 0:
+                productionvals['employee_lines'] = outputemployeelist
+            self.env['aas.production.product'].create(productionvals)
 
 
     @api.model

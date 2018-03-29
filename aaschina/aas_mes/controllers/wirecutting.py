@@ -233,8 +233,12 @@ class AASMESWireCuttingController(http.Controller):
         if float_compare(workorder.output_qty+output_qty, workorder.input_qty, precision_rounding=0.000001) > 0.0:
             values.update({'success': False, 'message': u'总产出数量不可以大于计划生产数量，请仔细检查！'})
             return values
-        outputresult = request.env['aas.mes.wireorder'].action_wirecutting_output(workorder.id, output_qty,
-                                                                   container_id,  workstation.id, employee_id, equipment_id)
+        employee = request.env['aas.hr.employee'].browse(employee_id)
+        container = request.env['aas.container'].browse(container_id)
+        equipment = request.env['aas.equipment.equipment'].browse(equipment_id)
+        outputresult = request.env['aas.mes.wireorder'].action_wirecutting_output(workorder, output_qty,
+                                                                                  container,  workstation,
+                                                                                  employee, equipment)
         if not outputresult['success']:
             values.update(outputresult)
             return values
