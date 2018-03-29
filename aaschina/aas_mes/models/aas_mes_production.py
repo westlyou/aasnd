@@ -242,16 +242,16 @@ class AASProductionProduct(models.Model):
             workorder.write(workordervals)
         # 更新序列号信息
         if serialnumber:
-            outputvals = {
-                'output_time': fields.Datetime.now(), 'outputuser_id': self.env.user.id,
-                'workorder_id': workorder.id
+            serialvals = {
+                'workorder_id': workorder.id, 'stocked': True,
+                'output_time': fields.Datetime.now(), 'outputuser_id': self.env.user.id
             }
             if mesline.serialnumber_id:
-                outputvals['lastone_id'] = mesline.serialnumber_id.id
-                currenttime = fields.Datetime.from_string(outputvals['output_time'])
+                serialvals['lastone_id'] = mesline.serialnumber_id.id
+                currenttime = fields.Datetime.from_string(serialvals['output_time'])
                 lasttime = fields.Datetime.from_string(mesline.serialnumber_id.output_time)
-                outputvals['output_internal'] = (currenttime - lasttime).seconds / 3600.0
-            serialnumber.write(outputvals)
+                serialvals['output_internal'] = (currenttime - lasttime).seconds / 3600.0
+            serialnumber.write(serialvals)
             mesline.write({'serialnumber_id': serialnumber.id})
         # 判断是否能工单结单
         workorder.action_done()
@@ -529,22 +529,6 @@ class AASMESProductionLabel(models.Model):
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', index=True)
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     company_id = fields.Many2one(comodel_name='res.company', string=u'公司', default=lambda self: self.env.user.company_id)
-
-
-    @api.model
-    def action_gp12_dolabel(self, product_id, productlot_id, product_qty, location_id, equipment_id=False, customer_code=False):
-        label = self.env['aas.product.label'].create({
-            'product_id': product_id, 'product_lot': productlot_id, 'product_qty': product_qty, 'stocked': True,
-            'location_id': location_id, 'company_id': self.env.user.company_id.id, 'customer_code': customer_code
-        })
-        product_code, chinadate = label.product_code, fields.Datetime.to_china_today()
-        self.env['aas.mes.production.label'].create({
-            'label_id': label.id, 'product_id': product_id,  'product_qty': product_qty,
-            'lot_id': productlot_id, 'product_code': product_code, 'customer_code': customer_code,
-            'operator_id': self.env.user.id, 'action_date': chinadate, 'equipment_id': equipment_id,
-            'location_id': location_id, 'isserialnumber': True
-        })
-        return label
 
 
     @api.multi

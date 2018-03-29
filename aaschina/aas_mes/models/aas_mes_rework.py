@@ -28,6 +28,7 @@ class AASMESRework(models.Model):
     serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', ondelete='restrict')
     internalpn = fields.Char(string=u'内部料号', copy=False)
     customerpn = fields.Char(string=u'客户料号', copy=False)
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
     badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')
     badmode_date = fields.Char(string=u'不良日期', compute='_compute_badmode_date', store=True)
@@ -65,31 +66,29 @@ class AASMESRework(models.Model):
         self.write({
             'internalpn': tserialnumber.internal_product_code, 'customerpn': tserialnumber.customer_product_code
         })
-        equipmentid, employeeid, employeename = False, False, False
-        workstation, mesline = self.workstation_id, self.serialnumber_id.mesline_id
+        workstation = self.workstation_id
+        if self.mesline_id:
+            mesline = self.mesline_id
+        else:
+            mesline = self.serialnumber_id.mesline_id
         tempdomain = [('serialnumber_id', '=', tserialnumber.id)]
         tempdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-        tempoutput = self.env['aas.mes.production.output'].search(tempdomain, order='output_time desc', limit=1)
+        tempoutput = self.env['aas.production.product'].search(tempdomain, order='output_time desc', limit=1)
         if tempoutput:
-            tempoutput.write({'pass_onetime': False, 'qualified': False})
-        else:
-            self.env['aas.mes.production.output'].create({
-                'product_id': tserialnumber.product_id.id, 'output_qty': 1.0,
-                'output_date': fields.Datetime.to_china_today(), 'mesline_id': mesline.id,
-                'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id,
-                'workstation_id': workstation.id, 'equipment_id': equipmentid,
-                'pass_onetime': False, 'qualified': False,
-                'employee_id': employeeid, 'employee_name': employeename, 'serialnumber_id': tserialnumber.id
-            })
+            tserialnumber.write({'qualified': False})
+            tempoutput.write({'onepass': False, 'qualified': False})
 
 
     @api.model
-    def action_commit(self, serialnumber_id, workstation_id, badmode_id, commiter_id):
-        rework = self.env['aas.mes.rework'].create({
-            'serialnumber_id': serialnumber_id, 'workstation_id': workstation_id, 'badmode_id': badmode_id,
-            'commiter_id': commiter_id, 'commit_time': fields.Datetime.now(), 'state': 'repair'
+    def action_commit(self, serialnumber_id, workstation_id, badmode_id, commiter_id, mesline_id=False):
+        tserialnumber = self.env['aas.mes.serialnumber'].browse(serialnumber_id)
+        meslineid = mesline_id if mesline_id else tserialnumber.mesline_id.id
+        self.env['aas.mes.rework'].create({
+            'mesline_id': meslineid,
+            'serialnumber_id': tserialnumber.id, 'workstation_id': workstation_id, 'state': 'repair',
+            'badmode_id': badmode_id, 'commiter_id': commiter_id, 'commit_time': fields.Datetime.now()
         })
-        operation = self.env['aas.mes.operation'].search([('serialnumber_id', '=', rework.serialnumber_id.id)], limit=1)
+        operation = self.env['aas.mes.operation'].search([('serialnumber_id', '=', tserialnumber.id)], limit=1)
         operation.write({
             'function_test': False, 'functiontest_record_id': False,
             'final_quality_check': False, 'fqccheck_record_id': False,
@@ -97,7 +96,7 @@ class AASMESRework(models.Model):
             'commit_badness': True, 'commit_badness_count': operation.commit_badness_count + 1,
             'dorework': False, 'ipqc_check': False
         })
-        rework.serialnumber_id.write({'qualified': False, 'reworked': True})
+        tserialnumber.write({'qualified': False, 'reworked': True})
 
     @api.one
     def action_repair(self, repairer_id, repair_note):

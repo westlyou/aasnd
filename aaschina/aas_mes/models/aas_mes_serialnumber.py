@@ -142,11 +142,45 @@ class AASMESSerialnumber(models.Model):
             'context': self.env.context
         }
 
-
     @api.multi
-    def action_label(self, labelid):
-        label = self.env['aas.product.label'].browse(labelid)
-        self.write({'label_id': labelid, 'product_lot': label.product_lot.id})
+    def action_gp12packing(self, mesline):
+        """
+        GP12打包标签
+        :param mesline:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'label_id': '0', 'label_name': ''}
+        firstserial = self[0]
+        ttoday = fields.Datetime.to_china_today()
+        lotcode = ttoday.replace('-', '')
+        outputlocation = mesline.location_production_id
+        product, product_qty = firstserial.product_id, len(self)
+        productlot = self.env['stock.production.lot'].action_checkout_lot(product.id, lotcode)
+        # 新建库存标签
+        label = self.env['aas.product.label'].create({
+            'product_id': product.id, 'product_lot': productlot.id, 'product_qty': product_qty,
+            'location_id': outputlocation.id, 'company_id': self.env.user.company_id.id, 'stocked': True,
+            'customer_code': firstserial.customer_product_code
+        })
+        product_code, customer_code = product.default_code, firstserial.customer_product_code
+        # 新建GP12成品标签
+        self.env['aas.mes.production.label'].create({
+            'label_id': label.id, 'product_id': product.id,  'product_qty': product_qty,
+            'lot_id': productlot.id, 'product_code': product_code, 'customer_code': customer_code,
+            'operator_id': self.env.user.id, 'action_date': ttoday, 'location_id': outputlocation.id,
+            'isserialnumber': True
+        })
+        # 更新产线成品库存
+        srclocation = self.env.ref('stock.location_production')
+        label.action_stock(srclocation.id)
+        # 更新序列号上标签和批次信息
+        self.write({'label_id': label.id, 'product_lot': label.product_lot.id})
         operationlist = self.env['aas.mes.operation'].search([('serialnumber_id', 'in', self.ids)])
         if operationlist and len(operationlist) > 0:
-            operationlist.write({'labeled': True, 'label_id': labelid})
+            operationlist.write({'labeled': True, 'label_id': label.id})
+        # 更新产出信息上的批次信息
+        productionlist = self.env['aas.production.product'].search([('serialnumber_id', 'in', self.ids)])
+        if productionlist and len(productionlist) > 0:
+            productionlist.write({'product_lot': productlot.id})
+        values.update({'label_id': label.id, 'label_name': label.name})
+        return values

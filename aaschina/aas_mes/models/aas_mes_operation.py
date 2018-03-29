@@ -99,7 +99,13 @@ class AASMESOperation(models.Model):
             'scanning_employee': scanemployeestr, 'checking_employee': checkemployeestr,
             'operator_id': self.env.user.id, 'operation_pass': True, 'operate_result': 'PASS', 'operate_type': 'fqc'
         })
-
+        tserialnumber = self.serialnumber_id
+        tempdomain = [('serialnumber_id', '=', tserialnumber.id), ('qualified', '=', False)]
+        tempdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        tempoutput = self.env['aas.production.product'].search(tempdomain, order='output_time desc', limit=1)
+        if tempoutput:
+            tempoutput.write({'qualified': True})
+            tserialnumber.write({'qualified': True})
 
     @api.one
     def action_gp12check(self, mesline, workstation):
