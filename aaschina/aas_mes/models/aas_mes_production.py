@@ -111,10 +111,10 @@ class AASProductionProduct(models.Model):
         outputvals['product_lot'] = productlot.id
         if product.customer_product_code:
             output_qty['ccode'] = product.customer_product_code
-        product_qty = output_qty
+        product_qty, badmode_qty = output_qty, 0.0
         # 加载不良信息
         if badmode_lines and len(badmode_lines) > 0:
-            badmodelines, badmode_qty = []
+            badmodelines = []
             for bline in badmode_lines:
                 badmode_qty += bline['badmode_qty']
                 badmodelines.append((0, 0, {
@@ -151,7 +151,8 @@ class AASProductionProduct(models.Model):
                 outputvals['employee_lines'] = employeelist
                 employeeids = []  # 清空数组
         # 加载消耗清单
-        consumevals = self.action_loading_consumelist(workorder, product, output_qty, workcenter=workcenter)
+        consumevals = self.action_loading_consumelist(workorder, product, output_qty,
+                                                      badmode_qty=badmode_qty, workcenter=workcenter)
         if not consumevals.get('success', False):
             values.update(consumevals)
             return values
@@ -188,6 +189,7 @@ class AASProductionProduct(models.Model):
         if movevallist and len(movevallist) > 0:
             movelist = self.env['stock.move']
             for moveval in movevallist:
+                moveval['production_id'] = currentoutput.id
                 movelist |= self.env['stock.move'].create(moveval)
             movelist.action_done()
         # 消耗虚拟件，更新相应产出记录上的已消耗数量
@@ -224,7 +226,10 @@ class AASProductionProduct(models.Model):
                 if templabel:
                     values['label_id'] = templabel.id
                     workticket.write({'label_id': templabel.id})
+        consumelines = consumevals.get('consumelines', [])
         workordervals = {'output_time': fields.Datetime.now()}
+        if consumelines and len(consumelines) > 0:
+            workordervals['consume_lines'] = consumelines
         # 更新生产状态
         if workorder.state == 'confirm':
             workordervals.update({
@@ -255,22 +260,23 @@ class AASProductionProduct(models.Model):
 
 
     @api.model
-    def action_loading_consumelist(self, workorder, product, output_qty, workcenter=False):
+    def action_loading_consumelist(self, workorder, product, output_qty, badmode_qty=0.0, workcenter=False):
         """获取工单消耗清单
         :param workorder:
         :param product:
         :param output_qty:
+        :param badmode_qty:
         :param workcenter:
         :return:
         """
-        values = {'success': True, 'message': '', 'consumedict': {}}
+        values = {'success': True, 'message': '', 'consumedict': {}, 'consumelines': []}
         consumedomain = [('workorder_id', '=', workorder.id), ('product_id', '=', product.id)]
         if workcenter:
             consumedomain += [('workcenter_id', '=', workcenter.id)]
         consumes = self.env['aas.mes.workorder.consume'].search(consumedomain)
         if not consumes or len(consumes) <= 0:
             return values
-        tempdict = {}
+        tempdict, consumelines = {}, []
         for tconsume in consumes:
             material, wait_qty = tconsume.material_id, tconsume.consume_unit * output_qty
             if not material.virtual_material:
@@ -289,7 +295,10 @@ class AASProductionProduct(models.Model):
                 tempdict[material.id] = {
                     'virtual': True, 'stocklist': stockvals['stocklist'], 'uom_id': material.uom_id.id
                 }
-        values['consumedict'] = tempdict
+            # 更新消耗清单信息
+            temp_qty = (output_qty - badmode_qty) * tconsume.consume_unit + tconsume.consume_qty
+            consumelines.append((1, tconsume.id, {'consume_qty': temp_qty}))
+        values.update({'consumedict': tempdict, 'consumelines': consumelines})
         return values
 
 
@@ -599,6 +608,14 @@ class AASMESProductionLabel(models.Model):
             'res_id': wizard.id,
             'context': self.env.context
         }
+
+
+
+ # 追溯消耗明细
+class StockMove(models.Model):
+    _inherit = 'stock.move'
+
+    production_id = fields.Many2one(comodel_name='aas.production.product', string=u'成品产出')
 
 
 
