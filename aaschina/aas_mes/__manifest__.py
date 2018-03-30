@@ -34,7 +34,6 @@
         'views/aas_mes_workorder_view.xml',
         'views/aas_mes_wires_view.xml',
         'views/aas_mes_workticket_view.xml',
-        'views/aas_mes_tracing_view.xml',
         'views/aas_mes_feedmaterial_view.xml',
         'views/aas_mes_stockadjust_view.xml',
         'views/aas_product_label_view.xml',
@@ -56,6 +55,7 @@
         'views/aas_mes_sundry_view.xml',
         'views/aas_mes_producttest_view.xml',
         'views/aas_mes_producttest_templates.xml',
+        # 'views/aas_mes_tracing_view.xml',
 
         'oracle/aas_ebs_mainorder_view.xml',
         'wechat/views/aas_wechat_mes_template.xml',

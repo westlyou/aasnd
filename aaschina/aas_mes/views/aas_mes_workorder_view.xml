@@ -36,9 +36,6 @@
                         <button name="action_confirm" type="object" string="确认工单" class="oe_highlight" states="draft"/>
                         <button name="action_producing" type="object" string="开始生产" class="oe_highlight"
                                 attrs="{'invisible':['|','|',('mesline_type','=','station'),('isproducing','=',True),('state','in',['draft','done'])]}"/>
-                        <button name="action_waitconsume" type="object" string="原料消耗" class="oe_highlight" attrs="{'invisible':[('waitconsume','=',False)]}"/>
-                        <!--<button name="action_set_finalproduct" type="object" string="最终产品" class="oe_highlight"
-                                attrs="{'invisible':[('finalproduct_id','!=',False)]}"/>-->
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,producing,pause,done"/>
                     </header>
                     <sheet>
@@ -104,7 +101,6 @@
                                 <field name="workcenter_name" readonly="1" string="当前工序"
                                         attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
                                 <field name="isproducing" invisible="1"/>
-                                <field name="waitconsume" invisible="1"/>
                                 <field name="workcenter_start" readonly="1"
                                         attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
                                 <field name="workcenter_finish" readonly="1"
@@ -113,43 +109,40 @@
                         </group>
                         <notebook>
                             <page string="成品产出">
-                                <field name="product_lines" readonly="1">
+                                <field name="production_lines" readonly="1">
                                     <tree>
-                                        <field name="schedule_id"/>
                                         <field name="product_id"/>
                                         <field name="product_lot"/>
                                         <field name="product_qty"/>
-                                        <field name="waiting_qty"/>
                                         <field name="badmode_qty"/>
-                                        <field name="waiting_badmode_qty"/>
-                                        <field name="output_date"/>
+                                        <field name="output_time"/>
                                         <field name="container_id"/>
                                         <field name="label_id"/>
+                                        <field name="serialnumber_id"/>
                                     </tree>
                                     <form>
                                         <group>
                                             <group>
-                                                <field name="schedule_id"/>
                                                 <field name="product_id"/>
                                                 <field name="product_lot"/>
                                             </group>
                                             <group>
                                                 <field name="product_qty"/>
-                                                <field name="waiting_qty"/>
                                                 <field name="badmode_qty"/>
                                             </group>
                                         </group>
                                         <group>
                                             <group>
-                                                <field name="output_date"/>
+                                                <field name="output_time"/>
                                                 <field name="container_id"/>
                                                 <field name="label_id"/>
+                                                <field name="serialnumber_id"/>
                                             </group>
                                         </group>
                                     </form>
                                 </field>
                             </page>
-                            <page string="消耗明细">
+                            <page string="消耗清单">
                                 <field name="consume_lines" readonly="1">
                                     <tree>
                                         <field name="workcenter_id"/>
@@ -159,6 +152,8 @@
                                         <field name="input_qty"/>
                                         <field name="consume_qty"/>
                                         <field name="leave_qty"/>
+                                        <field name="material_level"/>
+                                        <field name="material_virtual"/>
                                     </tree>
                                     <form>
                                         <group>
@@ -171,11 +166,13 @@
                                                 <field name="product_id"/>
                                                 <field name="material_id"/>
                                                 <field name="consume_unit"/>
+                                                <field name="material_level"/>
                                             </group>
                                             <group>
                                                 <field name="input_qty"/>
                                                 <field name="consume_qty"/>
                                                 <field name="leave_qty"/>
+                                                <field name="material_virtual"/>
                                             </group>
                                         </group>
                                     </form>

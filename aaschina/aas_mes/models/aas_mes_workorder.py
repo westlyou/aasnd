@@ -68,7 +68,7 @@ class AASMESWorkorder(models.Model):
 
     workticket_lines = fields.One2many(comodel_name='aas.mes.workticket', inverse_name='workorder_id', string=u'工票明细')
     production_lines = fields.One2many(comodel_name='aas.production.product', inverse_name='workorder_id', string=u'产出明细')
-    consume_lines = fields.One2many(comodel_name='aas.mes.workorder.consume', inverse_name='workorder_id', string=u'消耗明细')
+    consume_lines = fields.One2many(comodel_name='aas.mes.workorder.consume', inverse_name='workorder_id', string=u'消耗清单')
     badmode_lines = fields.One2many(comodel_name='aas.production.badmode', inverse_name='workorder_id', string=u'不良明细')
 
     _sql_constraints = [
@@ -193,9 +193,12 @@ class AASMESWorkorder(models.Model):
             'mainorder_id': False if not self.mainorder_id else self.mainorder_id.id,
             'mainorder_name': False if not self.mainorder_name else self.mainorder_name
         })
-        self.write({
+        ordervals = {
             'workcenter_id': workticket.id, 'workcenter_name': routline.name, 'workcenter_start': workticket.id
-        })
+        }
+        if workticket.islastworkcenter():
+            ordervals['workcenter_finish'] = workticket.id
+        self.write(ordervals)
 
     @api.one
     def action_build_consumelist(self):
@@ -678,7 +681,8 @@ class AASMESWorkorder(models.Model):
         values = {'success': True, 'message': ''}
         product = workorder.product_id
         outputresult = self.env['aas.production.product'].action_production_output(workorder, product, 1,
-                                                                            serialnumber=serialnumber, finaloutput=True)
+                                                                                    serialnumber=serialnumber,
+                                                                                    finaloutput=True, tracing=True)
         if not outputresult.get('success', False):
             values.update({'success': False, 'message': outputresult.get('message', '')})
             return values
@@ -704,7 +708,8 @@ class AASMESWorkorder(models.Model):
         csvalues = self.env['aas.production.product'].action_production_output(workorder, product, output_qty,
                                                                                equipment=equipment,
                                                                                workstation=workstation,
-                                                                               badmode_lines=badmode_lines)
+                                                                               badmode_lines=badmode_lines,
+                                                                               tracing=True)
         if not csvalues.get('success', False):
             values.update(csvalues)
         return values

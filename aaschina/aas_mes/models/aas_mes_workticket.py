@@ -160,8 +160,8 @@ class AASMESWorkticket(models.Model):
                                                                          workcenter=workcenter,
                                                                          workstation=workstation,
                                                                          badmode_lines=badmode_lines,
-                                                                         equipment=equipment,
-                                                                         container=container, finaloutput=finaloutput)
+                                                                         equipment=equipment, container=container,
+                                                                         finaloutput=finaloutput, tracing=True)
         if not tempvas.get('success', False):
             errormsg = tempvas.get('message', u'报工异常！')
             raise UserError(errormsg)
@@ -211,6 +211,8 @@ class AASMESWorkticket(models.Model):
             workordervals = {'workcenter_id': tempworkcenter.id, 'workcenter_name': nextworkcenter.name}
             if float_compare(self.output_qty, self.input_qty, precision_rounding=0.000001) != 0.0:
                 tempworkcenter.action_refresh_consumelist()
+            if tempworkcenter.islastworkcenter():
+                workordervals['workcenter_finish'] = tempworkcenter.id
             workorder.write(workordervals)
         else:
             workorder.action_done()

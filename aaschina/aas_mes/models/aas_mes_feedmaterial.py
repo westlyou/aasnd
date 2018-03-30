@@ -226,7 +226,7 @@ class AASMESFeedmaterial(models.Model):
             feedinglist = self.env['aas.mes.feedmaterial'].search(feeddomain)
             if feedinglist and len(feedinglist) > 0:
                 feedinglist.unlink()
-            self.env['aas.mes.feedmaterial'].create({
+            feeding = self.env['aas.mes.feedmaterial'].create({
                 'mesline_id': mesline.id,
                 'material_id': material_id, 'material_lot': material_lot, 'material_qty': temp_qty
             })
@@ -236,6 +236,11 @@ class AASMESFeedmaterial(models.Model):
                 'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id,
                 'restrict_lot_id': mline['material_lot'], 'location_id': container.stock_location_id.id,
                 'location_dest_id': materiallocation.id, 'product_uom_qty': temp_qty
+            })
+            self.env['aas.mes.feedmaterial.list'].create({
+                'feedmaterial_id': feeding.id, 'material_id': material_id,
+                'material_lot': material_lot, 'material_qty': temp_qty,
+                'toatal_qty': feeding.material_qty, 'feeder_id': self.env.user.id, 'container_id': container.id
             })
         movelist.action_done()
         if container.product_lines and len(container.product_lines) > 0:
@@ -269,10 +274,15 @@ class AASMESFeedmaterial(models.Model):
         feedmaterialist = self.env['aas.mes.feedmaterial'].search(feeddomain)
         if feedmaterialist and len(feedmaterialist) > 0:
             feedmaterialist.unlink()
-        self.env['aas.mes.feedmaterial'].create({
+        feeding = self.env['aas.mes.feedmaterial'].create({
             'mesline_id': mesline.id,
             'material_id': label.product_id.id, 'material_uom': label.product_id.uom_id.id,
             'material_lot': label.product_lot.id, 'material_qty': label.product_qty
+        })
+        self.env['aas.mes.feedmaterial.list'].create({
+            'feedmaterial_id': feeding.id, 'material_id': label.product_id.id,
+            'material_lot': label.product_lot.id, 'material_qty': label.product_qty,
+            'toatal_qty': feeding.material_qty, 'feeder_id': self.env.user.id, 'label_id': label.id
         })
         return values
 
@@ -306,6 +316,7 @@ class AASMESFeedmaterialList(models.Model):
 
 
     feedmaterial_id = fields.Many2one(comodel_name='aas.mes.feedmaterial', string=u'上料信息')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     material_id = fields.Many2one(comodel_name='product.product', string=u'原料', ondelete='restrict')
     material_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     material_qty = fields.Float(string=u'本次上料数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
