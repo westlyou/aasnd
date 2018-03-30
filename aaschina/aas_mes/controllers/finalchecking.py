@@ -332,9 +332,10 @@ class AASMESFinalCheckingController(http.Controller):
         timefinish = fields.Datetime.to_string(fields.Datetime.to_timezone_time(finishtime, 'Asia/Shanghai'))
         if not productid:
             productid = False
-        tvalues = request.env['aas.mes.production.output'].action_building_outputrecords(meslineid, timestart,
-                                                                                         timefinish, workstationid,
-                                                                                         productid=productid)
+        tvalues = request.env['aas.production.product'].action_build_outputlist(timestart, timefinish,
+                                                                                meslineid=meslineid,
+                                                                                workstationid=workstationid,
+                                                                                productid=productid)
         values.update(tvalues)
         return values
 

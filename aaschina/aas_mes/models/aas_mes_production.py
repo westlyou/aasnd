@@ -463,6 +463,77 @@ class AASProductionProduct(models.Model):
         return values
 
 
+    @api.model
+    def action_build_outputlist(self, starttime, finishtime, meslineid=False,
+                                workstationid=False, productid=False, equipmentid=False):
+        values = {'success': True, 'message': '', 'records': []}
+        params = [starttime, finishtime]
+        sql_query = """
+            SELECT approduct.product_id, approduct.mesline_id, approduct.workstation_id,
+            approduct.product_code, approduct.mesline_name, approduct.workstation_name,
+            approduct.product_qty, approduct.output_date, approduct.onepass, approduct.qualified
+            FROM aas_production_product approduct
+            WHERE approduct.output_time >= %s AND approduct.output_time <= %s
+        """
+        if meslineid:
+            params.append(meslineid)
+            sql_query += ' AND approduct.mesline_id = %s'
+        if workstationid:
+            params.append(workstationid)
+            sql_query += ' AND approduct.workstation_id = %s'
+        if productid:
+            params.append(productid)
+            sql_query += ' AND approduct.product_id = %s'
+        if equipmentid:
+            params.append(equipmentid)
+            sql_query += ' AND approduct.equipment_id = %s'
+        self.env.cr.execute(sql_query, tuple(params))
+        records = self.env.cr.dictfetchall()
+        if not records or len(records) <= 0:
+            return values
+        outputdict = {}
+        for record in records:
+            rkey = 'P-'+str(record['product_id'])+'-'+str(record['mesline_id'])
+            rkey += '-'+str(record['workstation_id'])+'-'+record['output_date']
+            if rkey in outputdict:
+                outputdict[rkey]['product_qty'] += record['product_qty']
+                if record['onepass']:
+                    outputdict[rkey]['once_qty'] += record['product_qty']
+                else:
+                    outputdict[rkey]['twice_total_qty'] += record['product_qty']
+                    if record['qualified']:
+                        outputdict[rkey]['twice_qualified_qty'] += record['product_qty']
+                    outputdict[rkey]['twice_rate'] = (outputdict[rkey]['twice_qualified_qty'] / outputdict[rkey]['twice_total_qty']) * 100
+                outputdict[rkey]['once_rate'] = (outputdict[rkey]['once_qty'] / outputdict[rkey]['product_qty']) * 100
+            else:
+                tempvals = {
+                    'product_id': record['product_id'], 'mesline_id': record['mesline_id'],
+                    'workstation_id': record['workstation_id'], 'output_date': record['output_date'],
+                    'product_qty': record['product_qty'], 'product_code': record['product_code'],
+                    'workstation_name': record['workstation_name'], 'mesline_name': record['mesline_name']
+                }
+                if record['onepass']:
+                    tempvals.update({
+                        'once_qty': record['product_qty'], 'twice_total_qty': 0.0,
+                        'twice_qualified_qty': 0.0, 'once_rate': 100.0, 'twice_rate': 100.0
+                    })
+                else:
+                    tempvals.update({
+                        'once_qty': 0.0, 'twice_total_qty': record['product_qty'], 'once_rate': 0.0
+                    })
+                    if record['qualified']:
+                        tempvals.update({
+                            'twice_qualified_qty': record['product_qty'], 'twice_rate': 100.0
+                        })
+                    else:
+                        tempvals.update({
+                            'twice_qualified_qty': 0.0, 'twice_rate': 0.0
+                        })
+                outputdict[rkey] = tempvals
+        values['records'] = outputdict.values()
+        return values
+
+
 # 产出原料消耗
 class AASPRoductionMaterial(models.Model):
     _name = 'aas.production.material'
@@ -652,75 +723,7 @@ class AASMESProductionOutputQueryWizard(models.TransientModel):
         return defaults
 
 
-    @api.model
-    def action_build_outputlist(self, starttime, finishtime, meslineid=False,
-                                workstationid=False, productid=False, equipmentid=False):
-        values = {'success': True, 'message': '', 'records': []}
-        params = [starttime, finishtime]
-        sql_query = """
-            SELECT approduct.product_id, approduct.mesline_id, approduct.workstation_id,
-            approduct.product_code, approduct.mesline_name, approduct.workstation_name,
-            approduct.product_qty, approduct.output_date, approduct.onepass, approduct.qualified
-            FROM aas_production_product approduct
-            WHERE approduct.output_time >= %s AND approduct.output_time <= %s
-        """
-        if meslineid:
-            params.append(meslineid)
-            sql_query += ' AND approduct.mesline_id = %s'
-        if workstationid:
-            params.append(workstationid)
-            sql_query += ' AND approduct.workstation_id = %s'
-        if productid:
-            params.append(productid)
-            sql_query += ' AND approduct.product_id = %s'
-        if equipmentid:
-            params.append(equipmentid)
-            sql_query += ' AND approduct.equipment_id = %s'
-        self.env.cr.execute(sql_query, tuple(params))
-        records = self.env.cr.dictfetchall()
-        if not records or len(records) <= 0:
-            return values
-        outputdict = {}
-        for record in records:
-            rkey = 'P-'+str(record['product_id'])+'-'+str(record['mesline_id'])
-            rkey += '-'+str(record['workstation_id'])+'-'+record['output_date']
-            if rkey in outputdict:
-                outputdict[rkey]['product_qty'] += record['product_qty']
-                if record['onepass']:
-                    outputdict[rkey]['once_qty'] += record['product_qty']
-                else:
-                    outputdict[rkey]['twice_total_qty'] += record['product_qty']
-                    if record['qualified']:
-                        outputdict[rkey]['twice_qualified_qty'] += record['product_qty']
-                    outputdict[rkey]['twice_rate'] = (outputdict[rkey]['twice_qualified_qty'] / outputdict[rkey]['twice_total_qty']) * 100
-                outputdict[rkey]['once_rate'] = (outputdict[rkey]['once_qty'] / outputdict[rkey]['product_qty']) * 100
-            else:
-                tempvals = {
-                    'product_id': record['product_id'], 'mesline_id': record['mesline_id'],
-                    'workstation_id': record['workstation_id'], 'output_date': record['output_date'],
-                    'product_qty': record['product_qty'], 'product_code': record['product_code'],
-                    'workstation_name': record['workstation_name'], 'mesline_name': record['mesline_name']
-                }
-                if record['onepass']:
-                    tempvals.update({
-                        'once_qty': record['product_qty'], 'twice_total_qty': 0.0,
-                        'twice_qualified_qty': 0.0, 'once_rate': 100.0, 'twice_rate': 100.0
-                    })
-                else:
-                    tempvals.update({
-                        'once_qty': 0.0, 'twice_total_qty': record['product_qty'], 'once_rate': 0.0
-                    })
-                    if record['qualified']:
-                        tempvals.update({
-                            'twice_qualified_qty': record['product_qty'], 'twice_rate': 100.0
-                        })
-                    else:
-                        tempvals.update({
-                            'twice_qualified_qty': 0.0, 'twice_rate': 0.0
-                        })
-                outputdict[rkey] = tempvals
-        values['records'] = outputdict.values()
-        return values
+
 
 
     @api.multi
@@ -734,7 +737,8 @@ class AASMESProductionOutputQueryWizard(models.TransientModel):
         workstationid = False if not self.workstation_id else self.workstation_id.id
         productid = False if not self.product_id else self.product_id.id
         equipmentid = False if not self.equipment_id else self.equipment_id.id
-        tempvals = self.action_build_outputlist(starttime, finishtime, meslineid, workstationid, productid, equipmentid)
+        tempvals = self.env['aas.production.product'].action_build_outputlist(starttime, finishtime, meslineid,
+                                                                              workstationid, productid, equipmentid)
         records = tempvals.get('records', [])
         if records and len(records) > 0:
             querylines = []
