@@ -4,11 +4,14 @@
 
 $(function(){
 
+    //初始化语音播报参数
+    var speechmsg = new SpeechSynthesisUtterance();
+    speechmsg.lang = 'zh';
+    speechmsg.rate = 1.3;
+
     function myspeak(msg){
-        var message = new SpeechSynthesisUtterance(msg);
-        message.lang = 'zh';
-        message.rate = 1.3;
-        speechSynthesis.speak(message);
+        speechmsg.text = msg;
+        speechSynthesis.speak(speechmsg);
     }
 
     new VScanner(function(barcode){
