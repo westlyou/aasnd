@@ -60,7 +60,7 @@ class AASProductionProduct(models.Model):
     @api.depends('product_qty', 'consumed_qty')
     def _compute_canconsume(self):
         for record in self:
-            if float_compare(record.product_qty, record.consumed_qty) <= 0.0:
+            if float_compare(record.product_qty, record.consumed_qty, precision_rounding=0.000001) <= 0.0:
                 record.canconsume = False
             else:
                 record.canconsume = True
@@ -101,29 +101,26 @@ class AASProductionProduct(models.Model):
             'workorder_id': workorder.id, 'product_id': product.id, 'finaloutput': finaloutput,
             'mesline_id': mesline.id, 'output_date': ttoday, 'pcode': product.default_code, 'tracing': tracing
         }
-        lotcode = ttoday.replace('-', '')
         if mesline.schedule_id:
-            outputvals['schedule_id'] = mesline.schedule_id
+            outputvals['schedule_id'] = mesline.schedule_id.id
         if workstation:
             outputvals['workstation_id'] = workstation.id
         if workticket:
             outputvals['workticket_id'] = workticket.id
-            if workticket.islastworkcenter() and workorder.output_manner == 'container' and not container:
-                values.update({'success': False, 'message': u'当前工单产出方式为容器，您还未添加产出容器！'})
-                return values
-            if not container.isempty:
-                values.update({'success': False, 'message': u'当前容器已被占用，请使用其他容器产出！'})
-                return values
+            if workticket.islastworkcenter() and workorder.output_manner == 'container':
+                if not container:
+                    values.update({'success': False, 'message': u'当前工单产出方式为容器，您还未添加产出容器！'})
+                    return values
+                elif not container.isempty:
+                    values.update({'success': False, 'message': u'当前容器已被占用，请使用其他容器产出！'})
+                    return values
         if equipment:
             outputvals['euipment_id'] = equipment.id
-            if equipment.sequenceno:
-                lotcode += equipment.sequenceno
         if serialnumber:
             outputvals['serialnumber_id'] = serialnumber.id
             if serialnumber.reworked:
                 outputvals['onepass'] = False
-        productlot = self.env['stock.production.lot'].action_checkout_lot(product.id, lotcode)
-        outputvals['product_lot'] = productlot.id
+
         if product.customer_product_code:
             output_qty['ccode'] = product.customer_product_code
         product_qty, badmode_qty = output_qty, 0.0
@@ -138,7 +135,7 @@ class AASProductionProduct(models.Model):
                     'mesline_id': outputvals.get('mesline_id', False),
                     'schedule_id': outputvals.get('schedule_id', False),
                     'workstation_id': outputvals.get('workstation_id', False),
-                    'euipment_id': outputvals.get('euipment_id', False),
+                    'euqipment_id': outputvals.get('euqipment_id', False),
                     'workorder_id': outputvals.get('workorder_id', False),
                     'workticket_id': outputvals.get('workticket_id', False),
                     'product_id': outputvals.get('product_id', False),
@@ -295,12 +292,12 @@ class AASProductionProduct(models.Model):
         consumes = self.env['aas.mes.workorder.consume'].search(consumedomain)
         if not consumes or len(consumes) <= 0:
             return values
-        tempdict, consumelines = {}, []
+        tempdict, consumelines, qualified_qty = {}, [], output_qty - badmode_qty
         for tconsume in consumes:
             material, wait_qty = tconsume.material_id, tconsume.consume_unit * output_qty
             if not material.virtual_material:
                 stockvals = self.action_loading_consume_materiallist(material, wait_qty, workorder.mesline_id)
-                if stockvals.get('success', False):
+                if not stockvals.get('success', False):
                     values.update(stockvals)
                     return values
                 tempdict[material.id] = {
@@ -308,14 +305,14 @@ class AASProductionProduct(models.Model):
                 }
             else:
                 stockvals = self.action_loading_consume_virtuallist(material, wait_qty, workorder)
-                if stockvals.get('success', False):
+                if not stockvals.get('success', False):
                     values.update(stockvals)
                     return values
                 tempdict[material.id] = {
                     'virtual': True, 'stocklist': stockvals['stocklist'], 'uom_id': material.uom_id.id
                 }
             # 更新消耗清单信息
-            temp_qty = (output_qty - badmode_qty) * tconsume.consume_unit + tconsume.consume_qty
+            temp_qty = qualified_qty * tconsume.consume_unit + tconsume.consume_qty
             consumelines.append((1, tconsume.id, {'consume_qty': temp_qty}))
         values.update({'consumedict': tempdict, 'consumelines': consumelines})
         return values
@@ -424,18 +421,20 @@ class AASProductionProduct(models.Model):
             _logger.info(u'产出到容器异常，容器%s已经被占用,操作时间：%s', container.name, fields.Datetime.now())
             values.update({'success': False})
             return values
-        if not production.product_lot:
-            _logger.info(u'产出到容器异常，当前工单%s产出没有成品批次,操作时间：%s', production.workorder_id.name, fields.Datetime.now())
-            values.update({'success': False})
-            return values
+        lotcode = production.output_date.replace('-', '')
+        tequipment = production.equipment_id
+        if tequipment and tequipment.sequenceno:
+            lotcode += tequipment.sequenceno
+        product = production.product_id
+        productlot = self.env['stock.production.lot'].action_checkout_lot(product.id, lotcode)
         mesline = production.mesline_id
         if container.location_id.id != mesline.location_production_id.id:
             container.action_domove(mesline.location_production_id.id, movenote=u'产出到容器自动调拨')
         containerline = self.env['aas.container.product'].create({
-            'product_id': production.product_id.id,
-            'product_lot': production.product_lot.id, 'temp_qty': production.product_qty
+            'product_id': product.id, 'product_lot': productlot.id, 'temp_qty': production.product_qty
         })
         containerline.action_stock(production.product_qty)
+        production.write({'product_lot': productlot.id, 'container_id': container.id})
         return values
 
 
@@ -447,18 +446,20 @@ class AASProductionProduct(models.Model):
         :return:
         """
         values = {'success': True, 'message': '', 'label_id': '0'}
-        if not production.product_lot:
-            _logger.info(u'产出到标签异常，当前工单%s产出没有成品批次,操作时间：%s', production.workorder_id.name, fields.Datetime.now())
-            values.update({'success': False})
-            return values
+        lotcode = production.output_date.replace('-', '')
+        tequipment = production.equipment_id
+        if tequipment and tequipment.sequenceno:
+            lotcode += tequipment.sequenceno
+        product = production.product_id
+        productlot = self.env['stock.production.lot'].action_checkout_lot(product.id, lotcode)
         label = self.env['aas.product.label'].create({
-            'product_id': production.product_id.id, 'product_lot': production.product_lot.id,
+            'product_id': product.id, 'product_lot': productlot.id,
             'product_qty': production.product_qty, 'origin_order': production.workorder_id.name,
             'location_id': production.mesline_id.location_production_id.id
         })
         production_location_id = self.env.ref('stock.location_production').id
         label.action_stock(production_location_id, origin=production.workorder_id.name)
-        production.write({'label_id': label.id})
+        production.write({'label_id': label.id, 'product_lot': productlot.id})
         values['label_id'] = label.id
         return values
 

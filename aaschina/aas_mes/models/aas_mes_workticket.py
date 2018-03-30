@@ -59,6 +59,8 @@ class AASMESWorkticket(models.Model):
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签')
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
+    production_lines = fields.One2many(comodel_name='aas.production.product', inverse_name='workticket_id', string=u'成品产出')
+
     @api.depends('name')
     def _compute_barcode(self):
         for record in self:
@@ -433,16 +435,11 @@ class AASMESWorkticketCommitWizard(models.TransientModel):
                 if float_compare(bline.badmode_qty, 0.0, precision_rounding=0.000001) <= 0.0:
                     continue
                 badmode_qty += bline.badmode_qty
-                badmode = bline.badmode_id.badmode_id
+                badmode = bline.badmode_id
                 badmode_lines.append({'badmode_id': badmode.id, 'badmode_qty': bline.badmode_qty})
         if float_compare(badmode_qty, self.commit_qty, precision_rounding=0.000001) > 0.0:
             raise UserError(u'不良数量的总和不可以大于报工数量！')
-        workstationid, productid = workcenter.workstation_id.id, workticket.product_id.id
-        workorderid, workcenterid, commitqty = workorder.id, workcenter.id, self.commit_qty
-        cresult = workorder.action_validate_consume(workorderid, productid, commitqty, workcenter_id=workcenterid)
-        if not cresult.get('success', False):
-            raise UserError(cresult['message'])
-        workticket.action_doing_commit(commitqty, badmode_lines, container_id=container_id)
+        workticket.action_doing_commit(self.commit_qty, badmode_lines, container_id=container_id)
 
 class AASMESWorkticketBadmodeWizard(models.TransientModel):
     _name = 'aas.mes.workticket.badmode.wizard'

@@ -216,8 +216,8 @@ class AASMESWorkorder(models.Model):
             virtual = material.virtual_material
             conunit = workcenterline.product_qty / self.aas_bom_id.product_qty
             consumevals = {
-                'product_id': product.id, 'material_id': material.id, 'level': 1,
-                'consume_unit': conunit, 'input_qty': input_qty * conunit, 'virtual': virtual,
+                'product_id': product.id, 'material_id': material.id, 'material_level': 1,
+                'consume_unit': conunit, 'input_qty': input_qty * conunit, 'material_virtual': virtual,
                 'workcenter_id': False if not workcenterline.workcenter_id else workcenterline.workcenter_id.id
             }
             if not virtual:
@@ -235,13 +235,15 @@ class AASMESWorkorder(models.Model):
                     vvirtual = vmaterial.virtual_material
                     vconunit = vbomline.product_qty / virtualbom.product_qty
                     vvals = {
-                        'product_id': material.id, 'material_id': vmaterial.id, 'virtual': vvirtual,
-                        'consume_unit': vconunit, 'input_qty': vconunit * consumevals['input_qty'],
-                        'workcenter_id': consumevals['workcenter_id'], 'level': consumevals['level'] + 1
+                        'product_id': material.id, 'material_id': vmaterial.id,
+                        'material_virtual': vvirtual, 'consume_unit': vconunit,
+                        'input_qty': vconunit * consumevals['input_qty'],
+                        'workcenter_id': consumevals['workcenter_id'],
+                        'material_level': consumevals['material_level'] + 1
                     }
                     if vmaterial.id in virtualdict:
                         tempvals = virtualdict[vmaterial.id]
-                        if tempvals['level'] < vvals['level']:
+                        if tempvals['material_level'] < vvals['material_level']:
                             tempvals.update(vvals)
                     else:
                         virtualdict[vmaterial.id] = vvals
@@ -722,6 +724,7 @@ class AASMESWorkorder(models.Model):
 class AASMESWorkorderConsume(models.Model):
     _name = 'aas.mes.workorder.consume'
     _description = 'AAS MES Work Order Consume'
+    _order = 'workorder_id desc,material_level,workcenter_id'
 
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='cascade')
     workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='restrict')
