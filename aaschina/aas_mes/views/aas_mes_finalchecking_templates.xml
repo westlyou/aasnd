@@ -197,7 +197,6 @@
                 <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
-                <script src="/aas_base/static/libs/speech/js/jQuery.speech.min.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
                 <script src="/aas_mes/static/src/js/mes_finalchecking.js"></script>
             </body>
