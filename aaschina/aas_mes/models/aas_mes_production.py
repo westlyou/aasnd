@@ -115,7 +115,7 @@ class AASProductionProduct(models.Model):
                     values.update({'success': False, 'message': u'当前容器已被占用，请使用其他容器产出！'})
                     return values
         if equipment:
-            outputvals['euipment_id'] = equipment.id
+            outputvals['equipment_id'] = equipment.id
         if serialnumber:
             outputvals['serialnumber_id'] = serialnumber.id
             if serialnumber.reworked:
