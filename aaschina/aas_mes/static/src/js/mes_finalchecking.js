@@ -4,16 +4,6 @@
 
 $(function(){
 
-    //初始化语音播报参数
-    var speechmsg = new SpeechSynthesisUtterance();
-    speechmsg.lang = 'zh';
-    speechmsg.rate = 1.3;
-
-    function myspeak(msg){
-        speechmsg.text = msg;
-        speechSynthesis.speak(speechmsg);
-    }
-
     new VScanner(function(barcode){
         if(barcode==null || barcode==''){
             layer.msg('扫描条码异常！', {icon: 5});
@@ -133,7 +123,7 @@ $(function(){
                 if(!dresult.success){
                     $('#final_result_box').removeClass('bg-green').addClass('bg-red');
                     $('#final_result_content').html('NG');
-                    myspeak($('#checkwarning').html());
+                    $('#checkwarning').speech({"speech": false, "speed": 6});
                     return ;
                 }
                 $('#final_result_content').attr('serialcount', dresult.serialcount).html(dresult.serialcount);
@@ -141,14 +131,14 @@ $(function(){
                     $('#final_result_box').removeClass('bg-red').addClass('bg-green');
                 }
                 if(dresult.rework){
-                    myspeak($('#checkwarning').html());
+                    $('#checkwarning').speech({"speech": false, "speed": 6});
                     $('#final_result_content').html('重工');
                     action_reworkconfirm(dresult.badmode_name);
                 }else{
                     if(dresult.done){
-                        myspeak($('#checkwarning').html());
+                        $('#checkwarning').speech({"speech": false, "speed": 6});
                     }else{
-                        myspeak($('#final_result_content').html());
+                        $('#final_result_content').speech({"speech": false, "speed": 6});
                     }
                 }
             },
