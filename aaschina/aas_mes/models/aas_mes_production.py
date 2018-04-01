@@ -124,7 +124,7 @@ class AASProductionProduct(models.Model):
                 outputvals['onepass'] = False
 
         if product.customer_product_code:
-            output_qty['ccode'] = product.customer_product_code
+            outputvals['ccode'] = product.customer_product_code
         product_qty, badmode_qty = output_qty, 0.0
         # 加载不良信息
         if badmode_lines and len(badmode_lines) > 0:
@@ -243,6 +243,7 @@ class AASProductionProduct(models.Model):
         # 更新序列号信息
         if serialnumber:
             serialvals = {
+                'production_id': currentoutput.id,
                 'workorder_id': workorder.id, 'stocked': True,
                 'output_time': fields.Datetime.now(), 'outputuser_id': self.env.user.id
             }

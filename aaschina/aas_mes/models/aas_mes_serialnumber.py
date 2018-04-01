@@ -52,7 +52,7 @@ class AASMESSerialnumber(models.Model):
     output_internal = fields.Float(string=u'产出间隔', default=0.0, help=u'上一次产出的序列号与本次产出的时间间隔')
     outputuser_id = fields.Many2one(comodel_name='res.users', string=u'产出用户', index=True, ondelete='restrict')
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'产出工单', index=True, ondelete='restrict')
-    outputrecord_id = fields.Many2one(comodel_name='aas.mes.workorder.product', string=u'产出记录', index=True, ondelete='restrict')
+    production_id = fields.Many2one(comodel_name='aas.production.product', string=u'产出记录', index=True)
     traced = fields.Boolean(string=u'已被追溯关联', default=False, copy=False)
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', index=True, ondelete='restrict')
     operation_id = fields.Many2one(comodel_name='aas.mes.operation', string=u'操作记录', index=True, ondelete='restrict')
