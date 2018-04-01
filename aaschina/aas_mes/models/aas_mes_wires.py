@@ -242,7 +242,7 @@ class AASMESWireOrder(models.Model):
         tempvals = self.env['aas.production.product'].action_production_output(workorder, product, output_qty,
                                                                             equipment=equipment, employee=employee,
                                                                         workstation=workstation, container=container,
-                                                                               finaloutput=True)
+                                                                               finaloutput=True, tracing=True)
         if not tempvals.get('success', False):
             values.update(tempvals)
             return values
