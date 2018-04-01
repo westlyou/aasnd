@@ -204,7 +204,7 @@ class AASMESOperation(models.Model):
         workorder = mesline.workorder_id
         if not workorder:
             return values
-        productid, currentdate = workorder.product_id.id, fields.Datetime.to_china_string(fields.Datetime.now())[0:10]
+        productid, currentdate = workorder.product_id.id, fields.Datetime.to_china_today()
         tdomain = [('product_id', '=', productid), ('mesline_id', '=', mesline.id), ('fqccheck_date', '=', currentdate)]
         values['serialcount'] = self.env['aas.mes.operation'].search_count(tdomain)
         return values
@@ -340,9 +340,10 @@ class AASMESOperationRecord(models.Model):
             if serialnumber.state == 'draft':
                 serialnumber.write({'state': 'normal'})
         elif self.operate_type == 'fqc':
-            if not serialnumber.stocked:
-                operationvals['fqccheck_date'] = fields.Datetime.to_china_today()
-            operationvals.update({'final_quality_check': True, 'fqccheck_record_id': self.id})
+            operationvals.update({
+                'final_quality_check': True,
+                'fqccheck_record_id': self.id, 'fqccheck_date': fields.Datetime.to_china_today()
+            })
         elif self.operate_type == 'gp12':
             operationvals.update({'gp12_check': True, 'gp12_record_id': self.id})
         if operationvals and len(operationvals) > 0:

@@ -238,13 +238,15 @@ class AASProductionProduct(models.Model):
             })
         if finaloutput:
             workordervals['output_qty'] = workorder.output_qty + currentoutput.product_qty
+        # 兼容下线产出
+        if not workticket and container and workorder.output_manner == 'container':
+            self.action_output2container(currentoutput, container)
         if workordervals and len(workordervals) > 0:
             workorder.write(workordervals)
         # 更新序列号信息
         if serialnumber:
             serialvals = {
-                'production_id': currentoutput.id,
-                'workorder_id': workorder.id, 'stocked': True,
+                'production_id': currentoutput.id, 'workorder_id': workorder.id,
                 'output_time': fields.Datetime.now(), 'outputuser_id': self.env.user.id
             }
             if mesline.serialnumber_id:

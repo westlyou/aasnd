@@ -674,7 +674,7 @@ class AASMESWorkorder(models.Model):
         }
 
     @api.model
-    def action_flowingline_output(self, workorder, serialnumber):
+    def action_flowingline_output(self, workorder, workstation, serialnumber):
         """流水线产出
         :param workorder:
         :param serialnumber:
@@ -683,6 +683,7 @@ class AASMESWorkorder(models.Model):
         values = {'success': True, 'message': ''}
         product = workorder.product_id
         outputresult = self.env['aas.production.product'].action_production_output(workorder, product, 1,
+                                                                                    workstation=workstation,
                                                                                     serialnumber=serialnumber,
                                                                                     finaloutput=True, tracing=True)
         if not outputresult.get('success', False):
