@@ -22,6 +22,8 @@ _logger = logging.getLogger(__name__)
 class AASProductionProduct(models.Model):
     _name = 'aas.production.product'
     _description = 'AAS Production Product'
+    _rec_name = 'product_id'
+    _order = 'id desc'
 
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', index=True)
     schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', index=True)
@@ -144,28 +146,10 @@ class AASProductionProduct(models.Model):
             outputvals.update({'badmode_lines': badmodelines, 'badmode_qty': badmode_qty})
             product_qty -= badmode_qty
         outputvals['product_qty'] = product_qty
-        # 加载工位员工
-        if employee:
-            empvals = {'employee_id': employee.id, 'employee_code': employee.code}
-            if workstation:
-                empvals['workstation_id'] = workstation.id
-            outputvals['employee_lines'] = [(0, 0, empvals)]
-        elif workstation:
-            employeedomain = [('workstation_id', '=', workstation.id), ('mesline_id', '=', mesline.id)]
-            employeelist = self.env['aas.mes.workstation.employee'].search(employeedomain)
-            if employeelist and len(employeelist) > 0:
-                employeeids, employeelist = [], []
-                for temployee in employeelist:
-                    employeeid = temployee.employee_id.id
-                    if employeeid in employeeids:
-                        continue
-                    employeeids.append(employeeid)
-                    employeelist.append((0, 0, {
-                        'workstation_id': workstation.id,
-                        'employee_id': employeeid, 'employee_code': temployee.employee_id.code
-                    }))
-                outputvals['employee_lines'] = employeelist
-                employeeids = []  # 清空数组
+        # 加载产出员工清单
+        empvals = self.action_loading_output_employeelist(mesline, workstation, employee=employee)
+        if empvals['employeelines'] and len(empvals['employeelines']) > 0:
+            outputvals['employee_lines'] = empvals['employeelines']
         # 加载消耗清单
         consumevals = self.action_loading_consumelist(workorder, product, output_qty,
                                                       badmode_qty=badmode_qty, workcenter=workcenter)
@@ -273,6 +257,40 @@ class AASProductionProduct(models.Model):
         workorder.action_done()
         _logger.info(u'工单%s完成产出时间:%s', workorder.name, fields.Datetime.now())
         return values
+
+
+    @api.model
+    def action_loading_output_employeelist(self, mesline, workstation, employee=False):
+        """加载产出员工清单
+        :param mesline:
+        :param workstation:
+        :param employee:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'employeelines': []}
+        if employee:
+            empvals = {'employee_id': employee.id, 'employee_code': employee.code}
+            if workstation:
+                empvals['workstation_id'] = workstation.id
+            values['employeelines'] = [(0, 0, empvals)]
+            return values
+        if not mesline or not workstation:
+            return values
+        employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        employeelist = self.env['aas.mes.workstation.employee'].search(employeedomain)
+        if employeelist and len(employeelist) > 0:
+            employeeids, employeelines = [], []
+            for temployee in employeelist:
+                employeeid, employeecode = temployee.employee_id.id, temployee.employee_id.code
+                if employeeid in employeeids:
+                    continue
+                employeeids.append(employeeid)
+                employeelines.append((0, 0, {
+                    'workstation_id': workstation.id, 'employee_id': employeeid, 'employee_code': employeecode
+                }))
+            values['employeelines'] = employeelines
+        return values
+
 
 
     @api.model
@@ -431,6 +449,7 @@ class AASProductionProduct(models.Model):
         if container.location_id.id != mesline.location_production_id.id:
             container.action_domove(mesline.location_production_id.id, movenote=u'产出到容器自动调拨')
         containerline = self.env['aas.container.product'].create({
+            'container_id': container.id,
             'product_id': product.id, 'product_lot': productlot.id, 'temp_qty': production.product_qty
         })
         containerline.action_stock(production.product_qty)

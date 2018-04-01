@@ -124,9 +124,6 @@ class AASMESWorkticket(models.Model):
             'workticket_id': self.id, 'workstation_id': workstation.id,
             'waiting_qty': waiting_qty, 'workcenter_id': self.workcenter_id.id
         }
-        badmodelist = workstation.get_badmode_list(workstation.id)
-        if badmodelist and len(badmodelist) > 0:
-            wizardvals['badmode_lines'] = [(0, 0, {'badmode_id': badmode.id}) for badmode in badmodelist]
         wizard = self.env['aas.mes.workticket.commit.wizard'].create(wizardvals)
         view_form = self.env.ref('aas_mes.view_form_aas_mes_workticket_commit_wizard')
         return {

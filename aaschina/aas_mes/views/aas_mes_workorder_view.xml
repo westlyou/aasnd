@@ -125,20 +125,67 @@
                                             <group>
                                                 <field name="product_id"/>
                                                 <field name="product_lot"/>
+                                                <field name="container_id"/>
+                                                <field name="label_id"/>
                                             </group>
                                             <group>
                                                 <field name="product_qty"/>
                                                 <field name="badmode_qty"/>
-                                            </group>
-                                        </group>
-                                        <group>
-                                            <group>
                                                 <field name="output_time"/>
-                                                <field name="container_id"/>
-                                                <field name="label_id"/>
                                                 <field name="serialnumber_id"/>
                                             </group>
                                         </group>
+                                        <notebook>
+                                            <page string="原料清单">
+                                                <field name="material_lines">
+                                                    <tree>
+                                                        <field name="material_id"/>
+                                                        <field name="material_lot"/>
+                                                        <field name="material_qty"/>
+                                                    </tree>
+                                                    <form>
+                                                        <group>
+                                                            <group>
+                                                                <field name="material_id"/>
+                                                                <field name="material_lot"/>
+                                                            </group>
+                                                            <group>
+                                                                <field name="production_id"/>
+                                                                <field name="material_qty"/>
+                                                            </group>
+                                                        </group>
+                                                    </form>
+                                                </field>
+                                            </page>
+                                            <page string="员工清单">
+                                                <field name="employee_lines">
+                                                    <tree>
+                                                        <field name="employee_id"/>
+                                                        <field name="workstation_id"/>
+                                                    </tree>
+                                                    <form>
+                                                        <group>
+                                                            <group> <field name="employee_id"/> </group>
+                                                            <group> <field name="workstation_id"/> </group>
+                                                        </group>
+                                                    </form>
+                                                </field>
+                                            </page>
+                                            <page string="不良清单">
+                                                <field name="badmode_lines">
+                                                    <tree>
+                                                        <field name="badmode_id"/>
+                                                        <field name="badmode_qty"/>
+                                                    </tree>
+                                                    <form>
+                                                        <group>
+                                                            <group> <field name="badmode_id"/> </group>
+                                                            <group> <field name="badmode_qty"/> </group>
+                                                        </group>
+                                                    </form>
+                                                </field>
+                                            </page>
+                                        </notebook>
                                     </form>
                                 </field>
                             </page>
