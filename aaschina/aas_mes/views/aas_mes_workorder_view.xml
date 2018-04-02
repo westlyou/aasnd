@@ -116,11 +116,15 @@
                                         <field name="product_qty"/>
                                         <field name="badmode_qty"/>
                                         <field name="output_time"/>
+                                        <field name="workstation_id"/>
                                         <field name="container_id"/>
                                         <field name="label_id"/>
                                         <field name="serialnumber_id"/>
                                     </tree>
                                     <form>
+                                        <group>
+                                            <group> <field name="workstation_id"/> </group>
+                                        </group>
                                         <group>
                                             <group>
                                                 <field name="product_id"/>
@@ -270,6 +274,32 @@
                                         <field name="workstation_id"/>
                                         <field name="workticket_id"/>
                                     </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="workstation_id"/>
+                                            </group>
+                                            <group>
+                                                <field name="badmode_id"/>
+                                                <field name="badmode_qty"/>
+                                            </group>
+                                        </group>
+                                        <notebook>
+                                            <page string="不良原料">
+                                                <field name="material_lines">
+                                                    <tree>
+                                                        <field name="material_id"/>
+                                                        <field name="material_qty"/>
+                                                    </tree>
+                                                    <group>
+                                                        <group> <field name="material_id"/> </group>
+                                                        <group> <field name="material_qty"/> </group>
+                                                    </group>
+                                                </field>
+                                            </page>
+                                        </notebook>
+                                    </form>
                                 </field>
                             </page>
                         </notebook>
