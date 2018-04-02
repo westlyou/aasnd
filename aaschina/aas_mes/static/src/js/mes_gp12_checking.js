@@ -4,6 +4,15 @@
 
 $(function() {
 
+    var nativeSpeech = new SpeechSynthesisUtterance();
+
+    function nativespeak(message){
+        nativeSpeech.text = message;
+        nativeSpeech.lang = 'zh';
+        nativeSpeech.rate = 1.3;
+        speechSynthesis.speak(nativeSpeech);
+    }
+
     var scanable = true; //是否可以继续扫描
     new VScanner(function(barcode) {
         if (barcode == null || barcode == '') {
@@ -173,7 +182,7 @@ $(function() {
                 $('#check_result').html(dresult.result);
                 if(dresult.done){
                     $('#gp12_result_content').html($('#gp12_result_content').attr('serialcount'));
-                    $('#speechcontent').speech({"speech": false, "speed": 6, 'content': '已扫描，请不要重复操作'});
+                    nativespeak('已扫描，请不要重复操作');
                     return ;
                 }
                 if(dresult.result=='OK'){
@@ -187,7 +196,7 @@ $(function() {
                         $('#gp12_result_content').attr('serialcount', scount).html(scount);
                         var waitcount = parseInt($('#mes_printbtn').attr('waitcount'));
                         $('#mes_printbtn').attr('waitcount', waitcount+1);
-                        $('#gp12_result_content').speech({"speech": false, "speed": 6});
+                        nativespeak($('#gp12_result_content').html());
                     }
                     var serialtr = $('<tr></tr>').prependTo($('#pass_list')).html('<td>'+dresult.operate_result+'</td>');
                     serialtr.attr({
@@ -198,7 +207,7 @@ $(function() {
                     $('#gp12_result_box').removeClass('bg-green').addClass('bg-red');
                     $('#fail_list').append('<tr><td>'+dresult.operate_result+'</td></tr>');
                     $('#gp12_result_content').html('N G');
-                    $('#gp12_result_content').speech({"speech": false, "speed": 6});
+                    nativespeak('N G');
                 }
                 if(dresult.message!=null && dresult.message!=''){
                     $('#checkwarning').html(dresult.message);
@@ -332,7 +341,7 @@ $(function() {
                         error:function(XMLHttpRequest,textStatus,errorThrown){}
                     });
                 });
-                $('#speechcontent').speech({"speech": false, "speed": 6, 'content': '标签已经打印，请注意查收'});
+                nativespeak('标签已经打印，请注意查收');
             },
             error:function(xhr,type,errorThrown){
                 scanable = true;
