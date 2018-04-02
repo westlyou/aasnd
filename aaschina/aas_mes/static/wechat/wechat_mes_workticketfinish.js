@@ -374,7 +374,7 @@ mui.ready(function(){
         var finishmask = aas_finish_loading();
         mui.ajax('/aaswechat/mes/workticket/docommit',{
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: params, id: access_id }),
-            dataType:'json', type:'post', timeout:20000,
+            dataType:'json', type:'post', timeout:30000,
             headers:{'Content-Type':'application/json'},
             success:function(data){
                 finish_flag = false;

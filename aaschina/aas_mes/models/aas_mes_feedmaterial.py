@@ -238,6 +238,7 @@ class AASMESFeedmaterial(models.Model):
                 'location_dest_id': materiallocation.id, 'product_uom_qty': temp_qty
             })
             self.env['aas.mes.feedmaterial.list'].create({
+                'mesline_id': mesline.id,
                 'feedmaterial_id': feeding.id, 'material_id': material_id,
                 'material_lot': material_lot, 'material_qty': temp_qty,
                 'toatal_qty': feeding.material_qty, 'feeder_id': self.env.user.id, 'container_id': container.id
@@ -280,6 +281,7 @@ class AASMESFeedmaterial(models.Model):
             'material_lot': label.product_lot.id, 'material_qty': label.product_qty
         })
         self.env['aas.mes.feedmaterial.list'].create({
+            'mesline_id': mesline.id,
             'feedmaterial_id': feeding.id, 'material_id': label.product_id.id,
             'material_lot': label.product_lot.id, 'material_qty': label.product_qty,
             'toatal_qty': feeding.material_qty, 'feeder_id': self.env.user.id, 'label_id': label.id
