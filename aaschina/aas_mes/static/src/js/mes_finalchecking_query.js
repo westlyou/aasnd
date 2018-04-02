@@ -71,6 +71,7 @@ $(function(){
             type: 'post', timeout:10000, dataType: 'json',
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: tempparams, id: access_id}),
             success:function(data){
+                $('#outputlist').html('');
                 var dresult = data.result;
                 if(!dresult.success){
                     layer.msg(dresult.message, {icon: 5});

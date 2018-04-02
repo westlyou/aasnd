@@ -328,8 +328,8 @@ class AASMESFinalCheckingController(http.Controller):
             values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位！'})
             return values
         workstationid = workstation.id
-        timestart = fields.Datetime.to_string(fields.Datetime.to_timezone_time(starttime, 'Asia/Shanghai'))
-        timefinish = fields.Datetime.to_string(fields.Datetime.to_timezone_time(finishtime, 'Asia/Shanghai'))
+        timestart = fields.Datetime.to_utc_string(fields.Datetime.from_string(starttime), 'Asia/Shanghai')
+        timefinish = fields.Datetime.to_utc_string(fields.Datetime.from_string(finishtime), 'Asia/Shanghai')
         if not productid:
             productid = False
         tvalues = request.env['aas.production.product'].action_build_outputlist(timestart, timefinish,

@@ -315,8 +315,6 @@ class AASMESWorkorder(models.Model):
         :return:
         """
         self.ensure_one()
-        if self.waitconsume:
-            raise UserError(u'当前工单仍有产出的产品还未消耗原料，请先扣除相关原料消耗才能关闭工单！')
         if float_compare(self.output_qty, self.input_qty, precision_rounding=0.000001) >= 0.0:
             self.action_done()
             self.write({'time_finish': fields.Datetime.now(), 'closer_id': self.env.user.id})
@@ -683,11 +681,11 @@ class AASMESWorkorder(models.Model):
         values = {'success': True, 'message': ''}
         product = workorder.product_id
         outputresult = self.env['aas.production.product'].action_production_output(workorder, product, 1,
-                                                                                    workstation=workstation,
-                                                                                    serialnumber=serialnumber,
-                                                                                    finaloutput=True, tracing=True)
+                                                                                       workstation=workstation,
+                                                                                       serialnumber=serialnumber,
+                                                                                       finaloutput=True, tracing=True)
         if not outputresult.get('success', False):
-            values.update({'success': False, 'message': outputresult.get('message', '')})
+            values.update(outputresult)
             return values
         return values
 
@@ -716,9 +714,6 @@ class AASMESWorkorder(models.Model):
         if not csvalues.get('success', False):
             values.update(csvalues)
         return values
-
-
-
 
 
 

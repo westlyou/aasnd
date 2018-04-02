@@ -78,9 +78,10 @@ class AASProductionProduct(models.Model):
         return record
 
     @api.model
-    def action_production_output(self, workorder, product, output_qty, workticket=False,
-                                 workcenter=False, workstation=False, badmode_lines=[], employee=False, equipment=False,
-                                 serialnumber=False, container=False, finaloutput=False, tracing=False):
+    def action_production_output(self, workorder, product, output_qty, workticket=False, schedule=False,
+                                 workcenter=False, workstation=False, badmode_lines=[], employee=False,
+                                 equipment=False, serialnumber=False, container=False, finaloutput=False,
+                                 tracing=False, output_date=False, output_time=False):
         """工单产出
         :param workorder:
         :param product:
@@ -94,16 +95,26 @@ class AASProductionProduct(models.Model):
         :param serialnumber:
         :param container:
         :param finaloutput:
+        :param tracing:
+        :param output_date:
+        :param output_time:
         :return:
         """
         values = {'success': True, 'message': '', 'label_id': '0', 'production_id': '0'}
         _logger.info(u'工单%s开始产出时间:%s', workorder.name, fields.Datetime.now())
         mesline, ttoday = workorder.mesline_id, fields.Datetime.to_china_today()
+        if not output_date:
+            output_date = ttoday
         outputvals = {
             'workorder_id': workorder.id, 'product_id': product.id, 'finaloutput': finaloutput,
-            'mesline_id': mesline.id, 'output_date': ttoday, 'pcode': product.default_code, 'tracing': tracing
+            'mesline_id': mesline.id, 'output_date': output_date, 'pcode': product.default_code, 'tracing': tracing
         }
-        if mesline.schedule_id:
+        if not output_time:
+            output_time = fields.Datetime.now()
+            outputvals['output_time'] = output_time
+        if schedule:
+            outputvals['schedule_id'] = schedule.id
+        elif mesline.schedule_id:
             outputvals['schedule_id'] = mesline.schedule_id.id
         if workstation:
             outputvals['workstation_id'] = workstation.id
@@ -151,8 +162,7 @@ class AASProductionProduct(models.Model):
         if empvals['employeelines'] and len(empvals['employeelines']) > 0:
             outputvals['employee_lines'] = empvals['employeelines']
         # 加载消耗清单
-        consumevals = self.action_loading_consumelist(workorder, product, output_qty,
-                                                      badmode_qty=badmode_qty, workcenter=workcenter)
+        consumevals = self.action_loading_consumelist(workorder, product, output_qty, workcenter=workcenter)
         if not consumevals.get('success', False):
             values.update(consumevals)
             return values
@@ -247,7 +257,7 @@ class AASProductionProduct(models.Model):
         if serialnumber:
             serialvals = {
                 'production_id': currentoutput.id, 'workorder_id': workorder.id,
-                'output_time': fields.Datetime.now(), 'outputuser_id': self.env.user.id
+                'output_time': output_time, 'outputuser_id': self.env.user.id
             }
             if mesline.serialnumber_id:
                 serialvals['lastone_id'] = mesline.serialnumber_id.id
@@ -297,7 +307,7 @@ class AASProductionProduct(models.Model):
 
 
     @api.model
-    def action_loading_consumelist(self, workorder, product, output_qty, badmode_qty=0.0, workcenter=False):
+    def action_loading_consumelist(self, workorder, product, output_qty, workcenter=False):
         """获取工单消耗清单
         :param workorder:
         :param product:
@@ -313,7 +323,7 @@ class AASProductionProduct(models.Model):
         consumes = self.env['aas.mes.workorder.consume'].search(consumedomain)
         if not consumes or len(consumes) <= 0:
             return values
-        tempdict, consumelines, qualified_qty = {}, [], output_qty - badmode_qty
+        tempdict, consumelines = {}, []
         for tconsume in consumes:
             material, wait_qty = tconsume.material_id, tconsume.consume_unit * output_qty
             if not material.virtual_material:
@@ -333,7 +343,7 @@ class AASProductionProduct(models.Model):
                     'virtual': True, 'stocklist': stockvals['stocklist'], 'uom_id': material.uom_id.id
                 }
             # 更新消耗清单信息
-            temp_qty = qualified_qty * tconsume.consume_unit + tconsume.consume_qty
+            temp_qty = output_qty * tconsume.consume_unit + tconsume.consume_qty
             consumelines.append((1, tconsume.id, {'consume_qty': temp_qty}))
         values.update({'consumedict': tempdict, 'consumelines': consumelines})
         return values
@@ -351,7 +361,7 @@ class AASProductionProduct(models.Model):
         feeddomain = [('mesline_id', '=', mesline.id), ('material_id', '=', material.id)]
         feedlist = self.env['aas.mes.feedmaterial'].search(feeddomain, order='feed_time')
         if not feedlist and len(feedlist) <= 0:
-            values.update({'success': False, 'message': u'物料%s还未上料，请联系上料员上料'% material.default_code})
+            values.update({'success': False, 'message': u'物料%s还未上料或已消耗完毕，请联系上料员上料'% material.default_code})
             return values
         tempqty, restqty = 0.0, wait_qty
         for feed in feedlist:
