@@ -790,7 +790,7 @@ class AASMESWorkorderCloseWizard(models.TransientModel):
     @api.one
     def action_done(self):
         workorder = self.workorder_id
-        workorder.action_done()
+        workorder.action_workorder_over()
         workorder.write({'time_finish': fields.Datetime.now(), 'closer_id': self.env.user.id})
 
 
