@@ -16,7 +16,7 @@
         <menuitem id="menu_aas_mes_production"  name="产成品" parent="menu_aas_mes" sequence="4"
                   groups="group_aas_production_packer"/>
 
-        <menuitem id="menu_aas_mes_workdata_tracing"  name="生产追溯" parent="menu_aas_mes" sequence="5"
+        <menuitem id="menu_aas_production_tracing"  name="生产追溯" parent="menu_aas_mes" sequence="5"
                   groups="group_aas_manufacture_user"/>
 
         <menuitem id="menu_aas_mes_producttest"  name="生产检测" parent="menu_aas_mes" sequence="6"

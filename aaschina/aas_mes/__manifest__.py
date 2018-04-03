@@ -55,7 +55,7 @@
         'views/aas_mes_sundry_view.xml',
         'views/aas_mes_producttest_view.xml',
         'views/aas_mes_producttest_templates.xml',
-        # 'views/aas_mes_tracing_view.xml',
+        'views/aas_mes_tracing_view.xml',
 
         'oracle/aas_ebs_mainorder_view.xml',
         'wechat/views/aas_wechat_mes_template.xml',
