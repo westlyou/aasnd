@@ -383,63 +383,50 @@ class AASMESWorkorder(models.Model):
         if not routing:
             values.update({'success': False, 'message': u'工单%s上未设置工艺路线，请仔细检查！'% workorder.name})
             return values
-        workcenter = self.env['aas.mes.routing.line'].search([('routing_id', '=', routing.id), ('workstation_id', '=', workstation.id)], limit=1)
+        wcdomain = [('routing_id', '=', routing.id), ('workstation_id', '=', workstation.id)]
+        workcenter = self.env['aas.mes.routing.line'].search(wcdomain, limit=1)
         if not workcenter:
             values.update({'success': False, 'message': u'工位%s上未设置相应工序，请仔细检查！'% workcenter.name})
             return values
         values['workcenter_id'] = workcenter.id
-        # 获取BOM上虚拟件信息
+        # 加载半成品信息
         productdict = {}
-        bomdomain = [('bom_id', '=', workorder.aas_bom_id.id), ('workcenter_id', '=', workcenter.id)]
-        bomworkcenters = self.env['aas.mes.bom.workcenter'].search(bomdomain)
-        if bomworkcenters and len(bomworkcenters) > 0:
-            for tempbom in bomworkcenters:
-                if not tempbom.product_id.virtual_material:
-                    continue
-                pkey = 'P-'+str(tempbom.product_id.id)
-                productdict[pkey] = {
-                    'product_id': tempbom.product_id.id, 'product_code': tempbom.product_id.default_code,
-                    'input_qty': (tempbom.product_qty / tempbom.bom_id.product_qty) * workorder.input_qty,
-                    'output_qty': 0.0, 'badmode_qty': 0.0, 'actual_qty': 0.0, 'todo_qty': 0.0, 'materiallist': [],
-                    'weld_count': tempbom.product_id.weld_count
-                }
-        # 获取虚拟件消耗明细
         materialdomain = [('workorder_id', '=', workorder.id), ('workcenter_id', '=', workcenter.id)]
-        materialdomain.append(('product_id', '!=', workorder.product_id.id))
         consumelist = self.env['aas.mes.workorder.consume'].search(materialdomain)
         if consumelist and len(consumelist) > 0:
             for tconsume in consumelist:
-                pkey = 'P-'+str(tconsume.product_id.id)
-                if pkey in productdict:
-                    productdict[pkey]['materiallist'].append({
-                        'product_id': productdict[pkey]['product_id'], 'product_code': productdict[pkey]['product_code'],
-                        'material_id': tconsume.material_id.id, 'material_code': tconsume.material_id.default_code,
-                        'consume_unit': tconsume.consume_unit, 'input_qty': tconsume.input_qty,
-                        'consume_qty': tconsume.consume_qty, 'leave_qty': tconsume.leave_qty
-                    })
-        # 获取虚拟件产出
-        outputdict = {}
-        outputdomain = [('workorder_id', '=', workorder.id), ('product_id', '!=', workorder.product_id.id)]
-        outputlist = self.env['aas.mes.workorder.product'].search(outputdomain)
-        if outputlist and len(outputlist) > 0:
-            for tempout in outputlist:
-                pkey = 'P-'+str(tempout.product_id.id)
-                output_qty, badmode_qty = tempout.product_qty + tempout.waiting_qty, tempout.badmode_qty
-                total_qty = output_qty + badmode_qty
-                if pkey in outputdict:
-                    outputdict[pkey]['output_qty'] += output_qty
-                    outputdict[pkey]['badmode_qty'] += badmode_qty
-                    outputdict[pkey]['total_qty'] += total_qty
+                product, material = tconsume.product_id, tconsume.material_id
+                pkey = 'P'+str(product.id)
+                materialval = {
+                    'product_id': product.id, 'product_code': product.default_code,
+                    'material_id': material.id, 'material_code': material.default_code,
+                    'consume_unit': tconsume.consume_unit, 'input_qty': tconsume.input_qty,
+                    'consume_qty': tconsume.consume_qty, 'leave_qty': tconsume.leave_qty
+                }
+                if pkey not in productdict:
+                    productdict[pkey] = {
+                        'product_id': product.id, 'product_code': product.default_code,
+                        'output_qty': 0.0, 'badmode_qty': 0.0, 'actual_qty': 0.0, 'todo_qty': 0.0,
+                        'weld_count': product.weld_count, 'input_qty': tconsume.input_qty/tconsume.consume_unit
+                    }
+                    productdict[pkey]['materiallist'] = [materialval]
                 else:
-                    outputdict[pkey] = {'output_qty': output_qty, 'badmode_qty': badmode_qty, 'total_qty': total_qty}
-        for tkey, tval in productdict.items():
-            if tkey in outputdict:
-                tval.update({
-                    'output_qty': outputdict[tkey]['output_qty'],
-                    'actual_qty': outputdict[tkey]['total_qty'], 'badmode_qty': outputdict[tkey]['badmode_qty']
-                })
-            tval['todo_qty'] = tval['input_qty'] - tval['output_qty']
-            values['virtuallist'].append(tval)
+                    productdict[pkey]['materiallist'].append(materialval)
+        workstation = workcenter.workstation_id
+        outputdomain = [('workorder_id', '=', workorder.id), ('workstation_id', '=', workstation.id)]
+        outputlist = self.env['aas.production.product'].search(outputdomain)
+        if outputlist and len(outputlist) > 0 and consumelist and len(consumelist) > 0:
+            for tempout in outputlist:
+                product = tempout.product_id
+                pkey = 'P'+str(product.id)
+                if pkey not in productdict:
+                    continue
+                productdict[pkey]['output_qty'] += tempout.product_qty
+                productdict[pkey]['badmode_qty'] += tempout.badmode_qty
+                productdict[pkey]['actual_qty'] += tempout.product_qty + tempout.badmode_qty
+                productdict[pkey]['todo_qty'] = productdict[pkey]['input_qty'] - tempout.product_qty
+        if productdict and len(productdict) > 0:
+            values['virtuallist'] = productdict.items()
         return values
 
 
@@ -477,7 +464,7 @@ class AASMESWorkorder(models.Model):
     def action_show_outputlabels(self):
         self.ensure_one()
         labeldomain = [('workorder_id', '=', self.id), ('label_id', '!=', False)]
-        labellines = self.env['aas.mes.workorder.product'].search(labeldomain)
+        labellines = self.env['aas.production.product'].search(labeldomain)
         if not labellines or len(labellines) <= 0:
             raise UserError(u'当前没有产出标签显示，可能已经按照其他方式产出！')
         labelids = [str(tlabel.label_id.id) for tlabel in labellines]

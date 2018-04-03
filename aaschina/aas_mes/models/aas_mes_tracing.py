@@ -40,7 +40,7 @@ class AASProductionProductMaterialReport(models.Model):
         pproduct.product_lot AS product_lot,
         pmaterial.material_id AS material_id,
         pmaterial.material_lot AS material_lot
-        FROM aas_production_product pproduct join aas_production_material pmateiral on pproduct.id = pmateiral.production_id
+        FROM aas_production_product pproduct join aas_production_material pmaterial on pproduct.id = pmaterial.production_id
         GROUP BY pproduct.mesline_id, pproduct.product_id, pproduct.product_lot, pmaterial.material_id, pmaterial.material_lot
         """
         return _select_sql
