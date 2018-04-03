@@ -320,7 +320,6 @@
                           parent="menu_aas_mes_manufacture" sequence="12" groups="group_aas_manufacture_foreman"/>
 
 
-
         <record id="view_form_aas_mes_production_output_query_result" model="ir.ui.view">
             <field name="name">aas.mes.production.output.query.wizard.result</field>
             <field name="model">aas.mes.production.output.query.wizard</field>
@@ -485,6 +484,9 @@
                 </form>
             </field>
         </record>
+
+
+
 
 
 
