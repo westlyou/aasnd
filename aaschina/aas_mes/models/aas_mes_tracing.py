@@ -42,6 +42,7 @@ class AASProductionProductMaterialReport(models.Model):
         pmaterial.material_id AS material_id,
         pmaterial.material_lot AS material_lot
         FROM aas_production_product pproduct join aas_production_material pmaterial on pproduct.id = pmaterial.production_id
+        WHERE pproduct.tracing = true
         GROUP BY pproduct.mesline_id, pproduct.product_id, pproduct.product_lot, pmaterial.material_id, pmaterial.material_lot
         """
         return _select_sql
@@ -101,11 +102,67 @@ class AASProductionProductMaterialReport(models.Model):
         }
 
 
+    @api.model
+    def action_loading_materialist_oneinall(self, productid, productlot):
+        """递归获取最终原料批次信息id集合
+        :param productid:
+        :param productlot:
+        :return:
+        """
+        materialreportids = []
+        tempdomain = [('product_id', '=', productid), ('product_lot', '=', productlot)]
+        reportlist = self.env['aas.production.product.material.report'].search(tempdomain)
+        if not reportlist or len(reportlist) <= 0:
+            return materialreportids
+        for treport in reportlist:
+            tmesline = treport.mesline_id
+            mateiral, materialot = treport.material_id, treport.material_lot
+            if mateiral.ismaterial:
+                mdomain = [('mesline_id', '=', tmesline.id)]
+                mdomain += [('mateiral_id', '=', mateiral.id), ('material_lot', '=', materialot.id)]
+                finalmaterial = self.env['aas.production.final.material.report'].search(mdomain, limit=1)
+                if finalmaterial:
+                    materialreportids.append(finalmaterial.id)
+            else:
+                materialreportids += self.action_loading_materialist_oneinall(mateiral.id, materialot.id)
+        return materialreportids
+
+
+    @api.model
+    def action_loading_productlist_oneinall(self, materialid, materialot):
+        """递归获取最终成品批次id集合
+        :param materialid:
+        :param materialot:
+        :return:
+        """
+        productreportids = []
+        mdomain = [('material_id', '=', materialid), ('material_lot', '=', materialot)]
+        reportlist = self.env['aas.production.product.material.report'].search(mdomain)
+        if not reportlist or len(reportlist) <= 0:
+            return productreportids
+        for treport in reportlist:
+            mesline = treport.mesline_id
+            temproduct, templot = treport.product_id, treport.product_lot
+            tempdomain = [('material_id', '=', temproduct.id), ('material_lot', '=', templot.id)]
+            if self.env['aas.production.product.material.report'].search_count(tempdomain) <= 0:
+                rdomain = [('mesline_id', '=', mesline.id)]
+                rdomain += [('product_id', '=', temproduct.id), ('product_lot', '=', templot.id)]
+                preport = self.env['aas.production.final.product.report'].search(rdomain, limit=1)
+                if preport:
+                    productreportids.append(preport.id)
+            else:
+                productreportids += self.action_loading_productlist_oneinall(temproduct.id, templot.id)
+        return productreportids
+
+
+
+
 
 class AASProductionFinalProductReport(models.Model):
     _auto = False
     _name = 'aas.production.final.product.report'
     _description = 'AAS Production Final Product Report'
+    _order = 'mesline_id,product_id,product_lot'
 
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线')
     product_id = fields.Many2one(comodel_name='product.product', string=u'成品')
@@ -120,6 +177,7 @@ class AASProductionFinalProductReport(models.Model):
         pproduct.product_lot AS product_lot,
         sum(pproduct.product_qty) AS product_qty
         FROM aas_production_product pproduct
+        WHERE pproduct.tracing = true
         GROUP BY pproduct.mesline_id, pproduct.product_id, pproduct.product_lot
         """
         return _select_sql
@@ -136,11 +194,12 @@ class AASProductionFinalMaterialReport(models.Model):
     _auto = False
     _name = 'aas.production.final.material.report'
     _description = 'AAS Production Final Material Report'
+    _order = 'mesline_id,material_id,material_lot'
 
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线')
     material_id = fields.Many2one(comodel_name='product.product', string=u'原料')
     material_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'原料批次')
-    product_qty = fields.Float(string=u'原料数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    material_qty = fields.Float(string=u'原料数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
 
     def _select_sql(self):
         _select_sql = """
@@ -150,6 +209,7 @@ class AASProductionFinalMaterialReport(models.Model):
         pmaterial.material_lot AS material_lot,
         sum(pmaterial.material_qty) AS material_qty
         FROM aas_production_product pproduct join aas_production_material pmaterial on pproduct.id = pmaterial.production_id
+        WHERE pproduct.tracing = true
         GROUP BY pproduct.mesline_id, pmaterial.material_id, pmaterial.material_lot
         """
         return _select_sql
@@ -195,6 +255,42 @@ class AASProductionForwardTracingWizard(models.TransientModel):
         action['domain'] = tempdomain
         return action
 
+    @api.multi
+    def action_trace_oneinall(self):
+        """最终原料追溯
+        :return:
+        """
+        self.ensure_one()
+        if not self.serialnumber_id and (not self.product_id or not self.product_lot):
+            raise UserError(u'如果未设置序列号，请设置好成品和批次信息！')
+        serialnumber, product, prolot = self.serialnumber_id, self.product_id, self.product_lot
+        tempdomain = [('tracing', '=', True)]
+        if serialnumber:
+            tempdomain.append(('serialnumber_id', '=', serialnumber.id))
+        else:
+            tempdomain += [('product_id', '=', product.id), ('product_lot', '=', prolot.id)]
+        productionlist = self.env['aas.production.product'].search(tempdomain)
+        if not productionlist or len(productionlist) <= 0:
+            raise UserError(u'未获取到追溯信息！')
+        finalmaterialids = []
+        for pproduction in productionlist:
+            if not pproduction.material_lines or len(pproduction.material_lines) <= 0:
+                continue
+            for pmaterial in pproduction.material_lines:
+                materialid, materialotid = pmaterial.material_id.id, pmaterial.material_lot.id
+                tempids = self.env['aas.production.product.material.report'].action_loading_materialist_oneinall(
+                    materialid, materialotid)
+                finalmaterialids += tempids
+        if not finalmaterialids or len(finalmaterialids) <= 0:
+            raise UserError(u'未获取到相关追溯信息！')
+        action = self.env.ref('aas_mes.action_aas_production_final_material_report').read()[0]
+        action['domain'] = [('id', 'in', finalmaterialids)]
+        return action
+
+
+
+
+
 
 class AASProductionReverseTracingWizard(models.TransientModel):
     _name = 'aas.production.reverse.tracing.wizard'
@@ -206,7 +302,24 @@ class AASProductionReverseTracingWizard(models.TransientModel):
     @api.multi
     def action_tracing(self):
         self.ensure_one()
+        tempdomain = [('material_id', '=', self.material_id.id), ('material_lot', '=', self.material_lot.id)]
+        action = self.env.ref('aas_mes.action_aas_production_product_material_report').read()[0]
+        action['domain'] = tempdomain
+        return action
 
 
+    @api.multi
+    def action_trace_oneinall(self):
+        """最终成品追溯
+        :return:
+        """
+        self.ensure_one()
+        finalproductids = self.env['aas.production.product.material.report'].action_loading_productlist_oneinall(
+            self.material_id.id, self.material_lot.id)
+        if not finalproductids or len(finalproductids) <= 0:
+            raise UserError(u'未获取到相关追溯信息！')
+        action = self.env.ref('aas_mes.action_aas_production_final_product_report').read()[0]
+        action['domain'] = [('id', 'in', finalproductids)]
+        return action
 
 
