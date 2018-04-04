@@ -391,7 +391,8 @@ class AASMESWorkorder(models.Model):
         values['workcenter_id'] = workcenter.id
         # 加载半成品信息
         productdict = {}
-        materialdomain = [('workorder_id', '=', workorder.id), ('workcenter_id', '=', workcenter.id)]
+        materialdomain = [('workorder_id', '=', workorder.id)]
+        materialdomain += [('workcenter_id', '=', workcenter.id), ('product_id', '!=', workorder.product_id.id)]
         consumelist = self.env['aas.mes.workorder.consume'].search(materialdomain)
         if consumelist and len(consumelist) > 0:
             for tconsume in consumelist:
@@ -426,7 +427,7 @@ class AASMESWorkorder(models.Model):
                 productdict[pkey]['actual_qty'] += tempout.product_qty + tempout.badmode_qty
                 productdict[pkey]['todo_qty'] = productdict[pkey]['input_qty'] - tempout.product_qty
         if productdict and len(productdict) > 0:
-            values['virtuallist'] = productdict.items()
+            values['virtuallist'] = productdict.values()
         return values
 
 
@@ -707,7 +708,7 @@ class AASMESWorkorder(models.Model):
 class AASMESWorkorderConsume(models.Model):
     _name = 'aas.mes.workorder.consume'
     _description = 'AAS MES Work Order Consume'
-    _order = 'workorder_id desc,material_level,workcenter_id'
+    _order = 'workorder_id desc,material_level,workcenter_id,product_id'
 
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='cascade')
     workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', ondelete='restrict')
