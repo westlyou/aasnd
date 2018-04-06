@@ -65,5 +65,10 @@
             <field name="url">aasmes/finalchecking</field>
         </record>
 
+        <menuitem id="menu_aas_mes_plan" name="生产计划"  sequence="12" groups="group_aas_manufacture_planner"/>
+
+        <menuitem id="menu_aas_mes_plan_order"  name="工单" parent="menu_aas_mes_plan" sequence="1"
+                  groups="group_aas_manufacture_planner"/>
+
     </data>
 </odoo>

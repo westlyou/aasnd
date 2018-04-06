@@ -2,12 +2,12 @@
 <odoo>
     <data>
 
-        <record id="view_tree_aas_mes_workorder" model="ir.ui.view">
-            <field name="name">aas.mes.workorder.tree</field>
+        <record id="view_tree_aas_mes_workorder_manufacture" model="ir.ui.view">
+            <field name="name">aas.mes.workorder.manufacture.tree</field>
             <field name="model">aas.mes.workorder</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree labelprint="true">
+                <tree labelprint="true" create="false" delete="false">
                     <field name="name"/>
                     <field name="mesline_id"/>
                     <field name="product_id"/>
@@ -26,12 +26,12 @@
             </field>
         </record>
 
-        <record id="view_form_aas_mes_workorder" model="ir.ui.view">
-            <field name="name">aas.mes.workorder.form</field>
+        <record id="view_form_aas_mes_workorder_manufacture" model="ir.ui.view">
+            <field name="name">aas.mes.workorder.manufacture.form</field>
             <field name="model">aas.mes.workorder</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form labelprint="true">
+                <form labelprint="true" create="false" delete="false">
                     <header>
                         <button name="action_confirm" type="object" string="确认工单" class="oe_highlight" states="draft"/>
                         <button name="action_producing" type="object" string="开始生产" class="oe_highlight"
@@ -334,36 +334,33 @@
             </field>
         </record>
 
-        <record id="action_aas_mes_workorder" model="ir.actions.act_window">
+        <record id="action_aas_mes_workorder_manufacture" model="ir.actions.act_window">
             <field name="name">子工单</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">aas.mes.workorder</field>
             <field name="limit">50</field>
             <field name="view_mode">form,tree</field>
-            <field name="view_id" ref="view_tree_aas_mes_workorder"/>
+            <field name="view_id" ref="view_tree_aas_mes_workorder_manufacture"/>
             <field name="search_view_id" ref="view_search_aas_mes_workorder"/>
             <field name="context">{'search_default_nowireorder': 1}</field>
-            <field name="help" type="html">
-                <p class="oe_view_nocontent_create"> 单击添加工单</p>
-            </field>
         </record>
 
-        <record id="act_view_tree_aas_mes_workorder" model="ir.actions.act_window.view">
+        <record id="act_view_tree_aas_mes_workorder_manufacture" model="ir.actions.act_window.view">
             <field name="sequence" eval="2"/>
             <field name="view_mode">tree</field>
-            <field name="view_id" ref="view_tree_aas_mes_workorder"/>
-            <field name="act_window_id" ref="action_aas_mes_workorder"/>
+            <field name="view_id" ref="view_tree_aas_mes_workorder_manufacture"/>
+            <field name="act_window_id" ref="action_aas_mes_workorder_manufacture"/>
         </record>
 
-        <record id="act_view_form_aas_mes_workorder" model="ir.actions.act_window.view">
+        <record id="act_view_form_aas_mes_workorder_manufacture" model="ir.actions.act_window.view">
             <field name="sequence" eval="3"/>
             <field name="view_mode">form</field>
-            <field name="view_id" ref="view_form_aas_mes_workorder"/>
-            <field name="act_window_id" ref="action_aas_mes_workorder"/>
+            <field name="view_id" ref="view_form_aas_mes_workorder_manufacture"/>
+            <field name="act_window_id" ref="action_aas_mes_workorder_manufacture"/>
         </record>
 
-        <menuitem id="menu_aas_mes_workorder"  name="子工单" action="action_aas_mes_workorder"
-                          parent="menu_aas_mes_manufacture" sequence="2" groups="group_aas_manufacture_user,group_aas_manufacture_planner"/>
+        <menuitem id="menu_aas_mes_workorder_manufacture"  name="子工单" action="action_aas_mes_workorder_manufacture"
+                          parent="menu_aas_mes_manufacture" sequence="1" groups="group_aas_manufacture_user"/>
 
 
         <!-- 向导 -->
@@ -446,6 +443,344 @@
                 </form>
             </field>
         </record>
+
+        <!-- 生产计划工单 -->
+
+        <record id="view_tree_aas_mes_workorder_plan" model="ir.ui.view">
+            <field name="name">aas.mes.workorder.plan.tree</field>
+            <field name="model">aas.mes.workorder</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree labelprint="true">
+                    <field name="name"/>
+                    <field name="mesline_id"/>
+                    <field name="product_id"/>
+                    <field name="product_uom"/>
+                    <field name="input_qty"/>
+                    <field name="output_qty"/>
+                    <field name="aas_bom_id"/>
+                    <field name="routing_id"/>
+                    <field name="creator_id"/>
+                    <field name="time_create"/>
+                    <field name="time_finish"/>
+                    <field name="plan_start"/>
+                    <field name="plan_finish"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_workorder_plan" model="ir.ui.view">
+            <field name="name">aas.mes.workorder.plan.form</field>
+            <field name="model">aas.mes.workorder</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form labelprint="true">
+                    <header>
+                        <button name="action_confirm" type="object" string="确认工单" class="oe_highlight" states="draft"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,producing,pause,done"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_right oe_button_box" style="width: 300px;" name="buttons">
+                            <div>
+                                <button type="object" name="action_show_outputlabels" class="oe_stat_button" icon="fa-list"
+                                    string="标签清单"/>
+                                <button type="object" name="action_close" class="oe_stat_button" icon="fa-close"
+                                        string="关闭工单" attrs="{'invisible':[('state','not in',['confirm','producing','pause'])]}"/>
+                            </div>
+                            <div>
+                                <button type="object" name="action_show_equipment_data" class="oe_stat_button" icon="fa-list"
+                                        string="设备数据"/>
+                                <button type="object" name="action_show_producttest_data" class="oe_stat_button" icon="fa-list"
+                                        string="检测数据"/>
+                                <button type="object" name="action_show_serialnumbers" class="oe_stat_button" icon="fa-list"
+                                        string="序列号清单" attrs="{'invisible':[('mesline_type','!=','flowing')]}"/>
+                            </div>
+
+                        </div>
+                        <group>
+                            <group> <field name="name" attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/> </group>
+                            <group> <field name="mainorder_id" readonly="1"/> </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="product_id" options="{'no_create':true}"
+                                        attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
+                                <field name="product_uom" readonly="1"/>
+                                <field name="input_qty" required="1" attrs="{'readonly':[('state','!=','draft')]}"/>
+                                <field name="creator_id" readonly="1"/>
+                                <field name="time_create" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="mesline_id" options="{'no_create':true}" required="1"
+                                        attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
+                                <field name="mesline_type" readonly="1"/>
+                                <field name="aas_bom_id" options="{'no_create':true}"
+                                       attrs="{'readonly':[('state','not in',['draft','confirm'])]}"
+                                       domain="[('state','=','normal'),('product_id','=',product_id)]"/>
+                                <field name="routing_id" readonly="1"/>
+                                <field name="time_finish" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="plan_start"/>
+                                <field name="plan_finish"/>
+                            </group>
+                            <group>
+                                <field name="produce_start" readonly="1"/>
+                                <field name="produce_finish" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="output_manner" attrs="{
+                                        'readonly':[('state','=','done')],
+                                        'invisible':[('mesline_type','=','flowing')],
+                                        'required':[('mesline_type','=','station')]}"/>
+                                <field name="output_qty" readonly="1"/>
+                                <field name="date_code" readonly="1"/>
+                                <field name="closer_id" readonly="1" attrs="{'invisible':[('closer_id','=',False)]}"/>
+                                <field name="workcenter_name" readonly="1" string="当前工序"
+                                        attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
+                                <field name="isproducing" invisible="1"/>
+                                <field name="workcenter_start" readonly="1"
+                                        attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
+                                <field name="workcenter_finish" readonly="1"
+                                        attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="成品产出">
+                                <field name="production_lines" readonly="1">
+                                    <tree>
+                                        <field name="product_id"/>
+                                        <field name="product_lot"/>
+                                        <field name="product_qty"/>
+                                        <field name="badmode_qty"/>
+                                        <field name="output_time"/>
+                                        <field name="workstation_id"/>
+                                        <field name="container_id"/>
+                                        <field name="label_id"/>
+                                        <field name="serialnumber_id"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group> <field name="workstation_id"/> </group>
+                                        </group>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_lot"/>
+                                                <field name="container_id"/>
+                                                <field name="label_id"/>
+                                            </group>
+                                            <group>
+                                                <field name="product_qty"/>
+                                                <field name="badmode_qty"/>
+                                                <field name="output_time"/>
+                                                <field name="serialnumber_id"/>
+                                            </group>
+                                        </group>
+                                        <notebook>
+                                            <page string="原料清单">
+                                                <field name="material_lines">
+                                                    <tree>
+                                                        <field name="material_id"/>
+                                                        <field name="material_lot"/>
+                                                        <field name="material_qty"/>
+                                                    </tree>
+                                                    <form>
+                                                        <group>
+                                                            <group>
+                                                                <field name="material_id"/>
+                                                                <field name="material_lot"/>
+                                                            </group>
+                                                            <group>
+                                                                <field name="production_id"/>
+                                                                <field name="material_qty"/>
+                                                            </group>
+                                                        </group>
+                                                    </form>
+                                                </field>
+                                            </page>
+                                            <page string="员工清单">
+                                                <field name="employee_lines">
+                                                    <tree>
+                                                        <field name="employee_id"/>
+                                                        <field name="workstation_id"/>
+                                                    </tree>
+                                                    <form>
+                                                        <group>
+                                                            <group> <field name="employee_id"/> </group>
+                                                            <group> <field name="workstation_id"/> </group>
+                                                        </group>
+                                                    </form>
+                                                </field>
+                                            </page>
+                                            <page string="不良清单">
+                                                <field name="badmode_lines">
+                                                    <tree>
+                                                        <field name="badmode_id"/>
+                                                        <field name="badmode_qty"/>
+                                                    </tree>
+                                                    <form>
+                                                        <group>
+                                                            <group> <field name="badmode_id"/> </group>
+                                                            <group> <field name="badmode_qty"/> </group>
+                                                        </group>
+                                                    </form>
+                                                </field>
+                                            </page>
+                                        </notebook>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="消耗清单">
+                                <field name="consume_lines" readonly="1">
+                                    <tree>
+                                        <field name="workcenter_id"/>
+                                        <field name="product_id"/>
+                                        <field name="material_id"/>
+                                        <field name="consume_unit"/>
+                                        <field name="input_qty"/>
+                                        <field name="consume_qty"/>
+                                        <field name="leave_qty"/>
+                                        <field name="material_level"/>
+                                        <field name="material_virtual"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="workcenter_id"/>
+                                            </group>
+                                        </group>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="material_id"/>
+                                                <field name="consume_unit"/>
+                                                <field name="material_level"/>
+                                            </group>
+                                            <group>
+                                                <field name="input_qty"/>
+                                                <field name="consume_qty"/>
+                                                <field name="leave_qty"/>
+                                                <field name="material_virtual"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="工票明细" attrs="{'invisible':[('mesline_type','=','flowing')]}">
+                                <field name="workticket_lines" readonly="1">
+                                    <tree>
+                                        <field name="sequence"/>
+                                        <field name="workcenter_id"/>
+                                        <field name="input_qty"/>
+                                        <field name="output_qty"/>
+                                        <field name="time_wait"/>
+                                        <field name="time_start"/>
+                                        <field name="time_finish"/>
+                                        <field name="badmode_qty"/>
+                                        <field name="state"/>
+                                    </tree>
+                                    <form>
+                                        <header>
+                                            <field name="state" widget="statusbar" statusbar_visible="draft,waiting,producing,pause,done"/>
+                                        </header>
+                                        <sheet>
+                                            <group>
+                                                <group>
+                                                    <field name="sequence"/>
+                                                    <field name="workcenter_id"/>
+                                                    <field name="input_qty"/>
+                                                    <field name="output_qty"/>
+                                                </group>
+                                                <group>
+                                                    <field name="time_wait"/>
+                                                    <field name="time_start"/>
+                                                    <field name="time_finish"/>
+                                                    <field name="badmode_qty"/>
+                                                </group>
+                                            </group>
+                                        </sheet>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="不良明细">
+                                <field name="badmode_lines" readonly="1">
+                                    <tree>
+                                        <field name="product_id"/>
+                                        <field name="badmode_id"/>
+                                        <field name="badmode_qty"/>
+                                        <field name="workstation_id"/>
+                                        <field name="workticket_id"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="workstation_id"/>
+                                            </group>
+                                            <group>
+                                                <field name="badmode_id"/>
+                                                <field name="badmode_qty"/>
+                                            </group>
+                                        </group>
+                                        <notebook>
+                                            <page string="不良原料">
+                                                <field name="material_lines">
+                                                    <tree>
+                                                        <field name="material_id"/>
+                                                        <field name="material_qty"/>
+                                                    </tree>
+                                                    <group>
+                                                        <group> <field name="material_id"/> </group>
+                                                        <group> <field name="material_qty"/> </group>
+                                                    </group>
+                                                </field>
+                                            </page>
+                                        </notebook>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_workorder_plan" model="ir.actions.act_window">
+            <field name="name">子工单</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.workorder</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_workorder_plan"/>
+            <field name="search_view_id" ref="view_search_aas_mes_workorder"/>
+            <field name="context">{'search_default_nowireorder': 1}</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加子工单</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_mes_workorder_plan" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_workorder_plan"/>
+            <field name="act_window_id" ref="action_aas_mes_workorder_plan"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_workorder_plan" model="ir.actions.act_window.view">
+            <field name="sequence" eval="3"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_workorder_plan"/>
+            <field name="act_window_id" ref="action_aas_mes_workorder_plan"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_workorder_plan"  name="子工单" action="action_aas_mes_workorder_plan"
+                          parent="menu_aas_mes_plan_order" sequence="2" groups="group_aas_manufacture_planner"/>
 
     </data>
 </odoo>

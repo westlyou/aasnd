@@ -807,6 +807,7 @@ class AASMESProductionOutputQueryWizard(models.TransientModel):
 class AASMESProductionOutputQueryLineWizard(models.TransientModel):
     _name = 'aas.mes.production.output.query.line.wizard'
     _description = 'AAS MES Production Output Query Line Wizard'
+    _order = 'mesline_id,workstation_id,product_id'
 
     wizard_id = fields.Many2one(comodel_name='aas.mes.production.output.query.wizard', string='Wizard', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
