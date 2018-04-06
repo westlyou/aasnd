@@ -103,16 +103,23 @@ class AASProductionProductMaterialReport(models.Model):
 
 
     @api.model
-    def action_loading_materialist_oneinall(self, productid, productlot):
+    def action_loading_materialist_oneinall(self, meslineid, productid, productlot):
         """递归获取最终原料批次信息id集合
+        :param meslineid:
         :param productid:
         :param productlot:
         :return:
         """
         materialreportids = []
-        tempdomain = [('product_id', '=', productid), ('product_lot', '=', productlot)]
+        tempdomain = [('mesline_id', '=', meslineid)]
+        tempdomain += [('product_id', '=', productid), ('product_lot', '=', productlot)]
         reportlist = self.env['aas.production.product.material.report'].search(tempdomain)
         if not reportlist or len(reportlist) <= 0:
+            finaldomain = [('mesline_id', '=', meslineid)]
+            finaldomain += [('material_id', '=', productid), ('material_lot', '=', productlot)]
+            finalmaterial = self.env['aas.production.final.material.report'].search(finaldomain, limit=1)
+            if finalmaterial:
+                materialreportids.append(finalmaterial.id)
             return materialreportids
         for treport in reportlist:
             tmesline = treport.mesline_id
@@ -124,7 +131,7 @@ class AASProductionProductMaterialReport(models.Model):
                 if finalmaterial:
                     materialreportids.append(finalmaterial.id)
             else:
-                materialreportids += self.action_loading_materialist_oneinall(mateiral.id, materialot.id)
+                materialreportids += self.action_loading_materialist_oneinall(tmesline.id, mateiral.id, materialot.id)
         return materialreportids
 
 
@@ -242,13 +249,22 @@ class AASProductionForwardTracingWizard(models.TransientModel):
         tempdomain = []
         serialnumber, product, prolot = self.serialnumber_id, self.product_id, self.product_lot
         if serialnumber:
-            mesline = serialnumber.mesline_id
-            tproduct, tprolot = serialnumber.product_id, serialnumber.product_lot
-            tempdomain += [('mesline_id', '=', mesline.id), ('product_id', '=', tproduct.id)]
-            if tprolot:
-                tempdomain += [('product_lot', '=', tprolot.id)]
-            else:
-                tempdomain += [('product_lot', '=', False)]
+            mdomain = [('tracing', '=', True), ('serialnumber_id', '=', serialnumber.id)]
+            production = self.env['aas.production.product'].search(mdomain, limit=1)
+            if not production or not production.material_lines or len(production.material_lines) <= 0:
+                raise UserError(u'未获取到追溯信息！')
+            reportids = []
+            meslineid, productid = production.mesline_id.id, production.product_id.id
+            productlot = False if not production.product_lot else production.product_lot.id
+            for mline in production.material_lines:
+                pmdomain = [('mesline_id', '=', meslineid)]
+                pmdomain += [('product_id', '=', productid), ('product_lot', '=', productlot)]
+                pmdomain += [('material_id', '=', mline.material_id.id), ('material_lot', '=', mline.material_lot.id)]
+                pmreport = self.env['aas.production.product.material.report'].search(pmdomain, limit=1)
+                if not pmreport:
+                    continue
+                reportids.append(pmreport.id)
+            tempdomain += [('id', 'in', reportids)]
         else:
             tempdomain += [('product_id', '=', product.id), ('product_lot', '=', prolot.id)]
         action = self.env.ref('aas_mes.action_aas_production_product_material_report').read()[0]
@@ -276,10 +292,11 @@ class AASProductionForwardTracingWizard(models.TransientModel):
         for pproduction in productionlist:
             if not pproduction.material_lines or len(pproduction.material_lines) <= 0:
                 continue
+            mesline = pproduction.mesline_id
             for pmaterial in pproduction.material_lines:
                 materialid, materialotid = pmaterial.material_id.id, pmaterial.material_lot.id
                 tempids = self.env['aas.production.product.material.report'].action_loading_materialist_oneinall(
-                    materialid, materialotid)
+                    mesline.id, materialid, materialotid)
                 finalmaterialids += tempids
         if not finalmaterialids or len(finalmaterialids) <= 0:
             raise UserError(u'未获取到相关追溯信息！')
