@@ -363,87 +363,6 @@
                           parent="menu_aas_mes_manufacture" sequence="1" groups="group_aas_manufacture_user"/>
 
 
-        <!-- 向导 -->
-
-        <record id="view_form_aas_mes_workorder_producing_wizard" model="ir.ui.view">
-            <field name="name">aas.mes.workorder.producing.wizard</field>
-            <field name="model">aas.mes.workorder.producing.wizard</field>
-            <field name="arch" type="xml">
-                <form>
-                    <group>
-                        <group>
-                            <field name="workorder_id" readonly="1"/>
-                        </group>
-                    </group>
-                    <div>
-                        <field name="action_message" readonly="1"/>
-                    </div>
-                    <footer>
-                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
-                        <button string="取消" class="btn-default" special="cancel"/>
-                    </footer>
-                </form>
-            </field>
-        </record>
-
-        <record id="view_form_aas_mes_workorder_close_wizard" model="ir.ui.view">
-            <field name="name">aas.mes.workorder.close.wizard</field>
-            <field name="model">aas.mes.workorder.close.wizard</field>
-            <field name="arch" type="xml">
-                <form>
-                    <group>
-                        <group>
-                            <field name="workorder_id" readonly="1"/>
-                        </group>
-                    </group>
-                    <div>
-                        <field name="action_message" readonly="1"/>
-                    </div>
-                    <footer>
-                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
-                        <button string="取消" class="btn-default" special="cancel"/>
-                    </footer>
-                </form>
-            </field>
-        </record>
-
-        <record id="view_form_aas_mes_workorder_finalproduct_setting_wizard" model="ir.ui.view">
-            <field name="name">aas.mes.workorder.finalproduct.setting.wizard</field>
-            <field name="model">aas.mes.workorder.finalproduct.setting.wizard</field>
-            <field name="arch" type="xml">
-                <form>
-                    <group>
-                        <group>
-                            <field name="workorder_id" readonly="1"/>
-                        </group>
-                    </group>
-                    <div>
-                        <field name="action_message" readonly="1"/>
-                    </div>
-                    <notebook>
-                        <page string="最终产品清单">
-                            <field name="product_lines">
-                                <tree create="false" delete="false">
-                                    <field name="product_id" readonly="1"/>
-                                    <field name="finalchecked"/>
-                                </tree>
-                                <form create="false" delete="false">
-                                    <group>
-                                        <group> <field name="product_id" readonly="1"/> </group>
-                                        <group> <field name="finalchecked"/> </group>
-                                    </group>
-                                </form>
-                            </field>
-                        </page>
-                    </notebook>
-                    <footer>
-                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
-                        <button string="取消" class="btn-default" special="cancel"/>
-                    </footer>
-                </form>
-            </field>
-        </record>
-
         <!-- 生产计划工单 -->
 
         <record id="view_tree_aas_mes_workorder_plan" model="ir.ui.view">
@@ -781,6 +700,88 @@
 
         <menuitem id="menu_aas_mes_workorder_plan"  name="子工单" action="action_aas_mes_workorder_plan"
                           parent="menu_aas_mes_plan_order" sequence="2" groups="group_aas_manufacture_planner"/>
+
+
+        <!-- 向导 -->
+
+        <record id="view_form_aas_mes_workorder_producing_wizard" model="ir.ui.view">
+            <field name="name">aas.mes.workorder.producing.wizard</field>
+            <field name="model">aas.mes.workorder.producing.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="workorder_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <div>
+                        <field name="action_message" readonly="1"/>
+                    </div>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_workorder_close_wizard" model="ir.ui.view">
+            <field name="name">aas.mes.workorder.close.wizard</field>
+            <field name="model">aas.mes.workorder.close.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="workorder_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <div>
+                        <field name="action_message" readonly="1"/>
+                    </div>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_workorder_finalproduct_setting_wizard" model="ir.ui.view">
+            <field name="name">aas.mes.workorder.finalproduct.setting.wizard</field>
+            <field name="model">aas.mes.workorder.finalproduct.setting.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="workorder_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <div>
+                        <field name="action_message" readonly="1"/>
+                    </div>
+                    <notebook>
+                        <page string="最终产品清单">
+                            <field name="product_lines">
+                                <tree create="false" delete="false">
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="finalchecked"/>
+                                </tree>
+                                <form create="false" delete="false">
+                                    <group>
+                                        <group> <field name="product_id" readonly="1"/> </group>
+                                        <group> <field name="finalchecked"/> </group>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
 
     </data>
 </odoo>

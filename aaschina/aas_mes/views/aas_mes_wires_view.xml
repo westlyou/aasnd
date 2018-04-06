@@ -276,7 +276,10 @@
         </record>
 
         <menuitem id="menu_aas_mes_wireorder"  name="线材工单" action="action_aas_mes_wireorder"
-                          parent="menu_aas_mes_manufacture" sequence="2" groups="group_aas_manufacture_user,group_aas_manufacture_planner"/>
+                          parent="menu_aas_mes_manufacture" sequence="2" groups="group_aas_manufacture_user"/>
+
+        <menuitem id="menu_aas_mes_wireorder_planner"  name="线材工单" action="action_aas_mes_wireorder"
+                          parent="menu_aas_mes_plan_order" sequence="3" groups="group_aas_manufacture_planner"/>
 
         <record id="view_form_aas_mes_wireorder_close_wizard" model="ir.ui.view">
             <field name="name">aas.mes.wireorder.close.wizard</field>

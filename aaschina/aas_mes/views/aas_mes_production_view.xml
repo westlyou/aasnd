@@ -322,6 +322,10 @@
                           parent="menu_aas_mes_manufacture" sequence="12" groups="group_aas_manufacture_foreman"/>
 
 
+        <menuitem id="menu_aas_mes_production_output_planner"  name="生产查询" action="action_aas_mes_production_output_query_window"
+                          parent="menu_aas_mes_plan_order" sequence="5" groups="group_aas_manufacture_planner"/>
+
+
         <record id="view_form_aas_mes_production_output_query_result" model="ir.ui.view">
             <field name="name">aas.mes.production.output.query.wizard.result</field>
             <field name="model">aas.mes.production.output.query.wizard</field>

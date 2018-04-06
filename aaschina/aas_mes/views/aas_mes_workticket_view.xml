@@ -32,8 +32,10 @@
             <field name="arch" type="xml">
                 <form create="false" edit="false" delete="false">
                     <header>
-                        <button name="action_start" type="object" states="waiting" string="生产开工" class="oe_highlight"/>
-                        <button name="action_commit" type="object" states="producing" string="生产报工" class="oe_highlight"/>
+                        <button name="action_start" type="object" states="waiting" string="生产开工" class="oe_highlight"
+                                groups="aas_mes.group_aas_manufacture_user"/>
+                        <button name="action_commit" type="object" states="producing" string="生产报工" class="oe_highlight"
+                                groups="aas_mes.group_aas_manufacture_user"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,waiting,producing,pause,done"/>
                     </header>
                     <sheet>
@@ -214,6 +216,9 @@
 
         <menuitem id="menu_aas_mes_workticket"  name="生产工票" action="action_aas_mes_workticket"
                           parent="menu_aas_mes_manufacture" sequence="3" groups="group_aas_manufacture_user"/>
+
+        <menuitem id="menu_aas_mes_workticket_planner"  name="生产工票" action="action_aas_mes_workticket"
+                          parent="menu_aas_mes_plan_order" sequence="4" groups="aas_mes.group_aas_manufacture_planner"/>
 
 
 
