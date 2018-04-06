@@ -114,8 +114,9 @@
             <field name="act_window_id" ref="action_aas_mes_producttest_template"/>
         </record>
 
-        <menuitem id="menu_aas_mes_producttest_template"  name="检测分类" action="action_aas_mes_producttest_template"
-                          parent="menu_aas_mes_producttest" sequence="1" groups="aas_mes.group_aas_mes_technologist"/>
+        <menuitem id="menu_aas_mes_producttest_template_technologist"  name="检测分类"
+                  action="action_aas_mes_producttest_template"
+                  parent="menu_aas_mes_producttest_technologist" sequence="1" groups="group_aas_mes_technologist"/>
 
         <record id="view_tree_aas_mes_producttest" model="ir.ui.view">
             <field name="name">aas.mes.producttest.tree</field>
@@ -263,8 +264,8 @@
             <field name="act_window_id" ref="action_aas_mes_producttest"/>
         </record>
 
-        <menuitem id="menu_aas_mes_producttest_list"  name="检测清单" action="action_aas_mes_producttest"
-                          parent="menu_aas_mes_producttest" sequence="2" groups="aas_mes.group_aas_manufacture_user"/>
+        <menuitem id="menu_aas_mes_producttest_list_technologist"  name="检测清单" action="action_aas_mes_producttest"
+                          parent="menu_aas_mes_producttest_technologist" sequence="2" groups="group_aas_mes_technologist"/>
 
         <record id="view_tree_aas_mes_producttest_order_all" model="ir.ui.view">
             <field name="name">aas.mes.producttest.order.all.tree</field>
@@ -433,7 +434,7 @@
         </record>
 
         <menuitem id="menu_aas_mes_producttest_order_firstone"  name="首件检测" action="action_aas_mes_producttest_order_firstone"
-                          parent="menu_aas_mes_producttest" sequence="3" groups="group_aas_manufacture_user"/>
+                          parent="menu_aas_mes_producttest" sequence="1" groups="group_aas_manufacture_user"/>
 
         <record id="action_aas_mes_producttest_order_lastone" model="ir.actions.act_window">
             <field name="name">末件检测</field>
@@ -464,7 +465,7 @@
         </record>
 
         <menuitem id="menu_aas_mes_producttest_order_lastone"  name="末件检测" action="action_aas_mes_producttest_order_lastone"
-                          parent="menu_aas_mes_producttest" sequence="4" groups="aas_mes.group_aas_manufacture_user"/>
+                          parent="menu_aas_mes_producttest" sequence="2" groups="aas_mes.group_aas_manufacture_user"/>
 
 
         <record id="action_aas_mes_producttest_order_random" model="ir.actions.act_window">
@@ -496,7 +497,7 @@
         </record>
 
         <menuitem id="menu_aas_mes_producttest_order_random"  name="抽样检测" action="action_aas_mes_producttest_order_random"
-                          parent="menu_aas_mes_producttest" sequence="5" groups="aas_mes.group_aas_manufacture_user"/>
+                          parent="menu_aas_mes_producttest" sequence="3" groups="aas_mes.group_aas_manufacture_user"/>
 
 
         <!-- 向导 -->

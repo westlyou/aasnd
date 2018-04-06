@@ -133,8 +133,8 @@
             <field name="act_window_id" ref="action_aas_mes_routing"/>
         </record>
 
-        <menuitem id="menu_aas_mes_routing"  name="生产工艺" action="action_aas_mes_routing"
-                          parent="menu_aas_mes_settings" sequence="1" groups="group_aas_mes_technologist"/>
+        <menuitem id="menu_aas_mes_routing_list"  name="生产工艺" action="action_aas_mes_routing"
+                          parent="menu_aas_mes_routing" sequence="1" groups="group_aas_mes_technologist"/>
 
         <record id="view_form_aas_mes_routing_line" model="ir.ui.view">
             <field name="name">aas.mes.routing.line.form</field>

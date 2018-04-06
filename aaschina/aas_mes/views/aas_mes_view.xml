@@ -70,5 +70,20 @@
         <menuitem id="menu_aas_mes_plan_order"  name="工单" parent="menu_aas_mes_plan" sequence="1"
                   groups="group_aas_manufacture_planner"/>
 
+
+        <menuitem id="menu_aas_mes_technologist" name="生产工艺"  sequence="13" groups="group_aas_mes_technologist"/>
+
+        <menuitem id="menu_aas_mes_routing"  name="工艺" parent="menu_aas_mes_technologist" sequence="1"
+                  groups="group_aas_mes_technologist"/>
+
+        <menuitem id="menu_aas_mes_workstation"  name="工位" parent="menu_aas_mes_technologist" sequence="2"
+                  groups="group_aas_mes_technologist"/>
+
+        <menuitem id="menu_aas_mes_producttest_technologist"  name="生产检测" parent="menu_aas_mes_technologist" sequence="3"
+                  groups="group_aas_mes_technologist"/>
+
+        <menuitem id="menu_aas_mes_badmode"  name="不良模式" parent="menu_aas_mes_technologist" sequence="4"
+                  groups="group_aas_mes_technologist"/>
+
     </data>
 </odoo>

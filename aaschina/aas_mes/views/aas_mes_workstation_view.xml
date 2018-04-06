@@ -145,8 +145,8 @@
             <field name="act_window_id" ref="action_aas_mes_workstation"/>
         </record>
 
-        <menuitem id="menu_aas_mes_workstation"  name="工位" action="action_aas_mes_workstation"
-                          parent="menu_aas_mes_resources" sequence="7" groups="group_aas_manufacture_foreman"/>
+        <menuitem id="menu_aas_mes_workstation_list"  name="生产工位" action="action_aas_mes_workstation"
+                          parent="menu_aas_mes_workstation" sequence="1" groups="group_aas_mes_technologist"/>
 
     </data>
 </odoo>
