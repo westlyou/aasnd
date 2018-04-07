@@ -242,7 +242,7 @@ class AASQualityOQCCheckingLabelWizard(models.TransientModel):
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
-    qualified = fields.Boolean(string=u'是否合格', default=False, copy=False)
+    qualified = fields.Boolean(string=u'是否合格', default=True, copy=False)
 
     @api.onchange('label_id')
     def action_change_label(self):
