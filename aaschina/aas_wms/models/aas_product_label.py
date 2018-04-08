@@ -381,6 +381,55 @@ class AASProductLabel(models.Model):
         }).action_done()
 
 
+    @api.model
+    def action_production_labels(self, labelinfo):
+        """不经过其他操作，直接生成标签
+        :param labelinfo:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'desc': '', 'barcodes': []}
+        product_code, product_lot = labelinfo.get('PN', False), labelinfo.get('LOT', False)
+        label_qty, label_count = labelinfo.get('QTY', False), labelinfo.get('Number', False)
+        if not product_code:
+            values.update({'success': False, 'message': u'请仔细检查，您还未设置产品编码！'})
+            return values
+        if not product_lot:
+            values.update({'success': False, 'message': u'请仔细检查，您还未设置产品批次！'})
+            return values
+        if not label_qty or float_compare(label_qty, 0.0, precision_rounding=0.0000001) <= 0.0:
+            values.update({'success': False, 'message': u'请仔细检查，每个标签的数量必须是一个大于零的数！'})
+            return values
+        if not label_count or label_count <= 0:
+            values.update({'success': False, 'message': u'请仔细检查，标签的个数必须大于零！'})
+            return values
+        temproduct = self.env['product.product'].search([('default_code', '=', product_code)], limit=1)
+        if not temproduct:
+            values.update({'success': False, 'message': u'请仔细检查，您的产品编码异常，系统中不存在此产品！'})
+            return values
+        values['desc'] = temproduct.name
+        lotdomain = [('product_id', '=', temproduct.id), ('name', '=', product_lot)]
+        templot = self.env['stock.production.lot'].search(lotdomain, limit=1)
+        if not templot:
+            templot = self.env['stock.production.lot'].create({
+                'name': product_lot, 'product_id': temproduct.id, 'create_date': fields.Datetime.now()
+            })
+        pdtlocation = self.env.ref('stock.location_production')
+        receiptlocation = self.env['stock.warehouse'].get_default_warehouse().wh_input_stock_loc_id.id
+        for tindex in range(0, label_count):
+            templabel = self.env['aas.product.label'].create({
+                'product_id': temproduct.id, 'product_code': product_code, 'product_uom': temproduct.uom_id.id,
+                'stocked': True, 'location_id': receiptlocation.id, 'product_lot': templot.id, 'product_qty': label_qty
+            })
+            values['barcodes'].append(templabel.name)
+        self.env['stock.move'].create({
+            'name': ','.join(values['barcodes']),
+            'product_id': temproduct.id, 'product_uom': temproduct.uom_id.id,
+            'restrict_lot_id': templot.id, 'product_uom_qty': label_qty * label_count,
+            'location_id': pdtlocation.id, 'location_dest_id': receiptlocation.id, 'create_date': fields.Datetime.now()
+        }).action_done()
+        return values
+
+
 
 # 标签流水帐  查存卡
 class AASProductLabelJournal(models.Model):
