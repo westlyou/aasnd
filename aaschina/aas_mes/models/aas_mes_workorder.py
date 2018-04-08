@@ -510,7 +510,7 @@ class AASMESWorkorder(models.Model):
     @api.multi
     def action_show_wireorder(self):
         self.ensure_one()
-        view_form = self.env.ref('aas_mes.view_form_aas_mes_workorder')
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_workorder_manufacture')
         return {
             'name': u"生产工单",
             'type': 'ir.actions.act_window',
