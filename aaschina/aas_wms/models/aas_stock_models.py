@@ -94,6 +94,8 @@ class ProductTemplate(models.Model):
 class AASProductProduct(models.Model):
     _inherit = 'product.product'
 
+    ismaterial = fields.Boolean(string=u'是否原材料', default=True, copy=False)
+
     @api.multi
     def name_get(self):
         if len(self) <= 0:

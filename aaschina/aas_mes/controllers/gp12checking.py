@@ -260,7 +260,8 @@ class AASMESGP12CheckingController(http.Controller):
             return values
         if serialnumberlist and len(serialnumberlist) > 0:
             for serialnumberid in serialnumberlist:
-                request.env['aas.mes.rework'].action_commit(serialnumberid, workstation.id, badmode_id, employee_id)
+                request.env['aas.mes.rework'].action_commit(serialnumberid, workstation.id, badmode_id,
+                                                            employee_id, mesline_id=mesline.id)
         return values
 
     @http.route('/aasmes/gp12/dolabel', type='json', auth="user")
@@ -284,18 +285,10 @@ class AASMESGP12CheckingController(http.Controller):
         if not serialnumberlist or len(serialnumberlist) <= 0:
             values.update({'success': False, 'message': u'序列号获取异常，请仔细检查！'})
             return values
-        tserialnumber = serialnumberlist[0]
-        lot_name = mesline.workdate.replace('-', '')
-        product_lot = request.env['stock.production.lot'].action_checkout_lot(tserialnumber.product_id.id, lot_name)
-        product_id, product_qty = tserialnumber.product_id.id, len(serialnumberlist)
-        location_id, customer_code = mesline.location_production_id.id, tserialnumber.customer_product_code
-        tlabel = request.env['aas.mes.production.label'].action_gp12_dolabel(product_id, product_lot.id,
-                                                                      product_qty, location_id, customer_code=customer_code)
-        serialnumberlist.action_label(tlabel.id)
-        srclocation = request.env.ref('stock.location_production')
-        tlabel.action_stock(srclocation.id)
-        values['label_name'] = tlabel.name
-        printvals = request.env['aas.product.label'].action_print_label(printer_id, [tlabel.id])
+        labelvals = serialnumberlist.action_gp12packing(mesline)
+        labelid, labelname = labelvals['label_id'], labelvals['label_name']
+        values['label_name'] = labelname
+        printvals = request.env['aas.product.label'].action_print_label(printer_id, [labelid])
         values.update(printvals)
         return values
 

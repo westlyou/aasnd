@@ -4,6 +4,15 @@
 
 $(function(){
 
+    var nativeSpeech = new SpeechSynthesisUtterance();
+
+    function nativespeak(message){
+        nativeSpeech.text = message;
+        nativeSpeech.lang = 'zh';
+        nativeSpeech.rate = 1.3;
+        speechSynthesis.speak(nativeSpeech);
+    }
+
     new VScanner(function(barcode){
         if(barcode==null || barcode==''){
             layer.msg('扫描条码异常！', {icon: 5});
@@ -122,8 +131,8 @@ $(function(){
                 action_init_record_rework(dresult.recordlist, dresult.reworklist);
                 if(!dresult.success){
                     $('#final_result_box').removeClass('bg-green').addClass('bg-red');
-                    $('#final_result_content').html('NG');
-                    $('#checkwarning').speech({"speech": false, "speed": 6});
+                    $('#final_result_content').html('N G');
+                    nativespeak($('#checkwarning').html());
                     return ;
                 }
                 $('#final_result_content').attr('serialcount', dresult.serialcount).html(dresult.serialcount);
@@ -131,14 +140,14 @@ $(function(){
                     $('#final_result_box').removeClass('bg-red').addClass('bg-green');
                 }
                 if(dresult.rework){
-                    $('#checkwarning').speech({"speech": false, "speed": 6});
+                    nativespeak($('#checkwarning').html());
                     $('#final_result_content').html('重工');
                     action_reworkconfirm(dresult.badmode_name);
                 }else{
                     if(dresult.done){
-                        $('#checkwarning').speech({"speech": false, "speed": 6});
+                        nativespeak($('#checkwarning').html());
                     }else{
-                        $('#final_result_content').speech({"speech": false, "speed": 6});
+                        nativespeak($('#final_result_content').html());
                     }
                 }
             },
@@ -237,7 +246,7 @@ $(function(){
         }
     }
 
-    $('#action_consume').click(function(){
+    /*$('#action_consume').click(function(){
         layer.confirm('您确认是要操作班次结单？', {'btn': ['确定', '取消']}, function(index){
             layer.close(index);
             var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
@@ -260,7 +269,7 @@ $(function(){
                 error:function(xhr,type,errorThrown){ console.log(type);}
             });
         }, function(){});
-    });
+    });*/
 
     function action_leave(attendanceid){
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);

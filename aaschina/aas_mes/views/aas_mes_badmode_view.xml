@@ -78,8 +78,8 @@
             <field name="act_window_id" ref="action_aas_mes_badmode"/>
         </record>
 
-        <menuitem id="menu_aas_mes_badmode"  name="不良模式" action="action_aas_mes_badmode"
-                          parent="menu_aas_mes_settings" sequence="4" groups="group_aas_mes_technologist"/>
+        <menuitem id="menu_aas_mes_badmode_list"  name="不良模式" action="action_aas_mes_badmode"
+                          parent="menu_aas_mes_badmode" sequence="1" groups="group_aas_mes_technologist"/>
 
     </data>
 </odoo>

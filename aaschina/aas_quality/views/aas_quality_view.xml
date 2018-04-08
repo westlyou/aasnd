@@ -19,5 +19,15 @@
         <menuitem id="menu_aas_mes_tracing_quality"  name="生产追溯" parent="menu_aas_quality" sequence="5"
                   groups="group_aas_quality_user,group_aas_quality_manager"/>
 
+        <menuitem id="menu_production_forward_tracing_quality"  name="正向追溯"
+                  action="aas_mes.action_aas_production_forword_tracing_wizard"
+                  parent="menu_aas_mes_tracing_quality" sequence="1"
+                  groups="group_aas_quality_user,group_aas_quality_manager"/>
+
+        <menuitem id="menu_production_reverse_tracing_quality"  name="反向追溯"
+                  action="aas_mes.action_aas_production_reverse_tracing_wizard"
+                  parent="menu_aas_mes_tracing_quality" sequence="2"
+                  groups="group_aas_quality_user,group_aas_quality_manager"/>
+
     </data>
 </odoo>

@@ -200,7 +200,7 @@ class AASMESFinalCheckingController(http.Controller):
                 values.update({'success': False, 'message': u'扫描序列号异常，此序列号产品与当前产线上生产的产品不相符！'})
                 return values
             if not serialnumber.stocked:
-                tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, barcode)
+                tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, workstation, serialnumber)
                 if not tvalues.get('success', False):
                     values.update(tvalues)
                     return values
@@ -240,7 +240,7 @@ class AASMESFinalCheckingController(http.Controller):
             if tserialnumber.product_id.id != workorder.product_id.id:
                 values.update({'success': False, 'message': u'扫描异常，当前产品型号与产线正在生产的型号不符！'})
                 return values
-            tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, tserialnumber.name)
+            tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, tserialnumber)
             if not tvalues.get('success', False):
                 values.update(tvalues)
                 return values
@@ -328,13 +328,14 @@ class AASMESFinalCheckingController(http.Controller):
             values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位！'})
             return values
         workstationid = workstation.id
-        timestart = fields.Datetime.to_string(fields.Datetime.to_timezone_time(starttime, 'Asia/Shanghai'))
-        timefinish = fields.Datetime.to_string(fields.Datetime.to_timezone_time(finishtime, 'Asia/Shanghai'))
+        timestart = fields.Datetime.to_utc_string(fields.Datetime.from_string(starttime), 'Asia/Shanghai')
+        timefinish = fields.Datetime.to_utc_string(fields.Datetime.from_string(finishtime), 'Asia/Shanghai')
         if not productid:
             productid = False
-        tvalues = request.env['aas.mes.production.output'].action_building_outputrecords(meslineid, timestart,
-                                                                                         timefinish, workstationid,
-                                                                                         productid=productid)
+        tvalues = request.env['aas.production.product'].action_build_outputlist(timestart, timefinish,
+                                                                                meslineid=meslineid,
+                                                                                workstationid=workstationid,
+                                                                                productid=productid)
         values.update(tvalues)
         return values
 

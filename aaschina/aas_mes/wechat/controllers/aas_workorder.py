@@ -169,12 +169,6 @@ class AASWorkorderWechatController(http.Controller):
         if request.env['aas.mes.workstation.employee'].search_count(employeedomain) <= 0:
             values.update({'success': False, 'message': u'当前岗位没有员工在岗，请员工先上岗再继续操作！'})
             return values
-        # 验证投料是否足够消耗
-        cresult = request.env['aas.mes.workorder'].action_validate_consume(workorder.id, workticket.product_id.id,
-                                                                           commit_qty, workcenter_id=workcenter.id)
-        if not cresult.get('success', False):
-            values.update(cresult)
-            return values
         if workticket.islastworkcenter():
             manner = workorder.output_manner
             if not manner:
@@ -184,7 +178,7 @@ class AASWorkorderWechatController(http.Controller):
                 values.update({'success': False, 'message': u'当前工序未最后一道工序成品产出需要指定容器，请先扫描容器条码！'})
                 return values
         try:
-            workticket.action_doing_commit(commit_qty, badmode_lines, container_id)
+            workticket.action_doing_commit(commit_qty, badmode_lines=badmode_lines, container_id=container_id)
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
             return values

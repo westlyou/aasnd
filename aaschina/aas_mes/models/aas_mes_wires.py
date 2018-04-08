@@ -227,94 +227,32 @@ class AASMESWireOrder(models.Model):
 
 
     @api.model
-    def action_wirecutting_output(self, workorder_id, output_qty, container_id, workstation_id, employee_id, equipment_id):
+    def action_wirecutting_output(self, workorder, output_qty, container, workstation, employee, equipment):
         """
         线材工单产出
-        :param workorder_id:
+        :param workorder:
         :param output_qty:
-        :param container_id:
-        :param employee_id:
-        :param equipment_id:
+        :param container:
+        :param employee:
+        :param equipment:
         :return:
         """
         values = {'success': True, 'message': ''}
-        workorder, stock_qty = self.env['aas.mes.workorder'].browse(workorder_id), output_qty
-        cresult = workorder.action_validate_consume(workorder.id, workorder.product_id.id, output_qty)
-        if not cresult['success']:
-            values.update(cresult)
+        product = workorder.product_id
+        tempvals = self.env['aas.production.product'].action_production_output(workorder, product, output_qty,
+                                                                            equipment=equipment, employee=employee,
+                                                                        workstation=workstation, container=container,
+                                                                               finaloutput=True, tracing=True)
+        if not tempvals.get('success', False):
+            values.update(tempvals)
             return values
-        tequipment = self.env['aas.equipment.equipment'].browse(equipment_id)
-        oresult = workorder.action_output(workorder.id, workorder.product_id.id, output_qty,
-                                          container_id=container_id, equipment=tequipment)
-        if not oresult['success']:
-            values.update(oresult)
-            return values
-        outputrecord = oresult.get('outputrecord', False)
-        if outputrecord:
-            outputrecord.write({'container_id': container_id})
-        temployee = self.env['aas.hr.employee'].browse(employee_id)
-        csresult = workorder.action_consume(workorder.id, workorder.product_id.id)
-        if csresult['tracelist'] and len(csresult['tracelist']) > 0:
-            outputtime = fields.Datetime.now()
-            tracelist = self.env['aas.mes.tracing'].browse(csresult['tracelist'])
-            tracelist.write({
-                'employeelist': temployee.name+'['+temployee.code+']',
-                'equipmentlist': tequipment.name+'['+tequipment.code+']',
-                'date_start': workorder.output_time, 'date_finish': outputtime
-            })
-            workorder.write({'output_time': outputtime})
-        if not csresult['success']:
-            values.update(csresult)
-            return values
-        # 根据结单方式判断什么时候自动结单
-        closeorder = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'closeorder_method')
-        if closeorder == 'equal':
-            if float_compare(workorder.output_qty, workorder.input_qty, precision_rounding=0.000001) >= 0.0:
-                workorder.action_done()
-        else:
-            # total
-            total_qty = workorder.output_qty + workorder.scrap_qty
-            if float_compare(total_qty, workorder.input_qty, precision_rounding=0.000001) >= 0.0:
-                workorder.action_done()
+        workorder.action_done()
         wireorder = workorder.wireorder_id
         if wireorder.state not in ['producing', 'done']:
             wireorder.write({'state': 'producing', 'produce_start': fields.Datetime.now()})
         if all([temporder.state == 'done' for temporder in wireorder.workorder_lines]):
             wireorder.write({'state': 'done', 'produce_finish': fields.Datetime.now()})
-        contianeroutput = oresult.get('containerproduct', False)
-        if contianeroutput:
-            contianeroutput.action_stock(stock_qty)
-        # 更新产出优率记录
-        productid, mesline = workorder.product_id.id, workorder.mesline_id
-        self.action_update_productionout(productid, workstation_id, mesline, output_qty, temployee, tequipment)
         return values
-
-
-    @api.model
-    def action_update_productionout(self, productid, workstationid, mesline, output_qty, employee, equipment):
-        """更新产出优率记录
-        :param productid:
-        :param workstationid:
-        :param mesline:
-        :param output_qty:
-        :param employee:
-        :param equipment:
-        :return:
-        """
-        employeeid, employeename, equipmentid = False, False, False
-        if employee:
-            employeeid, employeename = employee.id, employee.name
-        if equipment:
-            equipmentid = equipment.id
-        outputdate = fields.Datetime.to_china_today()
-        scheduleid = False if not mesline.schedule_id else mesline.schedule_id.id
-        if float_compare(output_qty, 0.0, precision_rounding=0.000001) > 0.0:
-            self.env['aas.mes.production.output'].create({
-                'product_id': productid, 'output_date': outputdate, 'output_qty': output_qty,
-                'mesline_id': mesline.id, 'schedule_id': scheduleid, 'workstation_id': workstationid,
-                'qualified': True, 'pass_onetime': True, 'equipment_id': equipmentid, 'employee_id': employeeid,
-                'employee_name': employeename
-            })
 
 
 

@@ -16,7 +16,7 @@
         <menuitem id="menu_aas_mes_production"  name="产成品" parent="menu_aas_mes" sequence="4"
                   groups="group_aas_production_packer"/>
 
-        <menuitem id="menu_aas_mes_workdata_tracing"  name="生产追溯" parent="menu_aas_mes" sequence="5"
+        <menuitem id="menu_aas_production_tracing"  name="生产追溯" parent="menu_aas_mes" sequence="5"
                   groups="group_aas_manufacture_user"/>
 
         <menuitem id="menu_aas_mes_producttest"  name="生产检测" parent="menu_aas_mes" sequence="6"
@@ -64,6 +64,26 @@
             <field name="name">终检</field>
             <field name="url">aasmes/finalchecking</field>
         </record>
+
+        <menuitem id="menu_aas_mes_plan" name="生产计划"  sequence="12" groups="group_aas_manufacture_planner"/>
+
+        <menuitem id="menu_aas_mes_plan_order"  name="工单" parent="menu_aas_mes_plan" sequence="1"
+                  groups="group_aas_manufacture_planner"/>
+
+
+        <menuitem id="menu_aas_mes_technologist" name="生产工艺"  sequence="13" groups="group_aas_mes_technologist"/>
+
+        <menuitem id="menu_aas_mes_routing"  name="工艺" parent="menu_aas_mes_technologist" sequence="1"
+                  groups="group_aas_mes_technologist"/>
+
+        <menuitem id="menu_aas_mes_workstation"  name="工位" parent="menu_aas_mes_technologist" sequence="2"
+                  groups="group_aas_mes_technologist"/>
+
+        <menuitem id="menu_aas_mes_producttest_technologist"  name="生产检测" parent="menu_aas_mes_technologist" sequence="3"
+                  groups="group_aas_mes_technologist"/>
+
+        <menuitem id="menu_aas_mes_badmode"  name="不良模式" parent="menu_aas_mes_technologist" sequence="4"
+                  groups="group_aas_mes_technologist"/>
 
     </data>
 </odoo>

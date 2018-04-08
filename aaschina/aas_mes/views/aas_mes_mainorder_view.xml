@@ -125,7 +125,7 @@
         </record>
 
         <menuitem id="menu_aas_mes_mainorder"  name="主工单" action="action_aas_mes_mainorder"
-                          parent="menu_aas_mes_manufacture" sequence="1" groups="group_aas_manufacture_user,group_aas_manufacture_planner"/>
+                          parent="menu_aas_mes_plan_order" sequence="1" groups="group_aas_manufacture_planner"/>
 
     </data>
 </odoo>

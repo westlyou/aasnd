@@ -273,9 +273,11 @@ class AASContainerProduct(models.Model):
         if float_compare(qty, self.temp_qty, precision_rounding=0.000001) > 0.0:
             qty = self.temp_qty
         self.env['stock.move'].create({
-            'name': self.container_id.name, 'product_id': self.product_id.id, 'product_uom': self.product_id.uom_id.id,
-            'create_date': fields.Datetime.now(), 'product_uom_qty': qty, 'location_id': srclocationid, 'location_dest_id': destlocationid,
-            'company_id': self.env.user.company_id.id, 'restrict_lot_id': False if not self.product_lot else self.product_lot.id
+            'name': self.container_id.name, 'company_id': self.env.user.company_id.id,
+            'product_id': self.product_id.id, 'product_uom': self.product_id.uom_id.id,
+            'create_date': fields.Datetime.now(), 'product_uom_qty': qty,
+            'location_id': srclocationid, 'location_dest_id': destlocationid,
+            'restrict_lot_id': False if not self.product_lot else self.product_lot.id
         }).action_done()
         self.write({'stock_qty': self.stock_qty + qty, 'temp_qty': self.temp_qty - qty})
 

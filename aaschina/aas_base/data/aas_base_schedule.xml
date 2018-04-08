@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
+    <data noupdate="1">
 
         <record forcecreate="True" id="ir_cron_aas_base_cron_month" model="ir.cron">
             <field name="name">月度任务</field>

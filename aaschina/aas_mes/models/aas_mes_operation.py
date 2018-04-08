@@ -99,30 +99,17 @@ class AASMESOperation(models.Model):
             'scanning_employee': scanemployeestr, 'checking_employee': checkemployeestr,
             'operator_id': self.env.user.id, 'operation_pass': True, 'operate_result': 'PASS', 'operate_type': 'fqc'
         })
-        # 添加产出记录
         tserialnumber = self.serialnumber_id
-        outputdomain = [('serialnumber_id', '=', tserialnumber.id)]
-        outputdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-        tempout = self.env['aas.mes.production.output'].search(outputdomain, limit=1)
-        if tempout:
-            tempvalues = {'qualified': True, 'pass_onetime': False}
-            if not tempout.employee_id:
-                tempvalues.update({'employee_id': employeeid, 'employee_name': checkemployeestr})
-            if not tempout.equipment_id:
-                tempvalues['equipment_id'] = equipmentid
-            tempout.write(tempvalues)
-        else:
-            self.env['aas.mes.production.output'].create({
-                'product_id': tserialnumber.product_id.id, 'output_qty': 1.0,
-                'output_date': fields.Datetime.to_china_today(), 'mesline_id': mesline.id,
-                'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id,
-                'workstation_id': workstation.id, 'equipment_id': equipmentid,
-                'employee_id': employeeid, 'employee_name': checkemployeestr, 'serialnumber_id': tserialnumber.id
-            })
-
+        tempdomain = [('serialnumber_id', '=', tserialnumber.id), ('qualified', '=', False)]
+        tempdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        tempoutput = self.env['aas.production.product'].search(tempdomain, order='output_time desc', limit=1)
+        if tempoutput:
+            tempoutput.write({'qualified': True})
+            tserialnumber.write({'qualified': True})
 
     @api.one
     def action_gp12check(self, mesline, workstation):
+        outputemployeelist = []
         tempemployeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
         tempemloyeelist = self.env['aas.mes.workstation.employee'].search(tempemployeedomain)
         scanemployeelist, scanemployeestr, checkemployeelist, checkemployeestr = [], False, [], False
@@ -133,6 +120,10 @@ class AASMESOperation(models.Model):
                     scanemployeelist.append(employee.name+'['+employee.code+']')
                 elif temployee.action_type == 'check':
                     checkemployeelist.append(employee.name+'['+employee.code+']')
+                outputemployeelist.append((0, 0, {
+                    'workstation_id': workstation.id,
+                    'employee_id': employee.id, 'employee_code': employee.code
+                }))
             scanemployeestr, checkemployeestr = ','.join(scanemployeelist), ','.join(checkemployeelist)
         employeeid, equipmentid = False, False
         equipmentdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
@@ -152,22 +143,21 @@ class AASMESOperation(models.Model):
         tserialnumber = self.serialnumber_id
         outputdomain = [('serialnumber_id', '=', tserialnumber.id)]
         outputdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-        tempout = self.env['aas.mes.production.output'].search(outputdomain, limit=1)
+        tempout = self.env['aas.production.product'].search(outputdomain, limit=1)
         if tempout:
-            tempvalues = {'qualified': True, 'pass_onetime': False}
-            if not tempout.employee_id:
-                tempvalues.update({'employee_id': employeeid, 'employee_name': checkemployeestr})
-            if not tempout.equipment_id:
-                tempvalues['equipment_id'] = equipmentid
-            tempout.write(tempvalues)
+            tempout.write({'qualified': True, 'onepass': False})
         else:
-            self.env['aas.mes.production.output'].create({
-                'product_id': tserialnumber.product_id.id, 'output_qty': 1.0,
-                'output_date': fields.Datetime.to_china_today(), 'mesline_id': mesline.id,
-                'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id,
-                'workstation_id': workstation.id, 'equipment_id': equipmentid,
-                'employee_id': employeeid, 'employee_name': checkemployeestr, 'serialnumber_id': tserialnumber.id
-            })
+            productionvals = {
+                'mesline_id': mesline.id, 'euipment_id': equipmentid,
+                'workstation_id': workstation.id, 'serialnumber_id': tserialnumber.id,
+                'product_id': tserialnumber.product_id.id, 'product_qty': 1.0,
+                'finaloutput': True, 'output_date': fields.Datetime.to_china_today(),
+                'pcode': self.internal_product_code, 'ccode': self.customer_product_code,
+                'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id
+            }
+            if outputemployeelist and len(outputemployeelist) > 0:
+                productionvals['employee_lines'] = outputemployeelist
+            self.env['aas.production.product'].create(productionvals)
 
 
     @api.model
@@ -214,7 +204,7 @@ class AASMESOperation(models.Model):
         workorder = mesline.workorder_id
         if not workorder:
             return values
-        productid, currentdate = workorder.product_id.id, fields.Datetime.to_china_string(fields.Datetime.now())[0:10]
+        productid, currentdate = workorder.product_id.id, fields.Datetime.to_china_today()
         tdomain = [('product_id', '=', productid), ('mesline_id', '=', mesline.id), ('fqccheck_date', '=', currentdate)]
         values['serialcount'] = self.env['aas.mes.operation'].search_count(tdomain)
         return values
@@ -350,9 +340,10 @@ class AASMESOperationRecord(models.Model):
             if serialnumber.state == 'draft':
                 serialnumber.write({'state': 'normal'})
         elif self.operate_type == 'fqc':
-            if not serialnumber.stocked:
-                operationvals['fqccheck_date'] = fields.Datetime.to_china_today()
-            operationvals.update({'final_quality_check': True, 'fqccheck_record_id': self.id})
+            operationvals.update({
+                'final_quality_check': True,
+                'fqccheck_record_id': self.id, 'fqccheck_date': fields.Datetime.to_china_today()
+            })
         elif self.operate_type == 'gp12':
             operationvals.update({'gp12_check': True, 'gp12_record_id': self.id})
         if operationvals and len(operationvals) > 0:
@@ -404,22 +395,18 @@ class AASMESOperationRecord(models.Model):
             return result
         tempdomain = [('serialnumber_id', '=', tserialnumber.id)]
         tempdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
-        tempoutput = self.env['aas.mes.production.output'].search(tempdomain, order='output_time desc', limit=1)
+        tempoutput = self.env['aas.production.product'].search(tempdomain, order='output_time desc', limit=1)
         if tempoutput:
-            tempvalues = {'pass_onetime': False, 'qualified': operation_pass}
-            if not tempoutput.employee_id:
-                tempvalues.update({'employee_id': employeeid, 'employee_name': employeename})
-            if not tempoutput.equipment_id:
-                tempvalues['equipment_id'] = equipment.id
+            tempvalues = {'onepass': False, 'qualified': operation_pass, 'equipment_id': equipment.id}
             tempoutput.write(tempvalues)
         else:
-            self.env['aas.mes.production.output'].create({
-                'product_id': tserialnumber.product_id.id, 'output_qty': 1.0,
-                'output_date': fields.Datetime.to_china_today(), 'mesline_id': mesline.id,
+            self.env['aas.production.product'].create({
+                'onepass': operation_pass, 'qualified': operation_pass,
+                'mesline_id': mesline.id, 'workstation_id': workstation.id,
+                'product_id': tserialnumber.product_id.id, 'product_qty': 1.0,
+                'euipment_id': equipment.id, 'output_date': fields.Datetime.to_china_today(),
                 'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id,
-                'workstation_id': workstation.id, 'equipment_id': equipment.id,
-                'pass_onetime': operation_pass, 'qualified': operation_pass,
-                'employee_id': employeeid, 'employee_name': employeename, 'serialnumber_id': tserialnumber.id
+                'pcode': tserialnumber.internal_product_code, 'ccode': tserialnumber.customer_product_code
             })
         _logger.info(u'序列号%s提交功能测试记录，结束时间：%s', serialnumber, fields.Datetime.now())
         return result
