@@ -52,8 +52,10 @@ class AASProductionProduct(models.Model):
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     product_code = fields.Char(string=u'产品编码', copy=False)
+    customer_code = fields.Char(string=u'客方编码', copy=False)
     mesline_name = fields.Char(string=u'产线名称', copy=False)
     workstation_name = fields.Char(string=u'工位名称', copy=False)
+    schedule_name = fields.Char(string=u'班次名称', copy=False)
 
     material_lines = fields.One2many(comodel_name='aas.production.material', inverse_name='production_id', string=u'原料清单')
     employee_lines = fields.One2many(comodel_name='aas.production.employee', inverse_name='production_id', string=u'员工清单')
@@ -69,11 +71,16 @@ class AASProductionProduct(models.Model):
     @api.model
     def create(self, vals):
         record = super(AASProductionProduct, self).create(vals)
-        productvals = {'product_code': record.product_id.default_code}
+        product = record.product_id
+        productvals = {'product_code': product.default_code}
+        if product.customer_product_code:
+            productvals['customer_code'] = product.customer_product_code
         if record.mesline_id:
             productvals['mesline_name'] = record.mesline_id.name
         if record.workstation_id:
             productvals['workstation_name'] = record.workstation_id.name
+        if record.schedule_id:
+            productvals['schedule_name'] = record.schedule_id.name
         record.write(productvals)
         return record
 

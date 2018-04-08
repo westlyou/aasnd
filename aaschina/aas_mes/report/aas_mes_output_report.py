@@ -40,20 +40,21 @@ class AASMESWeekOutputReport(models.Model):
     def _select_sql(self):
         _select_sql = """
         with aas_output_week_detail as (
-with aas_erveryday_output as (select min(ampo.id) as id,
-ampo.mesline_name,
-ampo.workstation_name,
-ampo.output_date,
-ampo.product_code,
-ampo.customer_pn,
-sum(ampo.output_qty) as output_qty,
-CASE WHEN ampo.schedule_name='白班' THEN 'Day' ELSE 'Night' END AS schedule_name
-from aas_mes_production_output ampo
-where ampo.output_date in (to_char(CURRENT_DATE, 'yyyy-MM-dd'), to_char(CURRENT_DATE -1, 'yyyy-MM-dd'),
+with aas_erveryday_output as (select min(approduct.id) as id,
+approduct.mesline_name,
+approduct.workstation_name,
+approduct.output_date,
+approduct.product_code,
+approduct.customer_code as customer_pn,
+sum(approduct.product_qty) as output_qty,
+CASE WHEN approduct.schedule_name='白班' THEN 'Day' ELSE 'Night' END AS schedule_name
+from aas_production_product approduct
+where approduct.output_date in (to_char(CURRENT_DATE, 'yyyy-MM-dd'), to_char(CURRENT_DATE -1, 'yyyy-MM-dd'),
                       to_char(CURRENT_DATE -2, 'yyyy-MM-dd'),to_char(CURRENT_DATE -3, 'yyyy-MM-dd'),
                       to_char(CURRENT_DATE -4, 'yyyy-MM-dd'),to_char(CURRENT_DATE -5, 'yyyy-MM-dd'),
                      to_char(CURRENT_DATE -6, 'yyyy-MM-dd'))
-group by ampo.mesline_name, ampo.schedule_name, ampo.workstation_name, ampo.output_date, ampo.product_code,ampo.customer_pn)
+group by approduct.mesline_name, approduct.schedule_name, approduct.workstation_name, approduct.output_date,
+approduct.product_code,approduct.customer_code)
 select aeo.id as id,
 aeo.mesline_name,
 aeo.workstation_name,

@@ -80,8 +80,8 @@ class AASMESProduceOutputReport(models.Model):
         ampo.workstation_id AS workstation_id,
         ampo.workstation_name AS workstation_name,
         ampo.output_date AS output_date,
-        sum(ampo.output_qty) AS output_qty
-        FROM aas_mes_production_output ampo
+        sum(ampo.product_qty) AS output_qty
+        FROM aas_production_product ampo
         GROUP BY ampo.mesline_id, ampo.mesline_name, ampo.product_id, ampo.product_code, ampo.output_date, ampo.workstation_id, ampo.workstation_name
         """
         return _select_sql
