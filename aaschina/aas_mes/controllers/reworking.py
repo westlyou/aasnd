@@ -121,7 +121,7 @@ class AASMESReworkingController(http.Controller):
 
 
     @http.route('/aasmes/repairing/actiondone', type='json', auth="user")
-    def aasmes_repairing_actiondone(self, repairerid, serialnumberid, repairesult):
+    def aasmes_repairing_actiondone(self, repairerid, serialnumberid, repairesult, repairtime=0.0):
         values = {'success': True, 'message': ''}
         rework = request.env['aas.mes.rework'].search([('serialnumber_id', '=', serialnumberid)], order='id desc', limit=1)
         if not rework:
@@ -130,7 +130,7 @@ class AASMESReworkingController(http.Controller):
         if rework.repairer_id and rework.state != 'repair':
             values.update({'success': False, 'message': u'%s已经维修，请不要重复操作！'% rework.serialnumber_id.name})
             return values
-        rework.action_repair(repairerid, repairesult)
+        rework.action_repair(repairerid, repairesult, worktime=repairtime)
         return values
 
 

@@ -29,6 +29,7 @@ class AASMESRework(models.Model):
     internalpn = fields.Char(string=u'内部料号', copy=False)
     customerpn = fields.Char(string=u'客户料号', copy=False)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线')
+    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
     badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')
     badmode_date = fields.Char(string=u'不良日期', compute='_compute_badmode_date', store=True)
@@ -44,6 +45,13 @@ class AASMESRework(models.Model):
     ipqccheck_note = fields.Text(string=u'IPQC结果')
     ipqc_worktime = fields.Float(string=u'IPQC工时', default=0.0)
     state = fields.Selection(selection=REWORKSTATES, string=u'状态', default='commit', copy=False)
+
+    mesline_name = fields.Char(string=u'产线名称', copy=False)
+    schedule_name = fields.Char(string=u'班次名称', copy=False)
+    workstation_name = fields.Char(string=u'工位名称', copy=False)
+    repairer_name = fields.Char(string=u'维修员工', copy=False)
+
+
 
 
     @api.depends('commit_time')
@@ -62,21 +70,26 @@ class AASMESRework(models.Model):
 
     @api.one
     def action_after_create(self):
-        tserialnumber = self.serialnumber_id
-        self.write({
-            'internalpn': tserialnumber.internal_product_code, 'customerpn': tserialnumber.customer_product_code
-        })
         workstation = self.workstation_id
-        if self.mesline_id:
-            mesline = self.mesline_id
-        else:
-            mesline = self.serialnumber_id.mesline_id
+        tserialnumber = self.serialnumber_id
+        repairvals = {
+            'workstation_name': workstation.name,
+            'internalpn': tserialnumber.internal_product_code, 'customerpn': tserialnumber.customer_product_code
+        }
+        tmesline = self.mesline_id
+        if not tmesline:
+            tmesline = tserialnumber.mesline_id
+        repairvals.update({'mesline_id': tmesline.id, 'mesline_name': tmesline.name})
+        tschedule = tmesline.schedule_id
+        if tschedule:
+            repairvals.update({'schedule_id': tschedule.id, 'schedule_name': tschedule.name})
         tempdomain = [('serialnumber_id', '=', tserialnumber.id)]
-        tempdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        tempdomain += [('mesline_id', '=', tmesline.id), ('workstation_id', '=', workstation.id)]
         tempoutput = self.env['aas.production.product'].search(tempdomain, order='output_time desc', limit=1)
         if tempoutput:
             tserialnumber.write({'qualified': False})
             tempoutput.write({'onepass': False, 'qualified': False})
+        self.write(repairvals)
 
 
     @api.model
@@ -99,10 +112,14 @@ class AASMESRework(models.Model):
         tserialnumber.write({'qualified': False, 'reworked': True})
 
     @api.one
-    def action_repair(self, repairer_id, repair_note):
+    def action_repair(self, repairer_id, repair_note, worktime=0.0):
+        repairer = self.env['aas.hr.employee'].browse(repairer_id)
+        rworktime = worktime
+        if worktime and float_compare(worktime, 0.0, precision_rounding=0.000001) > 0:
+            rworktime = worktime / 60.0
         self.write({
-            'repairer_id': repairer_id, 'repair_note': repair_note,
-            'repair_time': fields.Datetime.now(), 'state': 'ipqc'
+            'repairer_id': repairer_id, 'repair_note': repair_note, 'repair_worktime': rworktime,
+            'repair_time': fields.Datetime.now(), 'state': 'ipqc', 'repairer_name': repairer.name
         })
         operation = self.env['aas.mes.operation'].search([('serialnumber_id', '=', self.serialnumber_id.id)], limit=1)
         operation.write({'dorework': True, 'dorework_count': operation.dorework_count + 1})

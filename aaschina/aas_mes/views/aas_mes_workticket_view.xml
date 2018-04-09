@@ -73,6 +73,7 @@
                                         <field name="output_time"/>
                                         <field name="label_id"/>
                                         <field name="container_id"/>
+                                        <field name="equipment_id"/>
                                     </tree>
                                     <form>
                                         <group>
@@ -88,9 +89,8 @@
                                             </group>
                                         </group>
                                         <group>
-                                            <group>
-                                                <field name="output_time"/>
-                                            </group>
+                                            <group><field name="output_time"/></group>
+                                            <group><field name="equipment_id"/></group>
                                         </group>
                                         <notebook>
                                             <page string="原料清单">

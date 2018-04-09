@@ -236,6 +236,14 @@
                                                 <li> <a href="javascript:void(0);">维修员工 <span id="mes_employee" class="pull-right" employeeid="0"/></a></li>
                                                 <li> <a href="javascript:void(0);">客户料号 <span id="mes_customerpn" class="pull-right"/></a> </li>
                                                 <li> <a href="javascript:void(0);">内部料号 <span id="mes_internalpn" class="pull-right"/></a> </li>
+                                                <li style="padding:5px;">
+                                                    <div class="input-group">
+                                                        <div class="input-group-btn">
+                                                            <button type="button" class="btn btn-primary">维修工时(分钟)</button>
+                                                        </div>
+                                                        <input id="repairtime" type="text" class="form-control" value="0.0" style="text-align:right;"/>
+                                                    </div>
+                                                </li>
                                             </ul>
                                         </div>
                                     </div>

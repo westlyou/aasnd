@@ -117,6 +117,7 @@
                                         <field name="badmode_qty"/>
                                         <field name="output_time"/>
                                         <field name="workstation_id"/>
+                                        <field name="equipment_id"/>
                                         <field name="container_id"/>
                                         <field name="label_id"/>
                                         <field name="serialnumber_id"/>
@@ -124,6 +125,7 @@
                                     <form>
                                         <group>
                                             <group> <field name="workstation_id"/> </group>
+                                            <group> <field name="equipment_id"/> </group>
                                         </group>
                                         <group>
                                             <group>
@@ -479,6 +481,7 @@
                                         <field name="badmode_qty"/>
                                         <field name="output_time"/>
                                         <field name="workstation_id"/>
+                                        <field name="equipment_id"/>
                                         <field name="container_id"/>
                                         <field name="label_id"/>
                                         <field name="serialnumber_id"/>
@@ -486,6 +489,7 @@
                                     <form>
                                         <group>
                                             <group> <field name="workstation_id"/> </group>
+                                            <group> <field name="equipment_id"/> </group>
                                         </group>
                                         <group>
                                             <group>

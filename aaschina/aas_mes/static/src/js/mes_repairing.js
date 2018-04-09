@@ -94,6 +94,12 @@ $(function(){
         });
     }
 
+    function isAboveZeroFloat(val){
+        var reg = /^(\d+)(\.\d+)?$/;
+        if (reg.test(val)){ return true; }
+        return false;
+    }
+
     $('#action_repair').click(function(){
         var employeeid = parseInt($('#mes_employee').attr('employeeid'));
         if(employeeid==0){
@@ -110,6 +116,14 @@ $(function(){
            repairesult = 'ok';
         }
         var scanparams = {'serialnumberid': serialnumberid, 'repairerid': employeeid, 'repairesult': repairesult};
+        var repairtimestr = $('#repairtime').val();
+        if (repairtimestr!=null && repairtimestr!='' && repairtimestr!=0.0 && repairtimestr!='0.0'){
+            if(!isAboveZeroFloat(repairtimestr)){
+                layer.msg('维修工时必须是一个大于0的数！', {icon: 5});
+                return ;
+            }
+            scanparams['repairtime'] = parseFloat(repairtimestr);
+        }
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
             url: '/aasmes/repairing/actiondone',
@@ -118,6 +132,7 @@ $(function(){
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scanparams, id: access_id}),
             success:function(data){
                 scanable = true;
+                $('#repairtime').val('0.0');
                 var dresult = data.result;
                 if(!dresult.success){
                     layer.msg(dresult.message, {icon: 5});

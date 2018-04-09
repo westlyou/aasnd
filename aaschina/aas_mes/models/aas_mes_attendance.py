@@ -331,7 +331,11 @@ class AASMESWorkAttendanceLine(models.Model):
     attend_done = fields.Boolean(string=u'出勤结束', default=False, copy=False)
     attend_hours = fields.Float(string=u'在岗工时', compute='_compute_attend_hours', store=True)
     leave_id = fields.Many2one(comodel_name='aas.mes.work.attendance.leave', string=u'离开原因', ondelete='restrict')
-    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='restrict', default=lambda self:self.env.user.company_id)
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self:self.env.user.company_id)
+
+    mesline_name = fields.Char(string=u'产线名称', copy=False)
+    schedule_name = fields.Char(string=u'班次名称', copy=False)
+    employee_name = fields.Char(string=u'员工名称', copy=False)
 
     @api.depends('attendance_start', 'attendance_finish')
     def _compute_attend_hours(self):
@@ -352,10 +356,10 @@ class AASMESWorkAttendanceLine(models.Model):
 
     @api.one
     def action_after_create(self):
-        linevals = {}
         mesline, workstation, employee = self.mesline_id, self.workstation_id, self.employee_id
+        linevals = {'mesline_name': mesline.name, 'employee_name': employee.name}
         if mesline.schedule_id:
-            linevals['schedule_id'] = mesline.schedule_id.id
+            linevals.update({'schedule_id': mesline.schedule_id.id, 'schedule_name': mesline.schedule_id.name})
         if mesline.workdate:
             linevals['attendance_date'] = mesline.workdate
         if linevals and len(linevals) > 0:

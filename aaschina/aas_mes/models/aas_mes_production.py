@@ -56,6 +56,7 @@ class AASProductionProduct(models.Model):
     mesline_name = fields.Char(string=u'产线名称', copy=False)
     workstation_name = fields.Char(string=u'工位名称', copy=False)
     schedule_name = fields.Char(string=u'班次名称', copy=False)
+    workorder_name = fields.Char(string=u'工单编号', copy=False)
 
     material_lines = fields.One2many(comodel_name='aas.production.material', inverse_name='production_id', string=u'原料清单')
     employee_lines = fields.One2many(comodel_name='aas.production.employee', inverse_name='production_id', string=u'员工清单')
@@ -81,6 +82,8 @@ class AASProductionProduct(models.Model):
             productvals['workstation_name'] = record.workstation_id.name
         if record.schedule_id:
             productvals['schedule_name'] = record.schedule_id.name
+        if record.workorder_id:
+            productvals['workorder_name'] = record.workorder_id.name
         record.write(productvals)
         return record
 
