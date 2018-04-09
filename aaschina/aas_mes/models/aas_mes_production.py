@@ -88,7 +88,7 @@ class AASProductionProduct(models.Model):
     def action_production_output(self, workorder, product, output_qty, workticket=False, schedule=False,
                                  workcenter=False, workstation=False, badmode_lines=[], employee=False,
                                  equipment=False, serialnumber=False, container=False, finaloutput=False,
-                                 tracing=False, output_date=False, output_time=False):
+                                 tracing=False, output_date=False, output_time=False, product_lot=False):
         """工单产出
         :param workorder:
         :param product:
@@ -105,6 +105,7 @@ class AASProductionProduct(models.Model):
         :param tracing:
         :param output_date:
         :param output_time:
+        :param product_lot:
         :return:
         """
         values = {'success': True, 'message': '', 'label_id': '0', 'production_id': '0'}
@@ -116,6 +117,8 @@ class AASProductionProduct(models.Model):
             'workorder_id': workorder.id, 'product_id': product.id, 'finaloutput': finaloutput,
             'mesline_id': mesline.id, 'output_date': output_date, 'pcode': product.default_code, 'tracing': tracing
         }
+        if product_lot:
+            outputvals['product_lot'] = product_lot.id
         if not output_time:
             output_time = fields.Datetime.now()
             outputvals['output_time'] = output_time
@@ -165,7 +168,7 @@ class AASProductionProduct(models.Model):
             product_qty -= badmode_qty
         outputvals['product_qty'] = product_qty
         # 加载产出员工清单
-        empvals = self.action_loading_output_employeelist(mesline, workstation, employee=employee)
+        empvals = self.action_loading_output_employeelist(mesline, workstation, employee=employee, equipment=equipment)
         if empvals['employeelines'] and len(empvals['employeelines']) > 0:
             outputvals['employee_lines'] = empvals['employeelines']
         # 加载消耗清单
@@ -280,11 +283,12 @@ class AASProductionProduct(models.Model):
 
 
     @api.model
-    def action_loading_output_employeelist(self, mesline, workstation, employee=False):
+    def action_loading_output_employeelist(self, mesline, workstation, employee=False, equipment=False):
         """加载产出员工清单
         :param mesline:
         :param workstation:
         :param employee:
+        :param equipment:
         :return:
         """
         values = {'success': True, 'message': '', 'employeelines': []}
@@ -297,6 +301,8 @@ class AASProductionProduct(models.Model):
         if not mesline or not workstation:
             return values
         employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        if equipment:
+            employeedomain.append(('equipment_id', '=', equipment.id))
         employeelist = self.env['aas.mes.workstation.employee'].search(employeedomain)
         if employeelist and len(employeelist) > 0:
             employeeids, employeelines = [], []

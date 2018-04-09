@@ -148,7 +148,7 @@ class AASMESOperation(models.Model):
             tempout.write({'qualified': True, 'onepass': False})
         else:
             productionvals = {
-                'mesline_id': mesline.id, 'euipment_id': equipmentid,
+                'mesline_id': mesline.id, 'equipment_id': equipmentid,
                 'workstation_id': workstation.id, 'serialnumber_id': tserialnumber.id,
                 'product_id': tserialnumber.product_id.id, 'product_qty': 1.0,
                 'finaloutput': True, 'output_date': fields.Datetime.to_china_today(),
@@ -404,7 +404,7 @@ class AASMESOperationRecord(models.Model):
                 'onepass': operation_pass, 'qualified': operation_pass,
                 'mesline_id': mesline.id, 'workstation_id': workstation.id,
                 'product_id': tserialnumber.product_id.id, 'product_qty': 1.0,
-                'euipment_id': equipment.id, 'output_date': fields.Datetime.to_china_today(),
+                'equipment_id': equipment.id, 'output_date': fields.Datetime.to_china_today(),
                 'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id,
                 'pcode': tserialnumber.internal_product_code, 'ccode': tserialnumber.customer_product_code
             })

@@ -428,20 +428,18 @@ class AASMESWireCuttingController(http.Controller):
         if not parameters or len(parameters) <= 0:
             values.update({'success': False, 'message': u'工单异常，检测参数异常，未获取到检测参数信息！'})
             return values
-        productid = workorder.product_id.id
-        vdtvals = request.env['aas.mes.workorder'].action_validate_consume(workorderid, productid, 1.0)
-        if not vdtvals.get('success', False):
-            values.update(vdtvals)
-            return values
+        employee = request.env['aas.hr.employee'].browse(employeeid)
+        product = workorder.product_id
         badmodedict = {'random': 'T0053', 'firstone': 'T0054', 'lastone': 'T0055'}
         badmode = request.env['aas.mes.badmode'].search([('code', '=', badmodedict[testtype])], limit=1)
         if badmode:
             badlines = [{'badmode_id': badmode.id, 'badmode_qty': 1.0}]
-            optvals = request.env['aas.mes.workorder'].action_output(workorderid, productid, 1.0, badmode_lines=badlines)
+            optvals = request.env['aas.production.product'].action_production_output(workorder, product, 1.0,
+                                                                           workstation=workstation,
+                                                                           badmode_lines=badlines, employee=employee)
             if not optvals.get('success', False):
                 values.update(optvals)
                 return values
-            request.env['aas.mes.workorder'].action_consume(workorderid, productid)
         wireorder = workorder.wireorder_id
         testorder = request.env['aas.mes.producttest.order'].create({
             'producttest_id': producttestid, 'product_id': wireorder.product_id.id,

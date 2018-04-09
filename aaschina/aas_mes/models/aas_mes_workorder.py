@@ -200,59 +200,6 @@ class AASMESWorkorder(models.Model):
             ordervals['workcenter_finish'] = workticket.id
         self.write(ordervals)
 
-    # @api.one
-    # def action_build_consumelist(self):
-    #     """生成物料消耗清单
-    #     :return:
-    #     """
-    #     if not self.aas_bom_id:
-    #         raise UserError(u'请先设置工单成品的BOM清单，否则无法计算原料消耗！')
-    #     if not self.aas_bom_id.workcenter_lines or len(self.aas_bom_id.workcenter_lines) <= 0:
-    #         raise UserError(u'请先仔细检查BOM清单是否正确设置！')
-    #     consumelist, virtualdict = [], {}
-    #     product, input_qty = self.product_id, self.input_qty
-    #     for workcenterline in self.aas_bom_id.workcenter_lines:
-    #         material = workcenterline.product_id
-    #         virtual = material.virtual_material
-    #         conunit = workcenterline.product_qty / self.aas_bom_id.product_qty
-    #         consumevals = {
-    #             'product_id': product.id, 'material_id': material.id, 'material_level': 1,
-    #             'consume_unit': conunit, 'input_qty': input_qty * conunit, 'material_virtual': virtual,
-    #             'workcenter_id': False if not workcenterline.workcenter_id else workcenterline.workcenter_id.id
-    #         }
-    #         if not virtual:
-    #             consumelist.append((0, 0, consumevals))
-    #         else:
-    #             virtualdict[material.id] = consumevals
-    #             virtualdomain = [('product_id', '=', material.id), ('active', '=', True)]
-    #             virtualbom = self.env['aas.mes.bom'].search(virtualdomain, limit=1)
-    #             if not virtualbom or not virtualbom.bom_lines or len(virtualbom.bom_lines) <= 0:
-    #                 continue
-    #             for vbomline in virtualbom.bom_lines:
-    #                 vmaterial = vbomline.product_id
-    #                 vvirtual = vmaterial.virtual_material
-    #                 vconunit = vbomline.product_qty / virtualbom.product_qty
-    #                 vvals = {
-    #                     'product_id': material.id, 'material_id': vmaterial.id,
-    #                     'material_virtual': vvirtual, 'consume_unit': vconunit,
-    #                     'input_qty': vconunit * consumevals['input_qty'],
-    #                     'workcenter_id': consumevals['workcenter_id'],
-    #                     'material_level': consumevals['material_level'] + 1
-    #                 }
-    #                 if vmaterial.id in virtualdict:
-    #                     tempvals = virtualdict[vmaterial.id]
-    #                     if tempvals['material_level'] < vvals['material_level']:
-    #                         tempvals.update(vvals)
-    #                 else:
-    #                     virtualdict[vmaterial.id] = vvals
-    #     if virtualdict and len(virtualdict) > 0:
-    #         print virtualdict
-    #         for vkey, vvalues in virtualdict.items():
-    #             consumelist.append((0, 0, vvalues))
-    #     if not consumelist or len(consumelist) <= 0:
-    #         raise UserError(u'请仔细检查BOM清单设置，无法生成消耗明细清单')
-    #     self.write({'consume_lines': consumelist})
-
 
     @api.one
     def action_build_consumelist(self):
@@ -483,10 +430,11 @@ class AASMESWorkorder(models.Model):
                     'consume_qty': tconsume.consume_qty, 'leave_qty': tconsume.leave_qty
                 }
                 if pkey not in productdict:
+                    temp_inputqty = tconsume.input_qty/tconsume.consume_unit
                     productdict[pkey] = {
                         'product_id': product.id, 'product_code': product.default_code,
-                        'output_qty': 0.0, 'badmode_qty': 0.0, 'actual_qty': 0.0, 'todo_qty': 0.0,
-                        'weld_count': product.weld_count, 'input_qty': tconsume.input_qty/tconsume.consume_unit
+                        'output_qty': 0.0, 'badmode_qty': 0.0, 'actual_qty': 0.0,
+                        'weld_count': product.weld_count, 'input_qty': temp_inputqty, 'todo_qty': temp_inputqty
                     }
                     productdict[pkey]['materiallist'] = [materialval]
                 else:
@@ -772,11 +720,15 @@ class AASMESWorkorder(models.Model):
         workstation = self.env['aas.mes.workstation'].browse(workstation_id)
         product = self.env['product.product'].browse(product_id)
         equipment = False if not equipment_id else self.env['aas.equipment.equipment'].browse(equipment_id)
+        lotcode = fields.Datetime.to_china_today().replace('-', '')
+        if equipment and equipment.sequenceno:
+            lotcode += equipment.sequenceno
+        productlot = self.env['stock.production.lot'].action_checkout_lot(product_id, lotcode)
         csvalues = self.env['aas.production.product'].action_production_output(workorder, product, output_qty,
                                                                                equipment=equipment,
                                                                                workstation=workstation,
                                                                                badmode_lines=badmode_lines,
-                                                                               tracing=True)
+                                                                               tracing=True, product_lot=productlot)
         if not csvalues.get('success', False):
             values.update(csvalues)
         return values
