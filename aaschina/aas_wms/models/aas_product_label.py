@@ -213,8 +213,13 @@ class AASProductLabel(models.Model):
         if 'product_qty' in vals:
             operate_order = self.env.context.get('operate_order', False)
             self.action_journal_qty(vals.get('product_qty'), operate_order)
-        if vals.get('location_id'):
-            self.action_journal_location(vals.get('location_id'))
+        locationid = vals.get('location_id', False)
+        if locationid:
+            self.action_journal_location(locationid)
+            templocation = self.env['stock.location'].browse(locationid)
+            # 标签进入MRB库位或者呆滞库位自动冻结
+            if templocation.mrblocation or templocation.dulllocation:
+                vals['state'] = 'frozen'
         result = super(AASProductLabel, self).write(vals)
         self.action_after_write(vals)
         return result
@@ -414,18 +419,21 @@ class AASProductLabel(models.Model):
                 'name': product_lot, 'product_id': temproduct.id, 'create_date': fields.Datetime.now()
             })
         pdtlocation = self.env.ref('stock.location_production')
-        receiptlocation = self.env['stock.warehouse'].get_default_warehouse().wh_input_stock_loc_id.id
+        packlocation = self.env['stock.warehouse'].get_default_warehouse().wh_pack_stock_loc_id
+        # 启用打包库位
+        if not packlocation.active:
+            packlocation.sudo().write({'active': True})
         for tindex in range(0, label_count):
             templabel = self.env['aas.product.label'].create({
                 'product_id': temproduct.id, 'product_code': product_code, 'product_uom': temproduct.uom_id.id,
-                'stocked': True, 'location_id': receiptlocation.id, 'product_lot': templot.id, 'product_qty': label_qty
+                'stocked': True, 'location_id': packlocation.id, 'product_lot': templot.id, 'product_qty': label_qty
             })
             values['barcodes'].append(templabel.name)
         self.env['stock.move'].create({
             'name': ','.join(values['barcodes']),
             'product_id': temproduct.id, 'product_uom': temproduct.uom_id.id,
             'restrict_lot_id': templot.id, 'product_uom_qty': label_qty * label_count,
-            'location_id': pdtlocation.id, 'location_dest_id': receiptlocation.id, 'create_date': fields.Datetime.now()
+            'location_id': pdtlocation.id, 'location_dest_id': packlocation.id, 'create_date': fields.Datetime.now()
         }).action_done()
         return values
 
