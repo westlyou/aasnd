@@ -41,7 +41,7 @@ class AASMESSerialnumber(models.Model):
     internal_product_code = fields.Char(string=u'产品编码', copy=False, help=u'在公司内部的产品编码')
     customer_product_code = fields.Char(string=u'客户编码', copy=False, help=u'在客户方的产品编码')
     reworked = fields.Boolean(string=u'是否返工', default=False, copy=False)
-    reworksource = fields.Selection(selection=REJECTTYPES, string=u'返工来源')
+    reworksource = fields.Selection(selection=REJECTTYPES, string=u'返工来源', default='produce')
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'操作设备', ondelete='restrict')
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', index=True)
@@ -56,6 +56,7 @@ class AASMESSerialnumber(models.Model):
     traced = fields.Boolean(string=u'已被追溯关联', default=False, copy=False)
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', index=True, ondelete='restrict')
     operation_id = fields.Many2one(comodel_name='aas.mes.operation', string=u'操作记录', index=True, ondelete='restrict')
+    badmode_name = fields.Char(string=u'不良名称', copy=False, help=u'最近一次上报不良的不良模式名称')
 
     rework_lines = fields.One2many(comodel_name='aas.mes.rework', inverse_name='serialnumber_id', string=u'返工清单')
     operation_lines = fields.One2many(comodel_name='aas.mes.operation.record', inverse_name='serialnumber_id', string=u'操作清单')

@@ -51,9 +51,6 @@ class AASMESRework(models.Model):
     workstation_name = fields.Char(string=u'工位名称', copy=False)
     repairer_name = fields.Char(string=u'维修员工', copy=False)
 
-
-
-
     @api.depends('commit_time')
     def _compute_badmode_date(self):
         for record in self:
@@ -96,7 +93,7 @@ class AASMESRework(models.Model):
     def action_commit(self, serialnumber_id, workstation_id, badmode_id, commiter_id, mesline_id=False):
         tserialnumber = self.env['aas.mes.serialnumber'].browse(serialnumber_id)
         meslineid = mesline_id if mesline_id else tserialnumber.mesline_id.id
-        self.env['aas.mes.rework'].create({
+        reworking = self.env['aas.mes.rework'].create({
             'mesline_id': meslineid,
             'serialnumber_id': tserialnumber.id, 'workstation_id': workstation_id, 'state': 'repair',
             'badmode_id': badmode_id, 'commiter_id': commiter_id, 'commit_time': fields.Datetime.now()
@@ -109,7 +106,10 @@ class AASMESRework(models.Model):
             'commit_badness': True, 'commit_badness_count': operation.commit_badness_count + 1,
             'dorework': False, 'ipqc_check': False
         })
-        tserialnumber.write({'qualified': False, 'reworked': True})
+        tserialnumber.write({
+            'qualified': False, 'reworked': True,
+            'reworksource': 'produce', 'badmode_name': reworking.badmode_id.name
+        })
 
     @api.one
     def action_repair(self, repairer_id, repair_note, worktime=0.0):

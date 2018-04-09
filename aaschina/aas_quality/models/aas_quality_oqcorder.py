@@ -153,7 +153,10 @@ class AASQualityOQCOrderLabel(models.Model):
         if not productionlabel or not productionlabel.isserialnumber:
             return
         serialnumberlist = self.env['aas.mes.serialnumber'].search([('label_id', '=', label.id)])
-        serialnumberlist.sudo().write({'label_id': False, 'reworked': True, 'reworksource': 'oqccehcking'})
+        serialnumberlist.sudo().write({
+            'label_id': False, 'reworked': True,
+            'reworksource': 'oqccehcking', 'badmode_name': u'OQC出货检测'
+        })
         operationlist = self.env['aas.mes.operation']
         for tserialnumber in serialnumberlist:
             operationlist |= tserialnumber.operation_id

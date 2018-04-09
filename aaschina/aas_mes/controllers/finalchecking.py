@@ -188,11 +188,7 @@ class AASMESFinalCheckingController(http.Controller):
             values.update({'message': u'已扫描，请不要重复操作', 'done': True})
             return values
         if serialnumber.reworked:
-            if serialnumber.reworksource == 'oqcchecking':
-                values['badmode_name'] = 'OQC'
-            elif serialnumber.rework_lines and len(serialnumber.rework_lines) > 0:
-                currentrework = serialnumber.rework_lines[0]
-                values['badmode_name'] = currentrework.badmode_id.name
+            values['badmode_name'] = '' if not serialnumber.badmode_name else serialnumber.badmode_name
             values['message'] = u'%s返工，请仔细检查确认'% values['badmode_name']
             return values
         if workorder:
@@ -240,7 +236,7 @@ class AASMESFinalCheckingController(http.Controller):
             if tserialnumber.product_id.id != workorder.product_id.id:
                 values.update({'success': False, 'message': u'扫描异常，当前产品型号与产线正在生产的型号不符！'})
                 return values
-            tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, tserialnumber)
+            tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, workstation, tserialnumber)
             if not tvalues.get('success', False):
                 values.update(tvalues)
                 return values
