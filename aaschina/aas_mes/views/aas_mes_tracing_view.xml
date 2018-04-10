@@ -277,8 +277,8 @@
                         <p>追溯可以根据成品序列号追溯，也可以根据成品批次追溯；如果根据批次追溯必须同时设置料号和批次！</p>
                     </div>
                     <footer>
-                        <button name="action_tracing" string="原料追溯" type="object" class="btn-primary"/>
-                        <button name="action_trace_oneinall" string="一键追溯" type="object" class="btn-primary"/>
+                        <button name="action_tracing" string="逐级追溯" type="object" class="btn-primary"/>
+                        <button name="action_trace_oneinall" string="原料追溯" type="object" class="btn-primary"/>
                         <button string="取消" class="btn-default" special="cancel"/>
                     </footer>
                 </form>
@@ -316,8 +316,8 @@
                         <p>反向追溯，根据原料料号和批次追溯成品信息！</p>
                     </div>
                     <footer>
-                        <button name="action_tracing" string="成品追溯" type="object" class="btn-primary"/>
-                        <button name="action_trace_oneinall" string="一键追溯" type="object" class="btn-primary"/>
+                        <button name="action_tracing" string="逐级追溯" type="object" class="btn-primary"/>
+                        <button name="action_trace_oneinall" string="成品追溯" type="object" class="btn-primary"/>
                         <button string="取消" class="btn-default" special="cancel"/>
                     </footer>
                 </form>
