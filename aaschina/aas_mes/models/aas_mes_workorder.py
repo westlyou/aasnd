@@ -451,7 +451,7 @@ class AASMESWorkorder(models.Model):
                 productdict[pkey]['output_qty'] += tempout.product_qty
                 productdict[pkey]['badmode_qty'] += tempout.badmode_qty
                 productdict[pkey]['actual_qty'] += tempout.product_qty + tempout.badmode_qty
-                productdict[pkey]['todo_qty'] = productdict[pkey]['input_qty'] - tempout.product_qty
+                productdict[pkey]['todo_qty'] = productdict[pkey]['input_qty'] - productdict[pkey]['output_qty']
         if productdict and len(productdict) > 0:
             values['virtuallist'] = productdict.values()
         return values

@@ -28,6 +28,9 @@
         <menuitem id="menu_aas_mes_employee"  name="员工信息" parent="menu_aas_mes" sequence="8"
                   groups="group_aas_manufacture_user"/>
 
+        <menuitem id="menu_aas_mes_report"  name="生产报表" parent="menu_aas_mes" sequence="9"
+                  groups="group_aas_manufacture_manager"/>
+
         <menuitem id="menu_aas_stock_report"  name="库存报表" parent="menu_aas_mes" sequence="20"
                   groups="group_aas_manufacture_user"/>
 

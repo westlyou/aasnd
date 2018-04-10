@@ -445,8 +445,8 @@
                         </group>
                         <group>
                             <group>
-                                <field name="plan_start"/>
-                                <field name="plan_finish"/>
+                                <field name="plan_start" required="1"/>
+                                <field name="plan_finish" required="1"/>
                             </group>
                             <group>
                                 <field name="produce_start" readonly="1"/>

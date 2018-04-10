@@ -401,6 +401,7 @@ class AASMESOperationRecord(models.Model):
             tempoutput.write(tempvalues)
         else:
             self.env['aas.production.product'].create({
+                'serialnumber_id': tserialnumber.id,
                 'onepass': operation_pass, 'qualified': operation_pass,
                 'mesline_id': mesline.id, 'workstation_id': workstation.id,
                 'product_id': tserialnumber.product_id.id, 'product_qty': 1.0,
