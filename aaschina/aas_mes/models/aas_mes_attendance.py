@@ -217,7 +217,7 @@ class AASMESWorkAttendance(models.Model):
                 continue
             # 关闭出勤明细
             record.attend_lines.action_done()
-            # 更新工作日和班次信息
+            # 更新工作日信息
             linedict = {}
             for aline in record.attend_lines:
                 if not aline.schedule_id:

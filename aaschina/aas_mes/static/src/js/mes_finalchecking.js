@@ -5,11 +5,13 @@
 $(function(){
 
     var nativeSpeech = new SpeechSynthesisUtterance();
+    nativeSpeech.lang = 'zh';
+    nativeSpeech.rate = 1.2;
+    nativeSpeech.pitch = 1.5;
+    nativeSpeech.volume = 1.0;
 
     function nativespeak(message){
         nativeSpeech.text = message;
-        nativeSpeech.lang = 'zh';
-        nativeSpeech.rate = 1.3;
         speechSynthesis.speak(nativeSpeech);
     }
 

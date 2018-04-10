@@ -27,10 +27,12 @@ class AASBaseCron(models.Model):
 
     @api.model
     def action_thirty_minutes_cron(self):
-        # 清理待完成的出勤记录
-        self.env['aas.mes.work.attendance'].action_done_attendances()
         # 切换产线班次
         self.env['aas.mes.line'].action_switch_schedule()
+        # 清理待完成的出勤记录
+        self.env['aas.mes.work.attendance'].action_done_attendances()
+
+
 
 # 生产线
 class AASMESLine(models.Model):
