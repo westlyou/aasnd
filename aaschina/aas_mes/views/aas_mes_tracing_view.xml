@@ -7,7 +7,7 @@
             <field name="model">aas.production.product.material.report</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree create="false" delete="false">
                     <field name="mesline_id"/>
                     <field name="product_id"/>
                     <field name="product_lot"/>
@@ -22,7 +22,7 @@
             <field name="model">aas.production.product.material.report</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form>
+                <form create="false" delete="false">
                     <sheet>
                         <div class="oe_right oe_button_box" style="width: 300px;" name="buttons">
                             <button type="object" name="action_trace_productlist" class="oe_stat_button" icon="fa-send"
@@ -100,7 +100,7 @@
             <field name="model">aas.production.final.product.report</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree create="false" delete="false">
                     <field name="mesline_id"/>
                     <field name="product_id"/>
                     <field name="product_lot"/>
@@ -114,7 +114,7 @@
             <field name="model">aas.production.final.product.report</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form>
+                <form create="false" delete="false">
                     <sheet>
                         <group>
                             <group>
@@ -181,7 +181,7 @@
             <field name="model">aas.production.final.material.report</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree create="false" delete="false">
                     <field name="mesline_id"/>
                     <field name="material_id"/>
                     <field name="material_lot"/>
@@ -194,7 +194,7 @@
             <field name="model">aas.production.final.material.report</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form>
+                <form create="false" delete="false">
                     <sheet>
                         <group>
                             <group>

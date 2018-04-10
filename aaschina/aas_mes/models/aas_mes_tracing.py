@@ -123,15 +123,15 @@ class AASProductionProductMaterialReport(models.Model):
             return materialreportids
         for treport in reportlist:
             tmesline = treport.mesline_id
-            mateiral, materialot = treport.material_id, treport.material_lot
-            if mateiral.ismaterial:
+            material, materialot = treport.material_id, treport.material_lot
+            if material.ismaterial:
                 mdomain = [('mesline_id', '=', tmesline.id)]
-                mdomain += [('mateiral_id', '=', mateiral.id), ('material_lot', '=', materialot.id)]
+                mdomain += [('material_id', '=', material.id), ('material_lot', '=', materialot.id)]
                 finalmaterial = self.env['aas.production.final.material.report'].search(mdomain, limit=1)
                 if finalmaterial:
                     materialreportids.append(finalmaterial.id)
             else:
-                materialreportids += self.action_loading_materialist_oneinall(tmesline.id, mateiral.id, materialot.id)
+                materialreportids += self.action_loading_materialist_oneinall(tmesline.id, material.id, materialot.id)
         return materialreportids
 
 
