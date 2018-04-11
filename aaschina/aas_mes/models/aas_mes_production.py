@@ -188,7 +188,8 @@ class AASProductionProduct(models.Model):
                 materiallots, uomid = stockvals['stocklist'], stockvals['uom_id']
                 for mlot in materiallots:
                     materiallist.append((0, 0, {
-                        'material_id': materialid, 'material_lot': mlot['lot_id'], 'material_qty': mlot['lot_qty']
+                        'material_id': materialid, 'material_lot': mlot['lot_id'],
+                        'material_qty': mlot['lot_qty'], 'mesline_id': mesline.id
                     }))
                     if mlot.get('feed_id', False):
                         feedids.append(mlot.get('feed_id'))
@@ -583,12 +584,49 @@ class AASProductionProduct(models.Model):
         return values
 
 
+    @api.model
+    def action_loading_materialist_oneinall(self, production, productkeys=[], materialkeys=[]):
+        """
+        获取最终原料信息
+        :param production:
+        :param productkeys:
+        :param materialkeys:
+        :return:
+        """
+        if not production.material_lines or len(production.material_lines) <= 0:
+            return
+        for pmaterial in production.material_lines:
+            productid, productlot = pmaterial.material_id.id, pmaterial.material_lot.id
+            mkey = str(production.mesline_id.id)+'-'+str(productid)+'-'+str(productlot)
+            if pmaterial.material_id.ismaterial:
+                if mkey not in materialkeys:
+                    materialkeys.append(mkey)
+                continue
+            tempdomain = [('product_id', '=', productid), ('product_lot', '=', productlot)]
+            productionlist = self.env['aas.production.product'].search(tempdomain)
+            if not productionlist or len(productionlist) <= 0:
+                if mkey not in materialkeys:
+                    materialkeys.append(mkey)
+                continue
+            for tproduction in productionlist:
+                productid, productlot = tproduction.product_id.id, tproduction.product_lot.id
+                pkey = str(tproduction.mesline_id.id)+'-'+str(productid)+'-'+str(productlot)
+                if pkey in productkeys:
+                    continue
+                else:
+                    productkeys.append(pkey)
+                    self.action_loading_materialist_oneinall(tproduction, productkeys, materialkeys)
+
+
+
+
 # 产出原料消耗
 class AASPRoductionMaterial(models.Model):
     _name = 'aas.production.material'
     _description = 'AAS Production Material'
 
     production_id = fields.Many2one(comodel_name='aas.production.product', string=u'产出成品')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线')
     material_id = fields.Many2one(comodel_name='product.product', string=u'原料')
     material_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次')
     material_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)

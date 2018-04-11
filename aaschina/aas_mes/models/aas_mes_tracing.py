@@ -103,63 +103,33 @@ class AASProductionProductMaterialReport(models.Model):
 
 
     @api.model
-    def action_loading_materialist_oneinall(self, meslineid, productid, productlot):
-        """递归获取最终原料批次信息id集合
-        :param meslineid:
-        :param productid:
-        :param productlot:
-        :return:
-        """
-        materialreportids = []
-        tempdomain = [('mesline_id', '=', meslineid)]
-        tempdomain += [('product_id', '=', productid), ('product_lot', '=', productlot)]
-        reportlist = self.env['aas.production.product.material.report'].search(tempdomain)
-        if not reportlist or len(reportlist) <= 0:
-            finaldomain = [('mesline_id', '=', meslineid)]
-            finaldomain += [('material_id', '=', productid), ('material_lot', '=', productlot)]
-            finalmaterial = self.env['aas.production.final.material.report'].search(finaldomain, limit=1)
-            if finalmaterial:
-                materialreportids.append(finalmaterial.id)
-            return materialreportids
-        for treport in reportlist:
-            tmesline = treport.mesline_id
-            material, materialot = treport.material_id, treport.material_lot
-            if material.ismaterial:
-                mdomain = [('mesline_id', '=', tmesline.id)]
-                mdomain += [('material_id', '=', material.id), ('material_lot', '=', materialot.id)]
-                finalmaterial = self.env['aas.production.final.material.report'].search(mdomain, limit=1)
-                if finalmaterial:
-                    materialreportids.append(finalmaterial.id)
-            else:
-                materialreportids += self.action_loading_materialist_oneinall(tmesline.id, material.id, materialot.id)
-        return materialreportids
-
-
-    @api.model
-    def action_loading_productlist_oneinall(self, materialid, materialot):
-        """递归获取最终成品批次id集合
+    def action_loading_productlist_oneinall(self, materialid, materialot, productkeys=[]):
+        """递归获取最终成品批次集合
         :param materialid:
         :param materialot:
+        :param productkeys:
         :return:
         """
-        productreportids = []
         mdomain = [('material_id', '=', materialid), ('material_lot', '=', materialot)]
         reportlist = self.env['aas.production.product.material.report'].search(mdomain)
         if not reportlist or len(reportlist) <= 0:
-            return productreportids
+            return
         for treport in reportlist:
             mesline = treport.mesline_id
             temproduct, templot = treport.product_id, treport.product_lot
-            tempdomain = [('material_id', '=', temproduct.id), ('material_lot', '=', templot.id)]
-            if self.env['aas.production.product.material.report'].search_count(tempdomain) <= 0:
-                rdomain = [('mesline_id', '=', mesline.id)]
-                rdomain += [('product_id', '=', temproduct.id), ('product_lot', '=', templot.id)]
-                preport = self.env['aas.production.final.product.report'].search(rdomain, limit=1)
-                if preport:
-                    productreportids.append(preport.id)
+            if templot:
+                lotid = templot.id
             else:
-                productreportids += self.action_loading_productlist_oneinall(temproduct.id, templot.id)
-        return productreportids
+                lotid = 0
+            pkey = str(mesline.id)+'-'+str(temproduct.id)+'-'+str(lotid)
+            if pkey in productkeys:
+                continue
+            tempdomain = [('material_id', '=', temproduct.id), ('material_lot', '=', templot.id)]
+            templist = self.env['aas.production.product.material.report'].search(tempdomain)
+            if not templist or len(templist) <= 0:
+                productkeys.append(pkey)
+                continue
+            self.action_loading_productlist_oneinall(temproduct.id, templot.id, productkeys)
 
 
 
@@ -167,6 +137,7 @@ class AASProductionProductMaterialReport(models.Model):
 
 class AASProductionFinalProductReport(models.Model):
     _auto = False
+    _rec_name = 'product_id'
     _name = 'aas.production.final.product.report'
     _description = 'AAS Production Final Product Report'
     _order = 'mesline_id,product_id,product_lot'
@@ -199,6 +170,7 @@ class AASProductionFinalProductReport(models.Model):
 
 class AASProductionFinalMaterialReport(models.Model):
     _auto = False
+    _rec_name = 'material_id'
     _name = 'aas.production.final.material.report'
     _description = 'AAS Production Final Material Report'
     _order = 'mesline_id,material_id,material_lot'
@@ -288,18 +260,19 @@ class AASProductionForwardTracingWizard(models.TransientModel):
         productionlist = self.env['aas.production.product'].search(tempdomain)
         if not productionlist or len(productionlist) <= 0:
             raise UserError(u'未获取到追溯信息！')
-        finalmaterialids = []
+        productkeys, materialkeys = [], []
         for pproduction in productionlist:
-            if not pproduction.material_lines or len(pproduction.material_lines) <= 0:
-                continue
-            mesline = pproduction.mesline_id
-            for pmaterial in pproduction.material_lines:
-                materialid, materialotid = pmaterial.material_id.id, pmaterial.material_lot.id
-                tempids = self.env['aas.production.product.material.report'].action_loading_materialist_oneinall(
-                    mesline.id, materialid, materialotid)
-                finalmaterialids += tempids
-        if not finalmaterialids or len(finalmaterialids) <= 0:
+            self.env['aas.production.product'].action_loading_materialist_oneinall(pproduction, productkeys, materialkeys)
+        if not materialkeys or len(materialkeys) <= 0:
             raise UserError(u'未获取到相关追溯信息！')
+        finalmaterialids = []
+        for mkey in materialkeys:
+            tkeys = mkey.split('-')
+            mlid, mtid, mlot = int(tkeys[0]), int(tkeys[1]), int(tkeys[2])
+            mdomain = [('mesline_id', '=', mlid), ('material_id', '=', mtid), ('material_lot', '=', mlot)]
+            finalmaterial = self.env['aas.production.final.material.report'].search(mdomain, limit=1)
+            if finalmaterial:
+                finalmaterialids.append(finalmaterial.id)
         action = self.env.ref('aas_mes.action_aas_production_final_material_report').read()[0]
         action['domain'] = [('id', 'in', finalmaterialids)]
         return action
@@ -331,8 +304,21 @@ class AASProductionReverseTracingWizard(models.TransientModel):
         :return:
         """
         self.ensure_one()
-        finalproductids = self.env['aas.production.product.material.report'].action_loading_productlist_oneinall(
-            self.material_id.id, self.material_lot.id)
+        materialid, materialot, productkeys = self.material_id.id, self.material_lot.id, []
+        self.env['aas.production.product.material.report'].action_loading_productlist_oneinall(materialid, materialot,
+                                                                                               productkeys)
+        if not productkeys or len(productkeys) <= 0:
+            raise UserError(u"未获取到相关追溯信息")
+        finalproductids = []
+        for pkey in productkeys:
+            keys = pkey.split('-')
+            mlid, ptid, plot = int(keys[0]), int(keys[1]), int(keys[2])
+            if not plot:
+                plot = False
+            pdomain = [('mesline_id', '=', mlid), ('product_id', '=', ptid), ('product_lot', '=', plot)]
+            temproduct = self.env['aas.production.final.product.report'].search(pdomain, limit=1)
+            if temproduct:
+                finalproductids.append(temproduct.id)
         if not finalproductids or len(finalproductids) <= 0:
             raise UserError(u'未获取到相关追溯信息！')
         action = self.env.ref('aas_mes.action_aas_production_final_product_report').read()[0]
