@@ -251,9 +251,9 @@ class AASStockInventoryLabel(models.Model):
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品')
     location_id = fields.Many2one(comodel_name='stock.location', string=u'库位')
-    product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'))
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
-    temp_qty = fields.Float(string=u'临时数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
+    product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    temp_qty = fields.Float(string=u'临时数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
 
     _sql_constraints = [
         ('uniq_label', 'unique (inventory_id, label_id)', u'盘点标签中不能出现重复标签！')
