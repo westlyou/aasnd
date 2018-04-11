@@ -94,7 +94,7 @@ class AASProductionProduct(models.Model):
     def action_production_output(self, workorder, product, output_qty, workticket=False, schedule=False,
                                  workcenter=False, workstation=False, badmode_lines=[], employee=False,
                                  equipment=False, serialnumber=False, container=False, finaloutput=False,
-                                 tracing=False, output_date=False, output_time=False, product_lot=False):
+                                 tracing=False, output_date=False, output_time=False, product_lot=False, cutting=False):
         """工单产出
         :param workorder:
         :param product:
@@ -112,6 +112,7 @@ class AASProductionProduct(models.Model):
         :param output_date:
         :param output_time:
         :param product_lot:
+        :param cutting:
         :return:
         """
         values = {'success': True, 'message': '', 'label_id': '0', 'production_id': '0'}
@@ -119,6 +120,10 @@ class AASProductionProduct(models.Model):
         mesline, ttoday = workorder.mesline_id, fields.Datetime.to_china_today()
         if not output_date:
             output_date = ttoday
+        # update 20180411 确保下线产出必须设置容器
+        if not container and cutting:
+            values.update({'success': False, 'message': u'下线产出必须先设置好容器!'})
+            return values
         outputvals = {
             'workorder_id': workorder.id, 'product_id': product.id, 'finaloutput': finaloutput,
             'mesline_id': mesline.id, 'output_date': output_date, 'pcode': product.default_code, 'tracing': tracing

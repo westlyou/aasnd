@@ -239,10 +239,12 @@ class AASMESWireOrder(models.Model):
         """
         values = {'success': True, 'message': ''}
         product = workorder.product_id
+        if not workorder.output_manner or (workorder.output_manner != 'container'):
+            workorder.write({'output_manner': 'container'})
         tempvals = self.env['aas.production.product'].action_production_output(workorder, product, output_qty,
                                                                             equipment=equipment, employee=employee,
                                                                         workstation=workstation, container=container,
-                                                                               finaloutput=True, tracing=True)
+                                                                        finaloutput=True, tracing=True, cutting=True)
         if not tempvals.get('success', False):
             values.update(tempvals)
             return values

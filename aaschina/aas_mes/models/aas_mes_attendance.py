@@ -328,8 +328,17 @@ class AASMESWorkAttendanceLine(models.Model):
         linevals = {'mesline_name': mesline.name, 'employee_name': employee.name}
         if not self.schedule_id and mesline.schedule_id:
             linevals.update({'schedule_id': mesline.schedule_id.id, 'schedule_name': mesline.schedule_id.name})
-        if not self.attendance_date and mesline.workdate:
-            linevals['attendance_date'] = mesline.workdate
+        if mesline.workdate:
+            if not self.attendance_date:
+                linevals['attendance_date'] = mesline.workdate
+            elif self.attendance_date > mesline.workdate:
+                sdomain = [('id', '!=', self.id), ('attendance_id', '=', self.attendance_id.id)]
+                sdomain += [('mesline_id', '=', self.mesline_id.id), ('workstation_id', '=', self.workstation_id.id)]
+                attendanceline = self.env['aas.mes.work.attendance.line'].search(sdomain, order='id desc', limit=1)
+                if attendanceline and attendanceline.schedule_id:
+                    linevals.update({
+                        'schedule_id': attendanceline.schedule_id.id, 'schedule_name': attendanceline.schedule_id.name
+                    })
         if linevals and len(linevals) > 0:
             self.write(linevals)
         equipment_id = False if not self.equipment_id else self.equipment_id.id
