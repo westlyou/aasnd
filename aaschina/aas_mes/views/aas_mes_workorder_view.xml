@@ -18,9 +18,9 @@
                     <field name="routing_id"/>
                     <field name="creator_id"/>
                     <field name="time_create"/>
-                    <field name="time_finish"/>
                     <field name="plan_start"/>
                     <field name="plan_finish"/>
+                    <field name="produce_finish"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -67,7 +67,6 @@
                                 <field name="product_uom" readonly="1"/>
                                 <field name="input_qty" required="1" attrs="{'readonly':[('state','!=','draft')]}"/>
                                 <field name="creator_id" readonly="1"/>
-                                <field name="time_create" readonly="1"/>
                             </group>
                             <group>
                                 <field name="mesline_id" options="{'no_create':true}" required="1"
@@ -76,13 +75,12 @@
                                 <field name="aas_bom_id" options="{'no_create':true}" attrs="{'readonly':[('state','not in',['draft','confirm'])]}"
                                         domain="[('state','=','normal'),('product_id','=',product_id)]"/>
                                 <field name="routing_id" readonly="1"/>
-                                <field name="time_finish" readonly="1"/>
                             </group>
                         </group>
                         <group>
                             <group>
-                                <field name="plan_start"/>
-                                <field name="plan_finish"/>
+                                <field name="plan_start" readonly="1"/>
+                                <field name="plan_finish" readonly="1"/>
                             </group>
                             <group>
                                 <field name="produce_start" readonly="1"/>
@@ -95,9 +93,11 @@
                                 <field name="output_manner" attrs="{
                                        'invisible':[('mesline_type','=','flowing')], 'readonly':[('state','=','done')],
                                        'required':[('mesline_type','=','station')]}"/>
+                                <field name="time_create" readonly="1"/>
                                 <field name="output_qty" readonly="1"/>
                                 <field name="date_code" readonly="1"/>
                                 <field name="closer_id" readonly="1" attrs="{'invisible':[('closer_id','=',False)]}"/>
+                                <field name="close_time" readonly="1" attrs="{'invisible':[('closer_id','=',False)]}"/>
                                 <field name="workcenter_name" readonly="1" string="当前工序"
                                         attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
                                 <field name="isproducing" invisible="1"/>
@@ -383,9 +383,9 @@
                     <field name="routing_id"/>
                     <field name="creator_id"/>
                     <field name="time_create"/>
-                    <field name="time_finish"/>
                     <field name="plan_start"/>
                     <field name="plan_finish"/>
+                    <field name="produce_finish"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -430,7 +430,6 @@
                                 <field name="product_uom" readonly="1"/>
                                 <field name="input_qty" required="1" attrs="{'readonly':[('state','!=','draft')]}"/>
                                 <field name="creator_id" readonly="1"/>
-                                <field name="time_create" readonly="1"/>
                             </group>
                             <group>
                                 <field name="mesline_id" options="{'no_create':true}" required="1"
@@ -440,7 +439,6 @@
                                        attrs="{'readonly':[('state','not in',['draft','confirm'])]}"
                                        domain="[('state','=','normal'),('product_id','=',product_id)]"/>
                                 <field name="routing_id" readonly="1"/>
-                                <field name="time_finish" readonly="1"/>
                             </group>
                         </group>
                         <group>
@@ -459,9 +457,11 @@
                                         'readonly':[('state','=','done')],
                                         'invisible':[('mesline_type','=','flowing')],
                                         'required':[('mesline_type','=','station')]}"/>
+                                <field name="time_create" readonly="1"/>
                                 <field name="output_qty" readonly="1"/>
                                 <field name="date_code" readonly="1"/>
                                 <field name="closer_id" readonly="1" attrs="{'invisible':[('closer_id','=',False)]}"/>
+                                <field name="close_time" readonly="1" attrs="{'invisible':[('closer_id','=',False)]}"/>
                                 <field name="workcenter_name" readonly="1" string="当前工序"
                                         attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
                                 <field name="isproducing" invisible="1"/>

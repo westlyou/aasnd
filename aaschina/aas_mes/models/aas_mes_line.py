@@ -27,10 +27,11 @@ class AASBaseCron(models.Model):
 
     @api.model
     def action_thirty_minutes_cron(self):
-        # 切换产线班次
-        self.env['aas.mes.line'].action_switch_schedule()
         # 清理待完成的出勤记录
         self.env['aas.mes.work.attendance'].action_done_attendances()
+        # 切换产线班次
+        self.env['aas.mes.line'].action_switch_schedule()
+
 
 
 
@@ -95,9 +96,9 @@ class AASMESLine(models.Model):
             refresh_flag = True
         if not refresh_flag:
             return
+        workdate = fields.Datetime.to_china_today()
         workday_start, workday_finish = False, False
         currenttime = fields.Datetime.to_timezone_time(current_time, 'Asia/Shanghai')
-        workdate = fields.Datetime.to_timezone_string(current_time, 'Asia/Shanghai')[0:10]
         for schedule in self.schedule_lines:
             start_hour = int(math.floor(schedule.work_start))
             start_minutes = int(math.floor((schedule.work_start - start_hour) * 60))
@@ -127,9 +128,6 @@ class AASMESLine(models.Model):
         searchdomain += [('actual_start', '<=', currenttime), ('actual_finish', '>', currenttime)]
         schedule = self.env['aas.mes.schedule'].search(searchdomain, limit=1)
         if not schedule or not self.schedule_id or schedule.id != self.schedule_id.id:
-            # if self.workorder_id and self.workorder_id.isproducing:
-            #     self.workorder_id.write({'isproducing': False})
-            # ordervals = {'workorder_id': False, 'schedule_id': False}
             ordervals = {'schedule_id': False}
             if self.schedule_id:
                 self.schedule_id.write({'state': 'break'})
@@ -156,6 +154,10 @@ class AASMESLine(models.Model):
         if not mesline.workdate:
             mesline.action_refresh_schedule()
         tschedule = mesline.schedule_lines[0]
+        if tschedule:
+            scheduleid = tschedule.id
+        else:
+            scheduleid = False
         if mesline.schedule_id:
             tdomain = [('mesline_id', '=', mesline.id), ('sequence', '>', mesline.schedule_id.sequence)]
             ntschedule = self.env['aas.mes.schedule'].search(tdomain, limit=1)
@@ -170,7 +172,7 @@ class AASMESLine(models.Model):
         actual_start, actual_finish = fields.Datetime.to_string(tempstart), fields.Datetime.to_string(tempfinish)
         chinastarttime = fields.Datetime.to_timezone_string(actual_start, 'Asia/Shanghai')
         values['schedule'] = {
-            'workdate': chinastarttime[0:10], 'schedule_id': tschedule.id,
+            'workdate': chinastarttime[0:10], 'schedule_id': scheduleid,
             'actual_start': actual_start, 'actual_finish': actual_finish
         }
         return values

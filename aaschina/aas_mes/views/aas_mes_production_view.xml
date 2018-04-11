@@ -345,6 +345,13 @@
                             <field name="equipment_id" readonly="1"/>
                         </group>
                     </group>
+                    <group>
+                        <group>
+                            <field name="file_data" filename="file_name"/>
+                            <field name="file_exported" invisible="1"/>
+                            <field name="file_name" invisible="1"/>
+                        </group>
+                    </group>
                     <notebook>
                         <page string="数据清单">
                             <field name="query_lines" readonly="1">
@@ -382,6 +389,8 @@
                         </page>
                     </notebook>
                     <footer>
+                        <button name="action_dataexport" string="导出" type="object"
+                                class="btn-primary" attrs="{'invisible':[('file_exported','=',True)]}"/>
                         <button string="取消" class="btn-default" special="cancel"/>
                     </footer>
                 </form>

@@ -122,12 +122,14 @@ class AASMESWorkAttendance(models.Model):
         if attendance and employee.id != attendance.employee_id.id:
             values = {'success': False, 'message': u'出勤记录异常，请仔细检查！'}
             return values
+        firstscheduleid = False
         if not attendance:
             tvalues = self.action_addattendance(employee, mesline)
             if not tvalues.get('success', False):
                 values.update(tvalues)
                 return values
             attendance = tvalues['attendance']
+            firstscheduleid = tvalues['scheduleid']
         values.update({'attendance_id': attendance.id})
         equipmentid = False if not equipment else equipment.id
         alinedomain = [
@@ -137,10 +139,14 @@ class AASMESWorkAttendance(models.Model):
         if equipmentid:
             alinedomain.append(('equipment_id', '=', equipmentid))
         if self.env['aas.mes.work.attendance.line'].search_count(alinedomain) <= 0:
-            self.env['aas.mes.work.attendance.line'].create({
-                'attendance_id': attendance.id, 'employee_id': employee.id,
-                'mesline_id': mesline.id, 'workstation_id': workstation.id, 'equipment_id': equipmentid
+            temprecord = self.env['aas.mes.work.attendance.line'].create({
+                'attendance_id': attendance.id,
+                'employee_id': employee.id, 'equipment_id': equipmentid,
+                'mesline_id': mesline.id, 'workstation_id': workstation.id,
+                'attendance_date': attendance.attendance_date, 'schedule_id': firstscheduleid
             })
+            if temprecord.schedule_id and not temprecord.schedule_name:
+                temprecord.write({'schedule_name': temprecord.schedule_id.name})
         return values
 
 
@@ -151,7 +157,7 @@ class AASMESWorkAttendance(models.Model):
         :param mesline:
         :return:
         """
-        values = {'success': True, 'message': '', 'attendance': False}
+        values = {'success': True, 'message': '', 'attendance': False, 'scheduleid': False}
         attendancevals = {'employee_id': employee.id, 'employee_name': employee.name}
         worktime_min = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'worktime_min')
         worktime_max = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'worktime_max')
@@ -178,6 +184,7 @@ class AASMESWorkAttendance(models.Model):
             attendancevals.update({
                 'attendance_start': nextschedule['actual_start'], 'attendance_date': nextschedule['workdate']
             })
+            values['scheduleid'] = nextschedule['schedule_id']
         values['attendance'] = self.env['aas.mes.work.attendance'].create(attendancevals)
         return values
 
@@ -265,45 +272,6 @@ class AASMESWorkAttendance(models.Model):
 
 
     @api.model
-    def action_trace_employees_equipments(self, mesline_id, schedule_id, workstation_id, attendance_date):
-        """
-        获取相应日期的产线班次上指定工位的员工和设备信息
-        :param mesline_id:
-        :param schedule_id:
-        :param workstation_id:
-        :param attendance_date:
-        :return:
-        """
-        tracingdomain, tracevals = [], {'employeelist': '', 'equipmentlist': ''}
-        if mesline_id:
-            tracingdomain.append(('mesline_id', '=', mesline_id))
-        if schedule_id:
-            tracingdomain.append(('schedule_id', '=', schedule_id))
-        if workstation_id:
-            tracingdomain.append(('workstation_id', '=', workstation_id))
-        if attendance_date:
-            tracingdomain.append(('attendance_date', '=', attendance_date))
-        if not tracingdomain or len(attendance_date) <= 0:
-            return tracevals
-        attendancelines = self.env['aas.mes.work.attendance.line'].search(tracingdomain)
-        if attendancelines and len(attendancelines) > 0:
-            employeeids, employees, equipmentids, equipments = [], [], [], []
-            for attendance in attendancelines:
-                temployee, tequipment = attendance.employee_id, attendance.equipment_id
-                if temployee and temployee.id not in employeeids:
-                    employeeids.append(temployee.id)
-                    employees.append(temployee.name+'['+temployee.code+']')
-                if tequipment and tequipment.id not in equipmentids:
-                    equipmentids.append(tequipment.id)
-                    equipments.append(tequipment.name+'['+tequipment.code+']')
-            if employees and len(employees) > 0:
-                tracevals['employeelist'] = ','.join(employees)
-            if equipments and len(equipments) > 0:
-                tracevals['equipmentlist'] = ','.join(equipments)
-        return tracevals
-
-
-    @api.model
     def action_done_attendances(self):
         attendances = self.env['aas.mes.work.attendance'].search([('attend_done', '=', False)])
         if attendances and len(attendances) > 0:
@@ -358,9 +326,9 @@ class AASMESWorkAttendanceLine(models.Model):
     def action_after_create(self):
         mesline, workstation, employee = self.mesline_id, self.workstation_id, self.employee_id
         linevals = {'mesline_name': mesline.name, 'employee_name': employee.name}
-        if mesline.schedule_id:
+        if not self.schedule_id and mesline.schedule_id:
             linevals.update({'schedule_id': mesline.schedule_id.id, 'schedule_name': mesline.schedule_id.name})
-        if mesline.workdate:
+        if not self.attendance_date and mesline.workdate:
             linevals['attendance_date'] = mesline.workdate
         if linevals and len(linevals) > 0:
             self.write(linevals)
@@ -426,7 +394,7 @@ class AASMESWorkAttendanceLine(models.Model):
                 attendancevals.update({
                     'attendance_id': record.attendance_id.id, 'mesline_id': mesline.id,
                     'employee_id': record.employee_id.id, 'workstation_id': record.workstation_id.id,
-                    'company_id': record.company_id.id,
+                    'company_id': record.company_id.id, 'schedule_id': newscheduleid,
                     'equipment_id': False if not record.equipment_id else record.equipment_id.id
                 })
                 record.action_done()

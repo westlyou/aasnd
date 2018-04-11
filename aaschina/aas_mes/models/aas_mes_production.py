@@ -14,6 +14,9 @@ from odoo.tools.float_utils import float_compare, float_is_zero, float_round
 from odoo.exceptions import UserError, ValidationError
 
 import logging
+import base64
+from cStringIO import StringIO
+from odoo.tools.misc import str2bool, xlwt
 
 _logger = logging.getLogger(__name__)
 
@@ -551,10 +554,19 @@ class AASProductionProduct(models.Model):
                     outputdict[rkey]['once_qty'] += record['product_qty']
                 else:
                     outputdict[rkey]['twice_total_qty'] += record['product_qty']
+                    twice_total_qty = outputdict[rkey]['twice_total_qty']
                     if record['qualified']:
                         outputdict[rkey]['twice_qualified_qty'] += record['product_qty']
-                    outputdict[rkey]['twice_rate'] = (outputdict[rkey]['twice_qualified_qty'] / outputdict[rkey]['twice_total_qty']) * 100
-                outputdict[rkey]['once_rate'] = (outputdict[rkey]['once_qty'] / outputdict[rkey]['product_qty']) * 100
+                    twice_qualified_qty = outputdict[rkey]['twice_qualified_qty']
+                    if float_compare(twice_total_qty, 0.0, precision_rounding=0.0000001) <= 0.0:
+                        outputdict[rkey]['twice_rate'] = 100.0
+                    else:
+                        outputdict[rkey]['twice_rate'] = (twice_qualified_qty / twice_total_qty) * 100
+                product_qty, once_qty = outputdict[rkey]['product_qty'], outputdict[rkey]['once_qty']
+                if float_compare(product_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+                    outputdict[rkey]['once_rate'] = 100.0
+                else:
+                    outputdict[rkey]['once_rate'] = (once_qty / product_qty) * 100
             else:
                 tempvals = {
                     'product_id': record['product_id'], 'mesline_id': record['mesline_id'],
@@ -568,17 +580,11 @@ class AASProductionProduct(models.Model):
                         'twice_qualified_qty': 0.0, 'once_rate': 100.0, 'twice_rate': 100.0
                     })
                 else:
-                    tempvals.update({
-                        'once_qty': 0.0, 'twice_total_qty': record['product_qty'], 'once_rate': 0.0
-                    })
+                    tempvals.update({'once_qty': 0.0, 'twice_total_qty': record['product_qty'], 'once_rate': 100.0})
                     if record['qualified']:
-                        tempvals.update({
-                            'twice_qualified_qty': record['product_qty'], 'twice_rate': 100.0
-                        })
+                        tempvals.update({'twice_qualified_qty': record['product_qty'], 'twice_rate': 100.0})
                     else:
-                        tempvals.update({
-                            'twice_qualified_qty': 0.0, 'twice_rate': 0.0
-                        })
+                        tempvals.update({'twice_qualified_qty': 0.0, 'twice_rate': 100.0})
                 outputdict[rkey] = tempvals
         values['records'] = outputdict.values()
         return values
@@ -797,6 +803,10 @@ class AASMESProductionOutputQueryWizard(models.TransientModel):
     time_finish = fields.Datetime(string=u'结束时间', copy=False)
     query_lines = fields.One2many(comodel_name='aas.mes.production.output.query.line.wizard', inverse_name='wizard_id', string=u'查询明细')
 
+    file_name = fields.Char(string=u'文件名称')
+    file_data = fields.Binary(string=u'文件', readonly='1')
+    file_exported = fields.Boolean(string=u'是否导出', default=False)
+
     @api.model
     def default_get(self, fields_list):
         defaults = super(AASMESProductionOutputQueryWizard,self).default_get(fields_list)
@@ -808,9 +818,6 @@ class AASMESProductionOutputQueryWizard(models.TransientModel):
             'time_finish': fields.Datetime.to_utc_string(finishtime, 'Asia/Shanghai')
         })
         return defaults
-
-
-
 
 
     @api.multi
@@ -851,6 +858,67 @@ class AASMESProductionOutputQueryWizard(models.TransientModel):
             'res_id': self.id,
             'context': self.env.context
         }
+
+
+    @api.multi
+    def action_dataexport(self):
+        self.ensure_one()
+        if not self.query_lines or len(self.query_lines) <= 0:
+            raise UserError(u'暂时没有数据可以导出！')
+        fieldlines = ['output_date', 'mesline_id', 'product_id', 'workstation_id', 'product_qty', 'once_qty',
+                      'once_rate', 'twice_total_qty', 'twice_qualified_qty', 'twice_rate']
+        headerlines = [u'日期', u'产线', u'产品', u'工位', u'总数', u'一次合格数量', u'一次优率', u'二次总数', u'二次合格数量',
+                       u'二次优率']
+        records, rows = self.query_lines.read(fields=fieldlines), []
+        file_name = u"产出优率%s"% fields.Datetime.to_china_today().replace('-', '')
+        workbook = xlwt.Workbook()
+        worksheet = workbook.add_sheet(file_name)
+        base_style = xlwt.easyxf('align: wrap yes')
+        for record in records:
+            tvalue, row = '', []
+            for fkey in fieldlines:
+                tval = record.get(fkey)
+                if tval:
+                    if type(tval) == tuple:
+                        tvalue = tval[1]
+                    else:
+                        tvalue = tval
+                else:
+                    tvalue = None
+                row.append(tvalue)
+            rows.append(row)
+        for i, fheader in enumerate(headerlines):
+            worksheet.write(0, i, fheader)
+            # around 220 pixels
+            worksheet.col(i).width = 8000
+        for row_index, row in enumerate(rows):
+            for cell_index, cell_value in enumerate(row):
+                worksheet.write(row_index + 1, cell_index, cell_value, base_style)
+        fp = StringIO()
+        workbook.save(fp)
+        fp.seek(0)
+        data = fp.read()
+        fp.close()
+        out=base64.encodestring(data)
+        file_name = file_name+'.xls'
+        self.write({'file_data': out, 'file_name': file_name, 'file_exported': True})
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_production_output_query_result')
+        return {
+            'name': u"查询结果",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.mes.production.output.query.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': self.id,
+            'context': self.env.context
+        }
+
+
+
+
 
 
 

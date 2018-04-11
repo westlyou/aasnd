@@ -37,7 +37,6 @@ class AASMESWorkorder(models.Model):
     routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺路线', ondelete='restrict', index=True)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict', index=True)
     time_create = fields.Datetime(string=u'创建时间', default=fields.Datetime.now, copy=False)
-    time_finish = fields.Datetime(string=u'完成时间', copy=False)
     creator_id = fields.Many2one(comodel_name='res.users', string=u'创建人', ondelete='restrict', default=lambda self: self.env.user)
     state = fields.Selection(selection=ORDERSTATES, string=u'状态', default='draft', copy=False)
     produce_date = fields.Char(string=u'生产日期', copy=False)
@@ -60,11 +59,12 @@ class AASMESWorkorder(models.Model):
     workcenter_finish = fields.Many2one(comodel_name='aas.mes.workticket', string=u'结束工序', ondelete='restrict')
     isproducing = fields.Boolean(string=u'正在生产', default=False, copy=False, help=u'当前工单在相应的产线上正在生产')
     output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'))
-    closer_id = fields.Many2one(comodel_name='res.users', string=u'手工关单员', ondelete='restrict', copy=False)
     output_time = fields.Datetime(string=u'产出时间', copy=False, help=u'最近一次产出的时间')
     scrap_qty = fields.Float(string=u'报废数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     output_manner = fields.Selection(selection=OUTPUTMANNERS, string=u'产出方式', copy=False)
     finalproduct_id = fields.Many2one(comodel_name='product.product', string=u'最终产品')
+    closer_id = fields.Many2one(comodel_name='res.users', string=u'手工关单员', ondelete='restrict', copy=False)
+    close_time = fields.Datetime(string=u'手工关单时间', copy=False)
 
     workticket_lines = fields.One2many(comodel_name='aas.mes.workticket', inverse_name='workorder_id', string=u'工票明细')
     production_lines = fields.One2many(comodel_name='aas.production.product', inverse_name='workorder_id', string=u'产出明细')
@@ -325,7 +325,7 @@ class AASMESWorkorder(models.Model):
     @api.one
     def action_workorder_over(self):
         currenttime = fields.Datetime.now()
-        self.write({'state': 'done', 'produce_finish': currenttime, 'time_finish': currenttime})
+        self.write({'state': 'done', 'produce_finish': currenttime})
         if not self.mainorder_id:
             return
         maindomain = [('mainorder_id', '=', self.mainorder_id.id), ('state', '!=', 'done')]
@@ -342,7 +342,7 @@ class AASMESWorkorder(models.Model):
         self.ensure_one()
         if float_compare(self.output_qty, self.input_qty, precision_rounding=0.000001) >= 0.0:
             self.action_done()
-            self.write({'time_finish': fields.Datetime.now(), 'closer_id': self.env.user.id})
+            self.write({'close_time': fields.Datetime.now(), 'closer_id': self.env.user.id})
         else:
             action_message = u"当前工单产出数量还未达到计划的生产数量，确认要关闭工单吗？"
             wizard = self.env['aas.mes.workorder.close.wizard'].create({'workorder_id': self.id, 'action_message': action_message})
@@ -809,7 +809,7 @@ class AASMESWorkorderCloseWizard(models.TransientModel):
     def action_done(self):
         workorder = self.workorder_id
         workorder.action_workorder_over()
-        workorder.write({'time_finish': fields.Datetime.now(), 'closer_id': self.env.user.id})
+        workorder.write({'close_time': fields.Datetime.now(), 'closer_id': self.env.user.id})
 
 
 
