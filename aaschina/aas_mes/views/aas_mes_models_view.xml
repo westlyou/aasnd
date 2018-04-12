@@ -161,6 +161,7 @@
                 <form>
                     <header>
                         <button name="action_confirm" states="draft" type="object" string="确认盘点" class="oe_highlight"/>
+                        <button name="action_inventory_with_scanning" states="confirm" type="object" string="盘点扫描" class="oe_highlight"/>
                         <button name="action_addlabels" states="confirm" type="object" string="新增标签" class="oe_highlight"/>
                         <button name="action_done" states="confirm" type="object" string="完成盘点" class="oe_highlight"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done"/>
@@ -199,7 +200,9 @@
                             <page string="盘点标签">
                                 <field name="inventory_labels" attrs="{'readonly':[('state', '!=', 'confirm')]}">
                                     <tree editable="bottom" edit="false">
-                                        <field name="label_id" options="{'no_create':true}" required="1"/>
+                                        <field name="label_id" options="{'no_create':true}"/>
+                                        <field name="container_id"
+                                               options="{'no_create':true}" domain="[('isempty','=',False)]"/>
                                         <field name="product_id" readonly="1"/>
                                         <field name="product_lot" readonly="1"/>
                                         <field name="product_qty" readonly="1"/>

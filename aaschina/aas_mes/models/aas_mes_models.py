@@ -129,6 +129,137 @@ class AASStockInventory(models.Model):
                 labellist.write({'state': 'normal'})
 
 
+    @api.model
+    def action_scan_label(self, inventory, barcode):
+        """扫描标签盘点
+        :param barcode:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'ilabel': False}
+        if not barcode:
+            values.update({'success': False, 'message': u'请仔细检查是否扫描了一个有效的条码！'})
+            return values
+        barcode = barcode.upper()
+        label = self.env['aas.product.label'].search([('barcode', '=', barcode)], limit=1)
+        if not label:
+            values.update({'success': False, 'message': u'请仔细检查是否扫描有效的标签！'})
+            return values
+        labeldomain = [('inventory_id', '=', inventory.id), ('label_id', '=', label.id)]
+        if self.env['aas.stock.inventory.label'].search_count(labeldomain) > 0:
+            values.update({'success': False, 'message': u'标签已存在请不要重复扫描！'})
+            return values
+        if label.state not in ['normal', 'frezon']:
+            values.update({'success': False, 'message': u'标签状态异常，不在盘点范围！'})
+            return values
+        if inventory.product_id and inventory.product_id.id != label.product_id.id:
+            values.update({'success': False, 'message': u'标签产品与需要盘点的产品不一致，不在盘点范围！'})
+            return values
+        if inventory.product_lot and inventory.product_lot.id != label.product_lot.id:
+            values.update({'success': False, 'message': u'标签产品批次与需要盘点的产品批次不一致，不在盘点范围！'})
+            return values
+        if inventory.location_id:
+            ipleft, ipright = inventory.location_id.parent_left, inventory.location_id.parent_right
+            lpleft, lpright = label.location_id.parent_left, label.location_id.parent_right
+            if lpleft < ipleft or lpright > ipright:
+                values.update({'success': False, 'message': u'标签产品库位与需要盘点的产品库位不一致，不在盘点范围！'})
+                return values
+        if inventory.mesline_id:
+            llocations = []
+            lpleft, lpright = label.location_id.parent_left, label.location_id.parent_right
+            if inventory.mesline_id.location_production_id:
+                plocation = inventory.mesline_id.location_production_id
+                llocations.append((plocation.parent_left, plocation.parent_right))
+            if inventory.mesline_id.location_material_list and len(inventory.mesline_id.location_material_list) > 0:
+                for mlocation in inventory.mesline_id.location_material_list:
+                    tmlocation = mlocation.location_id
+                    llocations.append((tmlocation.parent_left, tmlocation.parent_right))
+            passflag = False
+            if llocations and len(llocations) > 0:
+                for llocation in llocations:
+                    if lpleft >= llocation[0] and lpright <= llocations[1]:
+                        passflag = True
+                        break
+            if not passflag:
+                values.update({'success': False, 'message': u'标签产品库位与需要盘点的产品库位不一致，不在盘点范围！'})
+                return values
+        ilabel = self.env['aas.stock.inventory.label'].create({'inventory_id': inventory.id, 'label_id': label.id})
+        values['ilabel'] = {
+            'list_id': ilabel.id, 'product_code': ilabel.product_id.default_code,
+            'product_lot': ilabel.product_lot.name, 'product_qty': ilabel.product_qty,
+            'location_name': ilabel.location_id.name, 'label_name': ilabel.label_id.name, 'container_name': ''
+        }
+        return values
+
+
+    @api.model
+    def action_scan_container(self, inventory, barcode):
+        """扫描容器盘点
+        :param barcode:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'ilabel': False}
+        if not barcode:
+            values.update({'success': False, 'message': u'请仔细检查是否扫描了一个有效的容器！'})
+            return values
+        barcode = barcode.upper()
+        container = self.env['aas.container'].search([('barcode', '=', barcode)], limit=1)
+        if not container:
+            values.update({'success': False, 'message': u'请仔细检查是否扫描有效的容器！'})
+            return values
+        cdomain = [('inventory_id', '=', inventory.id), ('container_id', '=', container.id)]
+        if self.env['aas.stock.inventory.label'].search_count(cdomain) > 0:
+            values.update({'success': False, 'message': u'容器已存在请不要重复扫描！'})
+            return values
+        if container.isempty:
+            values.update({'success': False, 'message': u'当前容器是一个空的容器，不可以盘点！'})
+            return values
+        productline = container.product_lines[0]
+        if inventory.product_id and inventory.product_id.id != productline.product_id.id:
+            values.update({'success': False, 'message': u'容器产品与需要盘点的产品不一致，不在盘点范围！'})
+            return values
+        if inventory.product_lot and inventory.product_lot.id != productline.product_lot.id:
+            values.update({'success': False, 'message': u'容器产品批次与需要盘点的产品批次不一致，不在盘点范围！'})
+            return values
+        if inventory.location_id:
+            ipleft, ipright = inventory.location_id.parent_left, inventory.location_id.parent_right
+            cpleft, cpright = container.stock_location_id.parent_left, container.stock_location_id.parent_right
+            if cpleft < ipleft or cpright > ipright:
+                values.update({'success': False, 'message': u'容器产品库位与需要盘点的产品库位不一致，不在盘点范围！'})
+                return values
+        if inventory.mesline_id:
+            llocations = []
+            cpleft, cpright = container.stock_location_id.parent_left, container.stock_location_id.parent_right
+            if inventory.mesline_id.location_production_id:
+                plocation = inventory.mesline_id.location_production_id
+                llocations.append((plocation.parent_left, plocation.parent_right))
+            if inventory.mesline_id.location_material_list and len(inventory.mesline_id.location_material_list) > 0:
+                for mlocation in inventory.mesline_id.location_material_list:
+                    tmlocation = mlocation.location_id
+                    llocations.append((tmlocation.parent_left, tmlocation.parent_right))
+            passflag = False
+            if llocations and len(llocations) > 0:
+                for llocation in llocations:
+                    if cpleft >= llocation[0] and cpright <= llocations[1]:
+                        passflag = True
+                        break
+            if not passflag:
+                values.update({'success': False, 'message': u'容器产品库位与需要盘点的产品库位不一致，不在盘点范围！'})
+                return values
+        ilabel = self.env['aas.stock.inventory.label'].create({'inventory_id': inventory.id, 'container_id': container.id})
+        values['ilabel'] = {
+            'list_id': ilabel.id, 'product_code': ilabel.product_id.default_code,
+            'product_lot': ilabel.product_lot.name, 'product_qty': ilabel.product_qty,
+            'location_name': ilabel.location_id.name, 'label_name': '', 'container_name': ilabel.container_id.name
+        }
+        return values
+
+
+
+
+
+
+
+
 class AASStockInventoryLabel(models.Model):
     _inherit = 'aas.stock.inventory.label'
 

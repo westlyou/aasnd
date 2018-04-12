@@ -33,6 +33,7 @@ class AASStockInventory(models.Model):
     state = fields.Selection(selection=INVENTORY_STATE, string=u'状态', default='draft', copy=False)
     create_time = fields.Datetime(string=u'创建时间', default=fields.Datetime.now)
     create_user = fields.Many2one(comodel_name='res.users', string=u'创建人员', default=lambda self: self.env.user)
+    isstock = fields.Boolean(string=u'仓库盘点', default=False, copy=False)
 
 
     inventory_lines = fields.One2many(comodel_name='aas.stock.inventory.line', inverse_name='inventory_id', string=u'盘点明细')
@@ -131,7 +132,6 @@ class AASStockInventory(models.Model):
         if self.product_lot:
             wizardvals['product_lot'] = self.product_lot.name
         wizard = self.env['aas.stock.inventory.addlabel.wizard'].create(wizardvals)
-        print wizardvals
         view_form = self.env.ref('aas_wms.view_form_aas_stock_inventory_addlabel_lots_wizard')
         return {
             'name': u"盘点新增标签批次",
@@ -206,11 +206,119 @@ class AASStockInventory(models.Model):
         if movelines and len(movelines) > 0:
             inventoryvals['inventory_moves'] = movelines
         self.write(inventoryvals)
+        if not self.inventory_labels or len(self.inventory_labels) <= 0:
+            return
         # 解除标签锁定
         labellist = self.env['aas.product.label']
         for tlabel in self.inventory_labels:
-            labellist |= tlabel.label_id
-        labellist.write({'locked': False, 'locked_order': False})
+            if tlabel.label_id:
+                labellist |= tlabel.label_id
+        if not labellist or len(labellist) <= 0:
+            labellist.write({'locked': False, 'locked_order': False})
+
+
+    @api.model
+    def action_scan_label(self, inventory, barcode):
+        """扫描标签盘点
+        :param barcode:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'ilabel': False}
+        if not barcode:
+            values.update({'success': False, 'message': u'请仔细检查是否扫描了一个有效的条码！'})
+            return values
+        barcode = barcode.upper()
+        label = self.env['aas.product.label'].search([('barcode', '=', barcode)], limit=1)
+        if not label:
+            values.update({'success': False, 'message': u'请仔细检查是否扫描有效的标签！'})
+            return values
+        labeldomain = [('inventory_id', '=', inventory.id), ('label_id', '=', label.id)]
+        if self.env['aas.stock.inventory.label'].search_count(labeldomain) > 0:
+            values.update({'success': False, 'message': u'标签已存在请不要重复扫描！'})
+            return values
+        if label.state not in ['normal', 'frezon']:
+            values.update({'success': False, 'message': u'标签状态异常，不在盘点范围！'})
+            return values
+        if inventory.product_id and inventory.product_id.id != label.product_id.id:
+            values.update({'success': False, 'message': u'标签产品与需要盘点的产品不一致，不在盘点范围！'})
+            return values
+        if inventory.product_lot and inventory.product_lot.id != label.product_lot.id:
+            values.update({'success': False, 'message': u'标签产品批次与需要盘点的产品批次不一致，不在盘点范围！'})
+            return values
+        if inventory.location_id:
+            ipleft, ipright = inventory.location_id.parent_left, inventory.location_id.parent_right
+            lpleft, lpright = label.location_id.parent_left, label.location_id.parent_right
+            if lpleft < ipleft or lpright > ipright:
+                values.update({'success': False, 'message': u'标签产品库位与需要盘点的产品库位不一致，不在盘点范围！'})
+                return values
+        try:
+            ilabel = self.env['aas.stock.inventory.label'].create({'inventory_id': inventory.id, 'label_id': label.id})
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
+        values['ilabel'] = {
+            'list_id': ilabel.id, 'product_code': ilabel.product_id.default_code,
+            'product_lot': ilabel.product_lot.name, 'product_qty': ilabel.product_qty,
+            'location_name': ilabel.location_id.name, 'label_name': ilabel.label_id.name, 'container_name': ''
+        }
+        return values
+
+    @api.model
+    def action_scan_container(self, inventory, barcode):
+        """扫描容器盘点
+        :param barcode:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'ilabel': False}
+        if not barcode:
+            values.update({'success': False, 'message': u'请仔细检查是否扫描了一个有效的容器！'})
+            return values
+        barcode = barcode.upper()
+        container = self.env['aas.container'].search([('barcode', '=', barcode)], limit=1)
+        if not container:
+            values.update({'success': False, 'message': u'请仔细检查是否扫描有效的容器！'})
+            return values
+        cdomain = [('inventory_id', '=', inventory.id), ('container_id', '=', container.id)]
+        if self.env['aas.stock.inventory.label'].search_count(cdomain) > 0:
+            values.update({'success': False, 'message': u'容器已存在请不要重复扫描！'})
+            return values
+        if container.isempty:
+            values.update({'success': False, 'message': u'当前容器是一个空的容器，不可以盘点！'})
+            return values
+        productline = container.product_lines[0]
+        if inventory.product_id and inventory.product_id.id != productline.product_id.id:
+            values.update({'success': False, 'message': u'容器产品与需要盘点的产品不一致，不在盘点范围！'})
+            return values
+        if inventory.product_lot and inventory.product_lot.id != productline.product_lot.id:
+            values.update({'success': False, 'message': u'容器产品批次与需要盘点的产品批次不一致，不在盘点范围！'})
+            return values
+        if inventory.location_id:
+            ipleft, ipright = inventory.location_id.parent_left, inventory.location_id.parent_right
+            cpleft, cpright = container.stock_location_id.parent_left, container.stock_location_id.parent_right
+            if cpleft < ipleft or cpright > ipright:
+                values.update({'success': False, 'message': u'容器产品库位与需要盘点的产品库位不一致，不在盘点范围！'})
+                return values
+        try:
+            ilabel = self.env['aas.stock.inventory.label'].create({'inventory_id': inventory.id, 'container_id': container.id})
+        except UserError, ue:
+            values.update({'success': False, 'message': ue.name})
+            return values
+        values['ilabel'] = {
+            'list_id': ilabel.id, 'product_code': ilabel.product_id.default_code,
+            'product_lot': ilabel.product_lot.name, 'product_qty': ilabel.product_qty,
+            'location_name': ilabel.location_id.name, 'label_name': '', 'container_name': ilabel.container_id.name
+        }
+        return values
+
+
+    @api.multi
+    def action_inventory_with_scanning(self):
+        """条码枪扫描盘点
+        :return:
+        """
+        self.ensure_one()
+        return {'type': 'ir.actions.act_url', 'target': 'self', 'url': '/aaswms/inventory/detail/'+str(self.id)}
+
 
 
 
@@ -243,7 +351,7 @@ class AASStockInventoryLine(models.Model):
 class AASStockInventoryLabel(models.Model):
     _name = 'aas.stock.inventory.label'
     _description = u"安费诺库存盘点标签"
-    _order = 'product_id, label_id'
+    _order = 'id desc'
     _rec_name = 'label_id'
 
     inventory_id = fields.Many2one(comodel_name='aas.stock.inventory', string=u'盘点单', required=True, ondelete='cascade')
@@ -254,6 +362,7 @@ class AASStockInventoryLabel(models.Model):
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     temp_qty = fields.Float(string=u'临时数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    container_id = fields.Many2one(comodel_name='aas.container', string=u'容器')
 
     _sql_constraints = [
         ('uniq_label', 'unique (inventory_id, label_id)', u'盘点标签中不能出现重复标签！')
@@ -282,14 +391,43 @@ class AASStockInventoryLabel(models.Model):
         else:
             self.prodcut_id, self.product_lot, self.location_id, self.product_qty = False, False, False, 0.0
 
+    @api.onchange('container_id')
+    def action_change_container(self):
+        container = self.container_id
+        if container:
+            if container.isempty:
+                self.prodcut_id, self.product_lot, self.location_id, self.product_qty = False, False, False, 0.0
+            else:
+                productline = container.product_lines[0]
+                self.prodcut_id, self.product_lot = productline.product_id.id, productline.product_lot.id
+                self.location_id, self.product_qty = container.stock_location_id.id, productline.stock_qty
+        else:
+            self.prodcut_id, self.product_lot, self.location_id, self.product_qty = False, False, False, 0.0
+
+
+
     @api.model
     def action_before_create(self, vals):
-        tlabel = self.env['aas.product.label'].browse(vals.get('label_id'))
-        vals.update({
-            'product_id': tlabel.product_id.id, 'product_lot': tlabel.product_lot.id,
-            'location_id': tlabel.location_id.id, 'product_qty': tlabel.product_qty,
-            'temp_qty': tlabel.product_qty
-        })
+        labelid = vals.get('label_id', False)
+        containerid = vals.get('container_id', False)
+        if not labelid and not containerid:
+            raise UserError(u'盘点内容标签或容器必须设置一个！')
+        if labelid:
+            tlabel = self.env['aas.product.label'].browse(labelid)
+            vals.update({
+                'product_id': tlabel.product_id.id, 'product_lot': tlabel.product_lot.id,
+                'location_id': tlabel.location_id.id, 'product_qty': tlabel.product_qty,
+                'temp_qty': tlabel.product_qty
+            })
+        elif containerid:
+            productline = self.env['aas.container.product'].search([('container_id', '=', containerid)], limit=1)
+            container = productline.container_id
+            vals.update({
+                'product_id': productline.product_id.id, 'product_lot': productline.product_lot.id,
+                'location_id': container.stock_location_id.id, 'product_qty': productline.stock_qty,
+                'temp_qty': productline.stock_qty
+            })
+
 
     @api.one
     def action_after_create(self):
@@ -301,7 +439,8 @@ class AASStockInventoryLabel(models.Model):
             iline = self.env['aas.stock.inventory.line'].search(linedomain, limit=1)
         self.write({'line_id': iline.id})
         iline.write({'actual_qty': iline.actual_qty+self.product_qty})
-        self.label_id.write({'locked': True, 'locked_order': self.inventory_id.serialnumber})
+        if self.label_id:
+            self.label_id.write({'locked': True, 'locked_order': self.inventory_id.serialnumber})
 
     @api.model
     def create(self, vals):
@@ -314,7 +453,10 @@ class AASStockInventoryLabel(models.Model):
     def unlink(self):
         inventorylinedict, labellist = {}, self.env['aas.product.label']
         for record in self:
-            labellist |= record.label_id
+            if record.inventory_id.state == 'done':
+                raise UserError(u'盘点已完成，请不要删除扫描记录！')
+            if record.label_id:
+                labellist |= record.label_id
             ikey = 'L'+str(record.line_id.id)
             if ikey not in inventorylinedict:
                 inventorylinedict[ikey] = {'line': record.line_id, 'qty': record.product_qty}
@@ -324,7 +466,8 @@ class AASStockInventoryLabel(models.Model):
         for lkey, lval in inventorylinedict.items():
             inventoryline, temp_qty = lval['line'], lval['qty']
             inventoryline.write({'actual_qty': inventoryline.actual_qty - temp_qty})
-        labellist.write({'locked': False, 'locked_order': False})
+        if labellist and len(labellist) > 0:
+            labellist.write({'locked': False, 'locked_order': False})
         return result
 
 

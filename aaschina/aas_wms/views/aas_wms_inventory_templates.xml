@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="aas_inventory" name="AAS WMS Inventory">
+        &lt;!DOCTYPE html&gt;
+        <html>
+            <head>
+                <meta charset="utf-8" />
+                <title>安费诺先进传感器</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                <meta name="apple-mobile-web-app-capable" content="yes"/>
+                <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/skins/skin-blue.min.css"/>
+                <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+                <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+                <!--[if lt IE 9]>
+                   <script src="/aas_base/static/libs/html5shiv.min.js"></script>
+                   <script src="/aas_base/static/libs/respond.min.js"></script>
+                <![endif]-->
+            </head>
+            <body class="hold-transition skin-blue layout-top-nav">
+                <div class="wrapper">
+                    <header class="main-header">
+                        <nav class="navbar navbar-static-top">
+                            <div class="container">
+                                <div class="navbar-header">
+                                    <a href="javascript:void(0);" class="navbar-brand">
+                                        <span><b>安费诺先进传感器</b></span>
+                                    </a>
+                                </div>
+
+                                <div class="navbar-custom-menu">
+                                    <ul class="nav navbar-nav">
+                                        <li id="action_comeback" class="notifications-menu">
+                                            <a href="javascript:void(0);"> <i class="fa fa-angle-left"></i> 返回盘点单 </a>
+                                        </li>
+                                        <li class="dropdown notifications-menu">
+                                            <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fa fa-user"></i> <span t-esc="checker"/>
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                <li class="header">欢迎您，<t t-esc="checker"/></li>
+                                                <li>
+                                                    <ul class="menu">
+                                                        <li> <a href="/web/session/logout">注销</a> </li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </nav>
+
+                    </header>
+
+                    <div id="ainventory" class="content-wrapper" t-att-inventoryid="inventory_id">
+                        <section class="content-header">
+                            <h1>盘点 <span style="margin-left:10px;" t-esc="name"/></h1>
+                        </section>
+                        <section class="content">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="box box-solid">
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">盘点信息</h3>
+                                        </div>
+                                        <div class="box-body no-padding">
+                                            <ul class="nav nav-pills nav-stacked">
+                                                <li> <a href="javascript:void(0);">盘点单号 <span class="pull-right" t-esc="serialnumber"/></a> </li>
+                                                <li> <a href="javascript:void(0);">产品编码 <span class="pull-right" t-esc="product_code"/></a> </li>
+                                                <li> <a href="javascript:void(0);">产品批次 <span class="pull-right" t-esc="product_lot"/></a> </li>
+                                                <li t-if="location_name">
+                                                    <a href="javascript:void(0);">库位名称 <span class="pull-right" t-esc="location_name"/></a>
+                                                </li>
+                                                <li t-if="mesline_name">
+                                                    <a href="javascript:void(0);">产线名称 <span class="pull-right" t-esc="mesline_name"/></a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="box box-primary">
+                                        <div class="box-header with-border">
+                                            <h3 class="box-title">扫描清单</h3>
+                                        </div>
+                                        <div class="box-body no-padding">
+                                            <div class="table-responsive mailbox-messages">
+                                                <table class="table table-hover table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <td>产品编码</td>
+                                                            <td>产品批次</td>
+                                                            <td>产品数量</td>
+                                                            <td>库位名称</td>
+                                                            <td>标签名称</td>
+                                                            <td>容器名称</td>
+                                                            <td>操作</td>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="ainventorylist">
+                                                        <t t-if="inventorylist">
+                                                            <t t-foreach="inventorylist" t-as="record">
+                                                                <tr t-attf-id="ilist_{{record['list_id']}}">
+                                                                    <td> <t t-esc="record['product_code']"/> </td>
+                                                                    <td> <t t-esc="record['product_lot']"/> </td>
+                                                                    <td> <t t-esc="record['product_qty']"/> </td>
+                                                                    <td> <t t-esc="record['location_name']"/> </td>
+                                                                    <td> <t t-esc="record['label_name']"/> </td>
+                                                                    <td> <t t-esc="record['container_name']"/> </td>
+                                                                    <td style="cursor:pointer;">
+                                                                        <span t-if="candel" t-att-listid="record['list_id']"
+                                                                              class="label label-danger pull-right aas-inventory">删除</span>
+                                                                    </td>
+                                                                </tr>
+                                                            </t>
+                                                        </t>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="main-footer">
+                        <div class="container" style="text-align:center;">
+                            <span>
+                                Copyright © 安费诺先进传感器 &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <a href="http://www.miitbeian.gov.cn" target="_blank">苏ICP备16061622</a>
+                            </span>
+                        </div>
+                    </footer>
+                </div>
+                <script src="/aas_base/static/libs/jquery/jquery-2.2.4.min.js"></script>
+                <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
+                <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
+                <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
+                <script src="/aas_base/static/libs/layer/layer.js"></script>
+                <script src="/aas_base/static/libs/vscanner.js"></script>
+                <script src="/aas_wms/static/src/js/wms_inventory.js"></script>
+            </body>
+        </html>
+    </template>
+
+
+
+</odoo>
