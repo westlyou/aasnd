@@ -7,7 +7,7 @@
             <field name="model">aas.mes.workorder.finishontime.report</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree create="false" delete="false">
                     <field name="finish_date"/>
                     <field name="mesline_name"/>
                     <field name="workorder_name"/>
