@@ -176,7 +176,7 @@ access_aas_production_final_product_report_all_user,aas.production.final.product
 access_aas_production_final_material_report_all_user,aas.production.final.material.report all_user,model_aas_production_final_material_report,base.group_user,1,0,0,0
 
 
-
+access_aas_mes_workorder_finishontime_report_all_user,aas.mes.workorder.finishontime.report all_user,model_aas_mes_workorder_finishontime_report,base.group_user,1,0,0,0
 access_aas_mes_rework_report_all_user,aas.mes.rework.report all_user,model_aas_mes_rework_report,base.group_user,1,0,0,0
 
 
