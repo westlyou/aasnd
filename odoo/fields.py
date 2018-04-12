@@ -1578,7 +1578,7 @@ class Datetime(Field):
 
     @staticmethod
     def to_china_date(value):
-        chinastr = Datetime.to_timezone_string(value, 'Asia/Shanghai')
+        chinastr = Datetime.to_china_string(value)
         if not chinastr:
             return ''
         return chinastr[0:10]

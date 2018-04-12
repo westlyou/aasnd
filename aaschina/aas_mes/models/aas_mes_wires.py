@@ -113,6 +113,8 @@ class AASMESWireOrder(models.Model):
     mesline_name = fields.Char(string=u'产线名称', compute='_compute_mesline_name', store=True)
     state = fields.Selection(selection=WIREORDERSTATES, string=u'状态', default='draft', copy=False)
     wirebom_id = fields.Many2one(comodel_name='aas.mes.wirebom', string=u'线材BOM', ondelete='restrict')
+    plan_start = fields.Datetime(string=u'计划开工时间', copy=False)
+    plan_finish = fields.Datetime(string=u'计划完工时间', copy=False)
     produce_start = fields.Datetime(string=u'开始生产', copy=False)
     produce_finish = fields.Datetime(string=u'结束生产', copy=False)
     operator_id = fields.Many2one(comodel_name='res.users', string=u'制单人', ondelete='restrict', default=lambda self:self.env.user)
@@ -218,7 +220,7 @@ class AASMESWireOrder(models.Model):
                 'product_uom': material.uom_id.id, 'aas_bom_id': aasbom.id,
                 'mesline_id': self.mesline_id.id, 'wireorder_id': self.id,
                 'input_qty': (tempmaterial.material_qty / wirebom.product_qty) * self.product_qty,
-                'output_manner': 'container'
+                'output_manner': 'container', 'plan_start': self.plan_start, 'plan_finish': self.plan_finish
             })
             workorder.action_confirm()
             tempindex += 1

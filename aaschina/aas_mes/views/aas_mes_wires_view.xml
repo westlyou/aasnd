@@ -139,6 +139,8 @@
                     <field name="operation_time"/>
                     <field name="pusher_id"/>
                     <field name="push_time"/>
+                    <field name="plan_start"/>
+                    <field name="plan_finish"/>
                     <field name="produce_start"/>
                     <field name="produce_finish"/>
                     <field name="state"/>
@@ -179,6 +181,10 @@
                             </group>
                         </group>
                         <group>
+                            <group>
+                                <field name="plan_start"/>
+                                <field name="plan_finish"/>
+                            </group>
                             <group>
                                 <field name="produce_start" readonly="1"/>
                                 <field name="produce_finish" readonly="1"/>

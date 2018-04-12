@@ -44,6 +44,8 @@ class AASMESWorkorder(models.Model):
     produce_finish = fields.Datetime(string=u'实际完工时间', copy=False)
     plan_start = fields.Datetime(string=u'计划开工时间', copy=False)
     plan_finish = fields.Datetime(string=u'计划完工时间', copy=False)
+    plan_finish_date = fields.Char(string=u'计划完工日期', compute='_compute_plan_finish_date', store=True)
+    finishontime = fields.Boolean(string=u'准时完工', default=False, copy=False)
 
 
     date_code = fields.Char(string='DateCode')
@@ -53,6 +55,7 @@ class AASMESWorkorder(models.Model):
     mesline_name = fields.Char(string=u'产线名称', compute='_compute_mesline', store=True)
     mainorder_name = fields.Char(string=u'主工单', compute='_compute_mainorder', store=True)
     product_code = fields.Char(string=u'产品编码', copy=False)
+    customer_code = fields.Char(string=u'客方编码', copy=False, help=u'产品在客户方的料号')
     workcenter_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'当前工序', ondelete='restrict')
     workcenter_name = fields.Char(string=u'当前工序名称', copy=False)
     workcenter_start = fields.Many2one(comodel_name='aas.mes.workticket', string=u'开始工序', ondelete='restrict')
@@ -97,6 +100,14 @@ class AASMESWorkorder(models.Model):
         for record in self:
             record.mainorder_name = record.mainorder_id.name
 
+    @api.depends('plan_finish')
+    def _compute_plan_finish_date(self):
+        for record in self:
+            if not record.plan_finish:
+                record.plan_finish_date = False
+            else:
+                record.plan_finish_date = fields.Datetime.to_china_date(record.plan_finish)
+
 
     @api.one
     @api.constrains('aas_bom_id', 'input_qty')
@@ -128,6 +139,8 @@ class AASMESWorkorder(models.Model):
     @api.model
     def action_before_create(self, vals):
         product = self.env['product.product'].browse(vals.get('product_id'))
+        if product.customer_product_code:
+            vals['customer_code'] = product.customer_product_code
         if not vals.get('product_code', False):
             vals['product_code'] = product.default_code
         if not vals.get('product_uom', False):
@@ -325,7 +338,11 @@ class AASMESWorkorder(models.Model):
     @api.one
     def action_workorder_over(self):
         currenttime = fields.Datetime.now()
-        self.write({'state': 'done', 'produce_finish': currenttime})
+        workordervals = {'state': 'done', 'produce_finish': currenttime}
+        chinatoday = fields.Datetime.to_china_today()
+        if self.plan_finish_date and self.plan_finish_date == chinatoday:
+            workordervals['finishontime'] = True
+        self.write(workordervals)
         if not self.mainorder_id:
             return
         maindomain = [('mainorder_id', '=', self.mainorder_id.id), ('state', '!=', 'done')]

@@ -2,6 +2,66 @@
 <odoo>
     <data>
 
+        <record id="view_tree_aas_mes_workorder_finishontime_report" model="ir.ui.view">
+            <field name="name">aas.mes.workorder.finishontime.report.tree</field>
+            <field name="model">aas.mes.workorder.finishontime.report</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="finish_date"/>
+                    <field name="mesline_name"/>
+                    <field name="workorder_name"/>
+                    <field name="product_code"/>
+                    <field name="customer_code"/>
+                    <field name="plan_qty"/>
+                    <field name="output_qty"/>
+                    <field name="finishontime"/>
+                    <field name="plan_start"/>
+                    <field name="plan_finish"/>
+                    <field name="produce_start"/>
+                    <field name="produce_finish"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_workorder_finishontime_report" model="ir.ui.view">
+            <field name="name">aas.mes.workorder.finishontime.report.search</field>
+            <field name="model">aas.mes.workorder.finishontime.report</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="finish_date" string="日期" filter_domain="[('finish_date','ilike',self)]"/>
+                    <field name="mesline_name" string="产线" filter_domain="[('mesline_name','ilike',self)]"/>
+                    <field name="workorder_name" string="工单号" filter_domain="[('workorder_name','ilike',self)]"/>
+                    <field name="product_code" string="内部料号" filter_domain="[('product_code','ilike',self)]"/>
+                    <field name="customer_code" string="客户料号" filter_domain="[('customer_code','ilike',self)]"/>
+                    <separator/>
+                    <filter string="准时完工" domain="[('finishontime','=',True)]" />
+                    <group expand="0" string="分组">
+                        <filter string="日期" context="{'group_by':'finish_date'}"/>
+                        <filter string="产线" context="{'group_by':'mesline_name'}"/>
+                        <filter string="工单号" context="{'group_by':'workorder_name'}"/>
+                        <filter string="内部料号" context="{'group_by':'product_code'}"/>
+                        <filter string="客户料号" context="{'group_by':'customer_code'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_workorder_finishontime_report" model="ir.actions.act_window">
+            <field name="name">返工工时</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.workorder.finishontime.report</field>
+            <field name="limit">50</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_workorder_finishontime_report"/>
+            <field name="search_view_id" ref="view_search_aas_mes_workorder_finishontime_report"/>
+        </record>
+
+        <menuitem id="menu_aas_mes_workorder_finishontime_report"  name="准时完工" action="action_aas_mes_workorder_finishontime_report"
+                          parent="menu_aas_mes_report" sequence="1" groups="group_aas_manufacture_manager"/>
+
+
+
         <record id="view_tree_aas_mes_rework_report" model="ir.ui.view">
             <field name="name">aas.mes.rework.report.tree</field>
             <field name="model">aas.mes.rework.report</field>
