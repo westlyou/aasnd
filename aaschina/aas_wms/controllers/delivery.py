@@ -35,9 +35,7 @@ class AASWMSDeliveryController(http.Controller):
                 pkey = 'P'+str(tlabel.product_id.id)
                 if pkey not in deliverydict:
                     deliverydict[pkey] = {
-                        'label_count': 1,
-                        'product_qty': tlabel.product_qty,
-                        'product_code': tlabel.product_code if not tlabel.product_id.customer_product_code else tlabel.product_id.customer_product_code
+                        'label_count': 1, 'product_qty': tlabel.product_qty, 'product_code': tlabel.product_code
                     }
                 else:
                     deliverydict[pkey]['label_count'] += 1
