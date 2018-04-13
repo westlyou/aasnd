@@ -23,7 +23,7 @@ class AASMESFeedmaterial(models.Model):
     _name = 'aas.mes.feedmaterial'
     _description = 'AAS MES Feed Material'
     _rec_name = 'material_id'
-    _order = 'feed_time asc'
+    _order = 'feed_time desc'
 
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     material_id = fields.Many2one(comodel_name='product.product', string=u'原料', ondelete='restrict')
@@ -202,10 +202,7 @@ class AASMESFeedmaterial(models.Model):
             values.update({'success': False, 'message': u'产线%s还未设置原料和成品库位！'% mesline.name})
             return values
         materiallocation = mesline.location_material_list[0].location_id
-        locationids = [mlocation.location_id.id for mlocation in mesline.location_material_list]
-        locationids.append(mesline.location_production_id.id)
-        locationlist = self.env['stock.location'].search([('id', 'child_of', locationids)])
-        if container.location_id.id not in locationlist.ids:
+        if materiallocation.id != container.location_id.id:
             # 容器不在当前产线自动调拨
             container.write({'location_id': materiallocation.id})
         productdict, movelist = {}, self.env['stock.move']
@@ -238,10 +235,10 @@ class AASMESFeedmaterial(models.Model):
                 'location_dest_id': materiallocation.id, 'product_uom_qty': temp_qty
             })
             self.env['aas.mes.feedmaterial.list'].create({
-                'mesline_id': mesline.id,
+                'mesline_id': mesline.id, 'container_id': container.id,
                 'feedmaterial_id': feeding.id, 'material_id': material_id,
                 'material_lot': material_lot, 'material_qty': temp_qty,
-                'toatal_qty': feeding.material_qty, 'feeder_id': self.env.user.id, 'container_id': container.id
+                'toatal_qty': feeding.material_qty, 'feeder_id': self.env.user.id
             })
         movelist.action_done()
         if container.product_lines and len(container.product_lines) > 0:
@@ -314,7 +311,7 @@ class AASMESFeedmaterialList(models.Model):
     _name = 'aas.mes.feedmaterial.list'
     _description = 'AAS MES Feed Material'
     _rec_name = 'material_id'
-    _order = 'feed_time asc'
+    _order = 'feed_time desc'
 
 
     feedmaterial_id = fields.Many2one(comodel_name='aas.mes.feedmaterial', string=u'上料信息')

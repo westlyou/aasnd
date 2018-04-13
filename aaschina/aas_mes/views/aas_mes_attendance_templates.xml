@@ -43,9 +43,8 @@
                                             <li class="header">欢迎您，<t t-esc="checker"/></li>
                                             <li>
                                                 <ul class="menu">
-                                                    <li>
-                                                        <a href="/web/session/logout">注销</a>
-                                                    </li>
+                                                    <li><a target="_blank" href="/aasmes/feedmaterial">产线上料</a></li>
+                                                    <li><a href="/web/session/logout">注销</a></li>
                                                 </ul>
                                             </li>
                                         </ul>
