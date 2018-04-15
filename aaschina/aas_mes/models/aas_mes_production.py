@@ -360,7 +360,7 @@ class AASProductionProduct(models.Model):
                     'virtual': False, 'stocklist': stockvals['stocklist'], 'uom_id': material.uom_id.id
                 }
             else:
-                stockvals = self.action_loading_consume_virtuallist(material, wait_qty, workorder)
+                stockvals = self.action_loading_consume_virtuallist(material, wait_qty, workorder.mesline_id)
                 if not stockvals.get('success', False):
                     values.update(stockvals)
                     return values
@@ -427,15 +427,16 @@ class AASProductionProduct(models.Model):
 
 
     @api.model
-    def action_loading_consume_virtuallist(self, material, wait_qty, workorder):
+    def action_loading_consume_virtuallist(self, material, wait_qty, mesline):
         """获取虚拟物料可供消耗清单
         :param material:
         :param wait_qty:
-        :param workorder:
+        :param mesline:
         :return:
         """
         values = {'success': True, 'message': '', 'stocklist': []}
-        tempdomain = [('workorder_id', '=', workorder.id), ('product_id', '=', material.id), ('canconsume', '=', True)]
+
+        tempdomain = [('mesline_id', '=', mesline.id), ('product_id', '=', material.id), ('canconsume', '=', True)]
         outputlist = self.env['aas.production.product'].search(tempdomain, order='output_time')
         if not outputlist or len(outputlist) <= 0:
             return values
