@@ -129,8 +129,8 @@ class AASBaseCron(models.Model):
     @api.model
     def action_insert_product_template(self):
         sql_query = """
-        INSERT INTO product_template (id, default_code, name, company_id, categ_id, type, uom_id, uom_po_id, active, tracking, create_date, write_date)
-        SELECT t2.id, t2.default_code, t2.name, 1, 1, 'product', t3.id, t3.id, TRUE, 'lot', t2.creation_date, t2.last_update_date
+        INSERT INTO product_template (id, default_code, name, company_id, categ_id, type, uom_id, uom_po_id, active, tracking, costcenter, create_date, write_date)
+        SELECT t2.id, t2.default_code, t2.name, 1, 1, 'product', t3.id, t3.id, TRUE, 'lot', t2.costcenter, t2.creation_date, t2.last_update_date
         FROM product_template t1 RIGHT JOIN aas_ebs_product t2 ON t1.id = t2.id and t1.create_date = t2.creation_date
              INNER JOIN product_uom t3 ON t2.product_uom = t3.name
         WHERE t1.name IS NULL
@@ -141,7 +141,7 @@ class AASBaseCron(models.Model):
     @api.model
     def action_update_product_template(self):
         sql_query = """
-        UPDATE product_template t1 SET default_code=t2.default_code, name = t2.name, uom_id = t3.id, uom_po_id = t3.id, write_date = t2.last_update_date
+        UPDATE product_template t1 SET name = t2.name, default_code = t2.default_code, uom_id = t3.id, uom_po_id = t3.id, costcenter=t2.costcenter, write_date = t2.last_update_date
         FROM aas_ebs_product t2 INNER JOIN product_uom t3 ON t2.product_uom = t3.name
         WHERE t1.id = t2.id AND t1.create_date = t2.creation_date AND t1.write_date <> t2.last_update_date
         """
