@@ -185,3 +185,14 @@ class AASMESSerialnumber(models.Model):
             productionlist.write({'product_lot': productlot.id})
         values.update({'label_id': label.id, 'label_name': label.name})
         return values
+
+
+
+class AASProductLabelSerialnumber(models.Model):
+    _name = 'aas.product.label.serialnumber'
+    _description = 'AAS Product Label Serialnumber'
+    _order = 'bind_time desc'
+
+    label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', index=True)
+    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', index=True)
+    bind_time = fields.Datetime(string=u'绑定时间', default=fields.Datetime.now, copy=False)
