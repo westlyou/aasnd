@@ -43,6 +43,7 @@ class AASProductionProduct(models.Model):
     consumed_qty = fields.Float(string=u'消耗数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     finaloutput = fields.Boolean(string=u'最终产出', default=False, copy=False, help=u'是否最终的成品产出')
     output_date = fields.Char(string=u'产出日期', copy=False)
+    output_hour = fields.Integer(string=u'产出小时')
     output_time = fields.Datetime(string=u'产出时间', default=fields.Datetime.now, copy=False)
     onepass = fields.Boolean(string=u'一次通过', default=True, copy=False)
     qualified = fields.Boolean(string=u'是否合格', default=True, copy=False)
@@ -87,6 +88,13 @@ class AASProductionProduct(models.Model):
             productvals['schedule_name'] = record.schedule_id.name
         if record.workorder_id:
             productvals['workorder_name'] = record.workorder_id.name
+        chinatime = fields.Datetime.to_china_string(fields.Datetime.now())
+        try:
+            currenthour = int(chinatime[11:13])
+            if 0 <= currenthour <= 23:
+                productvals['output_hour'] = currenthour
+        except Exception:
+            productvals['output_hour'] = False
         record.write(productvals)
         return record
 

@@ -35,7 +35,7 @@ $(function(){
         $.ajax({
             url: '/aasmes/finalchecking/scanemployee',
             headers:{'Content-Type':'application/json'},
-            type: 'post', timeout:10000, dataType: 'json',
+            type: 'post', timeout:20000, dataType: 'json',
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scanparams, id: access_id}),
             success:function(data){
                 var dresult = data.result;
@@ -97,7 +97,7 @@ $(function(){
         $.ajax({
             url: '/aasmes/finalchecking/changemployeerole',
             headers:{'Content-Type':'application/json'},
-            type: 'post', timeout:10000, dataType: 'json',
+            type: 'post', timeout:20000, dataType: 'json',
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: tparams, id: access_id}),
             success:function(data){
                 var dresult = data.result;
@@ -119,7 +119,7 @@ $(function(){
         $.ajax({
             url: '/aasmes/finalchecking/scanserialnumber',
             headers:{'Content-Type':'application/json'},
-            type: 'post', timeout:10000, dataType: 'json',
+            type: 'post', timeout:60000, dataType: 'json',
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scanparams, id: access_id}),
             success:function(data){
                 var dresult = data.result;
@@ -172,7 +172,7 @@ $(function(){
             $.ajax({
                 url: '/aasmes/finalchecking/reworkconfirm',
                 headers:{'Content-Type':'application/json'},
-                type: 'post', timeout:10000, dataType: 'json',
+                type: 'post', timeout:30000, dataType: 'json',
                 data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: confirmparams, id: access_id}),
                 success:function(data){
                     var dresult = data.result;
@@ -278,7 +278,7 @@ $(function(){
         $.ajax({
             url: '/aasmes/attendance/loadingleavelist',
             headers:{'Content-Type':'application/json'},
-            type: 'post', timeout:10000, dataType: 'json',
+            type: 'post', timeout:30000, dataType: 'json',
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {}, id: access_id}),
             success:function(data){
                 var dresult = data.result;
@@ -325,7 +325,7 @@ $(function(){
             $.ajax({
                 url: '/aasmes/attendance/actionleave',
                 headers:{'Content-Type':'application/json'},
-                type: 'post', timeout:10000, dataType: 'json',
+                type: 'post', timeout:30000, dataType: 'json',
                 data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: lparams, id: access_id}),
                 success:function(data){
                     var dresult = data.result;
@@ -346,7 +346,7 @@ $(function(){
         $.ajax({
             url: '/aasmes/finalchecking/serialcount',
             headers:{'Content-Type':'application/json'},
-            type: 'post', timeout:10000, dataType: 'json',
+            type: 'post', timeout:30000, dataType: 'json',
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {}, id: access_id}),
             success:function(data){
                 var dresult = data.result;
