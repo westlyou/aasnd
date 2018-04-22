@@ -21,7 +21,7 @@ mui.ready(function(){
         error:function(xhr,type,errorThrown){ console.log(type); }
     });
 
-    document.getElementById('oqcchecking').addEventListener('tap', function(){
+    /*document.getElementById('oqcchecking').addEventListener('tap', function(){
         wx.scanQRCode({
             needResult: 1,
             desc: '扫描标签',
@@ -31,5 +31,5 @@ mui.ready(function(){
             },
             fail: function (result) {mui.toast(result.errMsg);}
         });
-    });
+    });*/
 });

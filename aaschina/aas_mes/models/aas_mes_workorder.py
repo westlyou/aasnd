@@ -21,7 +21,7 @@ _logger = logging.getLogger(__name__)
 # 子工单
 
 ORDERSTATES = [('draft', u'草稿'), ('confirm', u'确认'), ('producing', u'生产'), ('pause', u'暂停'), ('done', u'完成')]
-OUTPUTMANNERS = [('container', u'容器'), ('label', u'标签')]
+OUTPUTMANNERS = [('container', u'容器'), ('label', u'标签'), ('none', u'暂无')]
 
 class AASMESWorkorder(models.Model):
     _name = 'aas.mes.workorder'

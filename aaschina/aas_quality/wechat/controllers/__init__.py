@@ -71,4 +71,3 @@ class AASWechatQualityController(http.Controller):
 
 
 import aas_quality
-import aas_quality_oqcchecking
