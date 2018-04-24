@@ -13,12 +13,12 @@ class AASLabelPrinter(models.Model):
     _name = 'aas.label.printer'
     _description = u'标签打印机'
 
-    name = fields.Char(string=u'名称', copy=False)
+    name = fields.Char(string=u'名称')
     host = fields.Char(string=u'主机', default='127.0.0.1', help=u'打印机IP地址')
     port = fields.Integer(string=u"端口", default=80, help=u'打印机服务端口')
     serverurl = fields.Char(string=u'打印服务', help=u'打印机服务请求完整的URL', compute='_compute_serverurl', store=True)
-    model_id = fields.Many2one(comodel_name='ir.model', string=u'标签对象', ondelete='set null')
-    field_lines = fields.One2many(comodel_name='aas.label.printer.lines', inverse_name='printer_id', string=u'打印明细')
+    model_id = fields.Many2one(comodel_name='ir.model', string=u'标签对象', ondelete='set null', copy=True)
+    field_lines = fields.One2many('aas.label.printer.lines', inverse_name='printer_id', string=u'打印明细', copy=True)
 
     _sql_constraints = [
         ('uniq_name', 'unique (name)', u'标签打印机的名称不能重复！')
@@ -35,6 +35,14 @@ class AASLabelPrinter(models.Model):
         if not vals.get('field_lines'):
             raise UserError(u'请先添加需要打印的字段！')
         return super(AASLabelPrinter, self).create(vals)
+
+    @api.one
+    @api.returns('self', lambda value: value.id)
+    def copy(self, default=None):
+        default = dict(default or {})
+        default.setdefault('name', "%s (copy)" % (self.name or ''))
+        return super(AASLabelPrinter, self).copy(default)
+
 
     @api.multi
     def action_correct_records(self, records):

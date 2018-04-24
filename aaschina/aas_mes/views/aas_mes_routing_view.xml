@@ -10,7 +10,7 @@
                 <tree>
                     <field name="name"/>
                     <field name="mesline_id"/>
-                    <field name="standard_hours"/>
+                    <field name="standard_hours" widget="float_time"/>
                     <field name="owner_id"/>
                     <field name="workticket"/>
                     <field name="create_time"/>
@@ -48,7 +48,7 @@
                         <group>
                             <group>
                                 <field name="active" readonly="1"/>
-                                <field name="standard_hours" readonly="1"/>
+                                <field name="standard_hours" readonly="1" widget="float_time"/>
                                 <field name="workticket"/>
                             </group>
                         </group>
@@ -60,14 +60,14 @@
                                         <field name="name" required="1"/>
                                         <field name="sequence" required="1"/>
                                         <field name="workstation_id" options="{'no_create':true}" required="1"/>
-                                        <field name="standard_hours"/>
+                                        <field name="standard_hours" widget="float_time"/>
                                         <field name="note"/>
                                     </tree>
                                     <form>
                                         <group>
                                             <group>
                                                 <field name="name" required="1"/>
-                                                <field name="standard_hours"/>
+                                                <field name="standard_hours" widget="float_time"/>
                                             </group>
                                             <group>
                                                 <field name="sequence" required="1"/>

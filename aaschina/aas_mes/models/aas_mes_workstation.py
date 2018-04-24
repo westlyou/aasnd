@@ -24,7 +24,7 @@ class AASMESWorkstation(models.Model):
     _description = 'AAS MES Workstation'
 
     name = fields.Char(string=u'名称', required=True, copy=False)
-    code = fields.Char(string=u'编码', required=True, copy=False)
+    code = fields.Char(string=u'编码', copy=False)
     barcode = fields.Char(string=u'条码', compute='_compute_barcode', store=True, index=True)
     active = fields.Boolean(string=u'是否有效', default=True, copy=False)
     station_type = fields.Selection(selection=STATIONTYPES, string=u'工位类型', default='scanner', copy=False)
@@ -40,7 +40,16 @@ class AASMESWorkstation(models.Model):
 
     @api.multi
     def name_get(self):
-        return [(record.id, '%s[%s]' % (record.name, record.code)) for record in self]
+        res = []
+        for record in self:
+            tempitems = []
+            if record.name:
+                tempitems.append(record.name)
+            if record.code:
+                tempitems += ['[', record.code, ']']
+            res.append((record.id, ''.join(tempitems)))
+        return res
+
 
     @api.depends('code')
     def _compute_barcode(self):
