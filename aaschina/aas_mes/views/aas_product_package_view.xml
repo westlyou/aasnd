@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tree_aas_product_package_mes" model="ir.ui.view">
+            <field name="name">aas.product.package.mes.tree</field>
+            <field name="model">aas.product.package</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="product_id"/>
+                    <field name="customer_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_product_package_mes" model="ir.ui.view">
+            <field name="name">aas.product.package.mes.form</field>
+            <field name="model">aas.product.package</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group> <field name="name"/> </group>
+                        </group>
+                        <group>
+                            <group> <field name="product_id" required="1" options="{'no_create':true}"/> </group>
+                            <group> <field name="customer_id" required="1" options="{'no_create':true}"/> </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_product_package_mes" model="ir.ui.view">
+            <field name="name">aas.product.package.mes.search</field>
+            <field name="model">aas.product.package</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
+                    <field name="customer_id" string="客户" filter_domain="[('customer_id','ilike',self)]"/>
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="产品" context="{'group_by':'product_id'}"/>
+                        <filter string="客户" context="{'group_by':'customer_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_product_package_mes" model="ir.actions.act_window">
+            <field name="name">产品包装方式</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.product.package</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_product_package_mes"/>
+            <field name="search_view_id" ref="view_search_aas_product_package_mes"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加包装方式</p>
+            </field>
+        </record>
+
+        <record id="act_view_tree_aas_product_package_mes" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_product_package_mes"/>
+            <field name="act_window_id" ref="action_aas_product_package_mes"/>
+        </record>
+
+        <record id="act_view_form_aas_product_package_mes" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_product_package_mes"/>
+            <field name="act_window_id" ref="action_aas_product_package_mes"/>
+        </record>
+
+        <menuitem id="menu_aas_product_package_mes"  name="包装方式" action="action_aas_product_package_mes"
+                          parent="menu_aas_product_package" sequence="1" groups="group_aas_mes_technologist"/>
+
+    </data>
+</odoo>

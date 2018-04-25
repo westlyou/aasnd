@@ -120,11 +120,33 @@ class AASMESAttendanceController(http.Controller):
 
     @http.route('/aasmes/attendance/actionleave', type='json', auth="user")
     def aasmes_attendance_actionleave(self, attendanceid, leaveid):
-        print attendanceid, leaveid
         values = {'success': True, 'message': ''}
         attendance = request.env['aas.mes.work.attendance'].browse(attendanceid)
         attendance.write({'leave_id': leaveid})
         attendlines = request.env['aas.mes.work.attendance.line'].search([('attendance_id', '=', attendanceid), ('leave_id', '=', False)])
         if attendlines and len(attendlines) > 0:
             attendlines.write({'leave_id': leaveid})
+        return values
+
+
+
+    @http.route('/aasmes/attendance/workstation/equipmentlist', type='json', auth="user")
+    def aasmes_attendance_actionleave(self, workstationid):
+        values = {'success': True, 'message': '', 'equipmentlist': []}
+        login = request.env.user
+        checkdomain = [('lineuser_id', '=', login.id)]
+        lineuser = request.env['aas.mes.lineusers'].search(checkdomain, limit=1)
+        if not lineuser or lineuser.mesrole != 'checker':
+            values.update({'success': False, 'message': u'当前登录用户可能不是考勤员，请仔细检查！'})
+            return values
+        tempdomain = [('mesline_id', '=', lineuser.mesline_id.id), ('workstation_id', '=', workstationid)]
+        tempequipments = request.env['aas.mes.workstation.equipment'].search(tempdomain)
+        if tempequipments and len(tempequipments) > 0:
+            equipmentlist = []
+            for tequipment in tempequipments:
+                equipment = tequipment.equipment_id
+                equipmentlist.push({
+                    'equipment_id': equipment.id, 'equipment_name': equipment.name, 'equipment_code': equipment.code
+                })
+            values['equipmentlist'] = equipmentlist
         return values

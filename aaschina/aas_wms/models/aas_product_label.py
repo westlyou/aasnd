@@ -60,6 +60,10 @@ class AASProductLabel(models.Model):
     isproduction = fields.Boolean(string=u'产线标签', copy=False, related='location_id.edgelocation', store=True)
     journal_lines = fields.One2many(comodel_name='aas.product.label.journal', inverse_name='label_id', string=u'查存卡', copy=False)
 
+    #成品发货包装
+    package_id = fields.Many2one(comodel_name='aas.product.package', string=u'包装')
+    customer_id = fields.Many2one(comodel_name='res.partner', string=u'客户', ondelete='restrict')
+
     @api.depends('child_lines')
     def _compute_has_children(self):
         for record in self:
@@ -392,7 +396,7 @@ class AASProductLabel(models.Model):
         :param labelinfo:
         :return:
         """
-        values = {'success': True, 'message': '', 'desc': '', 'barcodes': []}
+        values = {'success': True, 'message': '', 'desc': '', 'barcodes': [], 'lotid': False}
         product_code, product_lot = labelinfo.get('PN', False), labelinfo.get('LOT', False)
         label_qty, label_count = labelinfo.get('QTY', False), labelinfo.get('Number', False)
         if not product_code:
@@ -412,12 +416,11 @@ class AASProductLabel(models.Model):
             values.update({'success': False, 'message': u'请仔细检查，您的产品编码异常，系统中不存在此产品！'})
             return values
         values['desc'] = temproduct.name
-        lotdomain = [('product_id', '=', temproduct.id), ('name', '=', product_lot)]
-        templot = self.env['stock.production.lot'].search(lotdomain, limit=1)
-        if not templot:
-            templot = self.env['stock.production.lot'].create({
-                'name': product_lot, 'product_id': temproduct.id, 'create_date': fields.Datetime.now()
-            })
+        packageid, package, customerid = labelinfo.get('Package', False), False, False
+        if packageid:
+            package = self.env['aas.product.package'].browse(int(packageid))
+            customerid = package.customer_id.id
+        templot = self.env['stock.production.lot'].action_checkout_lot(temproduct.id, product_lot)
         pdtlocation = self.env.ref('stock.location_production')
         packlocation = self.env['stock.warehouse'].get_default_warehouse().wh_pack_stock_loc_id
         # 启用打包库位
@@ -425,8 +428,9 @@ class AASProductLabel(models.Model):
             packlocation.sudo().write({'active': True})
         for tindex in range(0, label_count):
             templabel = self.env['aas.product.label'].create({
-                'product_id': temproduct.id, 'product_code': product_code, 'product_uom': temproduct.uom_id.id,
-                'stocked': True, 'location_id': packlocation.id, 'product_lot': templot.id, 'product_qty': label_qty
+                'product_id': temproduct.id, 'product_code': product_code,
+                'product_uom': temproduct.uom_id.id, 'stocked': True, 'location_id': packlocation.id,
+                'product_lot': templot.id, 'product_qty': label_qty, 'package_id': packageid, 'customer_id': customerid
             })
             values['barcodes'].append(templabel.name)
         self.env['stock.move'].create({
@@ -435,6 +439,7 @@ class AASProductLabel(models.Model):
             'restrict_lot_id': templot.id, 'product_uom_qty': label_qty * label_count,
             'location_id': pdtlocation.id, 'location_dest_id': packlocation.id, 'create_date': fields.Datetime.now()
         }).action_done()
+        values['lotid'] = templot.id
         return values
 
 

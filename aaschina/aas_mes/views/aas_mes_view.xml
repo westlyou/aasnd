@@ -82,10 +82,13 @@
         <menuitem id="menu_aas_mes_workstation"  name="工位" parent="menu_aas_mes_technologist" sequence="2"
                   groups="group_aas_mes_technologist"/>
 
-        <menuitem id="menu_aas_mes_producttest_technologist"  name="生产检测" parent="menu_aas_mes_technologist" sequence="3"
+        <menuitem id="menu_aas_product_package"  name="包装" parent="menu_aas_mes_technologist" sequence="3"
                   groups="group_aas_mes_technologist"/>
 
-        <menuitem id="menu_aas_mes_badmode"  name="不良模式" parent="menu_aas_mes_technologist" sequence="4"
+        <menuitem id="menu_aas_mes_producttest_technologist"  name="生产检测" parent="menu_aas_mes_technologist" sequence="4"
+                  groups="group_aas_mes_technologist"/>
+
+        <menuitem id="menu_aas_mes_badmode"  name="不良模式" parent="menu_aas_mes_technologist" sequence="5"
                   groups="group_aas_mes_technologist"/>
 
     </data>

@@ -1115,6 +1115,30 @@ class AASMESProductionLabelDestroyWizard(models.TransientModel):
 
 
 
+class AASProductLabel(models.Model):
+    _inherit = 'aas.product.label'
+
+    @api.model
+    def action_production_labels(self, labelinfo):
+        values = super(AASProductLabel, self).action_production_labels(labelinfo)
+        if not values.get('success', False):
+            return values
+        workorderstr = labelinfo.get('Workorders', False)
+        if workorderstr:
+            workordernames = workorderstr.split(',')
+            for orderstr in workordernames:
+                workorder = self.env['aas.mes.workorder'].search([('name', '=', orderstr.strip())], limit=1)
+                if not workorder:
+                    continue
+                worderdomain = [('workorder_id', '=', workorder.id), ('product_lot', '=', False)]
+                outputlist = self.env['aas.production.product'].search(worderdomain)
+                if outputlist and len(outputlist) > 0:
+                    outputlist.write({'product_lot': values.get('lotid', False)})
+        return values
+
+
+
+
 
 
 
