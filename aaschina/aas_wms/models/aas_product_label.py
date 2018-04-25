@@ -393,7 +393,10 @@ class AASProductLabel(models.Model):
     @api.model
     def action_production_labels(self, labelinfo):
         """不经过其他操作，直接生成标签
-        :param labelinfo:
+        :param labelinfo: {
+                            'PN': 'P-1743', 'LOT': '20180425', 'QTY': 100, 'Number': 10,
+                            'Package': 1, 'Workorders': '1569672-12,1569672-13,,1569672-15'
+                          }
         :return:
         """
         values = {'success': True, 'message': '', 'desc': '', 'barcodes': [], 'lotid': False}
@@ -416,7 +419,7 @@ class AASProductLabel(models.Model):
             values.update({'success': False, 'message': u'请仔细检查，您的产品编码异常，系统中不存在此产品！'})
             return values
         values['desc'] = temproduct.name
-        packageid, package, customerid = labelinfo.get('Package', False), False, False
+        packageid, customerid = labelinfo.get('Package', False), False
         if packageid:
             package = self.env['aas.product.package'].browse(int(packageid))
             customerid = package.customer_id.id
