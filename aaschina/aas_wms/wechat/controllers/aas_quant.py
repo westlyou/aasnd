@@ -21,9 +21,10 @@ class AASStockQuantWechatController(http.Controller):
 
     @http.route('/aaswechat/wms/stocklist', type='http', auth="user")
     def aas_wechat_wms_stocklist(self, limit=20):
-        values = request.params.copy()
+        values, companyid = request.params.copy(), request.env.user.company_id.id
         values.update({'stocklist': [], 'stockindex': 0})
-        stocklist = request.env['aas.stock.quant.report'].search([('company_id', '=', request.env.user.company_id.id)], limit=limit)
+        qdomain = [('company_id', '=', companyid), ('location_id.usage', '=', 'internal')]
+        stocklist = request.env['aas.stock.quant.report'].search(qdomain, limit=limit)
         if stocklist and len(stocklist) > 0:
             values['stocklist'] = [{
                 'product_id': tempstock.product_id.id, 'product_code': tempstock.product_id.default_code,
@@ -36,7 +37,8 @@ class AASStockQuantWechatController(http.Controller):
     @http.route('/aaswechat/wms/stockmore', type='json', auth="user")
     def aas_wechat_wms_stockmore(self, stockindex=0, skey=None, limit=20):
         values = {'success': True, 'message': '', 'stocklist': [], 'stockindex': stockindex, 'stockcount': 0}
-        stockdomain = [('company_id', '=', request.env.user.company_id.id)]
+        companyid = request.env.user.company_id.id
+        stockdomain = [('company_id', '=', companyid), ('location_id.usage', '=', 'internal')]
         if skey:
             searchdomain = ['|', ('product_code', 'ilike', '%'+skey+'%'), ('location_name', 'ilike', '%'+skey+'%')]
             stockdomain.insert(0, '&')
@@ -55,7 +57,8 @@ class AASStockQuantWechatController(http.Controller):
     @http.route('/aaswechat/wms/stocksearch', type='json', auth="user")
     def aas_wechat_wms_stocksearch(self, skey=None, limit=20):
         values = {'success': True, 'message': '', 'stocklist': [], 'stockindex': 0}
-        stockdomain = [('company_id', '=', request.env.user.company_id.id)]
+        companyid = request.env.user.company_id.id
+        stockdomain = [('company_id', '=', companyid), ('location_id.usage', '=', 'internal')]
         if skey:
             searchdomain = ['|', ('product_code', 'ilike', '%'+skey+'%'), ('location_name', 'ilike', '%'+skey+'%')]
             stockdomain.insert(0, '&')
