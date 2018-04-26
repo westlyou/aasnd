@@ -62,7 +62,8 @@ class AASMESMainorder(models.Model):
             'product_uom': product.uom_id.id,
             'product_qty': ebsproduction.product_qty,
             'actual_qty': ebsproduction.product_qty,
-            'imported': True
+            'imported': True,
+            'split_unit_qty': product.split_qty
         }
         tempbom = self.env['aas.mes.bom'].search([('product_id', '=', product.id), ('active', '=', True)], limit=1)
         if tempbom:

@@ -149,6 +149,8 @@ class AASMESMainorder(models.Model):
 
     @api.one
     def action_split(self):
+        if not self.mesline_id:
+            raise UserError(u'请先为主工单设置一个产线！')
         if not self.split_unit_qty or float_compare(self.split_unit_qty, 0.0, precision_rounding=0.000001) <= 0.0:
             raise UserError(u'拆分批次数量必须是一个有效的正数！')
         tempqty, sequence = self.actual_qty, self.start_index

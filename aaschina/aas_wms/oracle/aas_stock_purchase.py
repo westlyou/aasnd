@@ -229,7 +229,7 @@ class AASStockPurchaseOrder(models.Model):
 class AASStockPurchaseOrderLine(models.Model):
     _name = 'aas.stock.purchase.order.line'
     _description = 'AAS Stock Purchase Order Line'
-    _rec_name = 'line_name'
+    _rec_name = 'product_id'
 
     order_id = fields.Many2one(comodel_name='aas.stock.purchase.order', string=u'采购订单', ondelete='cascade')
     order_name = fields.Char(string=u'订单号')

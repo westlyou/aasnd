@@ -77,7 +77,8 @@ class AASStockDelivery(models.Model):
         """
         if not self.delivery_lines or len(self.delivery_lines) <= 0:
             raise UserError(u'您还没有添加明细，请新添加明细！')
-        self.write({'state': 'confirm', 'delivery_lines': [(1, dline.id, {'state': 'confirm'}) for dline in self.delivery_lines]})
+        delivery_lines = [(1, dline.id, {'state': 'confirm'}) for dline in self.delivery_lines]
+        self.write({'state': 'confirm', 'delivery_lines': delivery_lines})
 
     @api.one
     def action_picking_list(self):
@@ -162,7 +163,9 @@ class AASStockDelivery(models.Model):
     @api.multi
     def unlink(self):
         for record in self:
-            if record.state!='draft':
+            if record.state == 'draft':
+                continue
+            else:
                 raise UserError(u'发货单%s已经开始处理，不可以删除！'% record.name)
         return super(AASStockDelivery, self).unlink()
 

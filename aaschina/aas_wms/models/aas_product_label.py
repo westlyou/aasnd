@@ -395,7 +395,7 @@ class AASProductLabel(models.Model):
         """不经过其他操作，直接生成标签
         :param labelinfo: {
                             'PN': 'P-1743', 'LOT': '20180425', 'QTY': 100, 'Number': 10,
-                            'Package': 1, 'Workorders': '1569672-12,1569672-13,,1569672-15'
+                            'Package': 1, 'Workorders': '1569672-12,1569672-13,1569672-15'
                           }
         :return:
         """
