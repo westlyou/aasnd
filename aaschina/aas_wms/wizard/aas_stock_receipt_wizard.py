@@ -177,7 +177,7 @@ class AASStockReceiptProductWizard(models.TransientModel):
             'location_id': location_id, 'product_qty': lot_qty, 'product_lot': lot_id, 'state': 'draft',
             'company_id': self.env.user.company_id.id, 'origin_order': self.origin_order,
             'locked': True, 'locked_order': receipt.name,
-            'partner_id': False if receipt.partner_id else receipt.partner_id.id,
+            'partner_id': False if not receipt.partner_id else receipt.partner_id.id,
             'warranty_date': warranty_date or False
         }
         return self.env['aas.product.label'].create(labelvals)

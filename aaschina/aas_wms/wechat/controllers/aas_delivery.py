@@ -321,13 +321,17 @@ class AASDeliveryWechatController(http.Controller):
         if label.locked:
             values.update({'success': False, 'message': u'标签已被%s锁定不可以用于发货！'% label.locked_order})
             return values
+        if label.partner_id:
+            partnerid, partnername = label.partner_id.id, label.partner_id.name
+        else:
+            partnerid, partnername = False, False
         if not label.origin_order or not label.partner_id:
             values.update({'success': False, 'message': u'请仔细检查当前标签是否是采购收货进来的！'})
             return values
         values.update({
             'label_id': label.id, 'label_name': label.name,
             'product_code': label.product_code, 'product_qty': label.product_qty, 'product_lot': label.product_lot.name,
-            'origin_order': label.origin_order, 'partner_id': label.partner_id.id, 'partner_name': label.partner_id.name
+            'origin_order': label.origin_order, 'partner_id': partnerid, 'partner_name': partnername
         })
         return values
 
