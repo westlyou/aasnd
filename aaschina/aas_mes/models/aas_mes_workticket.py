@@ -241,7 +241,8 @@ class AASMESWorkticket(models.Model):
         self.ensure_one()
         routing_id, sequence = self.routing_id.id, self.sequence
         tempdomain = [('routing_id', '=', routing_id), ('sequence', '>', sequence)]
-        if self.env['aas.mes.routing.line'].search_count(tempdomain, order='sequence') > 0:
+        nextworkcenter = self.env['aas.mes.routing.line'].search(tempdomain, order='sequence', limit=1)
+        if nextworkcenter:
             return False
         else:
             return True
