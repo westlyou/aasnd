@@ -179,7 +179,7 @@
                                     </div>
                                 </li>
                                 <t t-foreach="rejectlist" t-as="treject">
-                                    <li class="mui-table-view-cell" t-att-lineid="toperation['line_id']">
+                                    <li class="mui-table-view-cell">
                                         <div class="mui-table">
                                             <div class="mui-table-cell mui-col-xs-6 mui-text-left"><t t-esc="treject['label_name']"/></div>
                                             <div class="mui-table-cell mui-col-xs-6 mui-text-right"><t t-esc="treject['product_code']"/></div>
