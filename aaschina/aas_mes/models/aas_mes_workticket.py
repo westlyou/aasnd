@@ -153,7 +153,7 @@ class AASMESWorkticket(models.Model):
         workorder, product = self.workorder_id, self.workorder_id.product_id
         workcenter, workstation = self.workcenter_id, self.workcenter_id.workstation_id
         container = False if not container_id else self.env['aas.container'].browse(container_id)
-        finaloutput = False  # self.islastworkcenter()
+        finaloutput = self.islastworkcenter()
         tempvas = self.env['aas.production.product'].action_production_output(workorder, product, commit_qty,
                                                                          workticket=self,
                                                                          workcenter=workcenter,
