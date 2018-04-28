@@ -165,7 +165,9 @@ class AASWorkorderWechatController(http.Controller):
             })
             return values
         mesline, workorder = workticket.mesline_id, workticket.workorder_id
-        employeedomain = [('workstation_id', '=', workstation.id), ('mesline_id', '=', mesline.id)]
+        employeedomain = [('workstation_id', '=', workstation.id)]
+        if not workstation.ispublic:
+            employeedomain.append(('mesline_id', '=', mesline.id))
         if request.env['aas.mes.workstation.employee'].search_count(employeedomain) <= 0:
             values.update({'success': False, 'message': u'当前岗位没有员工在岗，请员工先上岗再继续操作！'})
             return values
