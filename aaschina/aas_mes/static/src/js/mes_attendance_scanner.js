@@ -8,6 +8,7 @@ $(function() {
         var stationid = station.attr('stationid');
         var stationname = station.attr('stationname');
         $('#cstation').attr('stationid', stationid).html(stationname);
+        action_loading_equipments(parseInt(stationid));
     });
 
     //员工牌扫描
@@ -30,6 +31,10 @@ $(function() {
         var cstationid = parseInt($('#cstation').attr('stationid'));
         if(cstationid > 0){
             scanparams['stationid'] = cstationid;
+        }
+        var cequipmentid = parseInt($('#cequipment').attr('equipmentid'));
+        if(cequipmentid > 0){
+            scanparams['equipmentid'] = cequipmentid;
         }
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
@@ -77,7 +82,7 @@ $(function() {
                 if(dresult.workstations.length<=0){
                     return ;
                 }
-                _.each(dresult.workstations, function(station){
+                $.each(dresult.workstations, function(index, station){
                     var stationblock = $('<div class="col-md-3"></div>').appendTo($('#workstationlist'));
                     var stationcontent = $('<div class="box box-widget widget-user-2"></div>').appendTo(stationblock);
                     var stationheader = $('<div class="widget-user-header"></div>').appendTo(stationcontent);
@@ -89,7 +94,7 @@ $(function() {
                     stationheader.html('<h3 class="widget-user-username" style="margin-left:0;">'+station.station_name+'</h3>');
                     var stationfooter = $('<div class="box-footer no-padding"></div>').appendTo(stationcontent);
                     var footerbox = $('<ul class="nav nav-stacked"></ul>').appendTo(stationfooter);
-                    _.each(station.employees, function(semployee){
+                    $.each(station.employees, function(tindex, semployee){
                         $('<li><a href="#" style="font-size:18px; padding:5px 15px; height:32px; font-weight:bold;">' +
                             semployee.employee_name+'<span class="pull-right">'+semployee.employee_code+'</span>' +
                             '</a></li>').appendTo(footerbox);
@@ -178,6 +183,51 @@ $(function() {
 
         });
     }
+
+
+    function action_loading_equipments(workstationid){
+        var temparams = {'workstationid': workstationid};
+        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        $.ajax({
+            url: '/aasmes/attendance/workstation/equipmentlist',
+            headers:{'Content-Type':'application/json'},
+            type: 'post', timeout:10000, dataType: 'json',
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: temparams, id: access_id}),
+            success:function(data){
+                var dresult = data.result;
+                if(!dresult.success){
+                    layer.msg(dresult.message, {icon: 5});
+                    return ;
+                }
+                var equipmentrow = $('#equipmentlist');
+                equipmentrow.html('');
+                if(dresult.equipmentlist.length <= 0){
+                    return ;
+                }
+                $.each(dresult.equipmentlist, function(index, tequipment){
+                    var titem = $('<div class="col-md-3 col-xs-6 aas-equipment"></div>');
+                    titem.attr({'eid': tequipment.equipment_id, 'ecode': tequipment.equipment_code});
+                    titem.css({'cursor': 'pointer', 'margin-bottom': '10px'});
+                    var tempstr = '<div class="small-box bg-green" style="margin-bottom:0;">';
+                    tempstr += '<div class="inner" style="text-align:center;">';
+                    tempstr += '<h4>'+tequipment.equipment_name+'</h4><p>'+tequipment.equipment_code+'</p></div></div>';
+                    titem.html(tempstr).appendTo(equipmentrow);
+                    titem.click(function(){
+                        $('#cequipment').attr('equipmentid', tequipment.equipment_id).html(tequipment.equipment_code);
+                    });
+                });
+            },
+            error:function(xhr,type,errorThrown){
+                console.log(type);
+            }
+        });
+    }
+
+    $('.aas-equipment').click(function(){
+        var eid=$(this).attr('eid');
+        var ecode = $(this).attr('ecode');
+        $('#cequipment').attr('equipmentid', eid).html(ecode);
+    });
 
 
 

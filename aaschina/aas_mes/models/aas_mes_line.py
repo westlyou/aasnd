@@ -54,6 +54,7 @@ class AASMESLine(models.Model):
     workdate = fields.Char(string=u'工作日期', copy=False)
     workday_start = fields.Datetime(string=u'当天开工时间', copy=False)
     workday_finish = fields.Datetime(string=u'当天完工时间', copy=False)
+    ispublic = fields.Boolean(string=u'公共产线', default=False, copy=False)
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'默认工位')
     serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'新序列号', ondelete='restrict', help=u'最近一次产出的序列号')
 

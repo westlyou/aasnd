@@ -394,7 +394,7 @@ class AASProductLabel(models.Model):
     def action_production_labels(self, labelinfo):
         """不经过其他操作，直接生成标签
         :param labelinfo: {
-                            'PN': 'P-1743', 'LOT': '20180425', 'QTY': 100, 'Number': 10,
+                            'PN': 'P-1743', 'LOT': '20180425', 'QTY': 100, 'Number': 10, 'DateCode':'1820',
                             'Package': 1, 'Workorders': '1569672-12,1569672-13,1569672-15'
                           }
         :return:
@@ -429,9 +429,10 @@ class AASProductLabel(models.Model):
         # 启用打包库位
         if not packlocation.active:
             packlocation.sudo().write({'active': True})
+        datecode = labelinfo.get('DateCode', False)
         for tindex in range(0, label_count):
             templabel = self.env['aas.product.label'].create({
-                'product_id': temproduct.id, 'product_code': product_code,
+                'product_id': temproduct.id, 'product_code': product_code, 'date_code': datecode,
                 'product_uom': temproduct.uom_id.id, 'stocked': True, 'location_id': packlocation.id,
                 'product_lot': templot.id, 'product_qty': label_qty, 'package_id': packageid, 'customer_id': customerid
             })

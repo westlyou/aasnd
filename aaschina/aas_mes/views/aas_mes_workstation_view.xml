@@ -11,6 +11,7 @@
                     <field name="name"/>
                     <field name="code"/>
                     <field name="station_type"/>
+                    <field name="shortname"/>
                 </tree>
             </field>
         </record>
@@ -30,8 +31,10 @@
                         <group>
                             <group>
                                 <field name="code" required="1"/>
+                                <field name="shortname"/>
                             </group>
                             <group>
+                                <field name="active" readonly="1"/>
                                 <field name="station_type" required="1"/>
                             </group>
                         </group>

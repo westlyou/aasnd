@@ -13,6 +13,7 @@
                     <field name="line_type"/>
                     <field name="workorder_id"/>
                     <field name="schedule_id"/>
+                    <field name="ispublic"/>
                 </tree>
             </field>
         </record>
@@ -39,6 +40,7 @@
                         </group>
                         <group>
                             <group>
+                                <field name="ispublic"/>
                                 <field name="workday_start" readonly="1"/>
                                 <field name="workday_finish" readonly="1"/>
                                 <field name="serialnumber_id" attrs="{'invisible':[('serialnumber_id','=',False)]}" readonly="1"/>
@@ -147,6 +149,8 @@
                     <field name="location_production_id" string="成品库位" filter_domain="[('location_production_id','ilike',self)]"/>
                     <field name="workorder_id" string="当前工单" filter_domain="[('workorder_id','ilike',self)]"/>
                     <field name="schedule_id" string="当前班次" filter_domain="[('schedule_id','ilike',self)]"/>
+                    <separator/>
+                    <filter string="公共产线" domain="[('ispublic','=',True)]" />
                 </search>
             </field>
         </record>

@@ -88,7 +88,7 @@
                             </div>
                         </section>
                         <section class="content">
-                            <div id="equipmentlist" class="row"></div>
+                            <div id="equipmentlist" class="row" style="margin-bottom:20px;"> </div>
                             <div id="workstationlist" class="row" action="working">
                                 <t t-foreach="workstations" t-as="station">
                                     <div class="col-md-3">

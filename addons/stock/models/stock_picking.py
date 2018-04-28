@@ -52,8 +52,7 @@ class PickingType(models.Model):
     rate_picking_late = fields.Integer(compute='_compute_picking_count')
     rate_picking_backorders = fields.Integer(compute='_compute_picking_count')
 
-    barcode_nomenclature_id = fields.Many2one(
-        'barcode.nomenclature', 'Barcode Nomenclature')
+    # barcode_nomenclature_id = fields.Many2one('barcode.nomenclature', 'Barcode Nomenclature')
 
     @api.one
     def _compute_last_done_picking(self):
