@@ -315,11 +315,8 @@ class AASDeliveryWechatController(http.Controller):
         if not label:
             values.update({'success': False, 'message': u'标签可能已删除！'})
             return values
-        if label.state != 'normal':
+        if label.state not in ['normal', 'frozen']:
             values.update({'success': False, 'message': u'标签状态异常不可以用于发货！'})
-            return values
-        if label.locked:
-            values.update({'success': False, 'message': u'标签已被%s锁定不可以用于发货！'% label.locked_order})
             return values
         if label.partner_id:
             partnerid, partnername = label.partner_id.id, label.partner_id.name
