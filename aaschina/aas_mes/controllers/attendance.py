@@ -36,7 +36,8 @@ class AASMESAttendanceController(http.Controller):
             stationlist = []
             for wline in workstationlines:
                 station = wline.workstation_id
-                stationitem = {'station_id': station.id, 'station_name': station.name, 'station_type': station.station_type, 'employees': []}
+                station_name = station.name if not station.shortname else station.shortname
+                stationitem = {'station_id': station.id, 'station_name': station_name, 'station_type': station.station_type, 'employees': []}
                 employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', station.id)]
                 employeelist = request.env['aas.mes.workstation.employee'].search(employeedomain)
                 if not employeelist or len(employeelist) <= 0:
