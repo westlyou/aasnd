@@ -202,6 +202,14 @@ mui.ready(function(){
         var mesline = document.getElementById('mesline');
         var meslineid = parseInt(mesline.getAttribute('meslineid'));
         var temparams = {'meslineid': meslineid, 'barcode': barcode};
+        var stationid = parseInt(document.getElementById('workstation').getAttribute('stationid'));
+        if(stationid > 0){
+            temparams['workstationid'] = stationid;
+        }
+        var equipmentid = parseInt(document.getElementById('mequipment').getAttribute('equipmentid'));
+        if(equipmentid > 0){
+            temparams['equipmentid'] = equipmentid;
+        }
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         var tempmask = aas_attendance_loading();
         mui.ajax('/aaswechat/mes/attendance/scanning', {

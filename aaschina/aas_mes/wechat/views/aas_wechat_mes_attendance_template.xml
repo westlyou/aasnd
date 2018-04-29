@@ -30,7 +30,7 @@
                                 </li>
                                 <li class="mui-table-view-cell">
                                     <span class="mui-pull-left">当前工位</span>
-                                    <span id="workstation" class="mui-pull-right" stationid="0">单击切换工位</span>
+                                    <span id="workstationworkstation" class="mui-pull-right" stationid="0">单击切换工位</span>
                                 </li>
                                 <li class="mui-table-view-cell">
                                     <span class="mui-pull-left">当前设备</span>
