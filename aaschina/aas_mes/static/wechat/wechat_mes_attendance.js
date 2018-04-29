@@ -225,11 +225,13 @@ mui.ready(function(){
                     return ;
                 }
                 if(dresult.action=='working'){
-                    mui.toast('您已上岗！');
-                    return ;
+                    if(dresult.message!=null && dresult.message!=''){
+                        mui.toast(dresult.message);
+                    }else{
+                        mui.toast('您已上岗！');
+                    }
                 }else if(dresult.action=='leave'){
-                    mui.toast('您已上岗！');
-                    return ;
+                    mui.toast('您已离岗！');
                 }
                 window.location.reload(true);
             },
