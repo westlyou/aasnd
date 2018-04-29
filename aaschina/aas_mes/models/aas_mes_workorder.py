@@ -324,6 +324,7 @@ class AASMESWorkorder(models.Model):
     @api.one
     def action_done(self):
         # 根据结单方式判断什么时候自动结单
+        _logger.info('workorder: '+str(self.output_qty))
         closeorder = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'closeorder_method')
         if closeorder == 'equal':
             if float_compare(self.output_qty, self.input_qty, precision_rounding=0.000001) >= 0.0:
