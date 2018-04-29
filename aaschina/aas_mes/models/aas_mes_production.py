@@ -223,6 +223,7 @@ class AASProductionProduct(models.Model):
                     if tempvlist and len(tempvlist) > 0:
                         virtuallist += tempvlist
             outputvals['material_lines'] = materiallist
+        _logger.info(str(outputvals))
         currentoutput = self.env['aas.production.product'].create(outputvals)
         values['production_id'] = currentoutput.id
         # 消耗原材料，库存移动到生产虚库
@@ -281,6 +282,7 @@ class AASProductionProduct(models.Model):
         # 兼容下线产出
         if not workticket and container and workorder.output_manner == 'container':
             self.action_output2container(currentoutput, container)
+        _logger.info(str(workordervals))
         if workordervals and len(workordervals) > 0:
             workorder.write(workordervals)
         # 更新序列号信息
