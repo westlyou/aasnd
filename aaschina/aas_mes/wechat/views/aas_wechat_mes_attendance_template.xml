@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <template id="wechat_mes_attendance" name="Wechat MES Attendance">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>安费诺先进传感器</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                    <meta name="apple-mobile-web-app-capable" content="yes"/>
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.picker.min.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/iconfont/iconfont.css"/>
+                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
+                </head>
+                <body>
+                    <header class="mui-bar mui-bar-nav">
+                        <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+                        <h1 class="mui-title"> 员工出勤 </h1>
+                    </header>
+                    <div id="attendance_pullrefresh" class="mui-content mui-scroll-wrapper">
+                        <div class="mui-scroll">
+                            <ul class="mui-table-view">
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">当前产线</span>
+                                    <span id="mesline" class="mui-pull-right" meslineid="0">单击切换产线</span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">当前工位</span>
+                                    <span id="workstation" class="mui-pull-right" stationid="0">单击切换工位</span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">当前设备</span>
+                                    <span id="mequipment" class="mui-pull-right" equipmentid="0">单击切换设备</span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">当前员工</span>
+                                    <span id="memployee" class="mui-pull-right" barcode=""></span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <div class='mui-table'>
+                                        <div class='mui-table-cell mui-col-xs-12 mui-text-center'>
+                                            <button id="action_scan" type="button"
+                                                    class="mui-btn mui-btn-primary mui-btn-block">扫描员工卡</button>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </body>
+                <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
+                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.picker.min.js"></script>
+                <script type="text/javascript" src="/aas_mes/static/wechat/wechat_mes_attendance.js"></script>
+            </html>
+        </template>
+
+
+    </data>
+</odoo>

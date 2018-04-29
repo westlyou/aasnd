@@ -12,3 +12,4 @@ import aas_feedmaterial
 import aas_workorder
 import aas_container
 import aas_label
+import aas_attendance
