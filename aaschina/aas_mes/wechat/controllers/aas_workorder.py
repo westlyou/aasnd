@@ -134,7 +134,7 @@ class AASWorkorderWechatController(http.Controller):
 
     @http.route('/aaswechat/mes/workticket/badmodelist', type='json', auth="user")
     def aas_wechat_mes_workticket_badmodelist(self, workticketid):
-        values = {'success': True, 'message': ''}
+        values = {'success': True, 'message': '', 'badmodelist': []}
         workticket = request.env['aas.mes.workticket'].browse(workticketid)
         workstation = workticket.workcenter_id.workstation_id
         if not workstation:
