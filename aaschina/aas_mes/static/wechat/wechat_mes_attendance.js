@@ -19,6 +19,17 @@ mui.init({
 
 mui.ready(function(){
 
+    var nativeSpeech = new SpeechSynthesisUtterance();
+    nativeSpeech.lang = 'zh';
+    nativeSpeech.rate = 1.2;
+    nativeSpeech.pitch = 1.5;
+    nativeSpeech.volume = 1.0;
+
+    function nativespeak(message){
+        nativeSpeech.text = message;
+        speechSynthesis.speak(nativeSpeech);
+    }
+
     mui.ajax('/aaswechat/mes/scaninit',{
         data: JSON.stringify({
             jsonrpc: "2.0", method: 'call', params: {'access_url': location.href}, id: Math.floor(Math.random() * 1000 * 1000 * 1000)
@@ -230,8 +241,10 @@ mui.ready(function(){
                     }else{
                         mui.toast('您已上岗！');
                     }
+                    nativespeak('您已上岗');
                 }else if(dresult.action=='leave'){
                     mui.toast('您已离岗！');
+                    nativespeak('您已离岗');
                 }
                 window.location.reload(true);
             },
