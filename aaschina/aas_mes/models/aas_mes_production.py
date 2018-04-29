@@ -325,7 +325,7 @@ class AASProductionProduct(models.Model):
             employeedomain.append(('mesline_id', '=', mesline.id))
         if equipment:
             tempdomain = employeedomain + [('equipment_id', '=', equipment.id)]
-            if self.env['aas.mes.workstation.employee'].search_count(employeedomain) > 0:
+            if self.env['aas.mes.workstation.employee'].search_count(tempdomain) > 0:
                 employeedomain = tempdomain
         employeelist = self.env['aas.mes.workstation.employee'].search(employeedomain)
         if employeelist and len(employeelist) > 0:
