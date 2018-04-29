@@ -93,7 +93,10 @@ class AASWorkorderWechatController(http.Controller):
 
     @http.route('/aaswechat/mes/workticket/finish/<int:workticketid>', type='http', auth='user')
     def aas_wechat_mes_workticketfinish(self, workticketid):
-        values = {'success': True, 'message': '', 'needcontainer': 'none', 'needprinter': 'none'}
+        values = {
+            'success': True, 'message': '', 'needcontainer': 'none',
+            'needprinter': 'none',
+        }
         workticket = request.env['aas.mes.workticket'].browse(workticketid)
         if not workticket:
             values.update({'success': False, 'message': u'工票异常，可能已经被删除！'})
@@ -102,28 +105,34 @@ class AASWorkorderWechatController(http.Controller):
             return http.redirect_with_hash('/aaswechat/mes/workticket/start/'+str(workticketid))
         if workticket.state == 'done':
             values.update({'success': False, 'message': u'工票已完工，不可以再操作！'})
-        workorder = workticket.workorder_id
+        workorder,mesline = workticket.workorder_id, workticket.mesline_id
         product_code = workticket.product_id.default_code
         output_qty, badmode_qty = workticket.output_qty, workticket.badmode_qty
         values.update({
+            'employeelist': [], 'equipmentlist': [],
             'workticket_id': workticketid, 'workticket_name': workticket.name,
             'time_start': fields.Datetime.to_china_string(workticket.time_start),
             'sequence': workticket.sequence, 'workcenter_name': workticket.workcenter_name,
-            'product_code': product_code, 'input_qty': workticket.input_qty, 'output_manner': workorder.output_manner,
-            'output_qty': output_qty, 'badmode_qty': badmode_qty, 'workorder_name': workticket.workorder_id.name,
-            'mesline_name': workticket.mesline_name, 'workstation_name': '', 'employeelist': [], 'equipmentlist': []
+            'workstation_name': '', 'workstation_id': '0', 'output_manner': workorder.output_manner,
+            'product_code': product_code, 'input_qty': workticket.input_qty, 'mesline_name': mesline.name,
+            'output_qty': output_qty, 'badmode_qty': badmode_qty, 'workorder_name': workticket.workorder_id.name
         })
         if workticket.workcenter_id.workstation_id:
             workstation = workticket.workcenter_id.workstation_id
-            values['workstation_name'] = workstation.name
-            if workstation.employee_lines and len(workstation.employee_lines) > 0:
+            values.update({'workstation_name': workstation.name, 'workstation_id': workstation.id})
+            tempdomain = [('workstation_id', '=', workstation.id)]
+            if not workstation.ispublic:
+                tempdomain.append(('mesline_id', '=', mesline.id))
+            temployees = request.env['aas.mes.workstation.employee'].search(tempdomain)
+            if temployees and len(temployees) > 0:
                 values['employeelist'] = [{
                     'employee_name': temployee.employee_id.name, 'employee_code': temployee.employee_id.code
-                } for temployee in workstation.employee_lines]
-            if workstation.equipment_lines and len(workstation.equipment_lines) > 0:
+                } for temployee in temployees]
+            tequipments = request.env['aas.mes.workstation.equipment'].search(tempdomain)
+            if tequipments and len(tequipments) > 0:
                 values['equipmentlist'] = [{
                     'equipment_name': tequipment.equipment_id.name, 'equipment_code': tequipment.equipment_id.code
-                } for tequipment in workstation.equipment_lines]
+                } for tequipment in tequipments]
         if workticket.islastworkcenter():
             if workorder.output_manner == 'container':
                 values['needcontainer'] = 'wanted'
@@ -157,7 +166,7 @@ class AASWorkorderWechatController(http.Controller):
 
 
     @http.route('/aaswechat/mes/workticket/docommit', type='json', auth="user")
-    def aas_wechat_mes_workticket_docommit(self, workticketid, commit_qty, badmode_lines=[], container_id=False):
+    def aas_wechat_mes_workticket_docommit(self, workticketid, commit_qty, badmode_lines=[], container_id=False, equipment_id=None):
         values = {'success': True, 'message': '', 'workticket_id': workticketid, 'labelid': '0'}
         workticket = request.env['aas.mes.workticket'].browse(workticketid)
         if not workticket:
@@ -185,8 +194,9 @@ class AASWorkorderWechatController(http.Controller):
             if manner == 'container' and not container_id:
                 values.update({'success': False, 'message': u'当前工序未最后一道工序成品产出需要指定容器，请先扫描容器条码！'})
                 return values
+        equipment = False if not equipment_id else request.env['aas.equipment.equipment'].browse(equipment_id)
         try:
-            workticket.action_doing_commit(commit_qty, badmode_lines=badmode_lines, container_id=container_id)
+            workticket.action_doing_commit(commit_qty, badmode_lines=badmode_lines, container_id=container_id, equipment=equipment)
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
             return values
@@ -210,4 +220,24 @@ class AASWorkorderWechatController(http.Controller):
             values.update({'success': False, 'message': u'容器已被占用，暂不可以使用！'})
             return values
         values.update({'container_id': container.id, 'container_name': container.name})
+        return values
+
+
+
+    @http.route('/aaswechat/mes/workticket/equipmentlist', type='json', auth="user")
+    def aas_wechat_mes_workticket_equipmentlist(self, workticketid):
+        values = {'success': True, 'message': '', 'equipments': []}
+        workticket = request.env['aas.mes.workticket'].browse(workticketid)
+        workstation, mesline = workticket.workcenter_id.workstation_id, workticket.mesline_id
+        if not workstation:
+            values.update({'success': False, 'message': u'当前工序还未设置工位,请先设置工位信息！'})
+            return values
+        tempdomain = [('workstation_id', '=', workstation.id)]
+        if not workstation.ispublic:
+            tempdomain.append(('mesline_id', '=', mesline.id))
+        tequipments = request.env['aas.mes.workstation.equipment'].search(tempdomain)
+        if tequipments and len(tequipments) > 0:
+            values['equipments'] = [{
+                'value': str(tequipment.equipment_id.id), 'text': tequipment.equipment_id.code
+            } for tequipment in tequipments]
         return values
