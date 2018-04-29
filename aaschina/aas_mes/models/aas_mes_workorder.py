@@ -61,7 +61,7 @@ class AASMESWorkorder(models.Model):
     workcenter_start = fields.Many2one(comodel_name='aas.mes.workticket', string=u'开始工序', ondelete='restrict')
     workcenter_finish = fields.Many2one(comodel_name='aas.mes.workticket', string=u'结束工序', ondelete='restrict')
     isproducing = fields.Boolean(string=u'正在生产', default=False, copy=False, help=u'当前工单在相应的产线上正在生产')
-    output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'))
+    output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     output_time = fields.Datetime(string=u'产出时间', copy=False, help=u'最近一次产出的时间')
     scrap_qty = fields.Float(string=u'报废数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     output_manner = fields.Selection(selection=OUTPUTMANNERS, string=u'产出方式', copy=False)
@@ -324,7 +324,6 @@ class AASMESWorkorder(models.Model):
     @api.one
     def action_done(self):
         # 根据结单方式判断什么时候自动结单
-        _logger.info('workorder: '+str(self.output_qty))
         closeorder = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'closeorder_method')
         if closeorder == 'equal':
             if float_compare(self.output_qty, self.input_qty, precision_rounding=0.000001) >= 0.0:

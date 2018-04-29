@@ -168,7 +168,7 @@ class AASMESMainorder(models.Model):
     def action_building_workorder(self, sequence, product_qty):
         workorder = self.env['aas.mes.workorder'].create({
             'name': self.name+'-'+str(sequence), 'product_id': self.product_id.id,
-            'product_uom': self.product_uom.id, 'input_qty': product_qty, 'output_qty': product_qty,
+            'product_uom': self.product_uom.id, 'input_qty': product_qty, 'output_qty': 0.0,
             'aas_bom_id': self.aas_bom_id.id, 'routing_id': self.routing_id.id,
             'mesline_id': self.mesline_id.id, 'mainorder_id': self.id, 'product_code': self.product_id.default_code
         })
