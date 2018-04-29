@@ -144,9 +144,15 @@ class AASWorkorderWechatController(http.Controller):
         if not badmodelist or len(badmodelist) <= 0:
             values.update({'success': False, 'message': u'工位%s还未设置不良模式，请联系工艺设置！'% workstation.name})
             return values
-        values['badmodelist'] = [{
-            'value': str(badmode.id), 'text': badmode.name+'['+badmode.code+']'
-        } for badmode in badmodelist]
+        for badmode in badmodelist:
+            tempnames = []
+            if badmode.name:
+                tempnames.append(badmode.name)
+            if badmode.code:
+                tempnames += ['[', badmode.code, ']']
+            if not tempnames or len(tempnames) <= 0:
+                continue
+            values['badmodelist'].append({'value': str(badmode.id), 'text': ''.join(tempnames)})
         return values
 
 
