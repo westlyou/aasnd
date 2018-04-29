@@ -246,7 +246,9 @@ mui.ready(function(){
                     mui.toast('您已离岗！');
                     nativespeak('您已离岗');
                 }
-                window.location.reload(true);
+                document.getElementById('workstation').setAttribute('stationid', '0').innerText='';
+                document.getElementById('mequipment').setAttribute('equipmentid', '0').innerText='';
+                document.getElementById('memployee').setAttribute('barcode', '').innerText='';
             },
             error:function(xhr,type,errorThrown){ console.log(type); }
         });
