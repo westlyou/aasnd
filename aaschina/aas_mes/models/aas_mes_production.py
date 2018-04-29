@@ -321,10 +321,12 @@ class AASProductionProduct(models.Model):
         if not mesline or not workstation:
             return values
         employeedomain = [('workstation_id', '=', workstation.id)]
-        if equipment:
-            employeedomain.append(('equipment_id', '=', equipment.id))
         if not workstation.ispublic:
             employeedomain.append(('mesline_id', '=', mesline.id))
+        if equipment:
+            tempdomain = employeedomain + [('equipment_id', '=', equipment.id)]
+            if self.env['aas.mes.workstation.employee'].search_count(employeedomain) > 0:
+                employeedomain = tempdomain
         employeelist = self.env['aas.mes.workstation.employee'].search(employeedomain)
         if employeelist and len(employeelist) > 0:
             employeeids, employeelines = [], []
