@@ -80,10 +80,13 @@ class AASMESController(http.Controller):
     def aas_mesline_workstations(self, meslineid):
         values = {'success': True, 'message': '', 'workstations': []}
         mesline = request.env['aas.mes.line'].browse(meslineid)
+        stationlist = []
         if mesline.workstation_lines and len(mesline.workstation_lines) > 0:
-            values['workstations'] = [{
-                'value': str(mstation.workstation_id.id), 'text': mstation.workstation_id.name
-            } for mstation in mesline.workstation_lines]
+            for mstation in mesline.workstation_lines:
+                station = mstation.workstation_id
+                station_name = station.name if not station.shortname else station.shortname
+                stationlist.append({'value': str(station.id), 'text': station_name})
+        values['workstations'] = stationlist
         return values
 
 

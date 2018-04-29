@@ -480,7 +480,7 @@ mui.ready(function(){
         var worktocketid = parseInt(document.getElementById('workticket_finish_pullrefresh').getAttribute('workticketid'));
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         mui.ajax('/aaswechat/mes/workticket/equipmentlist',{
-            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {'worktocketid': worktocketid}, id: access_id }),
+            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {'workticketid': worktocketid}, id: access_id }),
             dataType:'json', type:'post', timeout:10000,
             headers:{'Content-Type':'application/json'},
             success:function(data){
