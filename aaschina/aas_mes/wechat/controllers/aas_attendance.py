@@ -39,7 +39,7 @@ class AASAtteandanceWechatController(http.Controller):
             workstation = request.env['aas.mes.workstation'].browse(workstationid)
         if equipmentid:
             equipment = request.env['aas.equipment.equipment'].browse(equipmentid)
-        values = request.env['aas.mes.attendance'].action_scanning(employee, mesline,
+        values = request.env['aas.mes.work.attendance'].action_scanning(employee, mesline,
                                                                    workstation=workstation, equipment=equipment)
         return values
 
