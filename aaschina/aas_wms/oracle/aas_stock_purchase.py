@@ -77,6 +77,17 @@ class AASStockPurchaseOrder(models.Model):
     ]
 
 
+    @api.multi
+    def unlink(self):
+        for record in self:
+            if not record.order_lines or len(record.order_lines) <= 0:
+                continue
+            for oline in record.order_lines:
+                if float_compare(oline.receipt_qty, 0.0, precision_rounding=0.000001) > 0.0:
+                    raise UserError(u'订单%s已经开始收货，不可以删除！'% record.name)
+        return super(AASStockPurchaseOrder, self).unlink()
+
+
     @api.model
     def action_import_order(self, order_number):
         """
