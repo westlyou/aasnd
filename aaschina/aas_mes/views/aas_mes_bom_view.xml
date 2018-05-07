@@ -157,6 +157,9 @@
         <menuitem id="menu_aas_mes_bom"  name="物料清单" action="action_aas_mes_bom"
                           parent="menu_aas_mes_settings" sequence="2" groups="group_aas_mes_technologist"/>
 
+        <menuitem id="menu_aas_mes_bom_list_technologist"  name="物料清单" action="action_aas_mes_bom"
+                          parent="menu_aas_mes_bom_technologist" sequence="1" groups="group_aas_mes_technologist"/>
+
 
 
 
