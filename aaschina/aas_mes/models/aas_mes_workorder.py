@@ -63,6 +63,7 @@ class AASMESWorkorder(models.Model):
     isproducing = fields.Boolean(string=u'正在生产', default=False, copy=False, help=u'当前工单在相应的产线上正在生产')
     output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     output_time = fields.Datetime(string=u'产出时间', copy=False, help=u'最近一次产出的时间')
+    badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     scrap_qty = fields.Float(string=u'报废数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     output_manner = fields.Selection(selection=OUTPUTMANNERS, string=u'产出方式', copy=False)
     finalproduct_id = fields.Many2one(comodel_name='product.product', string=u'最终产品')

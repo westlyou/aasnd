@@ -370,10 +370,6 @@ mui.ready(function(){
             });
             params['badmode_lines'] = badmode_lines;
         }
-        var equipmentid = parseInt(document.getElementById('wequipment').getAttribute('equipmentid'));
-        if(equipmentid > 0){
-            params['equipment_id'] = equipmentid;
-        }
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         var finishmask = aas_finish_loading();
         mui.ajax('/aaswechat/mes/workticket/docommit',{
@@ -467,41 +463,6 @@ mui.ready(function(){
                 });
             },
             fail: function (result) {mui.toast(result.errMsg);}
-        });
-    });
-
-    //切换设备
-    document.getElementById('wequipment').addEventListener('tap', function(){
-        var workstationid = parseInt(document.getElementById('workstation').getAttribute('workstationid'));
-        if(workstationid==0){
-            mui.toast('请仔细检查是否设置了工位信息！');
-            return ;
-        }
-        var worktocketid = parseInt(document.getElementById('workticket_finish_pullrefresh').getAttribute('workticketid'));
-        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
-        mui.ajax('/aaswechat/mes/workticket/equipmentlist',{
-            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: {'workticketid': worktocketid}, id: access_id }),
-            dataType:'json', type:'post', timeout:10000,
-            headers:{'Content-Type':'application/json'},
-            success:function(data){
-                var dresult = data.result;
-                if (!dresult.success){
-                    mui.toast(dresult.message);
-                    return ;
-                }
-                if (dresult.equipments.length<=0){
-                    mui.alert('当前工位可能还未设置设备信息！');
-                    return ;
-                }
-                var eqpicker = new mui.PopPicker();
-                eqpicker.setData(dresult.equipments);
-                eqpicker.show(function(items) {
-                    var wequipment = document.getElementById('wequipment');
-                    wequipment.innerText = items[0].text;
-                    wequipment.setAttribute('equipmentid', items[0].value);
-                });
-            },
-            error:function(xhr,type,errorThrown){ console.log(type);}
         });
     });
 

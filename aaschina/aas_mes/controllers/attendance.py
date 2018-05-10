@@ -36,8 +36,7 @@ class AASMESAttendanceController(http.Controller):
             stationlist = []
             for wline in workstationlines:
                 station = wline.workstation_id
-                station_name = station.name if not station.shortname else station.shortname
-                stationitem = {'station_id': station.id, 'station_name': station_name, 'station_type': station.station_type, 'employees': []}
+                stationitem = {'station_id': station.id, 'station_name': station.name, 'station_type': station.station_type, 'employees': []}
                 employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', station.id)]
                 employeelist = request.env['aas.mes.workstation.employee'].search(employeedomain)
                 if not employeelist or len(employeelist) <= 0:
@@ -57,7 +56,7 @@ class AASMESAttendanceController(http.Controller):
 
 
     @http.route('/aasmes/attendance/actionscan', type='json', auth="user")
-    def aasmes_attendance_actionscan(self, barcode, stationid=None, equipmentid=None):
+    def aasmes_attendance_actionscan(self, barcode, stationid=None):
         values = {'success': True, 'message': ''}
         employee = request.env['aas.hr.employee'].search([('barcode', '=', barcode.upper())], limit=1)
         if not employee:
@@ -69,16 +68,13 @@ class AASMESAttendanceController(http.Controller):
         if not lineuser or lineuser.mesrole != 'checker':
             values.update({'success': False, 'message': u'当前登录用户可能不是考勤员，请仔细检查！'})
             return values
-        mesline, workstation, equipment = lineuser.mesline_id, False, False
+        mesline, workstation = lineuser.mesline_id, False
         if stationid:
             workstation = request.env['aas.mes.workstation'].browse(stationid)
             if not workstation:
                 values.update({'success': False, 'message': u'工位异常，请仔细检查！'})
                 return values
-        if equipmentid:
-            equipment = request.env['aas.equipment.equipment'].browse(equipmentid)
-        avalues = request.env['aas.mes.work.attendance'].action_scanning(employee, mesline,
-                                                                         workstation=workstation, equipment=equipment)
+        avalues = request.env['aas.mes.work.attendance'].action_scanning(employee, mesline, workstation)
         values.update(avalues)
         return values
 
@@ -97,8 +93,7 @@ class AASMESAttendanceController(http.Controller):
             stationlist = []
             for wline in workstationlines:
                 station = wline.workstation_id
-                station_name = station.name if not station.shortname else station.shortname
-                stationitem = {'station_id': station.id, 'station_name': station_name, 'station_type': station.station_type, 'employees': []}
+                stationitem = {'station_id': station.id, 'station_name': station.name, 'station_type': station.station_type, 'employees': []}
                 employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', station.id)]
                 employeelist = request.env['aas.mes.workstation.employee'].search(employeedomain)
                 if not employeelist or len(employeelist) <= 0:
@@ -125,34 +120,11 @@ class AASMESAttendanceController(http.Controller):
 
     @http.route('/aasmes/attendance/actionleave', type='json', auth="user")
     def aasmes_attendance_actionleave(self, attendanceid, leaveid):
+        print attendanceid, leaveid
         values = {'success': True, 'message': ''}
         attendance = request.env['aas.mes.work.attendance'].browse(attendanceid)
         attendance.write({'leave_id': leaveid})
         attendlines = request.env['aas.mes.work.attendance.line'].search([('attendance_id', '=', attendanceid), ('leave_id', '=', False)])
         if attendlines and len(attendlines) > 0:
             attendlines.write({'leave_id': leaveid})
-        return values
-
-
-
-    @http.route('/aasmes/attendance/workstation/equipmentlist', type='json', auth="user")
-    def aasmes_attendance_actionleave(self, workstationid):
-        values = {'success': True, 'message': '', 'equipmentlist': []}
-        login = request.env.user
-        checkdomain = [('lineuser_id', '=', login.id)]
-        lineuser = request.env['aas.mes.lineusers'].search(checkdomain, limit=1)
-        if not lineuser or lineuser.mesrole != 'checker':
-            values.update({'success': False, 'message': u'当前登录用户可能不是考勤员，请仔细检查！'})
-            return values
-        mesline = lineuser.mesline_id
-        if mesline.ispublic:
-            # 公共产线无需选择设备
-            return values
-        tempdomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstationid)]
-        tempequipments = request.env['aas.mes.workstation.equipment'].search(tempdomain)
-        if tempequipments and len(tempequipments) > 0:
-            values['equipmentlist'] = [{
-                'equipment_id': tequipment.equipment_id.id,
-                'equipment_name': tequipment.equipment_id.name, 'equipment_code': tequipment.equipment_id.code
-            } for tequipment in tempequipments]
         return values

@@ -177,7 +177,7 @@ class AASProductionProduct(models.Model):
                     'mesline_id': outputvals.get('mesline_id', False),
                     'schedule_id': outputvals.get('schedule_id', False),
                     'workstation_id': outputvals.get('workstation_id', False),
-                    'euqipment_id': outputvals.get('euqipment_id', False),
+                    'equipment_id': outputvals.get('equipment_id', False),
                     'workorder_id': outputvals.get('workorder_id', False),
                     'workticket_id': outputvals.get('workticket_id', False),
                     'product_id': outputvals.get('product_id', False),
@@ -320,13 +320,9 @@ class AASProductionProduct(models.Model):
             return values
         if not mesline or not workstation:
             return values
-        employeedomain = [('workstation_id', '=', workstation.id)]
-        if not workstation.ispublic:
-            employeedomain.append(('mesline_id', '=', mesline.id))
+        employeedomain = [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
         if equipment:
-            tempdomain = employeedomain + [('equipment_id', '=', equipment.id)]
-            if self.env['aas.mes.workstation.employee'].search_count(tempdomain) > 0:
-                employeedomain = tempdomain
+            employeedomain.append(('equipment_id', '=', equipment.id))
         employeelist = self.env['aas.mes.workstation.employee'].search(employeedomain)
         if employeelist and len(employeelist) > 0:
             employeeids, employeelines = [], []
@@ -1115,30 +1111,6 @@ class AASMESProductionLabelDestroyWizard(models.TransientModel):
             }).action_done()
         tlabel.write({'product_qty': 0.0})
         self.plabel_id.unlink()
-
-
-
-
-class AASProductLabel(models.Model):
-    _inherit = 'aas.product.label'
-
-    @api.model
-    def action_production_labels(self, labelinfo):
-        values = super(AASProductLabel, self).action_production_labels(labelinfo)
-        if not values.get('success', False):
-            return values
-        workorderstr = labelinfo.get('Workorders', False)
-        if workorderstr:
-            workordernames = workorderstr.split(',')
-            for orderstr in workordernames:
-                workorder = self.env['aas.mes.workorder'].search([('name', '=', orderstr.strip())], limit=1)
-                if not workorder:
-                    continue
-                worderdomain = [('workorder_id', '=', workorder.id), ('product_lot', '=', False)]
-                outputlist = self.env['aas.production.product'].search(worderdomain)
-                if outputlist and len(outputlist) > 0:
-                    outputlist.write({'product_lot': values.get('lotid', False)})
-        return values
 
 
 

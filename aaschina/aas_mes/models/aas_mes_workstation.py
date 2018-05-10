@@ -25,10 +25,8 @@ class AASMESWorkstation(models.Model):
 
     name = fields.Char(string=u'名称', required=True, copy=False)
     code = fields.Char(string=u'编码', copy=False)
-    shortname = fields.Char(string=u'简称', copy=False)
     barcode = fields.Char(string=u'条码', compute='_compute_barcode', store=True, index=True)
     active = fields.Boolean(string=u'是否有效', default=True, copy=False)
-    ispublic = fields.Boolean(string=u'公共工位', default=False, copy=False)
     station_type = fields.Selection(selection=STATIONTYPES, string=u'工位类型', default='scanner', copy=False)
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 

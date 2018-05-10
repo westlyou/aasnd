@@ -11,8 +11,6 @@
                     <field name="name"/>
                     <field name="code"/>
                     <field name="station_type"/>
-                    <field name="shortname"/>
-                    <field name="ispublic"/>
                 </tree>
             </field>
         </record>
@@ -32,11 +30,9 @@
                         <group>
                             <group>
                                 <field name="code" required="1"/>
-                                <field name="shortname"/>
                             </group>
                             <group>
                                 <field name="station_type" required="1"/>
-                                <field name="ispublic"/>
                             </group>
                         </group>
                         <notebook>
@@ -118,7 +114,6 @@
                     <separator/>
                     <filter string="扫描工位" domain="[('station_type','=','scanner')]"/>
                     <filter string="工控工位" domain="[('station_type','=','controller')]"/>
-                    <filter string="公共工位" domain="[('ispublic','=','controller')]"/>
                 </search>
             </field>
         </record>

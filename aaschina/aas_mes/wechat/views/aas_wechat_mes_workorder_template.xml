@@ -113,14 +113,9 @@
                                     <span class="mui-pull-left">开工时间</span>
                                     <span class="mui-pull-right" t-esc="time_start"/>
                                 </li>
-                                <li class="mui-table-view-cell">
+                                <li t-if="workstation_name" class="mui-table-view-cell">
                                     <span class="mui-pull-left">生产工位</span>
-                                    <span id="workstation" class="mui-pull-right"
-                                          t-att-workstationid="workstation_id" t-esc="workstation_name"/>
-                                </li>
-                                <li class="mui-table-view-cell">
-                                    <span class="mui-pull-left">当前设备</span>
-                                    <span id="wequipment" class="mui-pull-right" equipmentid="0">单击切换设备</span>
+                                    <span class="mui-pull-right" t-esc="workstation_name"/>
                                 </li>
                                 <li id="container_line" class="mui-table-view-cell"
                                     t-att-needcontainer="needcontainer" style="display:none;">

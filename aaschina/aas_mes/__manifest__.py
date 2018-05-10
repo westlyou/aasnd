@@ -58,16 +58,13 @@
         'views/aas_mes_tracing_view.xml',
         'views/aas_mes_report_view.xml',
         'views/aas_mes_feedmaterial_templates.xml',
-        'views/aas_product_package_view.xml',
-
 
         'oracle/aas_ebs_mainorder_view.xml',
         'wechat/views/aas_wechat_mes_template.xml',
         'wechat/views/aas_wechat_mes_feedmaterial_template.xml',
         'wechat/views/aas_wechat_mes_workorder_template.xml',
         'wechat/views/aas_wechat_mes_container_template.xml',
-        'wechat/views/aas_wechat_mes_label_template.xml',
-        'wechat/views/aas_wechat_mes_attendance_template.xml'
+        'wechat/views/aas_wechat_mes_label_template.xml'
     ],
     'qweb':[],
     'installable': True,

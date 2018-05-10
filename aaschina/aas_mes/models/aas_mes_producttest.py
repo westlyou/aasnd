@@ -386,19 +386,17 @@ class AASMESProductTest(models.Model):
         if not paramdict or len(paramdict) <= 0:
             values.update({'success': False, 'message': u'请仔细检查，是否已经设置了检测参数！'})
             return values
-        orderlines, paramflag = [], True
+        orderlines = []
         for tparameter in parameters:
             pkey = 'P'+str(tparameter['id'])
             if pkey not in paramdict:
                 continue
             pname, pvalue = paramdict.get('name'), tparameter.get('value', False)
             if not pvalue:
-                paramflag = False
                 values.update({'success': False, 'message': u'参数%s未设置检测值！'% pname})
                 break
             ptype = paramdict.get('type', 'char')
             if ptype == 'number' and (not isfloat(pvalue)):
-                paramflag = False
                 values.update({'success': False, 'message': u'参数%s检测值必须是一个数值！'% pname})
                 break
             orderlines.append((0, 0, {
@@ -406,11 +404,11 @@ class AASMESProductTest(models.Model):
                 'parameter_code': tparameter['code'], 'parameter_note': tparameter['note']
             }))
             del paramdict[pkey]
-        if not paramflag:
+        if not values.get('success', False):
             return values
-        # if paramdict and len(paramdict) > 0:
-        #     values.update({'success': False, 'message': u'请仔细检查，还有某些参数未设置检测值！'})
-        #     return values
+        if not orderlines or len(orderlines) <= 0:
+            values.update({'success': False, 'message': u'请仔细检查是否设置的检测参数值！'})
+            return values
         ordervals = {
             'producttest_id': producttestid, 'product_id': producttest.product_id.id,
             'workstation_id': producttest.workstation_id.id, 'mesline_id': mesline.id,

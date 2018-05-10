@@ -88,8 +88,3 @@ access_aas_stock_sale_delivery_stock_user,aas.stock.sale.delivery stock_user,mod
 access_aas_stock_sale_delivery_stock_manager,aas.stock.sale.delivery stock_manager,model_aas_stock_sale_delivery,stock.group_stock_manager,1,1,1,1
 access_aas_stock_sale_delivery_line_stock_user,aas.stock.sale.delivery.line stock_user,model_aas_stock_sale_delivery_line,stock.group_stock_user,1,1,1,1
 access_aas_stock_sale_delivery_line_stock_manager,aas.stock.sale.delivery.line stock_manager,model_aas_stock_sale_delivery_line,stock.group_stock_manager,1,1,1,1
-
-
-access_aas_product_package_all_user,aas.product.package all_user,model_aas_product_package,base.group_user,1,0,0,0
-access_aas_product_package_stock_user,aas.product.package stock_user,model_aas_product_package,stock.group_stock_user,1,1,0,0
-access_aas_product_package_stock_manager,aas.product.package stock_manager,model_aas_product_package,stock.group_stock_manager,1,1,0,0

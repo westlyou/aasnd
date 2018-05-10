@@ -184,7 +184,3 @@ access_aas_mes_workorder_finishontime_report_all_user,aas.mes.workorder.finishon
 access_aas_mes_rework_report_all_user,aas.mes.rework.report all_user,model_aas_mes_rework_report,base.group_user,1,0,0,0
 
 
-access_aas_product_package_all_user,aas.product.package all_user,aas_wms.model_aas_product_package,group_aas_manufacture_user,1,1,0,0
-access_aas_product_package_mes_technologist,aas.product.package mes_technologist,aas_wms.model_aas_product_package,group_aas_mes_technologist,1,1,1,1
-
-

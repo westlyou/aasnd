@@ -50,7 +50,7 @@
                                 <field name="concession_labels" attrs="{'readonly':[('state','!=','draft')]}">
                                     <tree editable="bottom" edit="false">
                                         <field name="label_id" options="{'no_create':true}"
-                                               domain="['&amp;',('locked','=',False),'|','|',('state','=','frozen'),('qualified','=',False),('location_id.mrblocation','=',True)]"/>
+                                               domain="['&amp;','&amp;',('locked','=',False),('state','=','normal'),'|',('qualified','=',False),('location_id.mrblocation','=',True)]"/>
                                         <field name="product_id" readonly="1"/>
                                         <field name="product_uom" readonly="1"/>
                                         <field name="product_qty" readonly="1"/>

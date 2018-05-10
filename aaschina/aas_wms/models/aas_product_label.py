@@ -60,10 +60,6 @@ class AASProductLabel(models.Model):
     isproduction = fields.Boolean(string=u'产线标签', copy=False, related='location_id.edgelocation', store=True)
     journal_lines = fields.One2many(comodel_name='aas.product.label.journal', inverse_name='label_id', string=u'查存卡', copy=False)
 
-    #成品发货包装
-    package_id = fields.Many2one(comodel_name='aas.product.package', string=u'包装')
-    customer_id = fields.Many2one(comodel_name='res.partner', string=u'客户', ondelete='restrict')
-
     @api.depends('child_lines')
     def _compute_has_children(self):
         for record in self:
@@ -393,13 +389,10 @@ class AASProductLabel(models.Model):
     @api.model
     def action_production_labels(self, labelinfo):
         """不经过其他操作，直接生成标签
-        :param labelinfo: {
-                            'PN': 'P-1743', 'LOT': '20180425', 'QTY': 100, 'Number': 10, 'DateCode':'1820',
-                            'Package': 1, 'Workorders': '1569672-12,1569672-13,1569672-15'
-                          }
+        :param labelinfo:
         :return:
         """
-        values = {'success': True, 'message': '', 'desc': '', 'barcodes': [], 'lotid': False}
+        values = {'success': True, 'message': '', 'desc': '', 'barcodes': []}
         product_code, product_lot = labelinfo.get('PN', False), labelinfo.get('LOT', False)
         label_qty, label_count = labelinfo.get('QTY', False), labelinfo.get('Number', False)
         if not product_code:
@@ -419,22 +412,16 @@ class AASProductLabel(models.Model):
             values.update({'success': False, 'message': u'请仔细检查，您的产品编码异常，系统中不存在此产品！'})
             return values
         values['desc'] = temproduct.name
-        packageid, customerid = labelinfo.get('Package', False), False
-        if packageid:
-            package = self.env['aas.product.package'].browse(int(packageid))
-            customerid = package.customer_id.id
         templot = self.env['stock.production.lot'].action_checkout_lot(temproduct.id, product_lot)
         pdtlocation = self.env.ref('stock.location_production')
         packlocation = self.env['stock.warehouse'].get_default_warehouse().wh_pack_stock_loc_id
         # 启用打包库位
         if not packlocation.active:
             packlocation.sudo().write({'active': True})
-        datecode = labelinfo.get('DateCode', False)
         for tindex in range(0, label_count):
             templabel = self.env['aas.product.label'].create({
-                'product_id': temproduct.id, 'product_code': product_code, 'date_code': datecode,
-                'product_uom': temproduct.uom_id.id, 'stocked': True, 'location_id': packlocation.id,
-                'product_lot': templot.id, 'product_qty': label_qty, 'package_id': packageid, 'customer_id': customerid
+                'product_id': temproduct.id, 'product_code': product_code, 'product_uom': temproduct.uom_id.id,
+                'stocked': True, 'location_id': packlocation.id, 'product_lot': templot.id, 'product_qty': label_qty
             })
             values['barcodes'].append(templabel.name)
         self.env['stock.move'].create({
@@ -443,7 +430,6 @@ class AASProductLabel(models.Model):
             'restrict_lot_id': templot.id, 'product_uom_qty': label_qty * label_count,
             'location_id': pdtlocation.id, 'location_dest_id': packlocation.id, 'create_date': fields.Datetime.now()
         }).action_done()
-        values['lotid'] = templot.id
         return values
 
 

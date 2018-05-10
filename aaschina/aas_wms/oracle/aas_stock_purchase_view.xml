@@ -40,7 +40,6 @@
                         </group>
                         <group>
                             <group>
-                                <field name="creation_date" readonly="1"/>
                                 <field name="ebsorder" invisible="1"/>
                                 <field name="receiptable" invisible="1"/>
                             </group>

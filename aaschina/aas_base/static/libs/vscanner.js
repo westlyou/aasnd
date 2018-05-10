@@ -4,7 +4,7 @@ var VScanner = function(callback){
      * keypress的event.which值为事件触发的键的值的字符代码即相应字符的ascii码
     */
 
-    this.delay = 50;
+    this.delay = 80;
     this.barcode = '';
     this.timer = null;
     this.scanning = true; // 是否扫描模式

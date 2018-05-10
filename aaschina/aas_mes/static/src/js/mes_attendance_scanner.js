@@ -8,7 +8,6 @@ $(function() {
         var stationid = station.attr('stationid');
         var stationname = station.attr('stationname');
         $('#cstation').attr('stationid', stationid).html(stationname);
-        action_loading_equipments(parseInt(stationid));
     });
 
     //员工牌扫描
@@ -31,10 +30,6 @@ $(function() {
         var cstationid = parseInt($('#cstation').attr('stationid'));
         if(cstationid > 0){
             scanparams['stationid'] = cstationid;
-        }
-        var cequipmentid = parseInt($('#cequipment').attr('equipmentid'));
-        if(cequipmentid > 0){
-            scanparams['equipmentid'] = cequipmentid;
         }
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
@@ -106,8 +101,6 @@ $(function() {
             }
         });
     }
-    // 20秒刷新一次工位看板
-    var refreshinterval = setInterval(_.throttle(refreshstations, 20000), 20000);
 
 
     function action_leave(attendanceid){
@@ -185,49 +178,9 @@ $(function() {
     }
 
 
-    function action_loading_equipments(workstationid){
-        var temparams = {'workstationid': workstationid};
-        var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
-        $.ajax({
-            url: '/aasmes/attendance/workstation/equipmentlist',
-            headers:{'Content-Type':'application/json'},
-            type: 'post', timeout:10000, dataType: 'json',
-            data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: temparams, id: access_id}),
-            success:function(data){
-                var dresult = data.result;
-                if(!dresult.success){
-                    layer.msg(dresult.message, {icon: 5});
-                    return ;
-                }
-                var equipmentrow = $('#equipmentlist');
-                equipmentrow.html('');
-                if(dresult.equipmentlist.length <= 0){
-                    return ;
-                }
-                $.each(dresult.equipmentlist, function(index, tequipment){
-                    var titem = $('<div class="col-md-3 col-xs-6 aas-equipment"></div>');
-                    titem.attr({'eid': tequipment.equipment_id, 'ecode': tequipment.equipment_code});
-                    titem.css({'cursor': 'pointer', 'margin-bottom': '10px'});
-                    var tempstr = '<div class="small-box bg-green" style="margin-bottom:0;">';
-                    tempstr += '<div class="inner" style="text-align:center;">';
-                    tempstr += '<h4>'+tequipment.equipment_name+'</h4><p>'+tequipment.equipment_code+'</p></div></div>';
-                    titem.html(tempstr).appendTo(equipmentrow);
-                    titem.click(function(){
-                        $('#cequipment').attr('equipmentid', tequipment.equipment_id).html(tequipment.equipment_code);
-                    });
-                });
-            },
-            error:function(xhr,type,errorThrown){
-                console.log(type);
-            }
-        });
-    }
 
-    $('.aas-equipment').click(function(){
-        var eid=$(this).attr('eid');
-        var ecode = $(this).attr('ecode');
-        $('#cequipment').attr('equipmentid', eid).html(ecode);
-    });
+    // 20秒刷新一次工位看板
+    var refreshinterval = window.setInterval(refreshstations,20000);
 
 
 

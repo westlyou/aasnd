@@ -6,7 +6,7 @@
             <field name="name">aas.hr.employee.mes.kanban</field>
             <field name="model">aas.hr.employee</field>
             <field name="arch" type="xml">
-                <kanban default_group_by="mesline_id"
+                <kanban default_group_by="state"
                         create="false" edit="false" delete="false"
                         group_create="false" group_edit="false" group_delete="false">
                     <field name="name"/>

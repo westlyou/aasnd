@@ -75,10 +75,7 @@ class AASHREmployee(models.Model):
     def _compute_state_color(self):
         statedict = {'working': 1, 'leave': 2, 'atop': 3, 'vacation': 4, 'dimission': 5}
         for record in self:
-            if not record.state:
-                record.state_color = 2
-            else:
-                record.state_color = statedict[record.state]
+            record.state_color = statedict[record.state]
 
 
     @api.multi

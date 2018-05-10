@@ -171,13 +171,13 @@ class AASStockReceiptProductWizard(models.TransientModel):
     @api.multi
     def action_build_label(self, lot_id, lot_qty, location_id, warranty_date):
         self.ensure_one()
-        receipt = self.receipt_id
+        receipt, partner = self.receipt_id, self.receipt_id.partner_id
         labelvals = {
             'product_id': self.product_id.id, 'product_uom': self.product_id.uom_id.id,
             'location_id': location_id, 'product_qty': lot_qty, 'product_lot': lot_id, 'state': 'draft',
             'company_id': self.env.user.company_id.id, 'origin_order': self.origin_order,
             'locked': True, 'locked_order': receipt.name,
-            'partner_id': False if not receipt.partner_id else receipt.partner_id.id,
+            'partner_id': False if partner else partner.id,
             'warranty_date': warranty_date or False
         }
         return self.env['aas.product.label'].create(labelvals)

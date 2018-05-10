@@ -34,4 +34,3 @@ import aas_stock_move
 import aas_container
 import aas_stock_adjust
 import aas_stock_material
-import aas_product_package

@@ -76,19 +76,15 @@
                         <section class="content-header">
                             <div style="text-align:center;width:100%;font-size:20px;font-weight:bold;"> <span t-esc="message"/> </div>
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <h3>当前工位：<span id="cstation" t-att-stationid="workstation_id" style="color:red;"> <t t-esc="workstation_name"/> </span> </h3>
                                 </div>
-                                <div class="col-md-4">
-                                    <h3>当前设备：<span id="cequipment" equipmentid="0" style="color:red;"></span> </h3>
-                                </div>
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <h3>当前员工：<span id="cemployee" employeeid="0" style="color:red;"></span> </h3>
                                 </div>
                             </div>
                         </section>
                         <section class="content">
-                            <div id="equipmentlist" class="row" style="margin-bottom:20px;"> </div>
                             <div id="workstationlist" class="row" action="working">
                                 <t t-foreach="workstations" t-as="station">
                                     <div class="col-md-3">
@@ -135,7 +131,6 @@
                 <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
                 <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
-                <script src="/aas_base/static/libs/underscore/underscore-1.8.3.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
                 <script src="/aas_mes/static/src/js/mes_attendance_scanner.js"></script>

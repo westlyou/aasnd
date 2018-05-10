@@ -76,15 +76,15 @@ class AASStockPurchaseOrder(models.Model):
         ('uniq_name', 'unique (name)', u'采购收货订单号不可以重复！')
     ]
 
-
     @api.multi
     def unlink(self):
         for record in self:
             if not record.order_lines or len(record.order_lines) <= 0:
                 continue
             for oline in record.order_lines:
-                if float_compare(oline.receipt_qty, 0.0, precision_rounding=0.000001) > 0.0:
-                    raise UserError(u'订单%s已经开始收货，不可以删除！'% record.name)
+                temp_qty = oline.receipt_qty + oline.doing_qty
+                if float_compare(temp_qty, 0.0, precision_rounding=0.000001) > 0.0:
+                    raise UserError(u'订单%s已经开始收获不可以删除！'% record.name)
         return super(AASStockPurchaseOrder, self).unlink()
 
 
@@ -175,7 +175,8 @@ class AASStockPurchaseOrder(models.Model):
                     'product_code': aasline.product_id.default_code,
                     'product_qty': aasline.product_qty,
                     'receipt_qty': aasline.receipt_qty,
-                    'rejected_qty': aasline.rejected_qty
+                    'rejected_qty': aasline.rejected_qty,
+                    'actual_qty': aasline.receipt_qty + aasline.rejected_qty
                 }
         aas_line_list = []
         if len(ebs_purchase_dict) > 0:
@@ -186,14 +187,14 @@ class AASStockPurchaseOrder(models.Model):
                     continue
                 aas_line = aas_purchase_dict[pkey]
                 if float_compare(ebs_line['product_qty'], aas_line['product_qty'], precision_rounding=0.000001) != 0:
-                    if float_compare(ebs_line['product_qty'], aas_line['receipt_qty'], precision_rounding=0.000001) < 0:
+                    if float_compare(ebs_line['product_qty'], aas_line['actual_qty'], precision_rounding=0.000001) < 0.0:
                         raise UserError(u'订单数量不能小于已收货数量')
                     aas_line_list.append((1, aas_line['id'], {'product_qty': ebs_line['product_qty']}))
                 del aas_purchase_dict[pkey]
         if len(aas_purchase_dict) > 0:
             for pkey in aas_purchase_dict:
                 aas_line = aas_purchase_dict[pkey]
-                if float_compare(aas_line['receipt_qty'], aas_line['rejected_qty'], precision_rounding=0.000001) != 0:
+                if float_compare(aas_line['actual_qty'], 0.0, precision_rounding=0.000001) != 0.0:
                     raise UserError(u"产品：%s已有收货,不可以清除！"% aas_line['product_code'])
                 else:
                     aas_line_list.append((2, aas_line['id'], False))
@@ -240,7 +241,7 @@ class AASStockPurchaseOrder(models.Model):
 class AASStockPurchaseOrderLine(models.Model):
     _name = 'aas.stock.purchase.order.line'
     _description = 'AAS Stock Purchase Order Line'
-    _rec_name = 'product_id'
+    _rec_name = 'line_name'
 
     order_id = fields.Many2one(comodel_name='aas.stock.purchase.order', string=u'采购订单', ondelete='cascade')
     order_name = fields.Char(string=u'订单号')

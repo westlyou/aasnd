@@ -42,7 +42,7 @@ class AASStockDelivery(models.Model):
     location_id = fields.Many2one(comodel_name='stock.location', string=u'目标库位', ondelete='restrict')
     warehouse_id = fields.Many2one(comodel_name='stock.warehouse', string=u'仓库', ondelete='restrict')
     picking_confirm = fields.Boolean(string=u'拣货确认', default=False, copy=False, help=u'发货员确认货物已分拣')
-    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
     delivery_lines = fields.One2many(comodel_name='aas.stock.delivery.line', inverse_name='delivery_id', string=u'发货明细')
     picking_list = fields.One2many(comodel_name='aas.stock.picking.list', inverse_name='delivery_id', string=u'拣货清单')
@@ -77,8 +77,7 @@ class AASStockDelivery(models.Model):
         """
         if not self.delivery_lines or len(self.delivery_lines) <= 0:
             raise UserError(u'您还没有添加明细，请新添加明细！')
-        delivery_lines = [(1, dline.id, {'state': 'confirm'}) for dline in self.delivery_lines]
-        self.write({'state': 'confirm', 'delivery_lines': delivery_lines})
+        self.write({'state': 'confirm', 'delivery_lines': [(1, dline.id, {'state': 'confirm'}) for dline in self.delivery_lines]})
 
     @api.one
     def action_picking_list(self):
@@ -163,9 +162,7 @@ class AASStockDelivery(models.Model):
     @api.multi
     def unlink(self):
         for record in self:
-            if record.state == 'draft':
-                continue
-            else:
+            if record.state!='draft':
                 raise UserError(u'发货单%s已经开始处理，不可以删除！'% record.name)
         return super(AASStockDelivery, self).unlink()
 

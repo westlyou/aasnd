@@ -21,10 +21,9 @@ class AASStockQuantWechatController(http.Controller):
 
     @http.route('/aaswechat/wms/stocklist', type='http', auth="user")
     def aas_wechat_wms_stocklist(self, limit=20):
-        values, companyid = request.params.copy(), request.env.user.company_id.id
+        values = request.params.copy()
         values.update({'stocklist': [], 'stockindex': 0})
-        qdomain = [('company_id', '=', companyid), ('location_id.usage', '=', 'internal')]
-        stocklist = request.env['aas.stock.quant.report'].search(qdomain, limit=limit)
+        stocklist = request.env['aas.stock.quant.report'].search([('company_id', '=', request.env.user.company_id.id)], limit=limit)
         if stocklist and len(stocklist) > 0:
             values['stocklist'] = [{
                 'product_id': tempstock.product_id.id, 'product_code': tempstock.product_id.default_code,
