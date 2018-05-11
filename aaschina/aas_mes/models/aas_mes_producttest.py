@@ -409,16 +409,12 @@ class AASMESProductTest(models.Model):
         if not orderlines or len(orderlines) <= 0:
             values.update({'success': False, 'message': u'请仔细检查是否设置的检测参数值！'})
             return values
-        # 获取员工在当前产线工位的班次信息
-        tempvals = self.env['aas.mes.work.attendance.line'].get_schedule(mesline, workstation.id, employee.id)
-        tschedule = tempvals.get('schedule', False)
         ordervals = {
             'producttest_id': producttestid, 'product_id': producttest.product_id.id,
             'workstation_id': producttest.workstation_id.id, 'mesline_id': mesline.id,
             'equipment_id': equipment.id, 'order_date': fields.Datetime.to_china_today(),
             'test_type': testtype, 'instrument_code': instrument, 'fixture_code': fixture,
-            'employee_id': employee.id, 'state': 'done', 'order_lines': orderlines,
-            'schedule_id': False if not tschedule else tschedule.id
+            'employee_id': employee.id, 'state': 'done', 'order_lines': orderlines
         }
         if workorderid:
             ordervals['workorder_id'] = workorderid
@@ -430,29 +426,6 @@ class AASMESProductTest(models.Model):
         values['qualified'] = testorder.qualified
         testorder.action_lock_testequipment()
         return values
-
-    @api.one
-    def action_lock_testequipment(self):
-        """NG的检测，添加锁定记录
-        :return:
-        """
-        if self.qualified:
-            return
-        employee, equipment = self.employee_id, self.equipment_id
-        if not equipment:
-            return
-        lockvals = {
-            'equipment_id': equipment.id, 'employee_id': employee.id, 'employee_job': employee.job, 'actiontype': 'lock'
-        }
-        actiondict = {'firstone': u'首件', 'lastone': u'末件', 'random': u'抽检'}
-        lockvals['action_note'] = u"%s NG"% actiondict[self.test_type]
-        if self.workstation_id:
-            lockvals['workstation_id'] = self.workstation_id.id
-        if self.equipment_id:
-            lockvals['equipment_id'] = self.equipment_id.id
-        if self.workorder_id:
-            lockvals['workorder_id'] = self.workorder_id.id
-        self.env['aas.mes.producttest.locking'].create(lockvals)
 
 
 
@@ -536,7 +509,6 @@ class AASMESProductTestOrder(models.Model):
 
     instrument_code = fields.Char(string=u'仪器编码', copy=False)
     fixture_code = fields.Char(string=u'夹具编码', copy=False)
-    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'当前班次', ondelete='restrict')
     employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
 
     qualified = fields.Boolean(string=u'合格', default=False, copy=False)
@@ -577,6 +549,30 @@ class AASMESProductTestOrder(models.Model):
             'producttest_id': producttest.id, 'state': 'confirm',
             'order_lines': [(0, 0, {'parameter_id': ppline.id}) for ppline in producttest.parameter_lines]
         })
+
+
+    @api.one
+    def action_lock_testequipment(self):
+        """NG的检测，添加锁定记录
+        :return:
+        """
+        if self.qualified:
+            return
+        employee, equipment = self.employee_id, self.equipment_id
+        if not equipment:
+            return
+        lockvals = {
+            'equipment_id': equipment.id, 'employee_id': employee.id, 'employee_job': employee.job, 'actiontype': 'lock'
+        }
+        actiondict = {'firstone': u'首件', 'lastone': u'末件', 'random': u'抽检'}
+        lockvals['action_note'] = u"%s NG; 检测单号：%s"% (actiondict[self.test_type], self.name)
+        if self.workstation_id:
+            lockvals['workstation_id'] = self.workstation_id.id
+        if self.equipment_id:
+            lockvals['equipment_id'] = self.equipment_id.id
+        if self.workorder_id:
+            lockvals['workorder_id'] = self.workorder_id.id
+        self.env['aas.mes.producttest.locking'].create(lockvals)
 
 
 
@@ -630,6 +626,28 @@ class AASMESProductTestOrderLine(models.Model):
 
 
 
+LOCKTYPES = [('lock', u'锁定'), ('unlock', u'解锁')]
+JOBS = [('worker', u'工人'), ('ipqc', 'IPQC')]
+
+
+class AASMESProductTestLocking(models.Model):
+    _name = 'aas.mes.producttest.locking'
+    _description = 'AAS MES ProductTest Locking'
+    _rec_name = 'equipment_id'
+    _order = 'id desc'
+
+
+    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单')
+    equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备')
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位')
+    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工')
+    employee_job = fields.Selection(selection=JOBS, string=u'员工岗位', copy=False)
+    action_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
+    actiontype = fields.Selection(selection=LOCKTYPES, string=u'操作类型', copy=False)
+    action_note = fields.Text(string=u'备注')
+
+
+
 ##################################################向导#########################################
 
 class AASMESProductTestTemplatePWorkcenterWizard(models.TransientModel):
@@ -670,27 +688,6 @@ class AASMESProductTestTemplatePWorkcenterWizard(models.TransientModel):
             'context': self.env.context,
             'flags': {'initial_mode': 'edit'}
         }
-
-
-LOCKTYPES = [('lock', u'锁定'), ('unlock', u'解锁')]
-JOBS = [('worker', u'工人'), ('ipqc', 'IPQC')]
-
-
-class AASMESProductTestLocking(models.Model):
-    _name = 'aas.mes.producttest.locking'
-    _description = 'AAS MES ProductTest Locking'
-    _rec_name = 'equipment_id'
-    _order = 'id desc'
-
-
-    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单')
-    equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备')
-    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位')
-    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工')
-    employee_job = fields.Selection(selection=JOBS, string=u'员工岗位', copy=False)
-    action_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
-    actiontype = fields.Selection(selection=LOCKTYPES, string=u'操作类型', copy=False)
-    action_note = fields.Text(string=u'备注')
 
 
 

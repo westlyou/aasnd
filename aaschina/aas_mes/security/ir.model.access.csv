@@ -182,5 +182,7 @@ access_aas_mes_produce_output_report_all_user,aas.mes.produce.output.report all_
 
 access_aas_mes_workorder_finishontime_report_all_user,aas.mes.workorder.finishontime.report all_user,model_aas_mes_workorder_finishontime_report,base.group_user,1,0,0,0
 access_aas_mes_rework_report_all_user,aas.mes.rework.report all_user,model_aas_mes_rework_report,base.group_user,1,0,0,0
+access_aas_mes_producttest_locking_all_user,aas.mes.producttest.locking all_user,model_aas_mes_producttest_locking,base.group_user,1,0,1,0
+
 
 

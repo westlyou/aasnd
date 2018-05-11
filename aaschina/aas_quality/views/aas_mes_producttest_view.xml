@@ -181,20 +181,19 @@
                                 <field name="workstation_id" options="{'no_open':true}"/>
                                 <field name="mesline_id" options="{'no_open':true}"/>
                                 <field name="equipment_id" options="{'no_open':true}"/>
-                                <field name="order_time"/>
                             </group>
                             <group>
                                 <field name="qualified"/>
                                 <field name="employee_id" options="{'no_open':true}"/>
                                 <field name="instrument_code"/>
                                 <field name="fixture_code"/>
-                                <field name="schedule_id" options="{'no_open':true}"/>
+                                <field name="order_time"/>
                             </group>
                         </group>
                         <notebook>
                             <page string="参数明细">
                                 <field name="order_lines" readonly="1">
-                                    <tree>
+                                    <tree decoration-danger="not qualified">
                                         <field name="parameter_id"/>
                                         <field name="parameter_value"/>
                                         <field name="parameter_code"/>

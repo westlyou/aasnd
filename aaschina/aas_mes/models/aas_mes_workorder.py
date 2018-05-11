@@ -37,7 +37,7 @@ class AASMESWorkorder(models.Model):
     routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺路线', ondelete='restrict', index=True)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict', index=True)
     time_create = fields.Datetime(string=u'创建时间', default=fields.Datetime.now, copy=False)
-    creator_id = fields.Many2one(comodel_name='res.users', string=u'创建人', ondelete='restrict', default=lambda self: self.env.user)
+    creator_id = fields.Many2one('res.users', string=u'创建人', ondelete='restrict', default=lambda self: self.env.user)
     state = fields.Selection(selection=ORDERSTATES, string=u'状态', default='draft', copy=False)
     produce_date = fields.Char(string=u'生产日期', copy=False)
     produce_start = fields.Datetime(string=u'实际开工时间', copy=False)

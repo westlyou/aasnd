@@ -454,12 +454,12 @@ class AASMESWireCuttingController(http.Controller):
             'producttest_id': producttestid, 'product_id': wireorder.product_id.id,
             'workstation_id': workstation.id, 'mesline_id': mesline.id, 'equipment_id': equipmentid,
             'test_type': testtype, 'employee_id': employeeid, 'workorder_id': workorder.id,
-            'wireorder_id': wireorder.id, 'state': 'confirm',
-            'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id,
+            'wireorder_id': wireorder.id, 'state': 'done',
             'order_lines': [(0, 0, tparam) for tparam in parameters]
         })
         testorder.write({'qualified': all([orderline.qualified for orderline in testorder.order_lines])})
         values['orderid'] = testorder.id
+        testorder.action_lock_testequipment()
         return values
 
 
