@@ -409,13 +409,16 @@ class AASMESProductTest(models.Model):
         if not orderlines or len(orderlines) <= 0:
             values.update({'success': False, 'message': u'请仔细检查是否设置的检测参数值！'})
             return values
+        # 获取员工在当前产线工位的班次信息
+        tempvals = self.env['aas.mes.work.attendance.line'].get_schedule(mesline, workstation.id, employee.id)
+        tschedule = tempvals.get('schedule', False)
         ordervals = {
             'producttest_id': producttestid, 'product_id': producttest.product_id.id,
             'workstation_id': producttest.workstation_id.id, 'mesline_id': mesline.id,
             'equipment_id': equipment.id, 'order_date': fields.Datetime.to_china_today(),
             'test_type': testtype, 'instrument_code': instrument, 'fixture_code': fixture,
             'employee_id': employee.id, 'state': 'done', 'order_lines': orderlines,
-            'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id
+            'schedule_id': False if not tschedule else tschedule.id
         }
         if workorderid:
             ordervals['workorder_id'] = workorderid

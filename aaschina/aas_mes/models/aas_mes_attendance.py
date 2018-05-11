@@ -419,6 +419,25 @@ class AASMESWorkAttendanceLine(models.Model):
                 record.action_done()
                 self.env['aas.mes.work.attendance.line'].create(attendancevals)
 
+    @api.model
+    def get_schedule(self, mesline, workstationid, employeeid):
+        """获取员工所在产线工位的当前班次
+        :param meslineid:
+        :param workstationid:
+        :param employeeid:
+        :return:
+        """
+        values, schedule = {'success': True, 'message': '', 'schedule': False}, False
+        tempdomain = [('employee_id', '=', employeeid)]
+        tempdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstationid)]
+        tattendance = self.env['aas.mes.work.attendance.line'].search(tempdomain, limit=1)
+        if tattendance and tattendance.schedule_id:
+            schedule = tattendance.schedule_id
+        if not schedule and mesline.schedule_id:
+            schedule = mesline.schedule_id
+        values['schedule'] = schedule
+        return values
+
 
 
 
