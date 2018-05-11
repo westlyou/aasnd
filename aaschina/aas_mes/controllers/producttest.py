@@ -118,9 +118,6 @@ class AASMESProducttestController(http.Controller):
             values.update({'success': False, 'message': u'请仔细检查，您可能还未设置工位！'})
             return values
         productid, mesline = workorder.product_id.id, workorder.mesline_id
-        # 获取员工在当前产线工位的班次信息
-        tempvals = request.env['aas.mes.work.attendance.line'].get_schedule(mesline, workstationid, employeeid)
-        tschedule = tempvals.get('schedule', False)
         # 获取质检清单
         testdomain = [('product_id', '=', productid), ('workstation_id', '=', workstationid)]
         producttest = request.env['aas.mes.producttest'].search(testdomain, limit=1)
@@ -128,8 +125,7 @@ class AASMESProducttestController(http.Controller):
             'producttest_id': producttest.id, 'product_id': productid,
             'workstation_id': workstationid, 'mesline_id': mesline.id, 'equipment_id': equipmentid,
             'test_type': testtype, 'employee_id': employeeid, 'workorder_id': workorderid,
-            'state': 'done', 'order_lines': [(0, 0, tparam) for tparam in parameters],
-            'schedule_id': False if not tschedule else tschedule.id
+            'state': 'done', 'order_lines': [(0, 0, tparam) for tparam in parameters]
         })
         testorder.write({'qualified': all([orderline.qualified for orderline in testorder.order_lines])})
         values['orderid'] = testorder.id
