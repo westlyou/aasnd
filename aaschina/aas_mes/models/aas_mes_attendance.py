@@ -37,8 +37,7 @@ class AASMESWorkAttendance(models.Model):
     worktime_max = fields.Float(string=u'最长工时')
     worktime_standard = fields.Float(string=u'标准工时')
     worktime_advance = fields.Float(string=u'提前工时')
-    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='restrict', index=True,
-                                 default=lambda self: self.env.user.company_id)
+    company_id = fields.Many2one('res.company', string=u'公司', index=True, default=lambda self: self.env.user.company_id)
 
     attend_lines = fields.One2many(comodel_name='aas.mes.work.attendance.line', inverse_name='attendance_id', string=u'出勤明细')
 
@@ -124,6 +123,9 @@ class AASMESWorkAttendance(models.Model):
             return values
         firstscheduleid = False
         if not attendance:
+            tempdomain = [('employee_id', '=', employee.id), ('attend_done', '=', False)]
+            attendance = self.env['aas.mes.work.attendance'].search(tempdomain, limit=1)
+        if not attendance:
             tvalues = self.action_addattendance(employee, mesline)
             if not tvalues.get('success', False):
                 values.update(tvalues)
@@ -139,14 +141,12 @@ class AASMESWorkAttendance(models.Model):
         if equipmentid:
             alinedomain.append(('equipment_id', '=', equipmentid))
         if self.env['aas.mes.work.attendance.line'].search_count(alinedomain) <= 0:
-            temprecord = self.env['aas.mes.work.attendance.line'].create({
+            self.env['aas.mes.work.attendance.line'].create({
                 'attendance_id': attendance.id,
                 'employee_id': employee.id, 'equipment_id': equipmentid,
                 'mesline_id': mesline.id, 'workstation_id': workstation.id,
                 'attendance_date': attendance.attendance_date, 'schedule_id': firstscheduleid
             })
-            if temprecord.schedule_id and not temprecord.schedule_name:
-                temprecord.write({'schedule_name': temprecord.schedule_id.name})
         return values
 
 
@@ -328,30 +328,40 @@ class AASMESWorkAttendanceLine(models.Model):
         linevals = {'mesline_name': mesline.name, 'employee_name': employee.name}
         if not self.schedule_id and mesline.schedule_id:
             linevals.update({'schedule_id': mesline.schedule_id.id, 'schedule_name': mesline.schedule_id.name})
-        if mesline.workdate:
-            if not self.attendance_date:
-                linevals['attendance_date'] = mesline.workdate
-            elif self.attendance_date > mesline.workdate:
-                sdomain = [('id', '!=', self.id), ('attendance_id', '=', self.attendance_id.id)]
-                sdomain += [('mesline_id', '=', self.mesline_id.id), ('workstation_id', '=', self.workstation_id.id)]
-                attendanceline = self.env['aas.mes.work.attendance.line'].search(sdomain, order='id desc', limit=1)
-                if attendanceline and attendanceline.schedule_id:
-                    linevals.update({
-                        'schedule_id': attendanceline.schedule_id.id, 'schedule_name': attendanceline.schedule_id.name
-                    })
+            if mesline.workdate and self.attendance_date and mesline.workdate < self.attendance_date:
+                tschedule = self.env['aas.mes.schedule'].get_next_schedule(mesline, shcedule=mesline.schedule_id)
+                if tschedule:
+                    linevals.update({'schedule_id': tschedule.id, 'schedule_name': tschedule.name})
+        if not self.attendance_date and mesline.workdate:
+            linevals['attendance_date'] = mesline.workdate
         if linevals and len(linevals) > 0:
             self.write(linevals)
+        # 更新工位员工信息
+        self.action_update_workstationemployee()
+        attendance = self.attendance_id
+        if attendance.attendance_finish:
+            attendance.write({'attendance_finish': False, 'leave_id': False})
+
+
+
+    @api.one
+    def action_update_workstationemployee(self):
+        """更新工位员工信息
+        :return:
+        """
+        employee, mesline, workstation = self.employee_id, self.mesline_id, self.workstation_id
         equipment_id = False if not self.equipment_id else self.equipment_id.id
-        tempdomain = [('employee_id', '=', employee.id), ('equipment_id', '=', equipment_id)]
+        tempdomain = [('employee_id', '=', employee.id)]
         tempdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
+        if equipment_id:
+            tempdomain.append(('equipment_id', '=', equipment_id))
         if self.env['aas.mes.workstation.employee'].search_count(tempdomain) <= 0:
             self.env['aas.mes.workstation.employee'].create({
                 'employee_id': self.employee_id.id, 'equipment_id': equipment_id,
-                'mesline_id': self.mesline_id.id, 'workstation_id': self.workstation_id.id
+                'mesline_id': self.mesline_id.id, 'workstation_id': workstation.id
             })
-        self.employee_id.write({'state': 'working'})
-        if self.attendance_id:
-            self.attendance_id.write({'attendance_finish': False, 'leave_id': False})
+        if employee.state != 'working':
+            employee.write({'state': 'working'})
 
 
     @api.multi

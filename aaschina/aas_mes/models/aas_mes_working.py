@@ -276,6 +276,44 @@ class AASEquipmentEquipment(models.Model):
                                                                   instrument=instrument, fixture=fixture)
 
 
+    @api.model
+    def action_producttest_equipmentunlock(self, workorderid, equipmentid, barcode, note=None):
+        """检测设备解锁
+        :param workorderid:
+        :param equipmentid:
+        :param barcode:
+        :param testtype:
+        :return:
+        """
+        values = {'success': True, 'message': u'设备解锁成功！'}
+        if not workorderid:
+            values.update({'success': False, 'message': u'请先设置好工单信息'})
+            return values
+        if not equipmentid:
+            values.update({'success': False, 'message': u'请先设置好设备信息'})
+            return values
+        if not barcode:
+            values.update({'success': False, 'message': u'未获取到员工条码'})
+            return values
+        temployee = self.env['aas.hr.employee'].search([('barcode', '=', barcode.upper())], limit=1)
+        if not temployee:
+            values.update({'success': False, 'message': u'未获取到员工信息，请仔细核对条码信息！'})
+            return values
+        if not temployee.job or (temployee.job != 'ipqc'):
+            values.update({'success': False, 'message': u'当前员工非IPQC员工，不可以解锁设备！'})
+            return values
+        equipment = self.env['aas.equipment.equipment'].browse(equipmentid)
+        workstation = equipment.workstation_id
+        workstationid = False if not workstation else workstation.id
+        self.env['aas.mes.producttest.locking'].create({
+            'workorder_id': workorderid, 'equipment_id': equipmentid,
+            'actiontype': 'unlock', 'employee_id': temployee.id, 'workstation_id': workstationid,
+            'employee_job': temployee.job, 'action_note': False if not note else note
+        })
+        return values
+
+
+
 
 
 

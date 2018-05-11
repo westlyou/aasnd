@@ -135,8 +135,6 @@ class AASMESLine(models.Model):
                 ordervals['schedule_id'] = schedule.id
                 schedule.write({'state': 'working'})
             self.write(ordervals)
-            # 分割快班次员工出勤记录
-            self.action_split_employee_attendance(self.id)
             # 刷新上料信息
             self.action_refreshandclear_feeding(self.id)
 
@@ -191,18 +189,6 @@ class AASMESLine(models.Model):
         feedmateriallist.action_freshandclear()
         return True
 
-
-    @api.model
-    def action_split_employee_attendance(self, mesline_id):
-        """
-        分割跨班次员工的出勤记录
-        :param mesline_id:
-        :return:
-        """
-        tempdomain = [('mesline_id', '=', mesline_id), ('attend_done', '=', False)]
-        attendancelines = self.env['aas.mes.work.attendance.line'].search(tempdomain)
-        if attendancelines and len(attendancelines) > 0:
-            attendancelines.action_split()
 
     @api.model
     def action_loading_workstationlist(self):
@@ -371,3 +357,19 @@ class AASMESSchedule(models.Model):
             if schedulecount <= 0:
                 raise UserError(u'产线%s下至少要保留一个班次！'% mesline.name)
         return result
+
+
+    @api.model
+    def get_next_schedule(self, mesline, shcedule=None):
+        """获取当前产线的下一个班次
+        :param mesline:
+        :param shcedule:
+        :return:
+        """
+        tempdomain = [('mesline_id', '=', mesline.id)]
+        if shcedule:
+            tdomain = tempdomain + [('sequence', '>', shcedule.sequence)]
+            if self.env['aas.mes.schedule'].search_count(tdomain) > 0:
+                tempdomain = tdomain
+        nextschedule = self.env['aas.mes.schedule'].search(tempdomain, order='sequence', limit=1)
+        return nextschedule

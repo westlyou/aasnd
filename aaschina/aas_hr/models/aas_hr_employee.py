@@ -23,6 +23,8 @@ EMPLOYEESTATES = [('working', u'工作'), ('leave', u'离开'), ('atop', u'事�
 GENDERS = [('male', u'男'), ('female', u'女')]
 MARITALS = [('single', u'单身'), ('married', u'已婚'), ('other', u'其他')]
 
+JOBS = [('worker', u'工人'), ('ipqc', 'IPQC')]
+
 class AASHREmployee(models.Model):
     _name = 'aas.hr.employee'
     _description = 'AAS HR Employee'
@@ -51,6 +53,7 @@ class AASHREmployee(models.Model):
     work_location = fields.Char(string=u'办公地址')
     entry_time = fields.Datetime(string=u'入职时间', default=fields.Datetime.now, copy=False)
     dimission_time = fields.Datetime(string=u'离职时间', copy=False)
+    job = fields.Selection(selection=JOBS, string=u'岗位', copy=False, default='worker')
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
 
@@ -116,5 +119,25 @@ class AASHREmployee(models.Model):
     @api.multi
     def action_entry(self):
         self.write({'entry_time': fields.Datetime.now(), 'state': 'leave', 'active': True})
+
+    @api.model
+    def action_scanning(self, barcode):
+        """扫描员工卡
+        :param barcode:
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        if not barcode:
+            values.update({'success': False, 'message': u'未获取到条码信息！'})
+            return values
+        temployee = self.env['aas.hr.employee'].search([('barcode', '=', barcode)], limit=1)
+        if not temployee:
+            values.update({'success': False, 'message': u'未获取到员工信息，请仔细核对条码信息！'})
+            return values
+        values.update({
+            'eid': temployee.id, 'ename': temployee.name,
+            'ecode': temployee.code, 'job': '' if not temployee.job else temployee.job
+        })
+        return values
 
 

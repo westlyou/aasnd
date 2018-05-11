@@ -123,6 +123,9 @@
         <menuitem id="menu_aas_mes_wirebom"  name="线材BOM" action="action_aas_mes_wirebom"
                           parent="menu_aas_mes_settings" sequence="3" groups="group_aas_mes_technologist"/>
 
+        <menuitem id="menu_aas_mes_wirebom_tech"  name="线材BOM" action="action_aas_mes_wirebom"
+                          parent="menu_aas_mes_bom_technologist" sequence="2" groups="group_aas_mes_technologist"/>
+
         <record id="view_tree_aas_mes_wireorder" model="ir.ui.view">
             <field name="name">aas.mes.wireorder.tree</field>
             <field name="model">aas.mes.wireorder</field>

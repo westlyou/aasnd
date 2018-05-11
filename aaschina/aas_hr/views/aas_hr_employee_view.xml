@@ -52,6 +52,7 @@
                     <field name="name"/>
                     <field name="code"/>
                     <field name="gender"/>
+                    <field name="job"/>
                     <field name="work_phone"/>
                     <field name="work_email"/>
                     <field name="state"/>
@@ -83,6 +84,7 @@
                             <page string="基础信息">
                                 <group>
                                     <group>
+                                        <field name="job"/>
                                         <field name="birthday"/>
                                         <field name="gender" widget="radio"/>
                                         <field name="identification_id"/>
@@ -112,16 +114,19 @@
                 <search>
                     <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
                     <field name="code" string="工号" filter_domain="[('code','ilike',self)]"/>
+                    <field name="job" string="岗位" filter_domain="[('job','ilike',self)]"/>
                     <separator/>
                     <filter string="工作" domain="[('state','=','working')]" />
                     <filter string="离开" domain="[('state','=','leave')]" />
                     <filter string="事假" domain="[('state','=','atop')]" />
                     <filter string="休假" domain="[('state','=','vacation')]" />
                     <filter string="离职" domain="[('active','=',False)]" />
+                    <separator/>
                     <group expand="0" string="分组">
                         <filter string="状态" context="{'group_by':'state'}"/>
                         <filter string="性别" context="{'group_by':'gender'}"/>
                         <filter string="婚配" context="{'group_by':'marital'}"/>
+                        <filter string="岗位" context="{'group_by':'job'}"/>
                     </group>
                 </search>
             </field>
