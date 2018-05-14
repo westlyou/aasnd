@@ -31,13 +31,19 @@ class AASReceiptWechatController(http.Controller):
 
     ######################################## 收货明细单上架操作 #########################################
 
-    @http.route('/aaswechat/wms/receiptlinelist', type='http', auth='user')
-    def aas_wechat_wms_receiptlinelist(self, limit=20):
-        values = {'success': True, 'message': '', 'receiptlines': [], 'lineindex': '0'}
-        linesdomain = ['&', '|']
-        linesdomain.extend(['&', ('receipt_type', '=', 'purchase'), ('state', 'in', ['checked', 'receipt'])])
-        linesdomain.extend(['&', ('receipt_type', '!=', 'purchase'), ('state', 'in', ['confirm', 'receipt'])])
-        linesdomain.extend([('company_id', '=', request.env.user.company_id.id)])
+    @http.route('/aaswechat/wms/receiptlinelist/<string:receipttype>', type='http', auth='user')
+    def aas_wechat_wms_receiptlinelist(self, receipttype='all', limit=20):
+        values = {'success': True, 'message': '', 'receiptlines': [], 'lineindex': '0', 'receipttype': receipttype}
+        linesdomain = [('company_id', '=', request.env.user.company_id.id)]
+        if receipttype == 'purchase':
+            linesdomain += [('receipt_type', '=', receipttype), ('state', 'in', ['checked', 'receipt'])]
+        elif receipttype != 'all':
+            linesdomain += [('receipt_type', '=', receipttype), ('state', 'in', ['confirm', 'receipt'])]
+        else:
+            linesdomain.insert(0, '&')
+            linesdomain.append('|')
+            linesdomain += ['&', ('receipt_type', '=', 'purchase'), ('state', 'in', ['checked', 'receipt'])]
+            linesdomain += ['&', ('receipt_type', '!=', 'purchase'), ('state', 'in', ['confirm', 'receipt'])]
         receiptlines = request.env['aas.stock.receipt.line'].search(linesdomain, limit=limit)
         if receiptlines and len(receiptlines) > 0:
             values['receiptlines'] = [{
@@ -49,15 +55,24 @@ class AASReceiptWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/receiptlinemore', type='json', auth="user")
-    def aas_wechat_wms_receiptlinemore(self, lineindex=0, product_code=None, limit=20):
+    def aas_wechat_wms_receiptlinemore(self, receipttype='all', lineindex=0, product_code=None, limit=20):
         values = {'success': True, 'message': '', 'receiptlines': [], 'lineindex': lineindex, 'linecount': 0}
-        linesdomain = ['&', '|']
-        linesdomain.extend(['&', ('receipt_type', '=', 'purchase'), ('state', 'in', ['checked', 'receipt'])])
-        linesdomain.extend(['&', ('receipt_type', '!=', 'purchase'), ('state', 'in', ['confirm', 'receipt'])])
-        if not product_code:
-            linesdomain.extend([('company_id', '=', request.env.user.company_id.id)])
+        linesdomain = [('company_id', '=', request.env.user.company_id.id)]
+        if product_code:
+            pdomain = [('product_code', 'ilike', '%'+product_code+'%')]
+            if receipttype == 'all':
+                linesdomain.insert(0, '&')
+            linesdomain += pdomain
+        if receipttype == 'purchase':
+            linesdomain += [('receipt_type', '=', receipttype), ('state', 'in', ['checked', 'receipt'])]
+        elif receipttype != 'all':
+            linesdomain += [('receipt_type', '=', receipttype), ('state', 'in', ['confirm', 'receipt'])]
         else:
-            linesdomain.extend(['&', ('company_id', '=', request.env.user.company_id.id), ('product_code', 'ilike', '%'+product_code+'%')])
+            linesdomain.insert(0, '&')
+            linesdomain.append('|')
+            linesdomain += ['&', ('receipt_type', '=', 'purchase'), ('state', 'in', ['checked', 'receipt'])]
+            linesdomain += ['&', ('receipt_type', '!=', 'purchase'), ('state', 'in', ['confirm', 'receipt'])]
+
         receiptlines = request.env['aas.stock.receipt.line'].search(linesdomain, offset=lineindex, limit=limit)
         if receiptlines and len(receiptlines) > 0:
             values['receiptlines'] = [{
@@ -71,12 +86,24 @@ class AASReceiptWechatController(http.Controller):
 
 
     @http.route('/aaswechat/wms/receiptlinesearch', type='json', auth="user")
-    def aas_wechat_wms_receiptlinesearch(self, product_code, limit=20):
+    def aas_wechat_wms_receiptlinesearch(self, product_code, receipttype='all', limit=20):
         values = {'success': True, 'message': '', 'receiptlines': [], 'lineindex': '0'}
-        linesdomain = ['&', '|']
-        linesdomain.extend(['&', ('receipt_type', '=', 'purchase'), ('state', 'in', ['checked', 'receipt'])])
-        linesdomain.extend(['&', ('receipt_type', '!=', 'purchase'), ('state', 'in', ['confirm', 'receipt'])])
-        linesdomain.extend(['&', ('company_id', '=', request.env.user.company_id.id), ('product_code', 'ilike', '%'+product_code+'%')])
+        if not product_code:
+            values.update({'success': False, 'message': u'请先设置好需要查询的料号！'})
+            return values
+        linesdomain = [('company_id', '=', request.env.user.company_id.id)]
+        if receipttype == 'all':
+            linesdomain.insert(0, '&')
+        linesdomain.append(('product_code', 'ilike', '%'+product_code+'%'))
+        if receipttype == 'purchase':
+            linesdomain += [('receipt_type', '=', receipttype), ('state', 'in', ['checked', 'receipt'])]
+        elif receipttype != 'all':
+            linesdomain += [('receipt_type', '=', receipttype), ('state', 'in', ['confirm', 'receipt'])]
+        else:
+            linesdomain.insert(0, '&')
+            linesdomain.append('|')
+            linesdomain += ['&', ('receipt_type', '=', 'purchase'), ('state', 'in', ['checked', 'receipt'])]
+            linesdomain += ['&', ('receipt_type', '!=', 'purchase'), ('state', 'in', ['confirm', 'receipt'])]
         receiptlines = request.env['aas.stock.receipt.line'].search(linesdomain, limit=limit)
         if receiptlines and len(receiptlines) > 0:
             values['receiptlines'] = [{

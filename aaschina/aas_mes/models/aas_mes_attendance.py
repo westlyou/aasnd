@@ -28,7 +28,7 @@ class AASMESWorkAttendance(models.Model):
     employee_code = fields.Char(string=u'员工工号', copy=False)
     attendance_date = fields.Char(string=u'在岗日期')
     attendance_start = fields.Datetime(string=u'上岗时间', default=fields.Datetime.now, copy=False)
-    attendance_finish = fields.Datetime(string=u'离岗时间', copy=False)
+    attendance_finish = fields.Datetime(string=u'离岗时间', copy=False, help=u'最近一次离开的时间')
     attend_hours = fields.Float(string=u'总工时', default=0.0, copy=False)
     overtime_hours = fields.Float(string=u'加班工时', default=0.0, copy=False)
     attend_done = fields.Boolean(string=u'是否结束', default=False, copy=False)
@@ -39,6 +39,7 @@ class AASMESWorkAttendance(models.Model):
     worktime_advance = fields.Float(string=u'提前工时')
     company_id = fields.Many2one('res.company', string=u'公司', index=True, default=lambda self: self.env.user.company_id)
 
+    leave_hours = fields.Float(string=u'离岗工时', default=0.0, copy=False)
     attend_lines = fields.One2many(comodel_name='aas.mes.work.attendance.line', inverse_name='attendance_id', string=u'出勤明细')
 
 
@@ -340,7 +341,9 @@ class AASMESWorkAttendanceLine(models.Model):
         self.action_update_workstationemployee()
         attendance = self.attendance_id
         if attendance.attendance_finish:
-            attendance.write({'attendance_finish': False, 'leave_id': False})
+            temptimes = fields.Datetime.from_string(fields.Datetime.now()) - fields.Datetime.from_string(attendance.attendance_finish)
+            leave_hours = temptimes.total_seconds() / 3600.00 + attendance.leave_hours
+            attendance.write({'attendance_finish': False, 'leave_id': False, 'leave_hours': leave_hours})
 
 
 

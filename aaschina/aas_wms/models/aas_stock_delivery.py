@@ -542,9 +542,8 @@ class AASStockDeliveryOperation(models.Model):
     @api.one
     @api.constrains('delivery_id', 'label_id')
     def action_check_operation(self):
-        if self.delivery_id.delivery_type == 'purchase':
-            return True
-        if self.prioritized:
+        deliverytype = self.delivery_id.delivery_type
+        if deliverytype not in ['manufacture', 'sundry'] or self.prioritized:
             return True
         product_id, location_id, product_lot = self.label_id.product_id, self.label_id.location_id, self.label_id.product_lot
         listdomain = [('product_id', '=', product_id.id), ('product_lot', '=', product_lot.id)]
@@ -555,13 +554,14 @@ class AASStockDeliveryOperation(models.Model):
 
     @api.onchange('label_id')
     def action_change_label(self):
-        if self.label_id:
-            self.product_id, self.product_uom = self.label_id.product_id.id, self.label_id.product_uom.id
-            self.product_lot, self.product_qty = self.label_id.product_lot.id, self.label_id.product_qty
-            self.location_id = self.label_id.location_id.id
+        label = self.label_id
+        if label:
+            product = label.product_id
+            self.product_qty, self.location_id = label.product_qty, label.location_id.id
+            self.product_id, self.product_uom, self.product_lot = product.id, product.uom_id.id, label.product_lot.id
         else:
-            self.product_id, self.product_uom, self.product_lot, self.product_qty, self.location_id= False, False, False, 0.0, False
-
+            self.product_id, self.product_uom = False, False
+            self.product_lot, self.product_qty, self.location_id = False, 0.0, False
 
     @api.model
     def action_before_create(self, vals):

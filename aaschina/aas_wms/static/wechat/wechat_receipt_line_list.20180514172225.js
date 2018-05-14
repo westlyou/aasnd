@@ -26,8 +26,9 @@ function pulluprefresh(){
     mui.later(function(){
         var pullrefresh = document.body.querySelector('#receipt_line_list_pullrefresh');
         var lineindex = pullrefresh.getAttribute('lineindex');
+        var receipttype = pullrefresh.getAttribute('receipttype');
         var accessid = Math.floor(Math.random() * 1000 * 1000 * 1000);
-        var params = {'lineindex': parseInt(lineindex)};
+        var params = {'lineindex': parseInt(lineindex), 'receipttype': receipttype};
         var keyword = document.getElementById('product_code_search').value;
         if(keyword!=null && keyword!=''){
             params['product_code'] = keyword;
@@ -86,9 +87,12 @@ mui.ready(function(){
             mui.toast('请输入产品编码，产品编码不能为空！');
             return;
         }
+        var pullrefresh = document.getElementById('receipt_line_list_pullrefresh');
+        var receipttype = pullrefresh.getAttribute('receipttype');
+        var temparams = {'product_code': keyword, 'receipttype': receipttype};
         var search_accessid = Math.floor(Math.random() * 1000 * 1000 * 1000);
         mui.ajax('/aaswechat/wms/receiptlinesearch', {
-            data: JSON.stringify({jsonrpc: "2.0", method: 'call', params: {'product_code': keyword}, id: search_accessid}),
+            data: JSON.stringify({jsonrpc: "2.0", method: 'call', params: temparams, id: search_accessid}),
             dataType: 'json', type: 'post', timeout: 10000,
             headers: {'Content-Type': 'application/json'},
             success: function (data) {

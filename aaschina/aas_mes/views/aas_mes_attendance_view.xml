@@ -15,6 +15,7 @@
                     <field name="attend_hours" widget="float_time"/>
                     <field name="overtime_hours" widget="float_time"/>
                     <field name="leave_id"/>
+                    <field name="leave_hours" widget="float_time"/>
                 </tree>
             </field>
         </record>
@@ -41,6 +42,7 @@
                                 <field name="attend_hours" widget="float_time"/>
                                 <field name="overtime_hours" widget="float_time"/>
                                 <field name="leave_id" readonly="1"/>
+                                <field name="leave_hours" readonly="1" widget="float_time"/>
                             </group>
                         </group>
                         <notebook>

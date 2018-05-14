@@ -120,7 +120,6 @@ class AASMESAttendanceController(http.Controller):
 
     @http.route('/aasmes/attendance/actionleave', type='json', auth="user")
     def aasmes_attendance_actionleave(self, attendanceid, leaveid):
-        print attendanceid, leaveid
         values = {'success': True, 'message': ''}
         attendance = request.env['aas.mes.work.attendance'].browse(attendanceid)
         attendance.write({'leave_id': leaveid})
