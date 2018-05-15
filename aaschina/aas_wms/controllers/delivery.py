@@ -19,10 +19,12 @@ class AASWMSDeliveryController(http.Controller):
 
     @http.route('/aaswms/delivery', type='http', auth="user")
     def aaswms_delivery(self):
-        values = {'success': True, 'message': '', 'checker': request.env.user.name, 'deliverylist': []}
-        currentdate = fields.Datetime.to_timezone_string(fields.Datetime.now(), 'Asia/Shanghai')[0:10]
-        values['currentdate'] = currentdate
-        timezonestarttime, timezonefinishtime = currentdate+' 00:00:00', currentdate+' 23:59:59'
+        chinatoday = fields.Datetime.to_china_today()
+        values = {
+            'success': True, 'message': '', 'currentdate': chinatoday,
+            'checker': request.env.user.name, 'deliverylist': [], 'productlist': []
+        }
+        timezonestarttime, timezonefinishtime = chinatoday+' 00:00:00', chinatoday+' 23:59:59'
         timestart = fields.Datetime.to_utc_string(fields.Datetime.from_string(timezonestarttime), 'Asia/Shanghai')
         timefinish = fields.Datetime.to_utc_string(fields.Datetime.from_string(timezonefinishtime), 'Asia/Shanghai')
         deliverydomain = [('pick_time', '>=', timestart), ('pick_time', '<=', timefinish)]
@@ -40,13 +42,48 @@ class AASWMSDeliveryController(http.Controller):
                 else:
                     deliverydict[pkey]['label_count'] += 1
                     deliverydict[pkey]['product_qty'] += tlabel.product_qty
-            values['deliverylist'] = deliverydict.values()
+            values['productlist'] = deliverydict.values()
+        ddomain = [('delivery_type', '=', 'sales'), ('state', 'in', ['confirm', 'picking', 'pickconfirm'])]
+        deliverylist = request.env['aas.stock.delivery'].search(ddomain)
+        if deliverylist and len(deliverylist) > 0:
+            values['deliverylist'] = [{
+                'delivery_id': delivery.id, 'delivery_name': delivery.name
+            } for delivery in deliverylist]
         return request.render('aas_wms.aas_delivery', values)
 
 
+
+    @http.route('/aaswms/delivery/detail/<int:deliveryid>', type='http', auth="user")
+    def aaswms_delivery_detail(self, deliveryid):
+        values = {
+            'success': True, 'message': '', 'delivery_id': deliveryid, 'delivery_name': '',
+            'checker': request.env.user.name, 'productlist': [], 'operationlist': []
+        }
+        delivery = request.env['aas.stock.delivery'].browse(deliveryid)
+        values['delivery_name'] = delivery.name
+        deliverylines = delivery.delivery_lines
+        if not deliverylines or len(deliverylines) <= 0:
+            return request.render('aas_wms.aas_delivery_detail', values)
+        values['productlist'] = [{
+            'product_id': dline.product_id.id, 'product_code': dline.product_id.default_code,
+            'delivery_qty': dline.delivery_qty, 'picking_qty': dline.picking_qty
+        } for dline in deliverylines]
+        optdomain = [('delivery_id', '=', deliveryid), ('deliver_done', '=', False)]
+        operationlist = request.env['aas.stock.delivery.operation'].search(optdomain)
+        if operationlist and len(operationlist) > 0:
+            values['operationlist'] = [{
+                'operation_id': tempopt.id, 'label_name': tempopt.label_id.name,
+                'product_code': tempopt.product_id.default_code,
+                'product_id': tempopt.product_id.id, 'product_lot': tempopt.product_lot.name,
+                'product_qty': tempopt.product_qty, 'location_name': tempopt.location_id.name
+            } for tempopt in operationlist]
+        return request.render('aas_wms.aas_delivery_detail', values)
+
+
+
     @http.route('/aaswms/delivery/scanlabel', type='json', auth="user")
-    def aasmes_delivery_scanlabel(self, barcode, labelids=[]):
-        values = {'success': True, 'message': ''}
+    def aasmes_delivery_scanlabel(self, barcode, deliveryid):
+        values = {'success': True, 'message': '', 'product_id': '0', 'picking_qty': '0.0'}
         label = request.env['aas.product.label'].search([('barcode', '=', barcode)], limit=1)
         if not label:
             values.update({'success': False, 'message': u'未搜搜到此标签，请仔细检查！'})
@@ -57,67 +94,62 @@ class AASWMSDeliveryController(http.Controller):
         if not label.oqcpass:
             values.update({'success': False, 'message': u'标签还没通过OQC检测，不可以扫描！'})
             return values
-        if str(label.id) in labelids:
-            values.update({'success': False, 'message': u'标签已存在请不要重复扫描！'})
-            return values
         if label.state != 'normal':
             values.update({'success': False, 'message': u'标签状态异常，请仔细检查！'})
             return values
         if label.locked:
             values.update({'success': False, 'message': u'标签锁定，标签已被%s锁定，请联系相关人员！'% label.locked_order})
             return values
-        if not label.product_id.customer_product_code:
-            product_code = label.product_code
-        else:
-            product_code = label.product_id.customer_product_code
-        values.update({
-            'label_id': label.id, 'label_name': label.name,
-            'product_qty': label.product_qty, 'product_id': label.product_id.id, 'product_code': product_code
+        linedomain = [('delivery_id', '=', deliveryid), ('product_id', '=', label.product_id.id)]
+        if request.env['aas.stock.delivery.line'].search_count(linedomain) <= 0:
+            values.update({'success': False, 'message': u'扫描异常，当前标签可能不是此发货单要发的产品！'})
+            return values
+        optdomain = [('delivery_id', '=', deliveryid), ('label_id', '=', label.id)]
+        if request.env['aas.stock.delivery.operation'].search_count(optdomain) > 0:
+            values.update({'success': False, 'message': u'标签已存在，请不要重复扫描！'})
+            return values
+        doperation = request.env['aas.stock.delivery.operation'].create({
+            'delivery_id': deliveryid, 'label_id': label.id
         })
+        deliveryline = doperation.delivery_line
+        values.update({'product_id': deliveryline.product_id.id, 'picking_qty': deliveryline.picking_qty})
+        values['label'] = {
+            'operation_id': doperation.id, 'label_name': label.name, 'product_code': label.product_code,
+            'product_lot': label.product_lot.name, 'product_qty': label.product_qty,
+            'location_name': label.location_id.name, 'product_id': label.product_id.id
+        }
         return values
 
 
-    @http.route('/aaswms/delivery/actiondone', type='json', auth="user")
-    def aasmes_delivery_actiondone(self, labelids=[]):
-        values = {'success': True, 'message': ''}
-        if not labelids and len(labelids) > 0:
-            values.update({'success': False, 'message': u'请先扫描需要出货的标签！'})
+    @http.route('/aaswms/delivery/deloperation', type='json', auth="user")
+    def aasmes_delivery_deloperation(self, operationid):
+        values = {'success': True, 'message': '', 'product_id': '0', 'picking_qty': '0.0'}
+        doperation = request.env['aas.stock.delivery.operation'].browse(operationid)
+        deliverylineid = doperation.delivery_line.id
+        if doperation.deliver_done:
+            values.update({'success': False, 'message': u'当前记录已执行发货，不可以删除！'})
             return values
-        labellist = request.env['aas.product.label'].browse(labelids)
-        deliveryvals, productdict = {'delivery_type': 'sales', 'pick_user': request.env.user.id}, {}
-        for tlabel in labellist:
-            pkey = 'P-'+str(tlabel.product_id.id)
-            if pkey not in productdict:
-                productdict[pkey] = {
-                    'product_id': tlabel.product_id.id, 'product_qty': tlabel.product_qty, 'delivery_type': 'sales'
-                }
-            else:
-                productdict[pkey]['product_qty'] += tlabel.product_qty
-        deliveryvals['delivery_lines'] = [(0, 0, dline) for dline in productdict.values()]
-        delivery = request.env['aas.stock.delivery'].create(deliveryvals)
-        delivery.action_confirm()
-        listdict, dlinedict = {}, {}
-        for dline in delivery.delivery_lines:
-            pkey = 'P-'+str(dline.product_id.id)
-            dlinedict[pkey] = dline.id
-        for tlabel in labellist:
-            pkey = 'P-'+str(tlabel.product_id.id)
-            lkey = pkey+'-'+str(tlabel.product_lot.id)+'-'+str(tlabel.location_id.id)
-            if lkey not in listdict:
-                deliverylineid = dlinedict[pkey]
-                listdict[lkey] = {
-                    'product_id': tlabel.product_id.id, 'product_uom': tlabel.product_uom.id, 'delivery_line': deliverylineid,
-                    'product_lot': tlabel.product_lot.id, 'location_id': tlabel.location_id.id, 'product_qty': tlabel.product_qty
-                }
-            else:
-                listdict[lkey]['product_qty'] += tlabel.product_qty
-        delivery.write({'picking_list': [(0, 0, dlist) for dlist in listdict.values()]})
-        operationlist = []
-        for tlabel in labellist:
-            pkey = 'P-'+str(tlabel.product_id.id)
-            lineid = False if pkey not in dlinedict else dlinedict[pkey]
-            operationlist.append((0, 0, {'label_id': tlabel.id, 'delivery_line': lineid}))
-        delivery.write({'operation_lines': operationlist})
+        doperation.unlink()
+        deliveryline = request.env['aas.stock.delivery.line'].browse(deliverylineid)
+        values.update({'product_id': deliveryline.product_id.id, 'picking_qty': deliveryline.picking_qty})
+        return values
+
+
+    @http.route('/aaswms/delivery/dodelivery', type='json', auth="user")
+    def aasmes_delivery_dodelivery(self, deliveryid):
+        values = {'success': True, 'message': ''}
+        optdomain = [('delivery_id', '=', deliveryid), ('deliver_done', '=', False)]
+        operationlines = request.env['aas.stock.delivery.operation'].search(optdomain)
+        if not operationlines or len(operationlines) <= 0:
+            values.update({'success': False, 'message': u'当前还没有任何拣货操作，不可以执行发货！'})
+            return values
+        delivery = request.env['aas.stock.delivery'].browse(deliveryid)
+        if delivery.state == 'done':
+            values.update({'success': False, 'message': u'当前发货单已经完成，请不要重复操作！'})
+            return values
+        if delivery.state == 'cancel':
+            values.update({'success': False, 'message': u'当前发货单已经取消，请不要继续操作！'})
+            return values
         delivery.action_picking_confirm()
         delivery.action_deliver_done()
         return values

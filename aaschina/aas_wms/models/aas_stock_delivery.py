@@ -156,6 +156,8 @@ class AASStockDelivery(models.Model):
         else:
             deliveryvals.update({'state': 'picking'})
         self.write(deliveryvals)
+        if self.picking_list and len(self.picking_list) > 0:
+            self.picking_list.unlink()
 
 
 
@@ -517,22 +519,22 @@ class AASStockDeliveryOperation(models.Model):
     _description = u'拣货作业'
     _order = 'id desc'
 
-    delivery_id = fields.Many2one(comodel_name='aas.stock.delivery', string=u'发货单', ondelete='cascade', index=True)
-    delivery_line = fields.Many2one(comodel_name='aas.stock.delivery.line', string=u'发货明细', ondelete='cascade', index=True)
+    delivery_id = fields.Many2one('aas.stock.delivery', string=u'发货单', ondelete='cascade', index=True)
+    delivery_line = fields.Many2one('aas.stock.delivery.line', string=u'发货明细', ondelete='cascade', index=True)
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签', ondelete='restrict', index=True)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='restrict', index=True)
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     product_qty = fields.Float(string=u'应发数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     location_id = fields.Many2one(comodel_name='stock.location', string=u'标签库位',  ondelete='restrict')
-    pick_user = fields.Many2one(comodel_name='res.users', string=u'拣货人', ondelete='restrict', default=lambda self: self.env.user)
+    pick_user = fields.Many2one('res.users', string=u'拣货人', ondelete='restrict', default=lambda self: self.env.user)
     pick_time = fields.Datetime(string=u'拣货时间', default=fields.Datetime.now)
     check_user = fields.Many2one(comodel_name='res.users', string=u'确认人', ondelete='restrict')
     check_time = fields.Datetime(string=u'确认时间')
     deliver_done = fields.Boolean(string=u'是否发货', default=False, copy=False)
     delivery_type = fields.Selection(selection=DELIVERY_TYPE, string=u'发货类型')
     prioritized = fields.Boolean(string=u'优先标签', default=False, copy=False)
-    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='set null', default=lambda self: self.env.user.company_id)
+    company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
 
     _sql_constraints = [
@@ -667,7 +669,7 @@ class AASStockDeliveryMove(models.Model):
     origin_order = fields.Char(string=u'来源单据', copy=False)
     delivery_note = fields.Text(string=u'备注')
     delivery_type = fields.Selection(selection=DELIVERY_TYPE, string=u'发货类型')
-    delivery_date = fields.Date(string=u'发货日期', default=fields.Date.today)
+    delivery_date = fields.Date(string=u'发货日期', default=fields.Datetime.to_china_today())
     delivery_time = fields.Datetime(string=u'发货时间', default=fields.Datetime.now)
     partner_id = fields.Many2one(comodel_name='res.partner', string=u'业务伙伴', ondelete='restrict')
     delivery_user = fields.Many2one(comodel_name='res.users', string=u'发货员工', ondelete='restrict')
