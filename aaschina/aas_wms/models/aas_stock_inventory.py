@@ -213,7 +213,7 @@ class AASStockInventory(models.Model):
         for tlabel in self.inventory_labels:
             if tlabel.label_id:
                 labellist |= tlabel.label_id
-        if not labellist or len(labellist) <= 0:
+        if labellist and len(labellist) > 0:
             labellist.write({'locked': False, 'locked_order': False})
 
 
