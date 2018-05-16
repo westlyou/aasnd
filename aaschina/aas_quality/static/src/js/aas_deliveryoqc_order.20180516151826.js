@@ -74,7 +74,7 @@ $(function(){
                 var picking_qty = parseFloat(temproduct.attr('pickingqty')) + current_qty;
                 temproduct.attr('pickingqty', picking_qty).html(picking_qty);
                 var pickingitem = $('<tr class="oqclabel"></tr>').prependTo($('#operationlist'));
-                pickingitem.attr('labelid', dresult.label_id);
+                pickingitem.attr({'labelid': dresult.label_id, 'id': 'label'+dresult.label_id});
                 $('<td></td>').html(dresult.label_name).appendTo(pickingitem);
                 $('<td></td>').html(dresult.product_code).appendTo(pickingitem);
                 $('<td></td>').html(dresult.product_lot).appendTo(pickingitem);

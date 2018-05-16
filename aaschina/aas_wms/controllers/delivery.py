@@ -66,7 +66,7 @@ class AASWMSDeliveryController(http.Controller):
             return request.render('aas_wms.aas_delivery_detail', values)
         values['productlist'] = [{
             'product_id': dline.product_id.id, 'product_code': dline.product_id.default_code,
-            'delivery_qty': dline.delivery_qty, 'picking_qty': dline.picking_qty
+            'picking_qty': dline.picking_qty, 'todo_qty': dline.product_qty - dline.delivery_qty
         } for dline in deliverylines]
         optdomain = [('delivery_id', '=', deliveryid), ('deliver_done', '=', False)]
         operationlist = request.env['aas.stock.delivery.operation'].search(optdomain)
@@ -97,16 +97,16 @@ class AASWMSDeliveryController(http.Controller):
         if label.state != 'normal':
             values.update({'success': False, 'message': u'标签状态异常，请仔细检查！'})
             return values
+        optdomain = [('delivery_id', '=', deliveryid), ('label_id', '=', label.id)]
+        if request.env['aas.stock.delivery.operation'].search_count(optdomain) > 0:
+            values.update({'success': False, 'message': u'标签已存在，请不要重复扫描！'})
+            return values
         if label.locked:
-            values.update({'success': False, 'message': u'标签锁定，标签已被%s锁定，请联系相关人员！'% label.locked_order})
+            values.update({'success': False, 'message': u'标签锁定，标签已被锁定，请联系相关人员！'})
             return values
         linedomain = [('delivery_id', '=', deliveryid), ('product_id', '=', label.product_id.id)]
         if request.env['aas.stock.delivery.line'].search_count(linedomain) <= 0:
             values.update({'success': False, 'message': u'扫描异常，当前标签可能不是此发货单要发的产品！'})
-            return values
-        optdomain = [('delivery_id', '=', deliveryid), ('label_id', '=', label.id)]
-        if request.env['aas.stock.delivery.operation'].search_count(optdomain) > 0:
-            values.update({'success': False, 'message': u'标签已存在，请不要重复扫描！'})
             return values
         doperation = request.env['aas.stock.delivery.operation'].create({
             'delivery_id': deliveryid, 'label_id': label.id

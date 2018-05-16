@@ -253,7 +253,7 @@
                                                             </li>
                                                             <li>
                                                                 <a href="#" style="font-size:18px; padding:5px 15px; height:32px; font-weight:bold;">
-                                                                    已发数量 <span class="pull-right" t-esc="product['delivery_qty']"/>
+                                                                    待发数量 <span class="pull-right" t-esc="product['todo_qty']"/>
                                                                 </a>
                                                             </li>
                                                         </ul>
