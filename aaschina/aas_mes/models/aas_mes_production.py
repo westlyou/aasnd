@@ -278,6 +278,8 @@ class AASProductionProduct(models.Model):
             })
         if finaloutput:
             workordervals['output_qty'] = workorder.output_qty + currentoutput.product_qty
+        if float_compare(currentoutput.badmode_qty, 0.0, precision_rounding=0.000001) > 0.0:
+            workordervals['badmode_qty'] = workorder.badmode_qty + currentoutput.badmode_qty
         # 兼容下线产出
         if not workticket and container and workorder.output_manner == 'container':
             self.action_output2container(currentoutput, container)

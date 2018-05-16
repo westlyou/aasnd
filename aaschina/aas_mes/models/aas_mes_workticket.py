@@ -59,6 +59,8 @@ class AASMESWorkticket(models.Model):
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签')
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
 
+    commitdoing = fields.Boolean(string=u'报工处理中', default=False, copy=False)
+
     production_lines = fields.One2many(comodel_name='aas.production.product', inverse_name='workticket_id', string=u'成品产出')
 
     @api.depends('name')
@@ -149,6 +151,10 @@ class AASMESWorkticket(models.Model):
         :param equipment:
         :return:
         """
+        # 报工正在处理中，如果有新的请求直接放弃
+        if self.commitdoing:
+            return
+        self.write({'commitdoing': True})
         _logger.info(u'工票%s开始报工;当前时间：%s', self.name, fields.Datetime.now())
         workorder, product = self.workorder_id, self.workorder_id.product_id
         workcenter, workstation = self.workcenter_id, self.workcenter_id.workstation_id
@@ -162,6 +168,7 @@ class AASMESWorkticket(models.Model):
                                                                          equipment=equipment, container=container,
                                                                          finaloutput=finaloutput, tracing=True)
         if not tempvas.get('success', False):
+            self.write({'commitdoing': False})
             errormsg = tempvas.get('message', u'报工异常！')
             raise UserError(errormsg)
         workticketvals = {}
@@ -183,6 +190,7 @@ class AASMESWorkticket(models.Model):
             if float_compare(total_qty, self.input_qty, precision_rounding=0.000001) >= 0.0:
                 self.action_workticket_done()
         _logger.info(u'工票%s报工结束;当前时间：%s', self.name, fields.Datetime.now())
+        self.write({'commitdoing': False})
 
     @api.one
     def action_workticket_done(self):
