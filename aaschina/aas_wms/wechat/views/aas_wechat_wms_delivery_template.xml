@@ -508,25 +508,28 @@
                 <body>
                     <header class="mui-bar mui-bar-nav">
                         <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
-                        <a class="mui-icon mui-icon-bars mui-pull-right" style="color: #0870d9;" href="#delivery_sales_list_buttons"></a>
-                        <h1 class="mui-title"> 销售发票 </h1>
+                        <h1 class="mui-title"> 销售发货 </h1>
                     </header>
                     <div id="delivery_sales_list_pullrefresh" class="mui-content mui-scroll-wrapper" t-att-salesindex="salesindex">
                         <div class="mui-scroll">
                             <ul id="delivery_sales_list" class="mui-table-view">
                                 <li class="mui-table-view-cell">
                                     <div class='mui-table'>
-                                        <div class='mui-table-cell mui-col-xs-4 mui-text-left'>发票单号</div>
+                                        <div class='mui-table-cell mui-col-xs-4 mui-text-left'>发货单号</div>
                                         <div class='mui-table-cell mui-col-xs-8 mui-text-right'>供应商</div>
                                     </div>
                                 </li>
                                 <t t-if="deliverysales">
                                    <t t-foreach="deliverysales" t-as="dsales">
-                                       <li class="aas-delivery-sales mui-table-view-cell" t-att-salesid="dsales['sales_id']">
+                                       <li class="aas-delivery-sales mui-table-view-cell" t-att-deliveryid="dsales['delivery_id']">
                                            <a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>
                                                <div class='mui-table'>
-                                                   <div class='mui-table-cell mui-col-xs-4 mui-text-left'> <t t-esc="dsales['sales_name']"/> </div>
-                                                   <div class='mui-table-cell mui-col-xs-8 mui-text-right'> <t t-esc="dsales['partner_name']"/> </div>
+                                                   <div class='mui-table-cell mui-col-xs-4 mui-text-left'>
+                                                       <t t-esc="dsales['delivery_name']"/>
+                                                   </div>
+                                                   <div class='mui-table-cell mui-col-xs-8 mui-text-right'>
+                                                       <t t-esc="dsales['partner_name']"/>
+                                                   </div>
                                                </div>
                                            </a>
                                        </li>
@@ -535,50 +538,12 @@
                             </ul>
                         </div>
                     </div>
-                    <div id="delivery_sales_list_buttons" class="mui-popover mui-popover-action mui-popover-bottom">
-                        <ul class="mui-table-view">
-                            <li class="mui-table-view-cell"> <a id="action_sales_import" href="javascript:;">导入发票</a></li>
-                        </ul>
-                        <ul class="mui-table-view">
-                            <li class="mui-table-view-cell"> <a href="#delivery_detail_buttons"><b>取消</b></a> </li>
-                        </ul>
-                    </div>
                 </body>
                 <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
-                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_delivery_sales_list.js"></script>
+                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_delivery_sales_list.20180516134256.js"></script>
             </html>
         </template>
 
-        <template id="wechat_wms_delivery_sales_import" name="Wechat WMS Delivery Sales Import">
-            &lt;!DOCTYPE html&gt;
-            <html>
-                <head>
-                    <meta charset="utf-8" />
-                    <title>安费诺先进传感器</title>
-                    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
-                    <meta name="apple-mobile-web-app-capable" content="yes"/>
-                    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
-                    <link rel="stylesheet" href="/aas_base/static/wechat/mui/css/mui.min.css"/>
-                    <link rel="stylesheet" href="/aas_base/static/wechat/aas/css/wechat.css"/>
-                </head>
-                <body>
-                    <header class="mui-bar mui-bar-nav">
-                        <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
-                        <h1 class="mui-title"> 发票导入 </h1>
-                    </header>
-                    <div class="mui-content">
-                        <div class="mui-content-padded" style="margin: 5px; margin-top:50px;">
-                            <div class="mui-input-row">
-                                <input id="sales_order" type="text" class="mui-input-clear" placeholder="请输入销售发票号"/>
-                            </div>
-                            <button id="action_sales_import" type="button" class="mui-btn mui-btn-primary mui-btn-block" style="margin-top:50px;">确认导入</button>
-                        </div>
-                    </div>
-                </body>
-                <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
-                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_delivery_sales_import.js"></script>
-            </html>
-        </template>
 
         <template id="wechat_wms_delivery_sales_detail" name="Wechat WMS Delivery Sales Detail">
             &lt;!DOCTYPE html&gt;
@@ -595,57 +560,116 @@
                 <body>
                     <header class="mui-bar mui-bar-nav">
                         <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
-                        <a class="mui-icon mui-icon-bars mui-pull-right" style="color: #0870d9;" href="#delivery_sales_detail_buttons"></a>
-                        <h1 class="mui-title"> 发票详情 </h1>
+                        <h1 class="mui-title"> 发货详情 </h1>
                     </header>
-                    <div id="delivery_sales_detail_pullrefresh" class="mui-content mui-scroll-wrapper" t-att-salesid="sales_id">
+                    <div id="delivery_sales_detail_pullrefresh" class="mui-content mui-scroll-wrapper" t-att-deliveryid="delivery_id">
                         <div class="mui-scroll">
                             <ul class="mui-table-view">
                                 <li class="mui-table-view-cell">
-                                    <span class="mui-pull-left">发票单号</span>
-                                    <span class="mui-pull-right"> <t t-esc="sales_name"/> </span>
+                                    <span class="mui-pull-left">发货单号</span>
+                                    <span class="mui-pull-right"> <t t-esc="delivery_name"/> </span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">下单时间</span>
+                                    <span class="mui-pull-right"> <t t-esc="order_time"/> </span>
+                                </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">来源单据</span>
+                                    <span class="mui-pull-right"> <t t-esc="origin_order"/> </span>
                                 </li>
                                 <li class="mui-table-view-cell">
                                     <span class="mui-pull-left">供应商</span>
                                     <span class="mui-pull-right"> <t t-esc="partner_name"/> </span>
                                 </li>
-                                <li class="mui-table-view-cell">
-                                    <span class="mui-pull-left">交付日期</span>
-                                    <span class="mui-pull-right"> <t t-esc="shipment_date"/> </span>
+                            </ul>
+
+                            <ul class="mui-table-view aas-ul">
+                                <li id="action_repicking" class="mui-table-view-cell" t-attf-style="display:{{repicking}};">
+                                    <div class="aas-btn">
+                                        <button type="button" class="mui-btn mui-btn-primary mui-btn-block">拣货清单</button>
+                                    </div>
                                 </li>
                             </ul>
-                            <div class="aas-mui-table-view-title"> 发票明细 </div>
+
+                            <div class="aas-mui-table-view-title"> 发货明细 </div>
                             <ul id="delivery_lines" class="mui-table-view">
                                 <li class="mui-table-view-cell">
                                     <div class='mui-table'>
                                         <div class='mui-table-cell mui-col-xs-6 mui-text-left'>产品编码</div>
-                                        <div class='mui-table-cell mui-col-xs-6 mui-text-right'>产品数量</div>
+                                        <div class='mui-table-cell mui-col-xs-6 mui-text-right'>拣货数量</div>
+                                    </div>
+                                    <div class='mui-table'>
+                                        <div class='mui-table-cell mui-col-xs-6 mui-text-left'>应发数量</div>
+                                        <div class='mui-table-cell mui-col-xs-6 mui-text-right'>已发数量</div>
                                     </div>
                                 </li>
-                                <t t-if="saleslines">s
-                                    <t t-foreach="saleslines" t-as="sline">
+                                <t t-if="productlist">
+                                    <t t-foreach="productlist" t-as="product">
                                         <li class="mui-table-view-cell">
                                             <div class='mui-table'>
-                                                <div class='mui-table-cell mui-col-xs-6 mui-text-left'> <t t-esc="sline['product_code']"/> </div>
-                                                <div class='mui-table-cell mui-col-xs-6 mui-text-right'> <t t-esc="sline['product_qty']"/> </div>
+                                                <div class='mui-table-cell mui-col-xs-6 mui-text-left'>
+                                                    <t t-esc="product['product_code']"/>
+                                                </div>
+                                                <div class='mui-table-cell mui-col-xs-6 mui-text-right'>
+                                                    <t t-esc="product['picking_qty']"/>
+                                                </div>
+                                            </div>
+                                            <div class='mui-table'>
+                                                <div class='mui-table-cell mui-col-xs-6 mui-text-left'>
+                                                    <t t-esc="product['product_qty']"/>
+                                                </div>
+                                                <div class='mui-table-cell mui-col-xs-6 mui-text-right'>
+                                                    <t t-esc="product['delivery_qty']"/>
+                                                </div>
                                             </div>
                                         </li>
                                     </t>
                                 </t>
                             </ul>
+
+                            <div class="aas-mui-table-view-title"> 拣货清单 </div>
+                            <ul id="delivery_lines" class="mui-table-view">
+                                <li class="mui-table-view-cell">
+                                    <div class='mui-table'>
+                                        <div class='mui-table-cell mui-col-xs-6 mui-text-left'>产品编码</div>
+                                        <div class='mui-table-cell mui-col-xs-6 mui-text-right'>库存数量</div>
+                                    </div>
+                                    <div class='mui-table'>
+                                        <div class='mui-table-cell mui-col-xs-6 mui-text-left'>产品批次</div>
+                                        <div class='mui-table-cell mui-col-xs-6 mui-text-right'>库位名称</div>
+                                    </div>
+                                </li>
+                                <t t-if="pickinglist">
+                                    <t t-foreach="pickinglist" t-as="pick">
+                                        <li class="mui-table-view-cell">
+                                            <div class='mui-table'>
+                                                <div class='mui-table-cell mui-col-xs-6 mui-text-left'>
+                                                    <t t-esc="pick['product_code']"/>
+                                                </div>
+                                                <div class='mui-table-cell mui-col-xs-6 mui-text-right'>
+                                                    <t t-esc="pick['product_qty']"/>
+                                                </div>
+                                            </div>
+                                            <div class='mui-table'>
+                                                <div class='mui-table-cell mui-col-xs-6 mui-text-left'>
+                                                    <t t-esc="pick['product_lot']"/>
+                                                </div>
+                                                <div class='mui-table-cell mui-col-xs-6 mui-text-right'>
+                                                    <t t-esc="pick['location_name']"/>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </t>
+                                </t>
+                            </ul>
+
                         </div>
                     </div>
-                    <div id="delivery_sales_detail_buttons" class="mui-popover mui-popover-action mui-popover-bottom">
-                        <ul class="mui-table-view">
-                            <li class="mui-table-view-cell"> <a id="action_delivery_done" href="javascript:;">执行发货</a></li>
-                        </ul>
-                        <ul class="mui-table-view">
-                            <li class="mui-table-view-cell"> <a href="#delivery_detail_buttons"><b>取消</b></a> </li>
-                        </ul>
-                    </div>
+
+
                 </body>
                 <script type="text/javascript" src="/aas_base/static/wechat/mui/js/mui.min.js"></script>
-                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_delivery_sales_detail.js"></script>
+                <script type="text/javascript" src="/aas_wms/static/wechat/wechat_delivery_sales_detail.20180516135800.js"></script>
             </html>
         </template>
 

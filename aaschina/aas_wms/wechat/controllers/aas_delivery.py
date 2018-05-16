@@ -19,11 +19,6 @@ logger = logging.getLogger(__name__)
 DELIVERYTYPEDICT = {'purchase': u'采购退货', 'manufacture': u'生产领料', 'sales': u'销售发货', 'sundry': u'杂项出库'}
 DELIVERYSTATEDICT = {'draft': u'草稿', 'confirm': u'确认', 'picking': u'拣货', 'pickconfirm': u'待确认发货', 'done': u'完成', 'cancel': u'取消'}
 
-def get_current_time(record, timestr):
-    if not timestr:
-        return ''
-    temptime = fields.Datetime.from_string(timestr)
-    return fields.Datetime.to_string(fields.Datetime.context_timestamp(record, temptime))
 
 class AASDeliveryWechatController(http.Controller):
 
@@ -265,11 +260,15 @@ class AASDeliveryWechatController(http.Controller):
     def aas_wechat_wms_deliverydetail(self, deliveryid):
         values = {'success': True, 'message': '', 'linelist': [], 'pickinglist': [], 'operationlist': []}
         delivery = request.env['aas.stock.delivery'].browse(deliveryid)
-        values.update({'deliveryid': delivery.id, 'delivery_name': delivery.name, 'delivery_type': DELIVERYTYPEDICT[delivery.delivery_type]})
-        values.update({'state_name': DELIVERYSTATEDICT[delivery.state], 'partner_name': '' if not delivery.partner_id else delivery.partner_id.name})
-        values.update({'order_user': delivery.order_user.name, 'order_time': get_current_time(delivery, delivery.order_time)})
-        values.update({'location_name': '' if not delivery.location_id else delivery.location_id.name})
-        values.update({'labelscan': 'none', 'pickconfirm': 'none', 'picklist': 'none', 'pickdone': 'none'})
+        values.update({
+            'deliveryid': delivery.id, 'delivery_name': delivery.name,
+            'delivery_type': DELIVERYTYPEDICT[delivery.delivery_type],
+            'state_name': DELIVERYSTATEDICT[delivery.state],
+            'partner_name': '' if not delivery.partner_id else delivery.partner_id.name,
+            'order_user': delivery.order_user.name, 'order_time': fields.Datetime.to_china_string(delivery.order_time),
+            'location_name': '' if not delivery.location_id else delivery.location_id.name,
+            'labelscan': 'none', 'pickconfirm': 'none', 'picklist': 'none', 'pickdone': 'none'
+        })
         pickable = False
         if delivery.delivery_lines and len(delivery.delivery_lines) > 0:
             deliverylines = []
@@ -389,152 +388,72 @@ class AASDeliveryWechatController(http.Controller):
     @http.route('/aaswechat/wms/deliverysaleslist', type='http', auth='user')
     def aas_wechat_wms_deliverysaleslist(self, limit=20):
         values = {'success': True, 'message': '', 'salesindex': 0, 'deliverysales': []}
-        salesdomain = [('aas_delivery_id', '=', False)]
-        deliverysales = request.env['aas.stock.sale.delivery'].search(salesdomain, limit=limit)
+        salesdomain = [('state', 'in', ('confirm', 'picking')), ('delivery_type', '=', 'sales')]
+        deliverysales = request.env['aas.stock.delivery'].search(salesdomain, limit=limit)
         if deliverysales and len(deliverysales):
             values['deliverysales'] = [{
-                'sales_id': dsales.id, 'sales_name': dsales.name, 'partner_name': '' if not dsales.partner_id else dsales.partner_id.name
-            } for dsales in deliverysales]
+                'delivery_id': delivery.id, 'delivery_name': delivery.name,
+                'partner_name': '' if not delivery.partner_id else delivery.partner_id.name
+            } for delivery in deliverysales]
             values['salesindex'] = len(deliverysales)
         return request.render('aas_wms.wechat_wms_delivery_sales_list', values)
 
 
     @http.route('/aaswechat/wms/deliverysalesmore', type='json', auth="user")
     def aas_wechat_wms_deliverysalesmore(self, salesindex=0, limit=20):
-        values = {'deliverysales': [], 'salesindex': salesindex, 'salescount': 0}
-        salesdomain = [('aas_delivery_id', '=', False)]
-        deliverysales = request.env['aas.stock.sale.delivery'].search(salesdomain, offset=salesindex, limit=limit)
+        values = {
+            'success': True, 'message': '',
+            'deliverysales': [], 'salesindex': salesindex, 'salescount': 0
+        }
+        salesdomain = [('state', 'in', ('confirm', 'picking')), ('delivery_type', '=', 'sales')]
+        deliverysales = request.env['aas.stock.delivery'].search(salesdomain, offset=salesindex, limit=limit)
         if deliverysales and len(deliverysales):
             values['deliverysales'] = [{
-                'sales_id': dsales.id, 'sales_name': dsales.name, 'partner_name': '' if not dsales.partner_id else dsales.partner_id.name
-            } for dsales in deliverysales]
+                'delivery_id': delivery.id, 'delivery_name': delivery.name,
+                'partner_name': '' if not delivery.partner_id else delivery.partner_id.name
+            } for delivery in deliverysales]
             values['salescount'] = len(deliverysales)
             values['salesindex'] = salesindex + values['salescount']
         return values
 
 
-    @http.route('/aaswechat/wms/deliverysalesimport', type='http', auth='user')
-    def aas_wechat_wms_deliverysalesimport(self):
-        values = {'success': True, 'message': ''}
-        return request.render('aas_wms.wechat_wms_delivery_sales_import', values)
-
-
-    @http.route('/aaswechat/wms/deliverysalesimportdone', type='json', auth="user")
-    def aas_wechat_wms_deliverysalesimportdone(self, order_name):
-        values = {'success': True, 'message': ''}
-        try:
-            tempvals = request.env['aas.stock.sale.delivery'].action_import_order(order_name)
-            values.update(tempvals)
-        except UserError, ue:
-            values.update({'success': False, 'message': ue.name})
-            return values
-        return values
-
-
-    @http.route('/aaswechat/wms/deliverysalesdetail/<int:salesid>', type='http', auth='user')
-    def aas_wechat_wms_deliverysalesdetail(self, salesid):
-        values = {'success': True, 'message': '', 'saleslines': []}
-        deliverysales = request.env['aas.stock.sale.delivery'].browse(salesid)
+    @http.route('/aaswechat/wms/deliverysalesdetail/<int:deliveryid>', type='http', auth='user')
+    def aas_wechat_wms_deliverysalesdetail(self, deliveryid):
+        values = {
+            'success': True, 'message': '',
+            'delivery_id': deliveryid, 'pickinglist': [], 'productlist': [],
+            'repicking': 'none'
+        }
+        delivery = request.env['aas.stock.delivery'].browse(deliveryid)
         values.update({
-            'sales_name': deliverysales.name, 'shipment_date': get_current_time(deliverysales, deliverysales.shipment_date),
-            'sales_id': deliverysales.id, 'partner_name': '' if not deliverysales.partner_id else deliverysales.partner_id.name
+            'delivery_name': delivery.name, 'order_user': delivery.order_user.name,
+            'order_time': fields.Datetime.to_china_string(delivery.order_time),
+            'origin_order': '' if not delivery.origin_order else delivery.origin_order,
+            'partner_name': '' if not delivery.partner_id else delivery.partner_id.name
         })
-        if deliverysales.delivery_lines and len(deliverysales.delivery_lines) > 0:
-            values['saleslines'] = [{
-                'product_code': dline.product_id.default_code, 'product_qty': dline.product_qty
-            } for dline in deliverysales.delivery_lines]
+        if delivery.delivery_lines and len(delivery.delivery_lines) > 0:
+            values['productlist'] = [{
+                'dline_id': dline.id, 'product_code': dline.product_id.default_code,
+                'product_qty': str(dline.product_qty), 'delivery_qty': str(dline.delivery_qty),
+                'picking_qty': str(dline.picking_qty)
+            } for dline in delivery.delivery_lines]
+        if delivery.picking_list and len(delivery.picking_list) > 0:
+            values['pickinglist'] = [{
+                'product_code': dpicking.product_id.default_code, 'product_lot': dpicking.product_lot.name,
+                'product_qty': dpicking.product_qty, 'location_name': dpicking.location_id.name
+            } for dpicking in delivery.picking_list]
+        if delivery.state in ['confirm', 'picking']:
+            values['repicking'] = 'block'
         return request.render('aas_wms.wechat_wms_delivery_sales_detail', values)
 
 
-    @http.route('/aaswechat/wms/deliverysalesdone', type='json', auth="user")
-    def aas_wechat_wms_deliverysalesdone(self, salesid):
+
+    @http.route('/aaswechat/wms/deliveryrepicking', type='json', auth="user")
+    def aas_wechat_wms_deliveryrepicking(self, deliveryid):
         values = {'success': True, 'message': ''}
-        deliverysales = request.env['aas.stock.sale.delivery'].browse(salesid)
-        try:
-            deliverysales.action_build_delivery()
-            values['delivery_id'] = deliverysales.aas_delivery_id.id
-        except UserError, ue:
-            values.update({'success': False, 'message': ue.name})
-            return values
+        delivery = request.env['aas.stock.delivery'].browse(deliveryid)
+        delivery.action_picking_list()
         return values
 
 
 
-    @http.route('/aaswechat/wms/deliverylocation/<string:barcode>/<string:deliverylineidstr>', type='http', auth='user')
-    def aas_wechat_wms_deliverylocation(self, barcode, deliverylineidstr):
-        values = {'success': True, 'message': '', 'labellist': [], 'deliveryid': '0', 'dlineid': '0'}
-        stocklocation = request.env['stock.location'].search([('barcode', '=', barcode)], limit=1)
-        if not stocklocation:
-            values.update({'success': False, 'message': u'请仔细检查系统是否存在此库位！'})
-            return request.render('aas_wms.wechat_wms_message', values)
-        values.update({'location_id': stocklocation.id, 'location_name': stocklocation.name})
-        tempids = deliverylineidstr.split('-')
-        deliveryid, dlineid = int(tempids[0]), int(tempids[1])
-        values.update({'delivery_name': '', 'product_code': ''})
-        if deliveryid:
-            values['deliveryid'] = deliveryid
-            delivery = request.env['aas.stock.delivery'].browse(deliveryid)
-            operationlist = delivery.operation_lines
-            values.update({'deliveryid': deliveryid, 'delivery_name': delivery.name})
-            picklist = request.env['aas.stock.picking.list'].search([('delivery_id', '=', deliveryid), ('location_id', '=', stocklocation.id)])
-        else:
-            deliveryline = request.env['aas.stock.delivery.line'].browse(dlineid)
-            operationlist = deliveryline.operation_lines
-            values.update({'dlineid': dlineid, 'product_code': deliveryline.product_id.default_code})
-            picklist = request.env['aas.stock.picking.list'].search([('delivery_line', '=', dlineid), ('location_id', '=', stocklocation.id)])
-        if not picklist or len(picklist) <= 0:
-            values.update({'success': False, 'message': u'当前可能还未生成拣货清单，或者扫描的库位不在拣货清单列表中！'})
-            return request.render('aas_wms.wechat_wms_message', values)
-        tlabelids = []
-        if operationlist and len(operationlist) > 0:
-            tlabelids = [toperation.label_id.id for toperation in operationlist]
-        tempdomain = [('state', '=', 'normal'), ('qualified', '=', True), ('stocked', '=', True)]
-        tempdomain.extend([('locked', '=', False), ('parent_id', '=', False), ('location_id', '=', stocklocation.id)])
-        for tlist in picklist:
-            labeldomain = [('product_id', '=', tlist.product_id.id), ('product_lot', '=', tlist.product_lot.id)]
-            labeldomain += tempdomain
-            labelist = request.env['aas.product.label'].search(labeldomain)
-            if labelist and len(labelist) > 0:
-                for tlabel in labelist:
-                    if tlabel.id in tlabelids:
-                        continue
-                    values['labellist'].append({
-                        'label_id': tlabel.id, 'label_name': tlabel.name, 'product_code': tlabel.product_code,
-                        'product_lot': tlabel.product_lotname, 'product_qty': tlabel.product_qty
-                    })
-        if not values['labellist'] or len(values['labellist']) <= 0:
-            values.update({'success': False, 'message': u'未搜索到符合条件的标签！'})
-            return request.render('aas_wms.wechat_wms_message', values)
-        return request.render('aas_wms.wechat_wms_deliverylocation', values)
-
-
-    @http.route('/aaswechat/wms/deliverylocationdone', type='json', auth="user")
-    def aas_wechat_wms_deliverylocationdone(self, deliveryids, labelids):
-        values = {'success': True, 'message': ''}
-        labelist = request.env['aas.product.label'].browse(labelids)
-        if not labelist or len(labelist) <= 0:
-            return values
-        tempids = deliveryids.split('-')
-        deliveryid, dlineid = int(tempids[0]), int(tempids[1])
-        productlinedict = {}
-        if deliveryid:
-            delivery = request.env['aas.stock.delivery'].browse(deliveryid)
-        else:
-            deliveryline = request.env['aas.stock.delivery.line'].browse(dlineid)
-            delivery = deliveryline.delivery_id
-            productlinedict[deliveryline.product_id.id] = deliveryline.id
-        for tlabel in labelist:
-            if tlabel.product_id.id not in productlinedict:
-                tdeliveryline = request.env['aas.stock.delivery.line'].search([('delivery_id', '=', delivery.id), ('product_id', '=', tlabel.product_id.id)], limit=1)
-                productlinedict[tlabel.product_id.id] = tdeliveryline.id
-            try:
-                request.env['aas.stock.delivery.operation'].create({
-                    'label_id': tlabel.id, 'delivery_id': delivery.id, 'delivery_line': productlinedict[tlabel.product_id.id]
-                })
-            except UserError, ue:
-                values.update({'success': False, 'message': ue.name})
-                return values
-            except ValidationError, ve:
-                values.update({'success': False, 'message': ve.name})
-                return values
-        return values

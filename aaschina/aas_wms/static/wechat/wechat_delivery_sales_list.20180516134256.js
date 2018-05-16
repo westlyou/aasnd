@@ -49,11 +49,11 @@ function pulluprefresh(){
                     li.className = 'aas-delivery-sales mui-table-view-cell';
                     li.innerHTML = "<a class='mui-navigate-right' style='padding-right:40px;' href='javascript:;'>" +
                         "<div class='mui-table'>" +
-                            "<div class='mui-table-cell mui-col-xs-4 mui-text-left'>"+dsales.sales_name+"</div>"+
+                            "<div class='mui-table-cell mui-col-xs-4 mui-text-left'>"+dsales.delivery_name+"</div>"+
                             "<div class='mui-table-cell mui-col-xs-8 mui-text-right'>"+dsales.partner_name+"</div>"+
                         "</div>"+
                         "</a>";
-                    li.setAttribute('salesid', dsales.sales_id);
+                    li.setAttribute('deliveryid', dsales.delivery_id);
                     delivery_sales_list.appendChild(li);
                 });
             },
@@ -65,13 +65,8 @@ function pulluprefresh(){
 mui.ready(function(){
 
     mui(".mui-content").on("tap", "li.aas-delivery-sales", function(){
-        var salesid = this.getAttribute("salesid");
+        var salesid = this.getAttribute("deliveryid");
         mui.openWindow({'url': '/aaswechat/wms/deliverysalesdetail/'+salesid, 'id': 'deliverysalesdetail'});
-    });
-
-    //导入发票
-    document.getElementById('action_sales_import').addEventListener('tap', function(){
-        mui.openWindow({'url': '/aaswechat/wms/deliverysalesimport', 'id': 'deliverysalesimport'});
     });
 
 });
