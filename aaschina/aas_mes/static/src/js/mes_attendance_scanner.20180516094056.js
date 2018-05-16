@@ -50,7 +50,7 @@ $(function() {
                 }
                 if(dresult.message!='' && dresult.message!=null){
                     // 显示信息后刷新页面！
-                    layer.msg(dresult.message, {icon: 1}, function(){
+                    layer.msg(dresult.message, {icon: 1, time: 1000}, function(){
                         window.location.reload(true);
                     });
                     return ;

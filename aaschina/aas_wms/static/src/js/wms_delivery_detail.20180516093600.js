@@ -31,12 +31,14 @@ $(function(){
         var operationid = parseInt(operationtd.attr('operationid'));
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         var params = {'operationid': operationid};
+        var delindex = layer.load(0, {shade: [0.2,'#000000']});
         $.ajax({
             url: '/aaswms/delivery/deloperation',
             headers:{'Content-Type':'application/json'},
             type: 'post', timeout:30000, dataType: 'json',
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: params, id: access_id}),
             success:function(data){
+                layer.close(delindex);
                 $('#barcodeipt').val('').focus();
                 var dresult = data.result;
                 if(!dresult.success){
@@ -49,6 +51,7 @@ $(function(){
                 temproduct.attr('pickingqty', dresult.picking_qty).html(dresult.picking_qty);
             },
             error:function(xhr,type,errorThrown){
+                layer.close(delindex);
                 console.log(type);
                 $('#barcodeipt').val('').focus();
             }
@@ -141,6 +144,7 @@ $(function(){
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         var params = {'deliveryid': deliveryid};
         $('#actiondone').attr('doing', '1');
+        var doneindex = layer.load(0, {shade: [0.2,'#000000']});
         $.ajax({
             url: '/aaswms/delivery/dodelivery',
             headers:{'Content-Type':'application/json'},
@@ -148,6 +152,7 @@ $(function(){
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: params, id: access_id}),
             success:function(data){
                 $('#actiondone').attr('doing', '0');
+                layer.close(doneindex);
                 var dresult = data.result;
                 if(!dresult.success){
                     layer.msg(dresult.message, {icon: 5});
@@ -161,6 +166,7 @@ $(function(){
             error:function(xhr,type,errorThrown){
                 console.log(type);
                 $('#actiondone').attr('doing', '0');
+                layer.close(doneindex);
                 $('#barcodeipt').val('').focus();
             }
         });

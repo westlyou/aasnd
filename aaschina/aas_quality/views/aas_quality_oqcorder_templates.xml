@@ -187,7 +187,7 @@
                 <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
-                <script src="/aas_quality/static/src/js/aas_deliveryoqc_order.20180515232000.js"></script>
+                <script src="/aas_quality/static/src/js/aas_deliveryoqc_order.20180516093600.js"></script>
             </body>
         </html>
     </template>

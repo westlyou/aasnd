@@ -173,12 +173,14 @@ $(function(){
         var temparams = {'labelids': labelids};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         self.attr('doing', '1');
+        var commitindex = layer.load(0, {shade: [0.2,'#000000']});
         $.ajax({
             url: '/aasquality/deliveryoqc/docommit',
             headers:{'Content-Type':'application/json'},
             type: 'post', timeout:10000, dataType: 'json',
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: temparams, id: access_id}),
             success:function(data){
+                layer.close(commitindex);
                 $('#barcodeipt').val('').focus();
                 self.attr('doing', '0');
                 var dresult = data.result;
@@ -192,6 +194,7 @@ $(function(){
                 window.location.replace('/aaswms/delivery');
             },
             error:function(xhr,type,errorThrown){
+                layer.close(commitindex);
                 console.log(type);
                 self.attr('doing', '0');
                 $('#barcodeipt').val('').focus();
