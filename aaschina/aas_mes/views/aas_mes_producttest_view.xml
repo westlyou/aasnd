@@ -499,6 +499,102 @@
                           parent="menu_aas_mes_producttest" sequence="3" groups="aas_mes.group_aas_manufacture_user"/>
 
 
+        <record id="view_tree_aas_mes_producttest_locking" model="ir.ui.view">
+            <field name="name">aas.mes.producttest.locking.tree</field>
+            <field name="model">aas.mes.producttest.locking</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree create="false" edit="false" delete="false">
+                    <field name="equipment_id"/>
+                    <field name="employee_id"/>
+                    <field name="employee_job"/>
+                    <field name="workorder_id"/>
+                    <field name="workstation_id"/>
+                    <field name="actiontype"/>
+                    <field name="action_time"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_form_aas_mes_producttest_locking" model="ir.ui.view">
+            <field name="name">aas.mes.producttest.locking.form</field>
+            <field name="model">aas.mes.producttest.locking</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" edit="false" delete="false">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="equipment_id"/>
+                                <field name="workorder_id"/>
+                                <field name="workstation_id"/>
+                            </group>
+                            <group>
+                                <field name="actiontype"/>
+                                <field name="employee_id"/>
+                                <field name="employee_job"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group><field name="action_time"/></group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_search_aas_mes_producttest_locking" model="ir.ui.view">
+            <field name="name">aas.mes.producttest.locking.search</field>
+            <field name="model">aas.mes.producttest.locking</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="equipment_id" string="设备" filter_domain="[('equipment_id','ilike',self)]"/>
+                    <field name="employee_id" string="员工" filter_domain="[('employee_id','ilike',self)]"/>
+                    <field name="workorder_id" string="工单" filter_domain="[('workorder_id','ilike',self)]"/>
+                    <field name="workstation_id" string="工位" filter_domain="[('workstation_id','ilike',self)]"/>
+                    <separator/>
+                    <filter string="锁定" domain="[('actiontype','=','lock')]" />
+                    <filter string="解锁" domain="[('actiontype','=','unlock')]" />
+                    <separator/>
+                    <group expand="0" string="分组">
+                        <filter string="设备" context="{'group_by':'equipment_id'}"/>
+                        <filter string="员工" context="{'group_by':'employee_id'}"/>
+                        <filter string="工单" context="{'group_by':'workorder_id'}"/>
+                        <filter string="工位" context="{'group_by':'workstation_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_producttest_locking" model="ir.actions.act_window">
+            <field name="name">设备解锁记录</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.producttest.locking</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_producttest_locking"/>
+            <field name="search_view_id" ref="view_search_aas_mes_producttest_locking"/>
+        </record>
+
+        <record id="act_view_tree_aas_mes_producttest_locking" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_producttest_locking"/>
+            <field name="act_window_id" ref="action_aas_mes_producttest_locking"/>
+        </record>
+
+        <record id="act_view_form_aas_mes_producttest_locking" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_form_aas_mes_producttest_locking"/>
+            <field name="act_window_id" ref="action_aas_mes_producttest_locking"/>
+        </record>
+
+
+        <menuitem id="menu_aas_mes_producttest_locking"  name="设备解锁记录" action="action_aas_mes_producttest_locking"
+                          parent="menu_aas_mes_producttest" sequence="4" groups="aas_mes.group_aas_manufacture_user"/>
+
+
         <!-- 向导 -->
         <record id="view_form_aas_mes_producttest_template_pworkcenter_wizard" model="ir.ui.view">
             <field name="name">aas.mes.producttest.template.pworkcenter.wizard</field>
