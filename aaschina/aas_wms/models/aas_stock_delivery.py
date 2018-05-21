@@ -156,8 +156,10 @@ class AASStockDelivery(models.Model):
         else:
             deliveryvals.update({'state': 'picking'})
         self.write(deliveryvals)
-        if self.picking_list and len(self.picking_list) > 0:
-            self.picking_list.unlink()
+        # 清理拣货清单
+        pickinglist = self.env['aas.stock.picking.list'].sudo().search([('delivery_id', '=', self.id)])
+        if pickinglist and len(pickinglist) > 0:
+            pickinglist.sudo().unlink()
 
 
 
