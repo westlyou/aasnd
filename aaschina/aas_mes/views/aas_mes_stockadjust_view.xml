@@ -8,14 +8,17 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree>
-                    <field name="mesline_id"/>
                     <field name="name"/>
                     <field name="product_id"/>
                     <field name="product_uom"/>
                     <field name="product_lot"/>
-                    <field name="location_id"/>
-                    <field name="adjustbefore_qty"/>
-                    <field name="adjustafter_qty"/>
+                    <field name="product_qty"/>
+                    <field name="srclocation_id"/>
+                    <field name="srclocation_beforeqty"/>
+                    <field name="srclocation_afterqty"/>
+                    <field name="destlocation_id"/>
+                    <field name="destlocation_beforeqty"/>
+                    <field name="destlocation_afterqty"/>
                     <field name="adjust_time"/>
                     <field name="adjustuser_id"/>
                     <field name="state"/>
@@ -44,22 +47,28 @@
                                 <field name="product_id" options="{'no_create':true}" required="1"
                                         attrs="{'readonly':[('state', '=', 'done')]}"/>
                                 <field name="product_uom" readonly="1"/>
-                                <field name="product_lot" options="{'no_create':true}" required="1"
-                                       domain="[('product_id','=',product_id)]" attrs="{'readonly':[('state', '=', 'done')]}"/>
                                 <field name="adjustuser_id" readonly="1"/>
                             </group>
                             <group>
-                                <field name="mesline_id" options="{'no_create':true}" required="1"
-                                        attrs="{'readonly':[('state', '=', 'done')]}"/>
-                                <field name="location_id" options="{'no_create':true}" required="1"
-                                       domain="[('edgelocation','=',True),('usage','=','internal')]"
-                                       attrs="{'readonly':[('state', '=', 'done')]}"/>
-                                <field name="adjustbefore_qty" readonly="1"/>
-                                <field name="adjustafter_qty" required="1"/>
+                                <field name="product_lot" options="{'no_create':true}" required="1"
+                                       domain="[('product_id','=',product_id)]" attrs="{'readonly':[('state', '=', 'done')]}"/>
+                                <field name="product_qty" required="1" attrs="{'readonly':[('state', '=', 'done')]}"/>
+                                <field name="adjust_time" readonly="1"/>
                             </group>
                         </group>
                         <group>
-                            <group> <field name="adjust_time" readonly="1"/> </group>
+                            <group>
+                                <field name="srclocation_id" options="{'no_create':true,'no_open':true}"
+                                       domain="[('edgelocation','=',True),('usage','=','internal')]" attrs="{'readonly':[('state', '=', 'done')]}"/>
+                                <field name="srclocation_beforeqty" readonly="1"/>
+                                <field name="srclocation_afterqty" readonly="1" attrs="{'invisible':[('state', '!=', 'done')]}"/>
+                            </group>
+                            <group>
+                                <field name="destlocation_id" options="{'no_create':true,'no_open':true}"
+                                       domain="[('edgelocation','=',True),('usage','=','internal')]" attrs="{'readonly':[('state', '=', 'done')]}"/>
+                                <field name="destlocation_beforeqty" readonly="1"/>
+                                <field name="destlocation_afterqty" readonly="1" attrs="{'invisible':[('state', '!=', 'done')]}"/>
+                            </group>
                         </group>
                     </sheet>
                 </form>
@@ -74,15 +83,15 @@
                     <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
                     <field name="product_id" string="产品" filter_domain="[('product_id','ilike',self)]"/>
                     <field name="product_lot" string="批次" filter_domain="[('product_lot','ilike',self)]"/>
-                    <field name="mesline_id" string="产线" filter_domain="[('mesline_id','ilike',self)]"/>
-                    <field name="location_id" string="库位" filter_domain="[('location_id','ilike',self)]"/>
+                    <field name="srclocation_id" string="源库位" filter_domain="[('srclocation_id','ilike',self)]"/>
+                    <field name="destlocation_id" string="目标库位" filter_domain="[('destlocation_id','ilike',self)]"/>
                     <field name="adjustuser_id" string="操作人" filter_domain="[('adjustuser_id','ilike',self)]"/>
                     <separator/>
                     <group expand="0" string="分组">
                         <filter string="产品" context="{'group_by':'product_id'}"/>
                         <filter string="批次" context="{'group_by':'product_lot'}"/>
-                        <filter string="产线" context="{'group_by':'mesline_id'}"/>
-                        <filter string="库位" context="{'group_by':'location_id'}"/>
+                        <filter string="源库位" context="{'group_by':'srclocation_id'}"/>
+                        <filter string="目标库位" context="{'group_by':'destlocation_id'}"/>
                         <filter string="操作人" context="{'group_by':'adjustuser_id'}"/>
                     </group>
                 </search>

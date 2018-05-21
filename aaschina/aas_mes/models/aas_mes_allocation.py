@@ -30,7 +30,7 @@ class AASMESAllocation(models.Model):
     operation_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
     state = fields.Selection(selection=[('draft', u'草稿'), ('done', u'完成')], string=u'状态', default='draft')
     company_id = fields.Many2one('res.company', string=u'公司', index=True, default=lambda self: self.env.user.company_id)
-    allocation_lines = fields.One2many(comodel_name='aas.mes.allocation.line', inverse_name='allocation_id', string=u'调拨明细')
+    allocation_lines = fields.One2many('aas.mes.allocation.line', inverse_name='allocation_id', string=u'调拨明细')
 
     @api.model
     def create(self, vals):
