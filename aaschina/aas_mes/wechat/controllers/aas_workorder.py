@@ -40,7 +40,6 @@ class AASWorkorderWechatController(http.Controller):
             values.update({'success': False, 'message': u'工票异常，工单可能还未生成待处理工票！'})
             return values
         values.update({'workticketid': workcenter.id})
-        logger.info(str(values))
         return values
 
 
