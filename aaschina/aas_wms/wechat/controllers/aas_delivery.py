@@ -457,3 +457,87 @@ class AASDeliveryWechatController(http.Controller):
 
 
 
+
+    @http.route('/aaswechat/wms/deliverylocation/<string:barcode>/<string:deliverylineidstr>', type='http', auth='user')
+    def aas_wechat_wms_deliverylocation(self, barcode, deliverylineidstr):
+        values = {'success': True, 'message': '', 'labellist': [], 'deliveryid': '0', 'dlineid': '0'}
+        stocklocation = request.env['stock.location'].search([('barcode', '=', barcode)], limit=1)
+        if not stocklocation:
+            values.update({'success': False, 'message': u'请仔细检查系统是否存在此库位！'})
+            return request.render('aas_wms.wechat_wms_message', values)
+        values.update({'location_id': stocklocation.id, 'location_name': stocklocation.name})
+        tempids = deliverylineidstr.split('-')
+        deliveryid, dlineid = int(tempids[0]), int(tempids[1])
+        values.update({'delivery_name': '', 'product_code': ''})
+        if deliveryid:
+            values['deliveryid'] = deliveryid
+            delivery = request.env['aas.stock.delivery'].browse(deliveryid)
+            operationlist = delivery.operation_lines
+            values.update({'deliveryid': deliveryid, 'delivery_name': delivery.name})
+            picklist = request.env['aas.stock.picking.list'].search([('delivery_id', '=', deliveryid), ('location_id', '=', stocklocation.id)])
+        else:
+            deliveryline = request.env['aas.stock.delivery.line'].browse(dlineid)
+            operationlist = deliveryline.operation_lines
+            values.update({'dlineid': dlineid, 'product_code': deliveryline.product_id.default_code})
+            picklist = request.env['aas.stock.picking.list'].search([('delivery_line', '=', dlineid), ('location_id', '=', stocklocation.id)])
+        if not picklist or len(picklist) <= 0:
+            values.update({'success': False, 'message': u'当前可能还未生成拣货清单，或者扫描的库位不在拣货清单列表中！'})
+            return request.render('aas_wms.wechat_wms_message', values)
+        tlabelids = []
+        if operationlist and len(operationlist) > 0:
+            tlabelids = [toperation.label_id.id for toperation in operationlist]
+        tempdomain = [('state', '=', 'normal'), ('qualified', '=', True), ('stocked', '=', True)]
+        tempdomain.extend([('locked', '=', False), ('parent_id', '=', False), ('location_id', '=', stocklocation.id)])
+        for tlist in picklist:
+            labeldomain = [('product_id', '=', tlist.product_id.id), ('product_lot', '=', tlist.product_lot.id)]
+            labeldomain += tempdomain
+            labelist = request.env['aas.product.label'].search(labeldomain)
+            if labelist and len(labelist) > 0:
+                for tlabel in labelist:
+                    if tlabel.id in tlabelids:
+                        continue
+                    values['labellist'].append({
+                        'label_id': tlabel.id, 'label_name': tlabel.name, 'product_code': tlabel.product_code,
+                        'product_lot': tlabel.product_lotname, 'product_qty': tlabel.product_qty
+                    })
+        if not values['labellist'] or len(values['labellist']) <= 0:
+            values.update({'success': False, 'message': u'未搜索到符合条件的标签！'})
+            return request.render('aas_wms.wechat_wms_message', values)
+        return request.render('aas_wms.wechat_wms_deliverylocation', values)
+
+
+    @http.route('/aaswechat/wms/deliverylocationdone', type='json', auth="user")
+    def aas_wechat_wms_deliverylocationdone(self, deliveryids, labelids):
+        values = {'success': True, 'message': ''}
+        labelist = request.env['aas.product.label'].browse(labelids)
+        if not labelist or len(labelist) <= 0:
+            return values
+        tempids = deliveryids.split('-')
+        deliveryid, dlineid = int(tempids[0]), int(tempids[1])
+        productlinedict = {}
+        if deliveryid:
+            delivery = request.env['aas.stock.delivery'].browse(deliveryid)
+        else:
+            deliveryline = request.env['aas.stock.delivery.line'].browse(dlineid)
+            delivery = deliveryline.delivery_id
+            productlinedict[deliveryline.product_id.id] = deliveryline.id
+        for tlabel in labelist:
+            if tlabel.product_id.id not in productlinedict:
+                linedomain = [('delivery_id', '=', delivery.id), ('product_id', '=', tlabel.product_id.id)]
+                tdeliveryline = request.env['aas.stock.delivery.line'].search(linedomain, limit=1)
+                productlinedict[tlabel.product_id.id] = tdeliveryline.id
+            try:
+                request.env['aas.stock.delivery.operation'].create({
+                    'label_id': tlabel.id,
+                    'delivery_id': delivery.id, 'delivery_line': productlinedict[tlabel.product_id.id]
+                })
+            except UserError, ue:
+                values.update({'success': False, 'message': ue.name})
+                return values
+            except ValidationError, ve:
+                values.update({'success': False, 'message': ve.name})
+                return values
+        return values
+
+
+

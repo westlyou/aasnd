@@ -177,9 +177,9 @@ class AASMESMainorder(models.Model):
         if not self.workorder_lines or len(self.workorder_lines) <= 0:
             raise UserError(u'当前主工单下没有子工单，可能已经被清理！')
         productionids = str(tuple(self.workorder_lines.ids))
-        action = self.env.ref('aas_mes.action_aas_mes_workorder')
-        formview = self.env.ref('aas_mes.view_form_aas_mes_workorder')
-        treeview = self.env.ref('aas_mes.view_tree_aas_mes_workorder')
+        action = self.env.ref('aas_mes.action_aas_mes_workorder_manufacture')
+        formview = self.env.ref('aas_mes.view_form_aas_mes_workorder_manufacture')
+        treeview = self.env.ref('aas_mes.view_tree_aas_mes_workorder_manufacture')
         result = {'name': u'拆分明细', 'help': action.help, 'type': action.type}
         result.update({'views': [[treeview.id, 'tree'], [formview.id, 'form']]})
         result.update({
