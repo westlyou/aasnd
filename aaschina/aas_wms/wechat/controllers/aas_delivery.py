@@ -25,7 +25,8 @@ class AASDeliveryWechatController(http.Controller):
     @http.route('/aaswechat/wms/deliverylinelist', type='http', auth='user')
     def aas_wechat_wms_deliverylinelist(self, limit=20):
         values = {'success': True, 'message': '', 'deliverylines': [], 'lineindex': '0'}
-        linesdomain = [('delivery_type', '!=', 'purhase'), ('company_id', '=', request.env.user.company_id.id)]
+        companyid = request.env.user.company_id.id
+        linesdomain = [('delivery_type', 'not in', ['purhase', 'sales']), ('company_id', '=', companyid)]
         linesdomain.append(('state', 'in', ['confirm', 'picking', 'pickconfirm']))
         deliverylines = request.env['aas.stock.delivery.line'].search(linesdomain, limit=limit)
         if deliverylines and len(deliverylines):
@@ -40,7 +41,8 @@ class AASDeliveryWechatController(http.Controller):
     @http.route('/aaswechat/wms/deliverylinemore', type='json', auth="user")
     def aas_wechat_wms_deliverylinemore(self, lineindex=0, product_code=None, limit=20):
         values = {'deliverylines': [], 'lineindex': lineindex, 'linecount': 0}
-        linesdomain = [('delivery_type', '!=', 'purhase'), ('company_id', '=', request.env.user.company_id.id)]
+        companyid = request.env.user.company_id.id
+        linesdomain = [('delivery_type', 'not in', ['purhase', 'sales']), ('company_id', '=', companyid)]
         linesdomain.append(('state', 'in', ['confirm', 'picking', 'pickconfirm']))
         if product_code:
             linesdomain.append(('product_id', 'ilike', '%'+product_code+'%'))
@@ -59,7 +61,8 @@ class AASDeliveryWechatController(http.Controller):
     @http.route('/aaswechat/wms/deliverylinesearch', type='json', auth="user")
     def aas_wechat_wms_deliverylinesearch(self, product_code, limit=20):
         values = {'success': True, 'message': '' ,'deliverylines': [], 'lineindex': '0'}
-        linesdomain = [('delivery_type', '!=', 'purhase'), ('company_id', '=', request.env.user.company_id.id)]
+        companyid = request.env.user.company_id.id
+        linesdomain = [('delivery_type', 'not in', ['purhase', 'sales']), ('company_id', '=', companyid)]
         linesdomain.extend([('state', 'in', ['confirm', 'picking', 'pickconfirm']), ('product_code', 'ilike', '%'+product_code+'%')])
         deliverylines = request.env['aas.stock.delivery.line'].search(linesdomain, limit=limit)
         if deliverylines and len(deliverylines):
@@ -228,7 +231,8 @@ class AASDeliveryWechatController(http.Controller):
     @http.route('/aaswechat/wms/deliverylist', type='http', auth='user')
     def aas_wechat_wms_deliverylist(self, limit=20):
         values = {'success': True, 'message': '', 'deliverylines': [], 'deliveryindex': '0'}
-        deliverydomain = [('delivery_type', '!=', 'purhase'), ('company_id', '=', request.env.user.company_id.id)]
+        companyid = request.env.user.company_id.id
+        deliverydomain = [('delivery_type', 'not in', ['purhase', 'sales']), ('company_id', '=', companyid)]
         deliverydomain.append(('state', 'in', ['confirm', 'picking', 'pickconfirm']))
         deliverylist = request.env['aas.stock.delivery'].search(deliverydomain, limit=limit)
         if deliverylist and len(deliverylist):
@@ -243,7 +247,8 @@ class AASDeliveryWechatController(http.Controller):
     @http.route('/aaswechat/wms/deliverymore', type='json', auth="user")
     def aas_wechat_wms_deliverymore(self, deliveryindex=0, limit=20):
         values = {'deliverylines': [], 'deliveryindex': deliveryindex, 'deliverycount': 0}
-        deliverydomain = [('delivery_type', '!=', 'purhase'), ('company_id', '=', request.env.user.company_id.id)]
+        companyid = request.env.user.company_id.id
+        deliverydomain = [('delivery_type', 'not in', ['purhase', 'sales']), ('company_id', '=', companyid)]
         deliverydomain.append(('state', 'in', ['confirm', 'picking', 'pickconfirm']))
         deliverylist = request.env['aas.stock.delivery'].search(deliverydomain, limit=limit)
         if deliverylist and len(deliverylist):
