@@ -46,15 +46,20 @@ class AASMESWorkorder(models.Model):
             raise UserError(u'当前工单未设置物料清单，无法生成备料清单！')
         if not self.aas_bom_id.bom_lines or len(self.aas_bom_id.bom_lines) <= 0:
             raise UserError(u'请仔细检查物料清单设置是否正确！')
-        wizardvals = {'workorder_id': self.id, 'product_id': self.product_id.id, 'product_qty': self.input_qty}
+        if not self.mesline_id:
+            raise UserError(u'当前工单还未设置产线！')
+        wizardvals = {
+            'workorder_id': self.id, 'mesline_id': self.mesline_id.id,
+            'product_id': self.product_id.id, 'product_qty': self.input_qty, 'material_lines': []
+        }
         bomqty = self.aas_bom_id.product_qty
         for bline in self.aas_bom_id.bom_lines:
             if not bline.product_id.ismaterial:
                 continue
-            wizardvals['material_lines'].append({
+            wizardvals['material_lines'].append((0, 0, {
                 'material_id': bline.product_id.id,
                 'material_qty': bline.product_qty / bomqty * self.input_qty
-            })
+            }))
         if not wizardvals['material_lines'] and len(wizardvals['material_lines']) <= 0:
             raise UserError(u'当前工单无需备料！')
         preparewizard = self.env['aas.mes.preparation.wizard'].create(wizardvals)
@@ -82,6 +87,7 @@ class AASMESPreparationWizard(models.TransientModel):
     _description = u'备料'
 
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'生产工单', ondelete='cascade')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='cascade')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
     product_qty = fields.Float(string=u'投入数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
 
@@ -91,6 +97,9 @@ class AASMESPreparationWizard(models.TransientModel):
     def action_done(self):
         if not self.material_lines or len(self.material_lines) <= 0:
             raise UserError(u'请先添加备料清单明细！')
+        if not self.mesline_id.location_material_list or len(self.mesline_id.location_material_list) <= 0:
+            raise UserError(u'%s产线还未设置原料库位！'% self.mesline_id.name)
+        destlocation = self.mesline_id.location_material_list[0].location_id
         deliverylines = []
         for mline in self.material_lines:
             if float_compare(mline.material_qty, 0.0, precision_rounding=0.000001) <= 0.0:
@@ -102,7 +111,7 @@ class AASMESPreparationWizard(models.TransientModel):
         delivery = self.env['aas.stock.delivery'].create({
             'state': 'confirm', 'delivery_type': 'manufacture',
             'workorder_id': self.workorder_id.id, 'origin_order': self.workorder_id.name,
-            'delivery_lines': deliverylines
+            'delivery_lines': deliverylines, 'location_id': destlocation.id
         })
         self.workorder_id.write({'delivery_id': delivery.id})
 

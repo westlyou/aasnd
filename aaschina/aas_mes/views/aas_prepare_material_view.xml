@@ -8,11 +8,14 @@
             <field name="arch" type="xml">
                 <form>
                     <group>
-                        <group> <field name="workorder_id" readonly="1"/> </group>
-                    </group>
-                    <group>
-                        <group> <field name="product_id" readonly="1"/> </group>
-                        <group> <field name="product_qty" readonly="1"/> </group>
+                        <group>
+                            <field name="workorder_id" readonly="1"/>
+                            <field name="product_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="mesline_id" readonly="1"/>
+                            <field name="product_qty" readonly="1"/>
+                        </group>
                     </group>
                     <notebook>
                         <page string="原料清单">
@@ -38,12 +41,10 @@
             <field name="model">aas.mes.workorder</field>
             <field name="inherit_id" ref="aas_mes.view_form_aas_mes_workorder_plan"/>
             <field name="arch" type="xml">
-                <div name="buttons" position="inside">
-                    <div>
-                        <button type="object" name="action_prepare_material"
+                <button name="action_show_outputlabels" position="before">
+                    <button type="object" name="action_prepare_material"
                                 class="oe_stat_button" icon="fa-list" string="工单备料" states="confirm"/>
-                    </div>
-                </div>
+                </button>
                 <field name="workcenter_finish" position="after">
                     <field name="delivery_id" readonly="1"/>
                 </field>
