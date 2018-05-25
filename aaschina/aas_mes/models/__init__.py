@@ -61,3 +61,4 @@ import aas_mes_sundry
 import aas_mes_producttest
 import aas_mes_report
 import aas_mes_tracing
+import aas_prepare_material

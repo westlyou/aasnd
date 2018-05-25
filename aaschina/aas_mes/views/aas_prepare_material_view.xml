@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_form_aas_mes_preparation_wizard" model="ir.ui.view">
+            <field name="name">aas.mes.preparation.wizard</field>
+            <field name="model">aas.mes.preparation.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group> <field name="workorder_id" readonly="1"/> </group>
+                    </group>
+                    <group>
+                        <group> <field name="product_id" readonly="1"/> </group>
+                        <group> <field name="product_qty" readonly="1"/> </group>
+                    </group>
+                    <notebook>
+                        <page string="原料清单">
+                            <field name="material_lines">
+                                <tree editable="bottom">
+                                    <field name="material_id" options="{'no_create':true}"
+                                           attrs="{'readonly':[('material_id','!=',False)]}"/>
+                                    <field name="material_qty" required="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_form_aas_prepare_material" model="ir.ui.view">
+            <field name="name">aas.mes.workorder.preparation</field>
+            <field name="model">aas.mes.workorder</field>
+            <field name="inherit_id" ref="aas_mes.view_form_aas_mes_workorder_plan"/>
+            <field name="arch" type="xml">
+                <div name="buttons" position="inside">
+                    <div>
+                        <button type="object" name="action_prepare_material"
+                                class="oe_stat_button" icon="fa-list" string="工单备料" states="confirm"/>
+                    </div>
+                </div>
+                <field name="workcenter_finish" position="after">
+                    <field name="delivery_id" readonly="1"/>
+                </field>
+            </field>
+        </record>
+
+    </data>
+</odoo>

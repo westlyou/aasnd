@@ -58,6 +58,7 @@
         'views/aas_mes_tracing_view.xml',
         'views/aas_mes_report_view.xml',
         'views/aas_mes_feedmaterial_templates.xml',
+        'views/aas_prepare_material_view.xml',
 
         'oracle/aas_ebs_mainorder_view.xml',
         'wechat/views/aas_wechat_mes_template.xml',

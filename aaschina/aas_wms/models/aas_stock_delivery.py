@@ -30,7 +30,7 @@ class AASStockDelivery(models.Model):
 
 
     name = fields.Char(string=u'名称')
-    order_user = fields.Many2one(comodel_name='res.users', string=u'下单人', ondelete='restrict', default=lambda self: self.env.user)
+    order_user = fields.Many2one('res.users', string=u'下单人', ondelete='restrict', default=lambda self: self.env.user)
     order_time = fields.Datetime(string=u'下单时间', default=fields.Datetime.now)
     state = fields.Selection(selection=DELIVERY_STATE, string=u'状态', default='draft')
     delivery_type = fields.Selection(selection=DELIVERY_TYPE, string=u'发货类型')
