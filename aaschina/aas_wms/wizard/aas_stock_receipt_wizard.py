@@ -267,11 +267,19 @@ class AASStockReceiptLabelWizard(models.TransientModel):
     def action_add_labels(self):
         if not self.add_lines or len(self.add_lines) <= 0:
             return
-        receipt, rlinedict = self.receipt_id, {}
+        # 兼容生产退料修改标签数量 labelvals
+        receipt, rlinedict, labelvals = self.receipt_id, {}, {}
         for aline in self.add_lines:
-            rlabelval = {'receipt_id': receipt.id, 'label_id': aline.label_id.id, 'product_id': aline.product_id.id}
-            rlabelval.update({'product_uom': aline.product_uom.id, 'product_qty': aline.product_qty})
-            rlabelval.update({'product_lot': aline.product_lot.id, 'label_location': aline.location_id.id})
+            tlabel = aline.label_id
+            rlabelval = {
+                'receipt_id': receipt.id, 'label_id': tlabel.id, 'product_id': aline.product_id.id,
+                'product_uom': aline.product_uom.id, 'product_qty': aline.product_qty,
+                'product_lot': aline.product_lot.id, 'label_location': aline.location_id.id
+            }
+            if float_compare(tlabel.product_qty, aline.product_qty, precision_rounding=0.000001) != 0.0:
+                lkey = 'LABEL'+str(tlabel.id)
+                labelvals[lkey] = {'label': tlabel, 'product_qty': aline.product_qty}
+                rlabelval['label_current'] = True
             lkey = 'P'+str(aline.product_id.id)
             if lkey not in rlinedict:
                 linedomain = [('receipt_id', '=', receipt.id), ('product_id', '=', aline.product_id.id), ('origin_order', '=', '')]
@@ -291,6 +299,12 @@ class AASStockReceiptLabelWizard(models.TransientModel):
             rline, product_qty = rval['line']['record'], rval['line']['qty']
             linevals = {'product_qty': rline.product_qty+product_qty, 'label_related': True, 'label_list': rval['labels']}
             rline.write(linevals)
+        # 兼容生产退料修改标签数量 labelvals
+        if labelvals and len(labelvals) > 0:
+            receiptname = self.receipt_id.name
+            for tkey, tval in labelvals.items():
+                label, qty = tval['label'], tval['product_qty']
+                label.with_context({'operate_order': receiptname}).write({'product_qty': qty})
 
 
     @api.one
@@ -326,14 +340,6 @@ class AASStockReceiptLabelWizard(models.TransientModel):
         self.action_check_labels()
         self.action_add_labels()
         self.action_del_labels()
-        # 原料退库，标签和实际数量不符需要手工修改
-        if self.receipt_type == 'manreturn' and self.add_lines and len(self.add_lines) > 0:
-            for templine in self.add_lines:
-                templabel = templine.label_id
-                balance_qty = templabel.product_qty - templine.product_qty
-                if not float_is_zero(balance_qty, precision_rounding=0.000001):
-                    operate_note = u'生产退料%s'% self.receipt_id.name
-                    templabel.with_context({'operate_note': operate_note}).write({'product_qty': templine.product_qty})
 
 
 
@@ -396,6 +402,18 @@ class AASStockReceiptLabelDelWizard(models.TransientModel):
     _sql_constraints = [
         ('uniq_rlabel', 'unique (wizard_id, rlabel_id)', u'请不要重复添加标签！')
     ]
+
+    @api.onchange('rlabel_id')
+    def action_change_label(self):
+        rlabel = self.rlabel_id
+        if not rlabel:
+            self.product_id, self.product_uom = False, False
+            self.product_lot, self.location_id, self.product_qty = False, False, 0.0
+        else:
+            label = rlabel.label_id
+            self.product_qty = label.product_qty
+            self.product_id, self.product_uom = label.product_id.id, label.product_uom.id
+            self.product_lot, self.location_id = label.product_lot.id, label.location_id.id
 
     @api.model
     def action_before_create(self, vals):
