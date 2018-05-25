@@ -303,24 +303,3 @@ class StockSettings(models.TransientModel):
                 groups.write({'implied_ids': [(4, implied_group.id)]})
 
 
-class StockMove(models.Model):
-    _inherit = 'stock.move'
-
-    @api.multi
-    def action_done(self):
-        result = super(StockMove, self).action_done()
-        ardmodel = self.env['aas.receive.deliver'].sudo()
-        for record in self:
-            product_lot = record.restrict_lot_id
-            if not product_lot:
-                continue
-            # 更新收发汇总
-            product_id, product_qty = record.product_id.id, record.product_uom_qty
-            locationdestid, locationsrcid = record.location_dest_id.id, record.location_id.id
-            if record.location_dest_id.usage == 'internal':
-                ardmodel.action_receive(product_id, locationdestid, product_lot.id, product_qty)
-            if record.location_id.usage == 'internal':
-                ardmodel.action_deliver(product_id, locationsrcid, product_lot.id, product_qty)
-        return result
-
-

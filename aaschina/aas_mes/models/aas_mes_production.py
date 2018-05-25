@@ -125,9 +125,9 @@ class AASProductionProduct(models.Model):
         """
         values = {'success': True, 'message': '', 'label_id': '0', 'production_id': '0'}
         _logger.info(u'工单%s开始产出时间:%s', workorder.name, fields.Datetime.now())
-        mesline, ttoday = workorder.mesline_id, fields.Datetime.to_china_today()
+        mesline = workorder.mesline_id
         if not output_date:
-            output_date = ttoday
+            output_date = fields.Datetime.to_china_today() if not mesline.workdate else mesline.workdate
         # update 20180411 确保下线产出必须设置容器
         if not container and cutting:
             values.update({'success': False, 'message': u'下线产出必须先设置好容器!'})
