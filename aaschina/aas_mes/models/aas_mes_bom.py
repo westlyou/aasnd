@@ -196,6 +196,28 @@ class AASMESBOM(models.Model):
         return materialist
 
 
+    @api.model
+    def action_load_consumematerialids(self, productid):
+        """获取消耗物料的ID集合
+        :param productid:
+        :return:
+        """
+        materialids = []
+        aasbom = self.env['aas.mes.bom'].search([('product_id', '=', productid), ('active', '=', True)], limit=1)
+        if not aasbom:
+            return materialids
+        if aasbom.bom_lines and len(aasbom.bom_lines) > 0:
+            for bomline in aasbom.bom_lines:
+                tempproduct = bomline.product_id
+                if tempproduct.virtual_material:
+                    materialids += self.action_load_consumematerialids(tempproduct.id)
+                elif tempproduct.id not in materialids:
+                    materialids.append(tempproduct.id)
+        return materialids
+
+
+
+
 
 
 
