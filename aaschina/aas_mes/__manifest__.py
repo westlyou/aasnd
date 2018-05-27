@@ -21,7 +21,6 @@
         'views/aas_stock_receipt_view.xml',
         'views/aas_stock_report_view.xml',
         'views/aas_mes_models_view.xml',
-        'wizard/aas_mes_models_wizard_view.xml',
         'views/aas_mes_employee_view.xml',
         'views/aas_mes_line_view.xml',
         'views/aas_mes_working_view.xml',
@@ -59,6 +58,7 @@
         'views/aas_mes_report_view.xml',
         'views/aas_mes_feedmaterial_templates.xml',
         'views/aas_prepare_material_view.xml',
+        'wizard/aas_mes_models_wizard_view.xml',
 
         'oracle/aas_ebs_mainorder_view.xml',
         'wechat/views/aas_wechat_mes_template.xml',
