@@ -184,7 +184,7 @@ class Location(models.Model):
         quantidsstr = ','.join([str(qid) for qid in quantlist.ids])
         view_tree = self.env.ref('aas_wms.view_tree_stock_quant_location')
         view_form = self.env.ref('aas_wms.view_form_stock_quant_location')
-        return {
+        actionvals = {
             'name': u"库存清单",
             'type': 'ir.actions.act_window',
             'view_mode': 'tree,form',
@@ -194,6 +194,9 @@ class Location(models.Model):
             'context': self.env.context,
             'domain': "[('id','in',("+quantidsstr+"))]"
         }
+        if len(quantlist) == 1:
+            actionvals['domain'] = "[('id','=',"+quantidsstr+")]"
+        return actionvals
 
 
 
