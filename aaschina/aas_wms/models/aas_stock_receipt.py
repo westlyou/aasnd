@@ -570,7 +570,7 @@ class AASStockReceiptMove(models.Model):
     origin_order = fields.Char(string=u'来源单据', copy=False)
     receipt_note = fields.Text(string=u'备注')
     receipt_type = fields.Selection(selection=RECEIPT_TYPE, string=u'收货类型')
-    receipt_date = fields.Date(string=u'收货日期', default=fields.Date.today)
+    receipt_date = fields.Date(string=u'收货日期')
     receipt_time = fields.Datetime(string=u'收货时间', default=fields.Datetime.now)
     partner_id = fields.Many2one(comodel_name='res.partner', string=u'业务伙伴', ondelete='restrict')
     receipt_user = fields.Many2one(comodel_name='res.users', string=u'收货员工', ondelete='restrict')
@@ -581,6 +581,7 @@ class AASStockReceiptMove(models.Model):
 
     @api.model
     def create(self, vals):
+        vals['receipt_date'] = fields.Datetime.to_china_today()
         record = super(AASStockReceiptMove, self).create(vals)
         record.action_stock_move()
         return record

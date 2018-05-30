@@ -89,7 +89,7 @@ class AASProductLabel(models.Model):
         journalvals.update({'balance_qty': self.product_qty, 'journal_qty': self.product_qty})
         if self.company_id:
             journalvals['company_id'] = self.company_id.id
-        if self.location_id.usage == 'internal' and self.stocked and self.state in ['normal', 'frozen']:
+        if self.stocked and self.state in ['normal', 'frozen']:
             self.env['aas.product.label.journal'].create(journalvals)
 
 
@@ -217,8 +217,8 @@ class AASProductLabel(models.Model):
         if locationid:
             self.action_journal_location(locationid)
             templocation = self.env['stock.location'].browse(locationid)
-            # 标签进入MRB库位或者呆滞库位自动冻结
-            if templocation.mrblocation or templocation.dulllocation:
+            # 标签进入呆滞库位自动冻结
+            if templocation.dulllocation:
                 vals['state'] = 'frozen'
         result = super(AASProductLabel, self).write(vals)
         self.action_after_write(vals)
@@ -243,16 +243,14 @@ class AASProductLabel(models.Model):
 
     @api.multi
     def action_journal_location(self, location_id):
-        temp_location = self.env['stock.location'].browse(location_id)
-        if temp_location.usage=='internal':
-            for record in self:
-                if record.location_id.id == location_id:
-                    continue
-                journalvals = {'label_id': record.id, 'journal_qty': record.product_qty, 'balance_qty': record.product_qty}
-                journalvals.update({'location_src_id': record.location_id.id, 'location_dest_id': location_id})
-                if record.company_id:
-                    journalvals['company_id'] = record.company_id.id
-                self.env['aas.product.label.journal'].create(journalvals)
+        for record in self:
+            if record.location_id.id == location_id:
+                continue
+            journalvals = {'label_id': record.id, 'journal_qty': record.product_qty, 'balance_qty': record.product_qty}
+            journalvals.update({'location_src_id': record.location_id.id, 'location_dest_id': location_id})
+            if record.company_id:
+                journalvals['company_id'] = record.company_id.id
+            self.env['aas.product.label.journal'].create(journalvals)
 
 
     @api.multi

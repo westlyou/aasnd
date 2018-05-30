@@ -671,7 +671,7 @@ class AASStockDeliveryMove(models.Model):
     origin_order = fields.Char(string=u'来源单据', copy=False)
     delivery_note = fields.Text(string=u'备注')
     delivery_type = fields.Selection(selection=DELIVERY_TYPE, string=u'发货类型')
-    delivery_date = fields.Date(string=u'发货日期', default=fields.Datetime.to_china_today())
+    delivery_date = fields.Date(string=u'发货日期')
     delivery_time = fields.Datetime(string=u'发货时间', default=fields.Datetime.now)
     partner_id = fields.Many2one(comodel_name='res.partner', string=u'业务伙伴', ondelete='restrict')
     delivery_user = fields.Many2one(comodel_name='res.users', string=u'发货员工', ondelete='restrict')
@@ -683,6 +683,7 @@ class AASStockDeliveryMove(models.Model):
 
     @api.model
     def create(self, vals):
+        vals['delivery_date'] = fields.Datetime.to_china_today()
         record = super(AASStockDeliveryMove, self).create(vals)
         record.action_stock_move()
         return record
