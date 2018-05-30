@@ -136,37 +136,3 @@ class AASMaterialCostcenter(models.Model):
     _sql_constraints = [
         ('uniq_email', 'unique (planner_email)', u'请不要重复添加同一个成本中心！')
     ]
-
-
-
-class AASStockReceiptLine(models.Model):
-    _inherit = "aas.stock.receipt.line"
-
-    @api.one
-    def action_confirm(self):
-        super(AASStockReceiptLine, self).action_confirm()
-        nmessages = {}
-        tempvals = self.env['aas.material.planner'].loading_inventory_information(self.product_id)
-        if not tempvals.get('success', False):
-            return
-        nmkey = tempvals['email']
-        nmessages[nmkey] = {'copys': tempvals.get('copys', ''), 'products': [tempvals['notice']]}
-        if nmessages and len(nmessages) > 0:
-            self.env['aas.material.planner'].action_send_emails(nmessages)
-
-
-class AASStockDeliveryLine(models.Model):
-    _inherit = 'aas.stock.delivery.line'
-
-
-    @api.one
-    def action_deliver(self):
-        super(AASStockDeliveryLine, self).action_deliver()
-        nmessages = {}
-        tempvals = self.env['aas.material.planner'].loading_inventory_information(self.product_id)
-        if not tempvals.get('success', False):
-            return
-        nmkey = tempvals['email']
-        nmessages[nmkey] = {'copys': tempvals.get('copys', ''), 'products': [tempvals['notice']]}
-        if nmessages and len(nmessages) > 0:
-            self.env['aas.material.planner'].action_send_emails(nmessages)
