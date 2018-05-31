@@ -142,6 +142,8 @@
                     <field name="operation_time"/>
                     <field name="pusher_id"/>
                     <field name="push_time"/>
+                    <field name="plan_date"/>
+                    <field name="plan_schedule"/>
                     <field name="plan_start"/>
                     <field name="plan_finish"/>
                     <field name="produce_start"/>
@@ -173,6 +175,7 @@
                                 <field name="product_qty" required="1" attrs="{'readonly':[('state','!=','draft')]}"/>
                                 <field name="operator_id" readonly="1"/>
                                 <field name="operation_time" readonly="1"/>
+                                <field name="produce_start" readonly="1"/>
                             </group>
                             <group>
                                 <field name="mesline_id" options="{'no_create':true,'no_open':true}"
@@ -181,16 +184,21 @@
                                        domain="[('product_id','=',product_id)]" attrs="{'readonly':[('state','!=','draft')]}"/>
                                 <field name="pusher_id" readonly="1"/>
                                 <field name="push_time" readonly="1"/>
+                                <field name="produce_finish" readonly="1"/>
                             </group>
                         </group>
                         <group>
                             <group>
-                                <field name="plan_start"/>
-                                <field name="plan_finish"/>
+                                <field name="plan_date" required="1" options="{'no_create':true,'no_open':true}"
+                                        attrs="{'readonly':[('state','!=','draft')]}"/>
+                                <field name="plan_schedule" required="1" domain="[('mesline_id','=',mesline_id)]"
+                                        options="{'no_create':true,'no_open':true}" attrs="{'readonly':[('state','!=','draft')]}"/>
+                                <field name="schedule_start" readonly="1"/>
+                                <field name="schedule_finish" readonly="1"/>
                             </group>
                             <group>
-                                <field name="produce_start" readonly="1"/>
-                                <field name="produce_finish" readonly="1"/>
+                                <field name="plan_start" required="1" attrs="{'readonly':[('state','!=','draft')]}"/>
+                                <field name="plan_finish" required="1" attrs="{'readonly':[('state','!=','draft')]}"/>
                                 <field name="closer_id" readonly="1" attrs="{'invisible':[('closer_id','=',False)]}"/>
                             </group>
                         </group>

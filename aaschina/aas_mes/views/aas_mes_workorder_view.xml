@@ -14,10 +14,11 @@
                     <field name="product_uom"/>
                     <field name="input_qty"/>
                     <field name="output_qty"/>
+                    <field name="badmode_qty"/>
                     <field name="aas_bom_id"/>
                     <field name="routing_id"/>
-                    <field name="creator_id"/>
-                    <field name="time_create"/>
+                    <field name="plan_date"/>
+                    <field name="plan_schedule"/>
                     <field name="plan_start"/>
                     <field name="plan_finish"/>
                     <field name="produce_finish"/>
@@ -57,47 +58,47 @@
 
                         </div>
                         <group>
-                            <group> <field name="name" attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/> </group>
-                            <group> <field name="mainorder_id" readonly="1"/> </group>
-                        </group>
-                        <group>
                             <group>
-                                <field name="product_id" options="{'no_create':true}"
-                                        attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
+                                <field name="name" readonly="1"/>
+                                <field name="product_id" readonly="1"/>
                                 <field name="product_uom" readonly="1"/>
-                                <field name="input_qty" required="1" attrs="{'readonly':[('state','!=','draft')]}"/>
-                                <field name="creator_id" readonly="1"/>
+                                <field name="input_qty" readonly="1"/>
+                                <field name="output_qty" readonly="1"/>
                             </group>
                             <group>
-                                <field name="mesline_id" options="{'no_create':true}" required="1"
-                                        attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
+                                <field name="mainorder_id" readonly="1"/>
+                                <field name="mesline_id"  readonly="1"/>
                                 <field name="mesline_type" readonly="1"/>
-                                <field name="aas_bom_id" options="{'no_create':true}" attrs="{'readonly':[('state','not in',['draft','confirm'])]}"
-                                        domain="[('state','=','normal'),('product_id','=',product_id)]"/>
+                                <field name="aas_bom_id" readonly="1"/>
                                 <field name="routing_id" readonly="1"/>
                             </group>
                         </group>
                         <group>
                             <group>
+                                <field name="plan_date" readonly="1"/>
+                                <field name="schedule_start" invisible="1"/>
                                 <field name="plan_start" readonly="1"/>
                                 <field name="plan_finish" readonly="1"/>
                             </group>
                             <group>
+                                <field name="plan_schedule" readonly="1"/>
+                                <field name="schedule_finish" invisible="1"/>
                                 <field name="produce_start" readonly="1"/>
                                 <field name="produce_finish" readonly="1"/>
                             </group>
                         </group>
-
                         <group>
                             <group>
                                 <field name="output_manner" attrs="{
                                        'invisible':[('mesline_type','=','flowing')], 'readonly':[('state','=','done')],
                                        'required':[('mesline_type','=','station')]}"/>
+                                <field name="creator_id" readonly="1"/>
                                 <field name="time_create" readonly="1"/>
-                                <field name="output_qty" readonly="1"/>
-                                <field name="date_code" readonly="1"/>
                                 <field name="closer_id" readonly="1" attrs="{'invisible':[('closer_id','=',False)]}"/>
                                 <field name="close_time" readonly="1" attrs="{'invisible':[('closer_id','=',False)]}"/>
+                            </group>
+                            <group>
+                                <field name="badmode_qty" readonly="1"/>
                                 <field name="workcenter_name" readonly="1" string="当前工序"
                                         attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
                                 <field name="isproducing" invisible="1"/>
@@ -379,10 +380,11 @@
                     <field name="product_uom"/>
                     <field name="input_qty"/>
                     <field name="output_qty"/>
+                    <field name="badmode_qty"/>
                     <field name="aas_bom_id"/>
                     <field name="routing_id"/>
-                    <field name="creator_id"/>
-                    <field name="time_create"/>
+                    <field name="plan_date"/>
+                    <field name="plan_schedule"/>
                     <field name="plan_start"/>
                     <field name="plan_finish"/>
                     <field name="produce_finish"/>
@@ -420,33 +422,36 @@
 
                         </div>
                         <group>
-                            <group> <field name="name" attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/> </group>
-                            <group> <field name="mainorder_id" readonly="1"/> </group>
-                        </group>
-                        <group>
                             <group>
-                                <field name="product_id" options="{'no_create':true}"
-                                        attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
+                                <field name="name" attrs="{'readonly':[('state','!=','draft')]}"/>
+                                <field name="product_id" options="{'no_create':true,'no_open':true}"
+                                       attrs="{'readonly':[('state','!=','draft')]}"/>
                                 <field name="product_uom" readonly="1"/>
                                 <field name="input_qty" required="1" attrs="{'readonly':[('state','!=','draft')]}"/>
-                                <field name="creator_id" readonly="1"/>
+                                <field name="output_qty" readonly="1"/>
                             </group>
                             <group>
-                                <field name="mesline_id" options="{'no_create':true}" required="1"
-                                        attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
+                                <field name="mainorder_id" readonly="1"/>
+                                <field name="mesline_id"  required="1" options="{'no_create':true,'no_open':true}"
+                                       attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
                                 <field name="mesline_type" readonly="1"/>
-                                <field name="aas_bom_id" options="{'no_create':true}"
-                                       attrs="{'readonly':[('state','not in',['draft','confirm'])]}"
+                                <field name="aas_bom_id" options="{'no_create':true,'no_open':true}"
+                                       attrs="{'readonly':[('state','!=','draft')]}"
                                        domain="[('state','=','normal'),('product_id','=',product_id)]"/>
                                 <field name="routing_id" readonly="1"/>
                             </group>
                         </group>
                         <group>
                             <group>
+                                <field name="plan_date" required="1" attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
+                                <field name="schedule_start" invisible="1"/>
                                 <field name="plan_start" required="1"/>
                                 <field name="plan_finish" required="1"/>
                             </group>
                             <group>
+                                <field name="plan_schedule" required="1" domain="[('mesline_id','=',mesline_id)]"
+                                       options="{'no_create':true,'no_open':true}" attrs="{'readonly':[('state','not in',['draft','confirm'])]}"/>
+                                <field name="schedule_finish" invisible="1"/>
                                 <field name="produce_start" readonly="1"/>
                                 <field name="produce_finish" readonly="1"/>
                             </group>
@@ -454,21 +459,22 @@
                         <group>
                             <group>
                                 <field name="output_manner" attrs="{
-                                        'readonly':[('state','=','done')],
-                                        'invisible':[('mesline_type','=','flowing')],
-                                        'required':[('mesline_type','=','station')]}"/>
+                                       'invisible':[('mesline_type','=','flowing')], 'readonly':[('state','=','done')],
+                                       'required':[('mesline_type','=','station')]}"/>
+                                <field name="creator_id" readonly="1"/>
                                 <field name="time_create" readonly="1"/>
-                                <field name="output_qty" readonly="1"/>
-                                <field name="date_code" readonly="1"/>
                                 <field name="closer_id" readonly="1" attrs="{'invisible':[('closer_id','=',False)]}"/>
                                 <field name="close_time" readonly="1" attrs="{'invisible':[('closer_id','=',False)]}"/>
+                            </group>
+                            <group>
+                                <field name="badmode_qty" readonly="1"/>
                                 <field name="workcenter_name" readonly="1" string="当前工序"
                                         attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
-                                <field name="isproducing" invisible="1"/>
                                 <field name="workcenter_start" readonly="1"
                                         attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
                                 <field name="workcenter_finish" readonly="1"
                                         attrs="{'invisible':[('mesline_type','=','flowing')]}"/>
+                                <field name="isproducing" invisible="1"/>
                             </group>
                         </group>
                         <notebook>

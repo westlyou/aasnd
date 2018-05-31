@@ -45,7 +45,7 @@
                     <button type="object" name="action_prepare_material"
                                 class="oe_stat_button" icon="fa-list" string="工单备料" states="confirm"/>
                 </button>
-                <field name="workcenter_finish" position="after">
+                <field name="badmode_qty" position="before">
                     <field name="delivery_id" readonly="1"/>
                 </field>
             </field>

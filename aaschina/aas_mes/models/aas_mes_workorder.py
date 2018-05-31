@@ -14,7 +14,9 @@ from odoo.tools.float_utils import float_compare, float_is_zero
 from odoo.exceptions import UserError, ValidationError
 from . import MESLINETYPE
 
+import math
 import logging
+from datetime import timedelta
 
 _logger = logging.getLogger(__name__)
 
@@ -29,31 +31,38 @@ class AASMESWorkorder(models.Model):
     _order = 'id desc'
 
     name = fields.Char(string=u'名称', required=True, copy=False, index=True)
-    barcode = fields.Char(string=u'条码', compute='_compute_barcode', store=True, index=True)
+    barcode = fields.Char(string=u'条码', index=True)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', required=True, index=True)
     product_uom = fields.Many2one(comodel_name='product.uom', string=u'单位', ondelete='restrict')
     input_qty = fields.Float(string=u'计划数量', digits=dp.get_precision('Product Unit of Measure'), default=1.0)
     aas_bom_id = fields.Many2one(comodel_name='aas.mes.bom', string=u'物料清单', ondelete='restrict', index=True)
     routing_id = fields.Many2one(comodel_name='aas.mes.routing', string=u'工艺路线', ondelete='restrict', index=True)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict', index=True)
-    time_create = fields.Datetime(string=u'创建时间', default=fields.Datetime.now, copy=False)
-    creator_id = fields.Many2one('res.users', string=u'创建人', ondelete='restrict', default=lambda self: self.env.user)
     state = fields.Selection(selection=ORDERSTATES, string=u'状态', default='draft', copy=False)
-    produce_date = fields.Char(string=u'生产日期', copy=False)
-    produce_start = fields.Datetime(string=u'实际开工时间', copy=False)
-    produce_finish = fields.Datetime(string=u'实际完工时间', copy=False)
+    output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    mainorder_id = fields.Many2one(comodel_name='aas.mes.mainorder', string=u'主工单', ondelete='cascade', index=True)
+    wireorder_id = fields.Many2one(comodel_name='aas.mes.wireorder', string=u'线材工单', ondelete='cascade', index=True)
+
+
+    plan_date = fields.Date(string=u'投产日期', copy=False)
+    plan_schedule = fields.Many2one(comodel_name='aas.mes.schedule', string=u'投产班次')
+    schedule_start = fields.Datetime(string=u'班次开始', compute='_compute_plan_schedule_time', store=True)
+    schedule_finish = fields.Datetime(string=u'班次结束', compute='_compute_plan_schedule_time', store=True)
     plan_start = fields.Datetime(string=u'计划开工时间', copy=False)
     plan_finish = fields.Datetime(string=u'计划完工时间', copy=False)
-    plan_finish_date = fields.Char(string=u'计划完工日期', compute='_compute_plan_finish_date', store=True)
+    produce_start = fields.Datetime(string=u'实际开工时间', copy=False)
+    produce_finish = fields.Datetime(string=u'实际完工时间', copy=False)
     finishontime = fields.Boolean(string=u'准时完工', default=False, copy=False)
 
 
     date_code = fields.Char(string='DateCode')
-    mainorder_id = fields.Many2one(comodel_name='aas.mes.mainorder', string=u'主工单', ondelete='cascade', index=True)
-    wireorder_id = fields.Many2one(comodel_name='aas.mes.wireorder', string=u'线材工单', ondelete='cascade', index=True)
-    mesline_type = fields.Selection(selection=MESLINETYPE, string=u'产线类型', compute='_compute_mesline', store=True)
-    mesline_name = fields.Char(string=u'产线名称', compute='_compute_mesline', store=True)
-    mainorder_name = fields.Char(string=u'主工单', compute='_compute_mainorder', store=True)
+    output_manner = fields.Selection(selection=OUTPUTMANNERS, string=u'产出方式', copy=False)
+    time_create = fields.Datetime(string=u'创建时间', default=fields.Datetime.now, copy=False)
+    creator_id = fields.Many2one('res.users', string=u'创建人', ondelete='restrict', default=lambda self: self.env.user)
+    mesline_type = fields.Selection(selection=MESLINETYPE, string=u'产线类型')
+    mesline_name = fields.Char(string=u'产线名称')
+    mainorder_name = fields.Char(string=u'主工单')
     product_code = fields.Char(string=u'产品编码', copy=False)
     customer_code = fields.Char(string=u'客方编码', copy=False, help=u'产品在客户方的料号')
     workcenter_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'当前工序', ondelete='restrict')
@@ -61,11 +70,8 @@ class AASMESWorkorder(models.Model):
     workcenter_start = fields.Many2one(comodel_name='aas.mes.workticket', string=u'开始工序', ondelete='restrict')
     workcenter_finish = fields.Many2one(comodel_name='aas.mes.workticket', string=u'结束工序', ondelete='restrict')
     isproducing = fields.Boolean(string=u'正在生产', default=False, copy=False, help=u'当前工单在相应的产线上正在生产')
-    output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     output_time = fields.Datetime(string=u'产出时间', copy=False, help=u'最近一次产出的时间')
-    badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     scrap_qty = fields.Float(string=u'报废数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    output_manner = fields.Selection(selection=OUTPUTMANNERS, string=u'产出方式', copy=False)
     finalproduct_id = fields.Many2one(comodel_name='product.product', string=u'最终产品')
     closer_id = fields.Many2one(comodel_name='res.users', string=u'手工关单员', ondelete='restrict', copy=False)
     close_time = fields.Datetime(string=u'手工关单时间', copy=False)
@@ -79,44 +85,37 @@ class AASMESWorkorder(models.Model):
         ('uniq_name', 'unique (name)', u'子工单名称不可以重复！')
     ]
 
-    @api.model
-    def default_get(self, fields_list):
-        defaults = super(AASMESWorkorder,self).default_get(fields_list)
-        defaults['name'] = fields.Datetime.to_timezone_time(fields.Datetime.now(), 'Asia/Shanghai').strftime('%Y%m%d%H%M%S')
-        return defaults
-
-    @api.depends('mesline_id')
-    def _compute_mesline(self):
-        for record in self:
-            record.mesline_type = record.mesline_id.line_type
-            record.mesline_name = record.mesline_id.name
-
-    @api.depends('name')
-    def _compute_barcode(self):
-        for record in self:
-            record.barcode = 'AQ'+record.name
-
-    @api.depends('mainorder_id')
-    def _compute_mainorder(self):
-        for record in self:
-            record.mainorder_name = record.mainorder_id.name
-
-    @api.depends('plan_finish')
-    def _compute_plan_finish_date(self):
-        for record in self:
-            if not record.plan_finish:
-                record.plan_finish_date = False
-            else:
-                record.plan_finish_date = fields.Datetime.to_china_date(record.plan_finish)
 
 
     @api.one
+    @api.constrains('plan_date')
+    def action_check_plandate(self):
+        plandate, mesline = self.plan_date, self.mesline_id
+        workdate = False if not mesline or not mesline.workdate else mesline.workdate
+        if plandate and workdate and plandate < workdate:
+            raise ValidationError(u'投产日期不能早于%s'% workdate)
+
+    @api.one
     @api.constrains('aas_bom_id', 'input_qty')
-    def action_check_mainorder(self):
+    def action_check_workorder(self):
         if not self.input_qty or float_compare(self.input_qty, 0.0, precision_rounding=0.000001) <= 0.0:
             raise ValidationError(u'投入数量必须是一个有效的正数！')
         if self.aas_bom_id and self.aas_bom_id.product_id.id != self.product_id.id:
             raise ValidationError(u'请仔细检查，当前物料清单和产品不匹配！')
+
+    @api.one
+    @api.constrains('plan_start', 'plan_finish')
+    def action_check_plan_production_times(self):
+        if not self.schedule_start or not self.schedule_finish:
+            raise ValidationError(u'请检查是否设置了投产日期和班次信息！')
+        if self.plan_start and self.plan_finish:
+            if self.plan_finish < self.plan_start:
+                raise ValidationError(u'计划结束时间必须大于计划开始时间！')
+            if self.plan_start < self.schedule_start or self.plan_finish > self.schedule_finish:
+                tempstart = fields.Datetime.to_china_string(self.schedule_start)
+                tempfinish = fields.Datetime.to_china_string(self.schedule_finish)
+                raise ValidationError(u'计划开工和完工时间必须在%s和%s之间！'% (tempstart, tempfinish))
+
 
     @api.onchange('product_id')
     def action_change_product(self):
@@ -126,11 +125,63 @@ class AASMESWorkorder(models.Model):
         else:
             self.product_uom = self.product_id.uom_id.id
             self.product_code = self.product_id.default_code
-            aasbom = self.env['aas.mes.bom'].search([('product_id', '=', self.product_id.id)], order='create_time desc', limit=1)
+            bomdomain = [('product_id', '=', self.product_id.id)]
+            aasbom = self.env['aas.mes.bom'].search(bomdomain, order='create_time desc', limit=1)
             if aasbom:
                 self.aas_bom_id = aasbom.id
                 if aasbom.routing_id:
                     self.routing_id = aasbom.routing_id.id
+
+    @api.onchange('mesline_id')
+    def action_change_mesline(self):
+        self.plan_schedule = False
+
+
+    @api.onchange('plan_schedule')
+    def action_change_plan_schedule(self):
+        self.plan_start, self.plan_finish = False, False
+
+
+    @api.depends('plan_date', 'plan_schedule')
+    def _compute_plan_schedule_time(self):
+        for record in self:
+            if not record.plan_date or not record.plan_schedule:
+                record.schedule_start, record.schedule_finish = False, False
+            else:
+                scheduletimes = self.action_compute_workorder_schedule_time(record)
+                record.schedule_start, record.schedule_finish = scheduletimes[0], scheduletimes[1]
+
+    @api.model
+    def action_compute_workorder_schedule_time(self, workorder):
+        mesline, schedule, scheduletimes = workorder.mesline_id, workorder.plan_schedule, []
+        tempstatus = [mesline.workdate == workorder.plan_date, schedule.id == mesline.schedule_id.id]
+        if all(tempstatus):
+            scheduletimes = [workorder.plan_schedule.actual_start, workorder.plan_schedule.actual_finish]
+            return scheduletimes
+        odootime = fields.Datetime.now()
+        currenttimestr = workorder.plan_date + odootime[10:]
+        currenttime = fields.Datetime.to_china_time(currenttimestr)
+        start_hour = int(math.floor(schedule.work_start))
+        start_minutes = int(math.floor((schedule.work_start - start_hour) * 60))
+        starttime = currenttime.replace(hour=start_hour, minute=start_minutes, second=0)
+        finish_hour = int(math.floor(schedule.work_finish))
+        finish_minutes = int(math.floor((schedule.work_finish - finish_hour) * 60))
+        if schedule.work_finish >= schedule.work_start:
+            finishtime = currenttime.replace(hour=finish_hour, minute=finish_minutes, second=0)
+        else:
+            temptime = currenttime + timedelta(days=1)
+            finishtime = temptime.replace(hour=finish_hour, minute=finish_minutes, second=0)
+        scheduletimes.append(fields.Datetime.to_utc_string(starttime, 'Asia/Shanghai'))
+        scheduletimes.append(fields.Datetime.to_utc_string(finishtime, 'Asia/Shanghai'))
+        return scheduletimes
+
+
+    @api.model
+    def default_get(self, fields_list):
+        defaults = super(AASMESWorkorder,self).default_get(fields_list)
+        currenttime = fields.Datetime.to_china_string(fields.Datetime.now())
+        defaults['name'] = currenttime.replace('-', '').replace(':', '').replace(' ', '')
+        return defaults
 
     @api.model
     def create(self, vals):
@@ -158,12 +209,28 @@ class AASMESWorkorder(models.Model):
                 aasbom = self.env['aas.mes.bom'].browse(vals.get('aas_bom_id'))
                 if aasbom.routing_id:
                     vals['routing_id'] = aasbom.routing_id.id
+        if not vals.get('barcode', False):
+            vals['barcode'] = 'AQ'+vals['name']
+        if vals.get('mesline_id', False):
+            mesline = self.env['aas.mes.line'].browse(vals['mesline_id'])
+            vals.update({'mesline_type': mesline.line_type, 'mesline_name': mesline.name})
 
     @api.multi
     def write(self, vals):
         if vals.get('product_id', False):
             raise UserError(u'您可以删除并重新创建工单，但是不要修改产品信息！')
-        return super(AASMESWorkorder, self).write(vals)
+        workorderids = []
+        meslineid, mesline = vals.get('mesline_id', False), False
+        if meslineid:
+            mesline = self.env['aas.mes.line'].browse(meslineid)
+            workorderids = [workorder.id for workorder in self]
+            vals.update({'mesline_type': mesline.line_type, 'mesline_name': mesline.name})
+        result = super(AASMESWorkorder, self).write(vals)
+        if meslineid:
+            worktickets = self.env['aas.mes.workticket'].search([('workorder_id', 'in', workorderids)])
+            if worktickets and len(worktickets) > 0:
+                worktickets.write({'mesline_id': mesline.id, 'mesline_name': mesline.name})
+        return result
 
     @api.multi
     def unlink(self):
@@ -182,7 +249,10 @@ class AASMESWorkorder(models.Model):
         确认工单；工位式生产工单需要生成首道工序工票；生成物料消耗清单
         :return:
         """
-        self.write({'state': 'confirm'})
+        workordervals = {'state': 'confirm', 'barcode': 'AQ'+self.name}
+        if self.mainorder_id:
+            workordervals['mainorder_name'] = self.mainorder_id.name
+        self.write(workordervals)
         self.action_build_first_workticket()
         self.action_build_consumelist()
 
@@ -340,9 +410,6 @@ class AASMESWorkorder(models.Model):
     def action_workorder_over(self):
         currenttime = fields.Datetime.now()
         workordervals = {'state': 'done', 'produce_finish': currenttime}
-        chinatoday = fields.Datetime.to_china_today()
-        if self.plan_finish_date and self.plan_finish_date == chinatoday:
-            workordervals['finishontime'] = True
         self.write(workordervals)
         if not self.mainorder_id:
             return
@@ -812,7 +879,7 @@ class AASMESWorkorderProducingWizard(models.TransientModel):
         if mesline.workorder_id:
             mesline.workorder_id.write({'isproducing': False})
         mesline.write({'workorder_id': workorder.id})
-        workorder.write({'isproducing': True, 'produce_date': fields.Datetime.to_china_today()})
+        workorder.write({'isproducing': True})
 
 
 
