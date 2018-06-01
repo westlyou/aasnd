@@ -135,6 +135,7 @@ class AASMESWorkorder(models.Model):
     @api.onchange('mesline_id')
     def action_change_mesline(self):
         self.plan_schedule = False
+        self.mesline_type = self.mesline_id.line_type
 
 
     @api.onchange('plan_schedule')
@@ -394,16 +395,7 @@ class AASMESWorkorder(models.Model):
 
     @api.one
     def action_done(self):
-        # 根据结单方式判断什么时候自动结单
-        closeorder = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'closeorder_method')
-        if closeorder == 'equal':
-            if float_compare(self.output_qty, self.input_qty, precision_rounding=0.000001) >= 0.0:
-                self.action_workorder_over()
-        else:
-            # total
-            total_qty = self.output_qty + self.scrap_qty
-            if float_compare(total_qty, self.input_qty, precision_rounding=0.000001) >= 0.0:
-                self.action_workorder_over()
+        self.action_workorder_over()
 
 
     @api.one
@@ -817,6 +809,24 @@ class AASMESWorkorder(models.Model):
         if not csvalues.get('success', False):
             values.update(csvalues)
         return values
+
+
+    @api.model
+    def action_close_schedule_workorders(self, meslineid, workdate, scheduleid):
+        """切换班次时关闭当前班次的工单
+        :param mesline:
+        :param workdate:
+        :param scheduleid:
+        :return:
+        """
+        orderdomain = [('mesline_id', '=', meslineid), ('plan_date', '=', workdate)]
+        if scheduleid:
+            orderdomain.append(('plan_schedule', '=', scheduleid))
+        orderdomain += [('state', 'not in', ['draft', 'done'])]
+        workorderlist = self.env['aas.mes.workorder'].search(orderdomain)
+        if workorderlist or len(workorderlist):
+            for workorder in workorderlist:
+                workorder.action_done()
 
 
 

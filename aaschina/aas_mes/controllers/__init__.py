@@ -17,3 +17,4 @@ import allocation
 import reworking
 import producttest
 import feedmaterial
+import yieldreport

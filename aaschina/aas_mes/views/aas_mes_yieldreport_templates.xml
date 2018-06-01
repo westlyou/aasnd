@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="aas_yieldreport_list" name="AAS Yield Report">
+        &lt;!DOCTYPE html&gt;
+        <html>
+            <head>
+                <meta charset="utf-8" />
+                <title>安费诺先进传感器</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                <meta name="apple-mobile-web-app-capable" content="yes"/>
+                <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/datepicker/datepicker3.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/iCheck/flat/blue.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/skins/skin-blue.min.css"/>
+                <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+                <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+                <!--[if lt IE 9]>
+                   <script src="/aas_base/static/libs/html5shiv.min.js"></script>
+                   <script src="/aas_base/static/libs/respond.min.js"></script>
+                <![endif]-->
+            </head>
+            <body class="hold-transition skin-blue layout-top-nav">
+                <div class="wrapper">
+                    <header class="main-header">
+                        <nav class="navbar navbar-static-top">
+                            <div class="container">
+                                <div class="navbar-header">
+                                    <a href="javascript:void(0);" class="navbar-brand">
+                                        <span><b>安费诺先进传感器</b></span>
+                                    </a>
+                                </div>
+
+                                <div class="navbar-custom-menu">
+                                    <ul class="nav navbar-nav">
+                                        <li class="dropdown notifications-menu">
+                                            <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fa fa-user"></i> <span t-esc="checker"/>
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                <li class="header">欢迎您，<t t-esc="checker"/></li>
+                                                <li>
+                                                    <ul class="menu">
+                                                        <li> <a href="/web/session/logout">注销</a> </li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </nav>
+
+                    </header>
+
+                    <div class="content-wrapper">
+                        <section class="content-header">
+                            <div class="row">
+                                <div class="col-xs-1" style="font-size:20px;font-weiht:bold;">
+                                    <span style="height:34px;line-height:34px;">良率报表</span>
+                                </div>
+                                <div class="col-xs-4">
+                                    <div class="form-group">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">投产日期</div>
+                                            <input type="text" class="form-control pull-right" id="querydate" readonly="readonly"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xs-3">
+                                    <div class="form-group">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">产品编码</div>
+                                            <input type="text" class="form-control pull-right" id="queryproduct"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xs-2">
+                                    <div class="form-group">
+                                        <div class="input-group">
+                                            <div class="input-group-addon">工单号码</div>
+                                            <input type="text" class="form-control pull-right" id="queryworkorder"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xs-1">
+                                    <button id="querybtn" type="button" class="btn btn-block btn-primary">查询</button>
+                                </div>
+                                <div class="col-xs-1">
+                                    <button id="exportbtn" type="button" class="btn btn-block btn-primary">导出</button>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="content">
+                            <div class="box box-solid">
+                                <div class="box-header with-border">
+                                    <h3 class="box-title"> 产线：<t t-esc="mesline_name"/> </h3>
+                                </div>
+                                <div class="box-body" style="min-height:200px;">
+                                    <div class="mailbox-controls" style="border-bottom:1px solid #EBEDF4;">
+                                        <button id="checkall" type="button" class="btn btn-default btn-sm checkbox-toggle">
+                                            <i class="fa fa-square-o"></i>
+                                        </button>
+                                        <div class="pull-right">
+                                            <span id="recordcountcontent" page="1" total="0"/>
+                                            <div class="btn-group">
+                                                <button id="action_prepage" type="button" class="btn btn-default btn-sm">
+                                                    <i class="fa fa-chevron-left"/>
+                                                </button>
+                                                <button id="action_nxtpage" type="button" class="btn btn-default btn-sm">
+                                                    <i class="fa fa-chevron-right"/>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="table-responsive mailbox-messages">
+                                        <table class="table table-hover table-striped">
+                                            <thead>
+                                                <tr id="yieldheaderline">
+                                                    <th></th>
+                                                    <th>日期</th>
+                                                    <th>班次</th>
+                                                    <th>主工单</th>
+                                                    <th>子工单</th>
+                                                    <th>生产品种</th>
+                                                    <th>开始时间</th>
+                                                    <th>结束时间</th>
+                                                    <th>计划产出</th>
+                                                    <th>实际产出</th>
+                                                    <th>达成率</th>
+                                                    <th>不良数量</th>
+                                                    <th>工单良率</th>
+                                                    <t t-if="flowingline">
+                                                        <th>一次不良</th>
+                                                        <th>二次不良</th>
+                                                        <th>三次不良</th>
+                                                    </t>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="workorderlist" t-att-meslineid="mesline_id"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="main-footer">
+                        <div class="container" style="text-align:center;">
+                            <span>
+                                Copyright © 安费诺先进传感器 &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <a href="http://www.miitbeian.gov.cn" target="_blank">苏ICP备16061622</a>
+                            </span>
+                        </div>
+                    </footer>
+                </div>
+                <script src="/aas_base/static/libs/jquery/jquery-2.2.4.min.js"></script>
+                <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
+                <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
+                <script src="/aas_base/static/libs/iCheck/icheck.min.js"></script>
+                <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
+                <script src="/aas_base/static/libs/layer/layer.js"></script>
+                <script src="/aas_base/static/libs/datepicker/bootstrap-datepicker.js"></script>
+                <script src="/aas_base/static/libs/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>
+                <script src="/aas_mes/static/src/js/mes_yield_report.js?ver=20180601234556"></script>
+            </body>
+        </html>
+    </template>
+
+</odoo>

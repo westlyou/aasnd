@@ -191,14 +191,14 @@ class AASMESWireOrder(models.Model):
                 record.schedule_start, record.schedule_finish = scheduletimes[0], scheduletimes[1]
 
     @api.model
-    def action_compute_workorder_schedule_time(self, workorder):
-        mesline, schedule, scheduletimes = workorder.mesline_id, workorder.plan_schedule, []
-        tempstatus = [mesline.workdate == workorder.plan_date, schedule.id == mesline.schedule_id.id]
+    def action_compute_workorder_schedule_time(self, wireorder):
+        mesline, schedule, scheduletimes = wireorder.mesline_id, wireorder.plan_schedule, []
+        tempstatus = [mesline.workdate == wireorder.plan_date, schedule.id == mesline.schedule_id.id]
         if all(tempstatus):
-            scheduletimes = [workorder.plan_schedule.actual_start, workorder.plan_schedule.actual_finish]
+            scheduletimes = [schedule.actual_start, schedule.actual_finish]
             return scheduletimes
         odootime = fields.Datetime.now()
-        currenttimestr = workorder.plan_date + odootime[10:]
+        currenttimestr = wireorder.plan_date + odootime[10:]
         currenttime = fields.Datetime.to_china_time(currenttimestr)
         start_hour = int(math.floor(schedule.work_start))
         start_minutes = int(math.floor((schedule.work_start - start_hour) * 60))

@@ -30,6 +30,7 @@ class AASMESRework(models.Model):
     customerpn = fields.Char(string=u'客户料号', copy=False)
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线')
     schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次')
+    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='restrict')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
     badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')
     badmode_date = fields.Char(string=u'不良日期', compute='_compute_badmode_date', store=True)
@@ -96,7 +97,8 @@ class AASMESRework(models.Model):
         reworking = self.env['aas.mes.rework'].create({
             'mesline_id': meslineid,
             'serialnumber_id': tserialnumber.id, 'workstation_id': workstation_id, 'state': 'repair',
-            'badmode_id': badmode_id, 'commiter_id': commiter_id, 'commit_time': fields.Datetime.now()
+            'badmode_id': badmode_id, 'commiter_id': commiter_id, 'commit_time': fields.Datetime.now(),
+            'workorder_id': False if not tserialnumber.workorder_id else tserialnumber.workorder_id.id
         })
         operation = self.env['aas.mes.operation'].search([('serialnumber_id', '=', tserialnumber.id)], limit=1)
         operation.write({

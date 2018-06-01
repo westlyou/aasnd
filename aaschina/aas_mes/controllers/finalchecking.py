@@ -171,7 +171,6 @@ class AASMESFinalCheckingController(http.Controller):
         if not checker:
             values.update({'success': False, 'message': u'当前岗位没有检测员工，请先让检测员工上岗再继续操作！'})
             return values
-
         tempoperation = request.env['aas.mes.operation'].search([('serialnumber_name', '=', barcode)], limit=1)
         if not tempoperation:
             values.update({'success': False, 'message': u'请仔细检查是否是有效条码'})

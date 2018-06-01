@@ -271,16 +271,23 @@ class AASMESOperation(models.Model):
         values['recordlist'] = recordlist
         serialnumber = toperation.serialnumber_id
         if serialnumber.rework_lines and len(serialnumber.rework_lines) > 0:
-            values['reworklist'] = [{
-                'badmode_date': rework.badmode_date, 'state': REWORKSTATEDICT[rework.state],
-                'badmode_name': rework.badmode_id.name+'['+rework.badmode_id.code+']',
-                'commiter': '' if not rework.commiter_id else rework.commiter_id.name,
-                'commit_time': fields.Datetime.to_china_string(rework.commit_time),
-                'repairer': '' if not rework.repairer_id else rework.repairer_id.name,
-                'repair_time': fields.Datetime.to_china_string(rework.repair_time),
-                'ipqcchecker': '' if not rework.ipqcchecker_id else rework.ipqcchecker_id.name,
-                'ipqccheck_time': fields.Datetime.to_china_string(rework.ipqccheck_time)
-            } for rework in serialnumber.rework_lines]
+            tempreworklist = self.env['aas.mes.rework']
+            for rework in serialnumber.rework_lines:
+                values['reworklist'].append({
+                    'badmode_date': rework.badmode_date, 'state': REWORKSTATEDICT[rework.state],
+                    'badmode_name': rework.badmode_id.name+'['+rework.badmode_id.code+']',
+                    'commiter': '' if not rework.commiter_id else rework.commiter_id.name,
+                    'commit_time': fields.Datetime.to_china_string(rework.commit_time),
+                    'repairer': '' if not rework.repairer_id else rework.repairer_id.name,
+                    'repair_time': fields.Datetime.to_china_string(rework.repair_time),
+                    'ipqcchecker': '' if not rework.ipqcchecker_id else rework.ipqcchecker_id.name,
+                    'ipqccheck_time': fields.Datetime.to_china_string(rework.ipqccheck_time)
+                })
+                if not rework.workorder_id and serialnumber.workorder_id:
+                    tempreworklist |= rework
+            if tempreworklist and len(tempreworklist) > 0:
+                ## 返工单绑定生产工单，后面工单良率统计使用
+                tempreworklist.write({'workorder_id': serialnumber.workorder_id.id})
         return values
 
 

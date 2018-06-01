@@ -122,19 +122,23 @@ class AASMESLine(models.Model):
 
     @api.one
     def action_refresh(self):
+        olddate = fields.Datetime.to_china_today() if not self.workdate else self.workdate
         self.action_refresh_schedule()
         currenttime = fields.Datetime.now()
         searchdomain = [('mesline_id', '=', self.id)]
         searchdomain += [('actual_start', '<=', currenttime), ('actual_finish', '>', currenttime)]
         schedule = self.env['aas.mes.schedule'].search(searchdomain, limit=1)
         if not schedule or not self.schedule_id or schedule.id != self.schedule_id.id:
-            ordervals = {'schedule_id': False}
+            ordervals, oldscheduleid = {'schedule_id': False}, False
             if self.schedule_id:
                 self.schedule_id.write({'state': 'break'})
+                oldscheduleid = self.schedule_id.id
             if schedule:
                 ordervals['schedule_id'] = schedule.id
                 schedule.write({'state': 'working'})
             self.write(ordervals)
+            # 关闭上个班次工单
+            self.env['aas.mes.workorder'].action_close_schedule_workorders(self.id, olddate, oldscheduleid)
             # 刷新上料信息
             self.action_refreshandclear_feeding(self.id)
 
