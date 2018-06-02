@@ -134,6 +134,7 @@ class AASMESFinalCheckingController(http.Controller):
 
     @http.route('/aasmes/finalchecking/scanserialnumber', type='json', auth="user")
     def aasmes_finalchecking_scanserialnumber(self, barcode):
+        logger.info(u'扫描序列号%s开始时间：%s'% (barcode, fields.Datetime.now()))
         values = {
             'success': True, 'message': '', 'serialnumber': barcode, 'done': False,
             'recordlist': [], 'reworklist': [], 'rework': False, 'serialcount': 0,
@@ -209,6 +210,7 @@ class AASMESFinalCheckingController(http.Controller):
         scvalues = request.env['aas.mes.operation'].action_loading_serialcount(mesline.id)
         values['serialcount'] = scvalues['serialcount']
         serialnumber.write({'stocked': True})
+        logger.info(u'扫描序列号%s结束时间：%s'% (barcode, fields.Datetime.now()))
         return values
 
 

@@ -36,8 +36,17 @@ $(function() {
 
     // 自动加载不良模式
     function action_loading_baodmodelist(){
+        var badmodeheaders = $('.aas-badmode');
+        if(badmodeheaders!=undefined && badmodeheaders!=null && badmodeheaders.length > 0){
+            badmodeheaders.remove();
+        }
+        var workdate = $('#querydate').val();
+        if(workdate==undefined || workdate==null || workdate==''){
+            layer.msg('请先设置投产日期！', {icon: 5});
+            return ;
+        }
         var meslineid = parseInt($('#workorderlist').attr('meslineid'));
-        var temparams = {'meslineid': meslineid, 'workdate': $('#querydate').val()};
+        var temparams = {'meslineid': meslineid, 'workdate': workdate};
         var accessid = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
             url: '/aasmes/yieldreport/badmodelist',
@@ -45,10 +54,6 @@ $(function() {
             type: 'post', timeout: 30000, dataType: 'json',
             data: JSON.stringify({jsonrpc: "2.0", method: 'call', params: temparams, id: accessid}),
             success: function (data) {
-                var badmodeheaders = $('.aas-badmode');
-                if(badmodeheaders!=undefined && badmodeheaders!=null && badmodeheaders.length > 0){
-                    badmodeheaders.remove();
-                }
                 var dresult = data.result;
                 if(!dresult.success){
                     layer.msg(dresult.message, {icon: 5});
@@ -59,6 +64,7 @@ $(function() {
                 var productcode = $('#queryproduct').val();
                 var workorder = $('#queryworkorder').val();
                 if(dresult.badmodelist.length<=0){
+                    localStorage.setItem('mesline-badmode-'+meslineid, '');
                     action_loading_workorderlist(page, querydate, productcode, workorder);
                     return ;
                 }
@@ -83,9 +89,11 @@ $(function() {
         if(page > 0){
             tparams['page'] = page;
         }
-        if(workdate!=undefined && workdate!=null && workdate!=''){
-            tparams['workdate'] = workdate;
+        if(workdate==undefined || workdate==null || workdate==''){
+            layer.msg('请先设置投产日期！', {icon: 5});
+            return ;
         }
+        tparams['workdate'] = workdate;
         if(productcode!=undefined && productcode!=null && productcode!=''){
             tparams['productcode'] = productcode;
         }
@@ -215,21 +223,7 @@ $(function() {
     //查询
     $('#querybtn').click(function(){
         $('#recordcountcontent').attr('page', 1);
-        var linetype = $('#workorderlist').attr('linetype');
-        if(linetype == 'flowing'){
-            action_loading_baodmodelist();
-        }else{
-            var workdate = $('#querydate').val();
-            var productcode = $('#queryproduct').val();
-            var workorder = $('#queryworkorder').val();
-            if(productcode!=null && productcode!=''){
-                productcode = productcode.trim();
-            }
-            if(workorder!=null && workorder!=''){
-                workorder = workorder.trim();
-            }
-            action_loading_workorderlist(1, workdate, productcode, workorder);
-        }
+        action_loading_baodmodelist();
     });
 
     //导出
@@ -252,10 +246,12 @@ $(function() {
         }else{
             var tempparams = {'meslineid': meslineid};
             var workdate = $('#querydate').val();
-            if(workdate!=null && workdate!=''){
-                searchkey += '&workdate='+workdate;
-                tempparams['workdate'] = workdate;
+            if(workdate==null || workdate==''){
+                layer.msg('请先设置投产日期！', {icon: 5});
+                return ;
             }
+            searchkey += '&workdate='+workdate;
+            tempparams['workdate'] = workdate;
             var productcode = $('#queryproduct').val();
             if(productcode!=null && productcode!=''){
                 searchkey += '&productcode='+productcode;

@@ -23,12 +23,12 @@ class AASMESYieldReportController(http.Controller):
 
     def action_loading_badmodelist(self, mesline, workdate):
         badmodeids, badmodelist = [], []
+        orderdomain = [('mesline_id', '=', mesline.id), ('plan_date', '=', workdate), ('state', '!=', 'draft')]
+        workorderlist = request.env['aas.mes.workorder'].search(orderdomain)
+        if not workorderlist or len(workorderlist) <= 0:
+            return badmodelist
+        workorderids = workorderlist.ids
         if mesline.line_type == 'flowing':
-            orderdomain = [('mesline_id', '=', mesline.id), ('plan_date', '=', workdate), ('state', '!=', 'draft')]
-            workorderlist = request.env['aas.mes.workorder'].search(orderdomain)
-            if not workorderlist or len(workorderlist) <= 0:
-                return badmodelist
-            workorderids = workorderlist.ids
             reworklist = request.env['aas.mes.rework'].search([('workorder_id', 'in', workorderids)])
             if not reworklist or len(reworklist) <= 0:
                 return badmodelist
@@ -39,23 +39,16 @@ class AASMESYieldReportController(http.Controller):
                 badmodeids.append(badmode.id)
                 badmodelist.append({'badmode_id': badmode.id, 'badmode_name': badmode.name})
         else:
-            badmodeids = [205, 206, 207]
-            badmodelist = [
-                {'badmode_id': 205, 'badmode_name': u'抽检'},
-                {'badmode_id': 206, 'badmode_name': u'首件'}, {'badmode_id': 207, 'badmode_name': u'末件'}
-            ]
-            if not mesline.workstation_lines or len(mesline.workstation_lines) <= 0:
-                return badmodelist
-            workstationids = [wline.workstation_id.id for wline in mesline.workstation_lines]
-            badmodes = request.env['aas.mes.workstation.badmode'].search([('workstation_id', 'in', workstationids)])
-            if not badmodes or len(badmodes) <= 0:
-                return badmodelist
-            for tbadmode in badmodes:
-                badmode = tbadmode.badmode_id
-                if badmode.id in badmodeids:
-                    continue
-                badmodeids.append(badmode.id)
-                badmodelist.append({'badmode_id': badmode.id, 'badmode_name': badmode.name})
+            sql_query = """
+            SELECT id, name FROM aas_mes_badmode WHERE id in (
+               SELECT DISTINCT badmode_id FROM aas_production_badmode WHERE workorder_id in %s
+            )
+            """
+            request.env.cr.execute(sql_query, (tuple(workorderids), ))
+            badmodes = request.env.cr.dictfetchall()
+            if badmodes and len(badmodes) > 0:
+                for badmode in badmodes:
+                    badmodelist.append({'badmode_id': badmode['id'], 'badmode_name': badmode['name']})
         return badmodelist
 
 

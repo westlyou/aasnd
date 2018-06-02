@@ -41,6 +41,7 @@ class AASMESOperation(models.Model):
     final_quality_check = fields.Boolean(string=u'最终检查', default=False, copy=False)
     fqccheck_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'最终检查记录')
     fqccheck_date = fields.Char(string=u'FQC日期', copy=False, index=True)
+    fqcschedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'FQC班次', index=True)
 
     gp12_check = fields.Boolean(string='GP12', default=False, copy=False)
     gp12_record_id = fields.Many2one(comodel_name='aas.mes.operation.record', string=u'GP12确认记录')
@@ -204,8 +205,10 @@ class AASMESOperation(models.Model):
         workorder = mesline.workorder_id
         if not workorder:
             return values
-        productid, currentdate = workorder.product_id.id, fields.Datetime.to_china_today()
-        tdomain = [('product_id', '=', productid), ('mesline_id', '=', mesline.id), ('fqccheck_date', '=', currentdate)]
+        productid = workorder.product_id.id
+        currentdate, scheduleid = mesline.workdate, mesline.schedule_id.id
+        tdomain = [('product_id', '=', productid), ('mesline_id', '=', mesline.id), ]
+        tdomain += [('fqccheck_date', '=', currentdate), ('fqcschedule_id', '=', scheduleid)]
         values['serialcount'] = self.env['aas.mes.operation'].search_count(tdomain)
         return values
 
@@ -349,7 +352,11 @@ class AASMESOperationRecord(models.Model):
         elif self.operate_type == 'fqc':
             operationvals.update({'final_quality_check': True, 'fqccheck_record_id': self.id})
             if not self.operation_id.fqccheck_date:
-                operationvals['fqccheck_date'] = fields.Datetime.to_china_today()
+                mesline = serialnumber.workorder_id.mesline_id
+                tempdate = fields.Datetime.to_china_today() if not mesline.workdate else mesline.workdate
+                operationvals['fqccheck_date'] = tempdate
+                if mesline.schedule_id:
+                    operationvals['fqcschedule_id'] = mesline.schedule_id.id
         elif self.operate_type == 'gp12':
             operationvals.update({'gp12_check': True, 'gp12_record_id': self.id})
         if operationvals and len(operationvals) > 0:
