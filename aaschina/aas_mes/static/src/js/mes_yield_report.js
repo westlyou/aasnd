@@ -45,6 +45,10 @@ $(function() {
             type: 'post', timeout: 30000, dataType: 'json',
             data: JSON.stringify({jsonrpc: "2.0", method: 'call', params: temparams, id: accessid}),
             success: function (data) {
+                var badmodeheaders = $('.aas-badmode');
+                if(badmodeheaders!=undefined && badmodeheaders!=null && badmodeheaders.length > 0){
+                    badmodeheaders.remove();
+                }
                 var dresult = data.result;
                 if(!dresult.success){
                     layer.msg(dresult.message, {icon: 5});
@@ -52,18 +56,20 @@ $(function() {
                 }
                 var page = 1;
                 var querydate = $('#querydate').val();
+                var productcode = $('#queryproduct').val();
+                var workorder = $('#queryworkorder').val();
                 if(dresult.badmodelist.length<=0){
-                    action_loading_workorderlist(page, querydate);
+                    action_loading_workorderlist(page, querydate, productcode, workorder);
                     return ;
                 }
                 var badmodeids = [];
                 var tableheader = $('#yieldheaderline');
                 $.each(dresult.badmodelist, function(index, badmode){
                     badmodeids.push(badmode.badmode_id);
-                    $('<th></th>').html(badmode.badmode_name).appendTo(tableheader);
+                    $('<th class="aas-badmode"></th>').html(badmode.badmode_name).appendTo(tableheader);
                 });
                 localStorage.setItem('mesline-badmode-'+meslineid, badmodeids.join(','));
-                action_loading_workorderlist(page, querydate);
+                action_loading_workorderlist(page, querydate, productcode, workorder);
             },
             error: function (xhr, type, errorThrown) {
                 console.log(type);
@@ -209,16 +215,21 @@ $(function() {
     //查询
     $('#querybtn').click(function(){
         $('#recordcountcontent').attr('page', 1);
-        var workdate = $('#querydate').val();
-        var productcode = $('#queryproduct').val();
-        var workorder = $('#queryworkorder').val();
-        if(productcode!=null && productcode!=''){
-            productcode = productcode.trim();
+        var linetype = $('#workorderlist').attr('linetype');
+        if(linetype == 'flowing'){
+            action_loading_baodmodelist();
+        }else{
+            var workdate = $('#querydate').val();
+            var productcode = $('#queryproduct').val();
+            var workorder = $('#queryworkorder').val();
+            if(productcode!=null && productcode!=''){
+                productcode = productcode.trim();
+            }
+            if(workorder!=null && workorder!=''){
+                workorder = workorder.trim();
+            }
+            action_loading_workorderlist(1, workdate, productcode, workorder);
         }
-        if(workorder!=null && workorder!=''){
-            workorder = workorder.trim();
-        }
-        action_loading_workorderlist(1, workdate, productcode, workorder);
     });
 
     //导出

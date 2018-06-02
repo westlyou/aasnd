@@ -102,7 +102,8 @@ class AASMESYieldReportController(http.Controller):
         values = {
             'success': True, 'message': '', 'checker': loginuser.name,
             'workorderlist': [], 'mesline_id': meslineid, 'mesline_name': mesline.name,
-            'flowingline': True if mesline.line_type == 'flowing' else False
+            'flowingline': True if mesline.line_type == 'flowing' else False,
+            'linetype': mesline.line_type
         }
         return request.render('aas_mes.aas_yieldreport_list', values)
 

@@ -28,7 +28,10 @@
         <menuitem id="menu_aas_mes_employee"  name="员工信息" parent="menu_aas_mes" sequence="8"
                   groups="group_aas_manufacture_user"/>
 
-        <menuitem id="menu_aas_mes_report"  name="生产报表" parent="menu_aas_mes" sequence="9"
+        <menuitem id="menu_aas_mes_yield_report"  name="良率报表" parent="menu_aas_mes" sequence="9"
+                  groups="group_aas_manufacture_manager,group_aas_manufacture_user"/>
+
+        <menuitem id="menu_aas_mes_report"  name="生产报表" parent="menu_aas_mes" sequence="10"
                   groups="group_aas_manufacture_manager"/>
 
         <menuitem id="menu_aas_stock_report"  name="库存报表" parent="menu_aas_mes" sequence="20"
@@ -36,6 +39,80 @@
 
         <menuitem id="menu_aas_mes_settings"  name="生产设置" parent="menu_aas_mes" sequence="21"
                   groups="group_aas_manufacture_manager,group_aas_mes_technologist"/>
+
+
+        <record id="action_aas_mes_line001_yield_report" model="ir.actions.act_url">
+            <field name="target">new</field>
+            <field name="name">Line001良率</field>
+            <field name="url">aasmes/yieldreport/1</field>
+        </record>
+
+        <menuitem id="menu_aas_mes_line001_yield_report"  name="Line001良率" action="action_aas_mes_line001_yield_report"
+                          parent="menu_aas_mes_yield_report" sequence="1" groups="group_aas_manufacture_manager,group_aas_manufacture_user"/>
+
+        <record id="action_aas_mes_line001_yield_report" model="ir.actions.act_url">
+            <field name="target">new</field>
+            <field name="name">Line001良率</field>
+            <field name="url">aasmes/yieldreport/1</field>
+        </record>
+
+        <menuitem id="menu_aas_mes_line001_yield_report"  name="Line001良率" action="action_aas_mes_line001_yield_report"
+                          parent="menu_aas_mes_yield_report" sequence="1" groups="group_aas_manufacture_manager,group_aas_manufacture_user"/>
+
+        <record id="action_aas_mes_line002_yield_report" model="ir.actions.act_url">
+            <field name="target">new</field>
+            <field name="name">Line002良率</field>
+            <field name="url">aasmes/yieldreport/2</field>
+        </record>
+
+        <menuitem id="menu_aas_mes_line002_yield_report"  name="Line002良率" action="action_aas_mes_line002_yield_report"
+                          parent="menu_aas_mes_yield_report" sequence="2" groups="group_aas_manufacture_manager,group_aas_manufacture_user"/>
+
+        <record id="action_aas_mes_line003_yield_report" model="ir.actions.act_url">
+            <field name="target">new</field>
+            <field name="name">Line003良率</field>
+            <field name="url">aasmes/yieldreport/3</field>
+        </record>
+
+        <menuitem id="menu_aas_mes_line003_yield_report"  name="Line003良率" action="action_aas_mes_line003_yield_report"
+                          parent="menu_aas_mes_yield_report" sequence="3" groups="group_aas_manufacture_manager,group_aas_manufacture_user"/>
+
+        <record id="action_aas_mes_line008_yield_report" model="ir.actions.act_url">
+            <field name="target">new</field>
+            <field name="name">NTCLine良率</field>
+            <field name="url">aasmes/yieldreport/8</field>
+        </record>
+
+        <menuitem id="menu_aas_mes_line008_yield_report"  name="NTCLine良率" action="action_aas_mes_line008_yield_report"
+                          parent="menu_aas_mes_yield_report" sequence="4" groups="group_aas_manufacture_manager,group_aas_manufacture_user"/>
+
+        <record id="action_aas_mes_line004_yield_report" model="ir.actions.act_url">
+            <field name="target">new</field>
+            <field name="name">CuttingLine良率</field>
+            <field name="url">aasmes/yieldreport/4</field>
+        </record>
+
+        <menuitem id="menu_aas_mes_line004_yield_report"  name="CuttingLine良率" action="action_aas_mes_line004_yield_report"
+                          parent="menu_aas_mes_yield_report" sequence="5" groups="group_aas_manufacture_manager,group_aas_manufacture_user"/>
+
+        <record id="action_aas_mes_line005_yield_report" model="ir.actions.act_url">
+            <field name="target">new</field>
+            <field name="name">WeldingLine良率</field>
+            <field name="url">aasmes/yieldreport/5</field>
+        </record>
+
+        <menuitem id="menu_aas_mes_line005_yield_report"  name="WeldingLine良率" action="action_aas_mes_line005_yield_report"
+                          parent="menu_aas_mes_yield_report" sequence="6" groups="group_aas_manufacture_manager,group_aas_manufacture_user"/>
+
+        <record id="action_aas_mes_line006_yield_report" model="ir.actions.act_url">
+            <field name="target">new</field>
+            <field name="name">PottingLine良率</field>
+            <field name="url">aasmes/yieldreport/6</field>
+        </record>
+
+        <menuitem id="menu_aas_mes_line006_yield_report"  name="PottingLine良率" action="action_aas_mes_line006_yield_report"
+                          parent="menu_aas_mes_yield_report" sequence="7" groups="group_aas_manufacture_manager,group_aas_manufacture_user"/>
+
 
 
         <record id="aas_mes_attendance_scanner" model="ir.actions.act_url">

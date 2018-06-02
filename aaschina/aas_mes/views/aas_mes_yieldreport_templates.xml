@@ -140,7 +140,9 @@
                                                     </t>
                                                 </tr>
                                             </thead>
-                                            <tbody id="workorderlist" t-att-meslineid="mesline_id"></tbody>
+                                            <tbody id="workorderlist"
+                                                   t-att-meslineid="mesline_id" t-att-linetype="linetype">
+                                            </tbody>
                                         </table>
                                     </div>
                                 </div>
@@ -163,7 +165,7 @@
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
                 <script src="/aas_base/static/libs/datepicker/bootstrap-datepicker.js"></script>
                 <script src="/aas_base/static/libs/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>
-                <script src="/aas_mes/static/src/js/mes_yield_report.js?ver=20180601234556"></script>
+                <script src="/aas_mes/static/src/js/mes_yield_report.js?ver=20180602124108"></script>
             </body>
         </html>
     </template>
