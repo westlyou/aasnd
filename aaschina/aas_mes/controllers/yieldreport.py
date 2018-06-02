@@ -39,6 +39,11 @@ class AASMESYieldReportController(http.Controller):
                 badmodeids.append(badmode.id)
                 badmodelist.append({'badmode_id': badmode.id, 'badmode_name': badmode.name})
         else:
+            badmodeids = [205, 206, 207]
+            badmodelist = [
+                {'badmode_id': 205, 'badmode_name': u'抽检'},
+                {'badmode_id': 206, 'badmode_name': u'首件'}, {'badmode_id': 207, 'badmode_name': u'末件'}
+            ]
             if not mesline.workstation_lines or len(mesline.workstation_lines) <= 0:
                 return badmodelist
             workstationids = [wline.workstation_id.id for wline in mesline.workstation_lines]
