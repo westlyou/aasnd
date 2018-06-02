@@ -14,7 +14,7 @@ from cStringIO import StringIO
 
 from odoo import http, fields
 from odoo.http import request
-from odoo.tools.float_utils import float_compare, float_is_zero
+from odoo.tools.float_utils import float_compare, float_repr
 from odoo.exceptions import AccessDenied, UserError, ValidationError
 
 logger = logging.getLogger(__name__)
@@ -270,7 +270,7 @@ class AASMESYieldReportController(http.Controller):
                 worksheet.write(rowindex, 6, produce_finish, base_style)
                 worksheet.write(rowindex, 7, workorder.input_qty, base_style)
                 worksheet.write(rowindex, 8, workorder.output_qty, base_style)
-                worksheet.write(rowindex, 9, reach_rate, base_style)
+                worksheet.write(rowindex, 9, float_repr(reach_rate, 2), base_style)
                 tempbadmodevals = self.action_loading_workorder_badmodelist(workorder)
                 badmode_qty = tempbadmodevals['total_qty']
                 worksheet.write(rowindex, 10, badmode_qty, base_style)
@@ -278,7 +278,7 @@ class AASMESYieldReportController(http.Controller):
                     yield_actual = 0.0
                 else:
                     yield_actual = workorder.output_qty / (badmode_qty + workorder.output_qty) * 100.0
-                worksheet.write(rowindex, 11, yield_actual, base_style)
+                worksheet.write(rowindex, 11, float_repr(yield_actual, 2), base_style)
                 wkcolumnindex = 11
                 if mesline.line_type == 'flowing':
                     worksheet.write(rowindex, 12, tempbadmodevals['once_qty'], base_style)
