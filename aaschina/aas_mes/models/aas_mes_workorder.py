@@ -402,6 +402,10 @@ class AASMESWorkorder(models.Model):
     def action_workorder_over(self):
         currenttime = fields.Datetime.now()
         workordervals = {'state': 'done', 'produce_finish': currenttime}
+        finishontime = float_compare(self.output_qty, self.input_qty, precision_rounding=0.000001) >= 0.0
+        if self.plan_start and self.plan_finish:
+            finishontime = True if self.plan_start <= currenttime <= self.plan_finish else False
+        workordervals['finishontime'] = finishontime
         self.write(workordervals)
         if not self.mainorder_id:
             return
