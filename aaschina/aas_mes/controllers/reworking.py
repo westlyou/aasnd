@@ -75,7 +75,19 @@ class AASMESReworkingController(http.Controller):
 
     @http.route('/aasmes/repairing', type='http', auth="user")
     def aasmes_repairing(self):
-        values = {'success': True, 'message': '', 'checker': request.env.user.name}
+        values = {'success': True, 'message': '', 'checker': request.env.user.name, 'repairlist': []}
+        repairlist = request.env['aas.mes.rework'].search([('state', '=', 'repair')])
+        if repairlist and len(repairlist) > 0:
+            values['repairlist'] = [{
+                'serialnumber': repair.serialnumber_id.name,
+                'internalpn': repair.internalpn, 'customerpn': repair.customerpn,
+                'workstation_name': repair.workstation_id.name, 'badmode_name': repair.badmode_id.name,
+                'badmode_date': repair.badmode_date, 'commit_time': fields.Datetime.to_china_string(repair.commit_time),
+                'commiter': repair.commiter_id.name,
+                'repairer': '' if not repair.repairer_id else repair.repairer_id.name,
+                'repair_start': '' if not repair.repair_start else fields.Datetime.to_china_string(repair.repair_start),
+                'repair_finish': '' if not repair.repair_finish else fields.Datetime.to_china_string(repair.repair_finish)
+            } for repair in repairlist]
         return request.render('aas_mes.aas_repairing', values)
 
 

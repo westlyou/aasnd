@@ -193,8 +193,11 @@
 
                                 <div class="navbar-custom-menu">
                                     <ul class="nav navbar-nav">
-                                        <li id="action_repair" class="notifications-menu">
-                                            <a href="javascript:void(0);"> <i class="fa fa-wrench"></i> 维修完成 </a>
+                                        <li id="action_repair_start" class="notifications-menu">
+                                            <a href="javascript:void(0);"> <i class="fa fa-send"></i> 维修开工 </a>
+                                        </li>
+                                        <li id="action_repair_finish" class="notifications-menu">
+                                            <a href="javascript:void(0);"> <i class="fa fa-send"></i> 维修完工 </a>
                                         </li>
                                         <li class="dropdown notifications-menu">
                                             <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">
@@ -218,83 +221,170 @@
 
                     <div class="content-wrapper">
                         <section class="content-header">
-                            <h1> 不良维修 </h1>
+                            <h1> 待维修清单 </h1>
+                        </section>
+                        <section class="content">
+                            <div class="box box-primary">
+                                <div class="box-body">
+                                    <div class="table-responsive">
+                                        <table class="table no-margin">
+                                            <thead>
+                                                <tr>
+                                                    <th>序列号</th>
+                                                    <th>内部料号</th>
+                                                    <th>客户料号</th>
+                                                    <th>工位</th>
+                                                    <th>不良模式</th>
+                                                    <th>不良日期</th>
+                                                    <th>上报时间</th>
+                                                    <th>上报员工</th>
+                                                    <th>维修员工</th>
+                                                    <th>维修开始</th>
+                                                    <th>维修结束</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="repair_list">
+                                                <t t-if="repairlist">
+                                                    <t t-foreach="repairlist" t-as="repair">
+                                                        <tr>
+                                                            <td><t t-esc="repair['serialnumber']"/></td>
+                                                            <td><t t-esc="repair['internalpn']"/></td>
+                                                            <td><t t-esc="repair['customerpn']"/></td>
+                                                            <td><t t-esc="repair['workstation_name']"/></td>
+                                                            <td><t t-esc="repair['badmode_name']"/></td>
+                                                            <td><t t-esc="repair['badmode_date']"/></td>
+                                                            <td><t t-esc="repair['commit_time']"/></td>
+                                                            <td><t t-esc="repair['commiter']"/></td>
+                                                            <td><t t-esc="repair['repairer']"/></td>
+                                                            <td><t t-esc="repair['repair_start']"/></td>
+                                                            <td><t t-esc="repair['repair_finish']"/></td>
+                                                        </tr>
+                                                    </t>
+                                                </t>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </section>
+                    </div>
+                    <footer class="main-footer">
+                        <div class="container" style="text-align:center;">
+                            <span>
+                                Copyright © 安费诺先进传感器 &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <a href="http://www.miitbeian.gov.cn" target="_blank">苏ICP备16061622</a>
+                            </span>
+                        </div>
+                    </footer>
+                </div>
+                <script src="/aas_base/static/libs/jquery/jquery-2.2.4.min.js"></script>
+                <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
+                <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
+                <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
+                <script src="/aas_base/static/libs/layer/layer.js"></script>
+                <script src="/aas_mes/static/src/js/mes_repairing.js?ver=20180604130456"></script>
+            </body>
+        </html>
+    </template>
+
+
+    <template id="aas_repairing_start" name="AAS MES Repairing Start">
+        &lt;!DOCTYPE html&gt;
+        <html>
+            <head>
+                <meta charset="utf-8" />
+                <title>安费诺先进传感器</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no"/>
+                <meta name="apple-mobile-web-app-capable" content="yes"/>
+                <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/skins/skin-blue.min.css"/>
+                <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+                <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+                <!--[if lt IE 9]>
+                   <script src="/aas_base/static/libs/html5shiv.min.js"></script>
+                   <script src="/aas_base/static/libs/respond.min.js"></script>
+                <![endif]-->
+            </head>
+            <body class="hold-transition skin-blue layout-top-nav">
+                <div class="wrapper">
+                    <header class="main-header">
+                        <nav class="navbar navbar-static-top">
+                            <div class="container">
+                                <div class="navbar-header">
+                                    <a href="javascript:void(0);" class="navbar-brand">
+                                        <span><b>安费诺先进传感器</b></span>
+                                    </a>
+                                </div>
+
+                                <div class="navbar-custom-menu">
+                                    <ul class="nav navbar-nav">
+                                        <li id="action_repair_back" class="notifications-menu">
+                                            <a href="javascript:void(0);"> <i class="fa fa-send"></i> 返回主页 </a>
+                                        </li>
+                                        <li id="action_repair_dostart" class="notifications-menu">
+                                            <a href="javascript:void(0);"> <i class="fa fa-send"></i> 维修开工 </a>
+                                        </li>
+                                        <li class="dropdown notifications-menu">
+                                            <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fa fa-user"></i> <span t-esc="checker"/>
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                <li class="header">欢迎您，<t t-esc="checker"/></li>
+                                                <li>
+                                                    <ul class="menu">
+                                                        <li> <a href="/web/session/logout">注销</a> </li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </nav>
+
+                    </header>
+
+                    <div class="content-wrapper">
+                        <section class="content-header">
+                            <h1> 维修开工 </h1>
                         </section>
                         <section class="content">
                             <div class="row">
                                 <div class="col-md-3">
-
-                                    <a id="action_clearemployee" href="javascript:void(0);"
-                                       class="btn btn-primary btn-block margin-bottom">清理员工</a>
-
                                     <div class="box box-solid">
                                         <div class="box-header with-border">
-                                            <h3 class="box-title">基础信息</h3>
+                                            <h3 class="box-title">维修清单</h3>
                                         </div>
                                         <div class="box-body no-padding">
-                                            <ul class="nav nav-pills nav-stacked">
-                                                <li> <a href="javascript:void(0);">维修员工 <span id="mes_employee" class="pull-right" employeeid="0"/></a></li>
-                                                <li> <a href="javascript:void(0);">客户料号 <span id="mes_customerpn" class="pull-right"/></a> </li>
-                                                <li> <a href="javascript:void(0);">内部料号 <span id="mes_internalpn" class="pull-right"/></a> </li>
-                                                <li style="padding:5px;">
-                                                    <div class="input-group">
-                                                        <div class="input-group-btn">
-                                                            <button type="button" class="btn btn-primary">维修工时(分钟)</button>
-                                                        </div>
-                                                        <input id="repairtime" type="text" class="form-control" value="0.0" style="text-align:right;"/>
-                                                    </div>
-                                                </li>
-                                            </ul>
+                                            <ul id="serialnumberlist" class="nav nav-pills nav-stacked"></ul>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-9">
                                     <div class="box box-primary">
-                                        <div class="box-header with-border">
-                                            <h3 class="box-title">当前SN: </h3>
-                                            <div class="box-tools pull-right">
-                                                <div style="font-size:22px; font-weight:bold;">
-                                                    <span id="mes_serialnumber" style="color:#72AFD2;" serialnumberid="0"/>
-                                                </div>
-                                            </div>
+                                        <div class="box-header">
+                                            <h3 class="box-title">返工记录</h3>
                                         </div>
                                         <div class="box-body">
-                                            <div class="row" style="margin-top:10px;">
-                                                <div class="col-md-12">
-                                                    <div class="input-group">
-                                                        <span class="input-group-addon">操作结果</span>
-                                                        <input id="mes_result" type="text" class="form-control" value="OK"/>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="row" style="margin-top:10px;">
-                                                <section class="col-md-12">
-                                                    <div class="box box-primary">
-                                                        <div class="box-header">
-                                                            <i class="fa fa-list"></i>
-                                                            <h3 class="box-title">返工记录</h3>
-                                                        </div>
-                                                        <div class="box-body">
-                                                            <div class="table-responsive">
-                                                                <table class="table no-margin">
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th>No</th>
-                                                                            <th>SN</th>
-                                                                            <th>不良日期</th>
-                                                                            <th>料号</th>
-                                                                            <th>工序</th>
-                                                                            <th>不良模式</th>
-                                                                            <th>作业员</th>
-                                                                            <th>维修状态</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody id="rework_list"></tbody>
-                                                                </table>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </section>
+                                            <div class="table-responsive">
+                                                <table class="table no-margin">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>No</th>
+                                                            <th>SN</th>
+                                                            <th>不良日期</th>
+                                                            <th>料号</th>
+                                                            <th>工序</th>
+                                                            <th>不良模式</th>
+                                                            <th>作业员</th>
+                                                            <th>维修状态</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="rework_list"></tbody>
+                                                </table>
                                             </div>
                                         </div>
                                     </div>
@@ -312,12 +402,11 @@
                 </div>
                 <script src="/aas_base/static/libs/jquery/jquery-2.2.4.min.js"></script>
                 <script src="/aas_base/static/libs/bootstrap/js/bootstrap.min.js"></script>
-                <script src="/aas_base/static/libs/select2/select2.min.js"></script>
                 <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
-                <script src="/aas_mes/static/src/js/mes_repairing.js"></script>
+                <script src="/aas_mes/static/src/js/mes_repairing_start.js?ver=20180604134316"></script>
             </body>
         </html>
     </template>
