@@ -159,9 +159,9 @@ class AASMESWorkorder(models.Model):
         if all(tempstatus):
             scheduletimes = [workorder.plan_schedule.actual_start, workorder.plan_schedule.actual_finish]
             return scheduletimes
-        odootime = fields.Datetime.now()
-        currenttimestr = workorder.plan_date + odootime[10:]
-        currenttime = fields.Datetime.to_china_time(currenttimestr)
+        chinatime = fields.Datetime.to_china_string(fields.Datetime.now())
+        currenttimestr = workorder.plan_date + chinatime[10:]
+        currenttime = fields.Datetime.from_string(currenttimestr)
         start_hour = int(math.floor(schedule.work_start))
         start_minutes = int(math.floor((schedule.work_start - start_hour) * 60))
         starttime = currenttime.replace(hour=start_hour, minute=start_minutes, second=0)
