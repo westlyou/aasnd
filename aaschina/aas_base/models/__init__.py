@@ -27,4 +27,5 @@
 import aas_base
 import aas_label
 import aas_wechat
+import aas_product
 
