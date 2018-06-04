@@ -133,7 +133,7 @@
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
-                <script src="/aas_mes/static/src/js/mes_attendance_scanner.20180516094056.js"></script>
+                <script src="/aas_mes/static/src/js/mes_attendance_scanner.js?ver=20180604154200"></script>
             </body>
         </html>
     </template>

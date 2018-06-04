@@ -6,4 +6,3 @@ access_aas_label_printer_base_user,aas.label.printer base_user,model_aas_label_p
 access_aas_label_printer_lines_base_user,aas.label.printer.lines base_user,model_aas_label_printer_lines,base.group_user,1,0,0,0
 access_aas_wechat_enapplication_all_user,aas.wechat.enapplication user,model_aas_wechat_enapplication,,1,0,0,0
 access_aas_wechat_enapplication_aasit,aas.wechat.enapplication aasit,model_aas_wechat_enapplication,group_aas_it,1,1,1,1
-access_aas_product_product_base_user,aas.product.product base_user,model_aas_product_product,base.group_user,1,0,0,0

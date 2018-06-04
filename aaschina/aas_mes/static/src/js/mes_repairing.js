@@ -5,11 +5,11 @@
 $(function(){
 
     $('#action_repair_start').click(function(){
-        alert('敬请期待');
+        window.location.replace('/aasmes/repairing/start');
     });
 
     $('#action_repair_finish').click(function(){
-        alert('敬请期待');
+        window.location.replace('/aasmes/repairing/finish');
     });
 
 });

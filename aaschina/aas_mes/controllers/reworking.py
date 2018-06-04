@@ -71,8 +71,6 @@ class AASMESReworkingController(http.Controller):
         return values
 
 
-
-
     @http.route('/aasmes/repairing', type='http', auth="user")
     def aasmes_repairing(self):
         values = {'success': True, 'message': '', 'checker': request.env.user.name, 'repairlist': []}
@@ -91,6 +89,12 @@ class AASMESReworkingController(http.Controller):
         return request.render('aas_mes.aas_repairing', values)
 
 
+    @http.route('/aasmes/repairing/start', type='http', auth="user")
+    def aasmes_repairing_start(self):
+        values = {'success': True, 'message': '', 'checker': request.env.user.name}
+        return request.render('aas_mes.aas_repairing_start', values)
+
+
     @http.route('/aasmes/repairing/scanemployee', type='json', auth="user")
     def aasmes_repairing_scanemployee(self, barcode):
         values = {'success': True, 'message': '', 'employee_id': '0', 'employee_name': ''}
@@ -101,8 +105,8 @@ class AASMESReworkingController(http.Controller):
         values.update({'employee_id': employee.id, 'employee_name': employee.name})
         return values
 
-    @http.route('/aasmes/repairing/scanserialnumber', type='json', auth="user")
-    def aasmes_repairing_scanserialnumber(self, barcode):
+    @http.route('/aasmes/repairing/start/scanserialnumber', type='json', auth="user")
+    def aasmes_repairing_start_scanserialnumber(self, barcode):
         values = {'success': True, 'message': '', 'reworklist': []}
         serialnumber = request.env['aas.mes.serialnumber'].search([('name', '=', barcode)])
         if not serialnumber:
@@ -115,6 +119,9 @@ class AASMESReworkingController(http.Controller):
         if rework.state != 'repair':
             values.update({'success': False, 'message': u'%s已经维修，请不要重复操作！'% barcode})
             return values
+        if rework.repair_start:
+            values.update({'success': False, 'message': u'%s已经开始维修，请不要重复操作！'% barcode})
+            return values
         # 返工记录
         reworklist = request.env['aas.mes.rework'].search([('serialnumber_id', '=', serialnumber.id)], order='id desc')
         if reworklist and len(reworklist) > 0:
@@ -125,25 +132,27 @@ class AASMESReworkingController(http.Controller):
                 'state_name': REWORKSTATEDICT[rework.state]
             } for rework in reworklist]
         values.update({
-            'serialnumber_id': serialnumber.id, 'serialnumber_name': serialnumber.name,
-            'customerpn': serialnumber.customer_product_code,
-            'internalpn': serialnumber.internal_product_code
+            'serialnumber_id': serialnumber.id, 'rework_id': rework.id,
+            'serialnumber_name': serialnumber.name, 'productcode': serialnumber.internal_product_code
         })
         return values
 
 
-    @http.route('/aasmes/repairing/actiondone', type='json', auth="user")
-    def aasmes_repairing_actiondone(self, repairerid, serialnumberid, repairesult, repairtime=0.0):
+    @http.route('/aasmes/repairing/start/done', type='json', auth="user")
+    def aasmes_repairing_startdone(self, repairerid, reworkids=[]):
         values = {'success': True, 'message': ''}
-        rework = request.env['aas.mes.rework'].search([('serialnumber_id', '=', serialnumberid)], order='id desc', limit=1)
-        if not rework:
-            values.update({'success': False, 'message': u'%s还未上报过不良，暂时无需维修！'% rework.serialnumber_id.name})
+        if not reworkids or len(reworkids) <= 0:
+            values.update({'success': False, 'message': u'未获取到需要维修的序列号！'})
             return values
-        if rework.repairer_id and rework.state != 'repair':
-            values.update({'success': False, 'message': u'%s已经维修，请不要重复操作！'% rework.serialnumber_id.name})
-            return values
-        rework.action_repair(repairerid, repairesult, worktime=repairtime)
+        reworklist = request.env['aas.mes.rework'].browse(reworkids)
+        reworklist.write({'repairer_id': repairerid, 'repair_start': fields.Datetime.now()})
         return values
+
+
+    @http.route('/aasmes/repairing/finish', type='http', auth="user")
+    def aasmes_repairing_finish(self):
+        values = {'success': True, 'message': '', 'checker': request.env.user.name}
+        return request.render('aas_mes.aas_repairing_finish', values)
 
 
     @http.route('/aasmes/ipqcchecking', type='http', auth="user")
