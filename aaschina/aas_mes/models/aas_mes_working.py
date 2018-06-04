@@ -148,7 +148,7 @@ class AASEquipmentEquipment(models.Model):
         return self.env['aas.mes.workstation'].get_employeelist(equipment_code)
 
     @api.model
-    def action_functiontest(self, equipment_code, serialnumber, operation_pass, operate_result):
+    def action_functiontest(self, equipment_code, serialnumber, operation_pass, operate_result, workorder_id=False):
         """添加功能测试记录
         :param equipment_code:
         :param serialnumber:
@@ -156,7 +156,7 @@ class AASEquipmentEquipment(models.Model):
         :param operate_result:
         :return:
         """
-        return self.env['aas.mes.operation.record'].action_functiontest(equipment_code, serialnumber, operation_pass, operate_result)
+        return self.env['aas.mes.operation.record'].action_functiontest(equipment_code, serialnumber, operation_pass, operate_result, workorder_id=workorder_id)
 
     @api.model
     def loading_consumelist_onclient(self, workorder_id, workcenter_id):
