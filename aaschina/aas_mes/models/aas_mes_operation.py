@@ -366,13 +366,14 @@ class AASMESOperationRecord(models.Model):
 
 
     @api.model
-    def action_functiontest(self, equipment_code, serialnumber, operation_pass=False, operate_result=False):
+    def action_functiontest(self, equipment_code, serialnumber, operation_pass=False, operate_result=False, workorder_id=False):
         """
         添加功能测试记录
         :param equipment_code:
         :param serialnumber:
         :param operation_pass:
         :param operate_result:
+        :param workorder_id:
         :return:
         """
         result = {'success': True, 'message': ''}
@@ -422,6 +423,8 @@ class AASMESOperationRecord(models.Model):
                 'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id,
                 'pcode': tserialnumber.internal_product_code, 'ccode': tserialnumber.customer_product_code
             })
+        if workorder_id:
+            tserialnumber.write({'workorder_id': workorder_id})
         _logger.info(u'序列号%s提交功能测试记录，结束时间：%s', serialnumber, fields.Datetime.now())
         return result
 
