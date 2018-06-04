@@ -323,7 +323,6 @@ class AASMESWireOrder(models.Model):
         if not tempvals.get('success', False):
             values.update(tempvals)
             return values
-        workorder.action_done()
         wireorder = workorder.wireorder_id
         if wireorder.state not in ['producing', 'done']:
             wireorder.write({'state': 'producing', 'produce_start': fields.Datetime.now()})
