@@ -131,6 +131,8 @@ access_aas_mes_operation_record_manufacture_user,aas.mes.operation.record manufa
 
 access_aas_mes_rework_manufacture_user,aas.mes.rework manufacture_user,model_aas_mes_rework,group_aas_manufacture_user,1,1,1,1
 access_aas_mes_rework_manufacture_foreman,aas.mes.rework manufacture_foreman,model_aas_mes_rework,group_aas_manufacture_foreman,1,1,1,1
+access_aas_mes_rework_material_manufacture_user,aas.mes.rework.material manufacture_user,model_aas_mes_rework_material,group_aas_manufacture_user,1,1,1,1
+access_aas_mes_rework_material_manufacture_foreman,aas.mes.rework.material manufacture_foreman,model_aas_mes_rework_material,group_aas_manufacture_foreman,1,1,1,1
 access_aas_mes_scrap_manufacture_user,aas.mes.scrap manufacture_user,model_aas_mes_scrap,group_aas_manufacture_user,1,1,1,0
 access_aas_mes_scrap_manufacture_forman,aas.mes.scrap manufacture_forman,model_aas_mes_scrap,group_aas_manufacture_foreman,1,1,1,1
 
