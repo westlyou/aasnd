@@ -508,7 +508,26 @@
                                 <div class="col-xs-1" style="font-size:20px;font-weiht:bold;">
                                     <span style="height:34px;line-height:34px;">维修报工</span>
                                 </div>
-                                <div class="col-xs-4 col-xs-offset-3" style="font-size:20px;font-weiht:bold;">
+                                <div class="col-xs-3">
+                                    <div class="input-group">
+                                        <div class="input-group-btn">
+                                            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                                                用料产线<span class="fa fa-caret-down" style="margin-left:5px;"/>
+                                            </button>
+                                            <ul id="meslines" class="dropdown-menu">
+                                                <t t-if="linelist">
+                                                    <t t-foreach="linelist" t-as="mesline">
+                                                        <li class="aas-mesline" t-att-meslineid="mesline['mesline_id']" t-att-meslinename="mesline['mesline_name']">
+                                                            <a href="javascript:void(0);"><t t-esc="mesline['mesline_name']"/></a>
+                                                        </li>
+                                                    </t>
+                                                </t>
+                                            </ul>
+                                        </div>
+                                        <input id="mes_currentline" meslineid="0" type="text" class="form-control" readonly="readonly" style="width:100%; text-align:right;"/>
+                                    </div>
+                                </div>
+                                <div class="col-xs-4" style="font-size:20px;font-weiht:bold;">
                                     当前序列号：<span id="currentserial" reworkid="0" style="height:34px;line-height:34px;"/>
                                 </div>
                                 <div class="col-xs-1 col-xs-offset-3">
@@ -519,20 +538,20 @@
                         <section class="content">
                             <div class="row">
                                 <div class="col-md-4">
-                                    <div class="box box-solid">
+                                    <div class="box box-solid" style="min-height:550px;">
                                         <div class="box-header with-border">
                                             <h3 class="box-title">维修信息</h3>
                                         </div>
                                         <div class="box-body no-padding">
                                             <ul class="nav nav-pills nav-stacked">
-                                                <li> <a href="javascript:void(0);">不良模式 <span id="mes_badmode" class="pull-right"/></a> </li>
-                                                <li> <a href="javascript:void(0);">维修员工 <span id="mes_repairer" class="pull-right"/></a> </li>
-                                                <li> <a href="javascript:void(0);">开始时间 <span id="mes_repstart" class="pull-right"/></a> </li>
-                                                <li> <a href="javascript:void(0);">内部料号 <span id="mes_internalpn" class="pull-right"/></a> </li>
-                                                <li> <a href="javascript:void(0);">客户料号 <span id="mes_customerpn" class="pull-right"/></a> </li>
-                                                <li> <a href="javascript:void(0);">上报工位 <span id="mes_workstation" class="pull-right"/></a> </li>
-                                                <li> <a href="javascript:void(0);">上报时间 <span id="mes_committime" class="pull-right"/></a> </li>
-                                                <li> <a href="javascript:void(0);">上报员工 <span id="mes_committer" class="pull-right"/></a> </li>
+                                                <li> <a href="javascript:void(0);">维修员工 <span id="mes_repairer" class="pull-right"/></a></li>
+                                                <li> <a href="javascript:void(0);">开始维修 <span id="repair_start" class="pull-right"/></a></li>
+                                                <li> <a href="javascript:void(0);">不良模式 <span id="mes_badmode" class="pull-right"/></a></li>
+                                                <li> <a href="javascript:void(0);">上报员工 <span id="mes_commiter" class="pull-right"/></a></li>
+                                                <li> <a href="javascript:void(0);">上报时间 <span id="commit_time" class="pull-right"/></a></li>
+                                                <li> <a href="javascript:void(0);">上报工位 <span id="mes_station" class="pull-right"/></a></li>
+                                                <li> <a href="javascript:void(0);">内部料号 <span id="mes_internalpn" class="pull-right"/></a></li>
+                                                <li> <a href="javascript:void(0);">客户料号 <span id="mes_customerpn" class="pull-right"/></a></li>
                                             </ul>
                                         </div>
                                     </div>
@@ -548,7 +567,8 @@
                                                     <thead>
                                                         <tr>
                                                             <th>原料</th>
-                                                            <th>数量</th>
+                                                            <th>消耗数量</th>
+                                                            <th>库存数量</th>
                                                             <th>操作</th>
                                                         </tr>
                                                     </thead>
@@ -576,7 +596,7 @@
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
-                <script src="/aas_mes/static/src/js/mes_repairing_finish.js?ver=20180604175036"></script>
+                <script src="/aas_mes/static/src/js/mes_repairing_finish.js?ver=20180606000216"></script>
             </body>
         </html>
     </template>

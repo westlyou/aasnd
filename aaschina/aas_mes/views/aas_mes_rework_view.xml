@@ -51,9 +51,11 @@
                         <group>
                             <group>
                                 <field name="commiter_id"/>
+                                <field name="commit_time"/>
                             </group>
                             <group>
-                                <field name="commit_time"/>
+                                <field name="ipqcchecker_id"/>
+                                <field name="ipqccheck_time"/>
                             </group>
                         </group>
                         <group>
@@ -66,17 +68,9 @@
                                 <field name="repair_finish"/>
                             </group>
                         </group>
-                        <group>
-                            <group>
-                                <field name="ipqcchecker_id"/>
-                            </group>
-                            <group>
-                                <field name="ipqccheck_time"/>
-                            </group>
-                        </group>
                         <notebook>
                             <page string="消耗清单">
-                                <field name="material_lines" readonly="1">
+                                <field name="material_lines">
                                     <tree>
                                         <field name="mesline_id"/>
                                         <field name="location_id"/>

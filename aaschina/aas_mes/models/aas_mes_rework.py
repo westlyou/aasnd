@@ -52,7 +52,7 @@ class AASMESRework(models.Model):
     workstation_name = fields.Char(string=u'工位名称', copy=False)
     repairer_name = fields.Char(string=u'维修员工', copy=False)
 
-    material_lines = fields.One2many(comodel_name='aas.mes.rework.material', inverse_name='rework_id', string=u'消耗清单')
+    material_lines = fields.One2many('aas.mes.rework.material', inverse_name='rework_id', string=u'消耗清单')
 
     @api.model
     def create(self, vals):
@@ -122,15 +122,103 @@ class AASMESRework(models.Model):
             'reworksource': 'produce', 'badmode_name': reworking.badmode_id.name
         })
 
-    @api.one
-    def action_repair(self, repairer_id, repair_note, worktime=0.0):
-        repairer = self.env['aas.hr.employee'].browse(repairer_id)
-        self.write({
-            'repairer_id': repairer_id, 'repair_note': repair_note,
-            'repair_time': fields.Datetime.now(), 'state': 'ipqc', 'repairer_name': repairer.name
-        })
-        operation = self.env['aas.mes.operation'].search([('serialnumber_id', '=', self.serialnumber_id.id)], limit=1)
+
+    @api.model
+    def action_finish_repair(self, rework, materiallist=[]):
+        """ 返工维修报工
+        :param rework:
+        :param materiallist: [{'mesline_id': 1, 'material_id': 1, 'material_qty': 10.0}]
+        :return:
+        """
+        values = {'success': True, 'message': ''}
+        movelines, materiallines = [], []
+        reworkvals = {'repair_finish': fields.Datetime.now(), 'state': 'ipqc'}
+        if materiallist and len(materiallist) > 0:
+            for material in materiallist:
+                meslineid = material['mesline_id']
+                materialid, materialqty = material['material_id'], material['material_qty']
+                consumevals = self.action_loading_rework_consumelist(meslineid, materialid, materialqty, loadmove=True)
+                if not consumevals.get('success', False):
+                    return consumevals
+                movelines += consumevals['movelines']
+                materiallines += consumevals['materiallines']
+            if materiallines and len(materiallines) > 0:
+                reworkvals['material_lines'] = materiallines
+        rework.write(reworkvals)
+        optdomain = [('serialnumber_id', '=', rework.serialnumber_id.id)]
+        operation = self.env['aas.mes.operation'].search(optdomain, limit=1)
         operation.write({'dorework': True, 'dorework_count': operation.dorework_count + 1})
+        if movelines and len(movelines) > 0:
+            movelist = self.env['stock.move']
+            for tempmove in movelines:
+                movelist |= self.env['stock.move'].create(tempmove)
+            movelist.action_done()
+        return values
+
+
+    def action_loading_rework_consumelist(self, meslineid, materialid, materialqty, loadmove=False):
+        values = {
+            'success': True, 'message': '', 'meslineid': meslineid, 'feedmaterialids': [],
+            'materialid': materialid, 'materialcode': '', 'materialqty': materialqty,
+            'stockqty': 0.0, 'movelines': [], 'materiallines': []
+        }
+        material = self.env['product.product'].browse(materialid)
+        feedomain = [('mesline_id', '=', meslineid), ('material_id', '=', materialid)]
+        feedmaterialist = self.env['aas.mes.feedmaterial'].search(feedomain, order='id desc')
+        if not feedmaterialist or len(feedmaterialist) <= 0:
+            values.update({'success': False, 'message': u'%s还未投料或产线投料已消耗完毕，请先上料！'% material.default_code})
+            return values
+        stock_qty, waitqty, feedmaterialids, companyid = 0.0, materialqty, [], self.env.user.company_id.id
+        movedict, materialdict, productionlocation = {}, {}, self.env.ref('stock.location_production')
+        for feedmaterial in feedmaterialist:
+            if not loadmove:
+                stock_qty += feedmaterial.material_qty
+                continue
+            feedmaterialids.append(feedmaterial.id)
+            quantlist = feedmaterial.action_checking_quants()
+            for quant in quantlist:
+                if float_compare(waitqty, 0.0, precision_rounding=0.000001) <= 0.0:
+                    break
+                if float_compare(quant.qty, 0.0, precision_rounding=0.000001) <= 0.0:
+                    break
+                if float_compare(waitqty, quant.qty, precision_rounding=0.000001) >= 0.0:
+                    temp_qty = quant.qty
+                else:
+                    temp_qty = waitqty
+                pkey = 'P-'+str(quant.lot_id.id)+'-'+str(quant.location_id.id)
+                if pkey not in movedict:
+                    movedict[pkey] = {
+                        'name': u'返工消耗', 'product_id': materialid, 'product_uom': material.uom_id.id,
+                        'create_date': fields.Datetime.now(), 'restrict_lot_id': quant.lot_id.id,
+                        'product_uom_qty': temp_qty, 'location_id': quant.location_id.id,
+                        'location_dest_id': productionlocation.id, 'company_id': companyid,
+                    }
+                else:
+                    movedict[pkey]['product_uom_qty'] += temp_qty
+                if pkey not in materialdict:
+                    materialdict[pkey] = {
+                        'mesline_id': meslineid, 'material_id': materialid, 'material_qty': temp_qty,
+                        'material_uom': material.uom_id.id, 'material_lot': quant.lot_id.id,
+                        'location_id': quant.location_id.id
+                    }
+                else:
+                    materialdict[pkey]['material_qty'] += temp_qty
+
+                waitqty -= temp_qty
+
+            stock_qty += feedmaterial.material_qty
+        if float_compare(stock_qty, materialqty, precision_rounding=0.000001) <= 0.0:
+            values.update({'success': False, 'message': u'%s上料不足，请先补足消耗数量！'% material.default_code})
+            return values
+        if movedict and len(movedict) > 0:
+            values['movelines'] = movedict.values()
+        if materialdict and len(materialdict) > 0:
+            values['materiallines'] = [(0, 0, mval) for mkey, mval in materialdict.items()]
+        values.update({
+            'materialcode': material.default_code, 'stockqty': stock_qty, 'feedmaterialids': feedmaterialids
+        })
+        return values
+
 
 
     @api.one
@@ -145,14 +233,13 @@ class AASMESRework(models.Model):
 
 
 
-
-class AASMESReworkMaterial(models.Model):
+class AASMESReworkConsumeMaterial(models.Model):
     _name = 'aas.mes.rework.material'
     _description = 'AAS MES Rework Material'
 
 
     rework_id = fields.Many2one(comodel_name='aas.mes.rework', string=u'返工单', ondelete='restrict')
-    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线')
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='restrict')
     location_id = fields.Many2one(comodel_name='stock.location', string=u'库位')
     material_id = fields.Many2one(comodel_name='product.product', string=u'原料', ondelete='restrict')
     material_uom = fields.Many2one(comodel_name='product.uom', string=u'单位')
