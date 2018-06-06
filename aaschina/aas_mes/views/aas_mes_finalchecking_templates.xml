@@ -199,7 +199,7 @@
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
                 <script src="/aas_base/static/libs/speech/js/jQuery.sougou.speech.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
-                <script src="/aas_mes/static/src/js/mes_finalchecking.js"></script>
+                <script src="/aas_mes/static/src/js/mes_finalchecking.js?ver=20180606192736"></script>
             </body>
         </html>
     </template>

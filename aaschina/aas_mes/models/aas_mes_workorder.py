@@ -75,6 +75,8 @@ class AASMESWorkorder(models.Model):
     finalproduct_id = fields.Many2one(comodel_name='product.product', string=u'最终产品')
     closer_id = fields.Many2one(comodel_name='res.users', string=u'手工关单员', ondelete='restrict', copy=False)
     close_time = fields.Datetime(string=u'手工关单时间', copy=False)
+    producer_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'报工员', help=u'最近一次报工员工')
+    equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'产出设备', help=u'最近一次产出设备')
 
     workticket_lines = fields.One2many(comodel_name='aas.mes.workticket', inverse_name='workorder_id', string=u'工票明细')
     production_lines = fields.One2many(comodel_name='aas.production.product', inverse_name='workorder_id', string=u'产出明细')

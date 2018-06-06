@@ -26,7 +26,7 @@ class AASMESSerialnumber(models.Model):
     _description = 'AAS MES Serialnumber'
     _order = 'id desc'
 
-    name = fields.Char(string=u'名称', required=True, copy=False)
+    name = fields.Char(string=u'名称', required=True, index=True)
     regular_code = fields.Char(string=u'规则编码', copy=False)
     sequence = fields.Integer(string=u'规则序号', copy=False)
     sequence_code = fields.Char(string=u'序列编码', copy=False)
@@ -46,6 +46,7 @@ class AASMESSerialnumber(models.Model):
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'操作设备', ondelete='restrict')
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', index=True)
     printed = fields.Boolean(string=u'已打印', default=False, copy=False)
+    consumed = fields.Boolean(string=u'已消耗', default=False, copy=False, help=u'是否已消耗原材料')
 
     lastone_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'上一个', index=True, ondelete='restrict')
     output_time = fields.Datetime(string=u'产出时间', copy=False)

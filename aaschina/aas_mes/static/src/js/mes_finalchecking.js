@@ -137,6 +137,10 @@ $(function(){
                     nativespeak($('#checkwarning').html());
                     return ;
                 }
+                if(dresult.rescan){
+                    nativespeak('已扫描，请不要重复操作');
+                    return ;
+                }
                 $('#final_result_content').attr('serialcount', dresult.serialcount).html(dresult.serialcount);
                 if($('#final_result_box').hasClass('bg-red')){
                     $('#final_result_box').removeClass('bg-red').addClass('bg-green');
@@ -146,11 +150,7 @@ $(function(){
                     $('#final_result_content').html('重工');
                     action_reworkconfirm(dresult.badmode_name);
                 }else{
-                    if(dresult.done){
-                        nativespeak($('#checkwarning').html());
-                    }else{
-                        nativespeak($('#final_result_content').html());
-                    }
+                    nativespeak($('#final_result_content').html());
                 }
             },
             error:function(xhr,type,errorThrown){ console.log(type);}

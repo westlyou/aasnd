@@ -282,7 +282,7 @@ class AASMESOperation(models.Model):
                     'commiter': '' if not rework.commiter_id else rework.commiter_id.name,
                     'commit_time': fields.Datetime.to_china_string(rework.commit_time),
                     'repairer': '' if not rework.repairer_id else rework.repairer_id.name,
-                    'repair_time': fields.Datetime.to_china_string(rework.repair_time),
+                    'repair_time': fields.Datetime.to_china_string(rework.repair_finish),
                     'ipqcchecker': '' if not rework.ipqcchecker_id else rework.ipqcchecker_id.name,
                     'ipqccheck_time': fields.Datetime.to_china_string(rework.ipqccheck_time)
                 })
@@ -366,7 +366,8 @@ class AASMESOperationRecord(models.Model):
 
 
     @api.model
-    def action_functiontest(self, equipment_code, serialnumber, operation_pass=False, operate_result=False, workorder_id=False):
+    def action_functiontest(self, equipment_code, serialnumber,
+                            operation_pass=False, operate_result=False, workorder_id=False):
         """
         添加功能测试记录
         :param equipment_code:
@@ -407,6 +408,7 @@ class AASMESOperationRecord(models.Model):
         tserialnumber = toperation.serialnumber_id
         if not tserialnumber:
             return result
+        workorderid = workorder_id if not tserialnumber.workorder_id else tserialnumber.workorder_id.id
         tempdomain = [('serialnumber_id', '=', tserialnumber.id)]
         tempdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
         tempoutput = self.env['aas.production.product'].search(tempdomain, order='output_time desc', limit=1)
@@ -414,17 +416,19 @@ class AASMESOperationRecord(models.Model):
             tempvalues = {'onepass': False, 'qualified': operation_pass, 'equipment_id': equipment.id}
             tempoutput.write(tempvalues)
         else:
+            productid = tserialnumber.product_id.id
+            outputdate = fields.Datetime.to_china_today() if not mesline.workdate else mesline.workdate
+            scheduleid = False if not mesline.schedule_id else mesline.schedule_id.id
             self.env['aas.production.product'].create({
                 'serialnumber_id': tserialnumber.id,
                 'onepass': operation_pass, 'qualified': operation_pass,
                 'mesline_id': mesline.id, 'workstation_id': workstation.id,
-                'product_id': tserialnumber.product_id.id, 'product_qty': 1.0,
-                'equipment_id': equipment.id, 'output_date': fields.Datetime.to_china_today(),
-                'schedule_id': False if not mesline.schedule_id else mesline.schedule_id.id,
+                'product_id': productid, 'product_qty': 1.0, 'equipment_id': equipment.id,
+                'workorder_id': workorderid, 'schedule_id': scheduleid, 'output_date': outputdate,
                 'pcode': tserialnumber.internal_product_code, 'ccode': tserialnumber.customer_product_code
             })
-        if workorder_id:
-            tserialnumber.write({'workorder_id': workorder_id})
+        if not tserialnumber.workorder_id:
+            tserialnumber.write({'workorder_id': workorderid})
         _logger.info(u'序列号%s提交功能测试记录，结束时间：%s', serialnumber, fields.Datetime.now())
         return result
 
