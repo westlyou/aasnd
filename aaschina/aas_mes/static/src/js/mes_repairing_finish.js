@@ -122,9 +122,15 @@ $(function(){
         });
     });
 
+    var doneflag = false;
     $('#action_repair_dofinish').click(function(){
+        if(doneflag){
+            layer.msg('操作正在处理，请耐心等待！', {icon: 5});
+            return ;
+        }
         var reworkid = parseInt($('#currentserial').attr('reworkid'));
         if(reworkid==0){
+            doneflag = false;
             layer.msg('您还未扫描序列号，请先扫描需要维修报工的序列号！', {icon: 5});
             return ;
         }
@@ -155,13 +161,17 @@ $(function(){
             });
             temparams['materiallist'] = materialines;
         }
+        doneflag = true;
+        var doneindex = layer.load(0, {shade: [0.2,'#000000']});
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
             url: '/aasmes/repairing/finish/done',
             headers:{'Content-Type':'application/json'},
-            type: 'post', timeout:10000, dataType: 'json',
+            type: 'post', timeout:30000, dataType: 'json',
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: temparams, id: access_id}),
             success:function(data){
+                doneflag = false;
+                layer.close(doneindex);
                 var dresult = data.result;
                 if(!dresult.success){
                     layer.msg(dresult.message, {icon: 5});
@@ -170,7 +180,9 @@ $(function(){
                 window.location.reload(true);
             },
             error:function(xhr,type,errorThrown){
+                doneflag = false;
                 console.log(type);
+                layer.close(doneindex);
             }
         });
     }

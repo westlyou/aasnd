@@ -18,7 +18,7 @@
                     <field name="repairer_id"/>
                     <field name="repair_start"/>
                     <field name="repair_finish"/>
-                    <field name="repair_worktime"/>
+                    <field name="repair_worktime" widget="float_time"/>
                     <field name="ipqcchecker_id"/>
                     <field name="ipqccheck_time"/>
                     <field name="state"/>

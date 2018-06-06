@@ -596,7 +596,7 @@
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
-                <script src="/aas_mes/static/src/js/mes_repairing_finish.js?ver=20180606000216"></script>
+                <script src="/aas_mes/static/src/js/mes_repairing_finish.js?ver=20180606092948"></script>
             </body>
         </html>
     </template>

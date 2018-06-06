@@ -131,8 +131,8 @@ class AASMESRework(models.Model):
         :return:
         """
         values = {'success': True, 'message': ''}
-        movelines, materiallines = [], []
-        reworkvals = {'repair_finish': fields.Datetime.now(), 'state': 'ipqc'}
+        movelines, materiallines, feedids = [], [], []
+        reworkvals = {'repair_finish': fields.Datetime.now(), 'state': 'ipqc', 'repair_note': 'OK'}
         if materiallist and len(materiallist) > 0:
             for material in materiallist:
                 meslineid = material['mesline_id']
@@ -142,6 +142,7 @@ class AASMESRework(models.Model):
                     return consumevals
                 movelines += consumevals['movelines']
                 materiallines += consumevals['materiallines']
+                feedids += consumevals['feedmaterialids']
             if materiallines and len(materiallines) > 0:
                 reworkvals['material_lines'] = materiallines
         rework.write(reworkvals)
@@ -153,6 +154,9 @@ class AASMESRework(models.Model):
             for tempmove in movelines:
                 movelist |= self.env['stock.move'].create(tempmove)
             movelist.action_done()
+        if feedids and len(feedids) > 0:
+            feedinglist = self.env['aas.mes.feedmaterial'].browse(feedids)
+            feedinglist.action_freshandclear()
         return values
 
 
@@ -164,7 +168,7 @@ class AASMESRework(models.Model):
         }
         material = self.env['product.product'].browse(materialid)
         feedomain = [('mesline_id', '=', meslineid), ('material_id', '=', materialid)]
-        feedmaterialist = self.env['aas.mes.feedmaterial'].search(feedomain, order='id desc')
+        feedmaterialist = self.env['aas.mes.feedmaterial'].search(feedomain, order='id asc')
         if not feedmaterialist or len(feedmaterialist) <= 0:
             values.update({'success': False, 'message': u'%s还未投料或产线投料已消耗完毕，请先上料！'% material.default_code})
             return values
