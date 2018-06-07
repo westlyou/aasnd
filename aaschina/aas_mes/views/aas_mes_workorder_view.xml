@@ -276,16 +276,19 @@
                                         <field name="badmode_qty"/>
                                         <field name="workstation_id"/>
                                         <field name="workticket_id"/>
+                                        <field name="serialnumber_id"/>
                                     </tree>
                                     <form>
                                         <group>
                                             <group>
                                                 <field name="product_id"/>
                                                 <field name="workstation_id"/>
+                                                <field name="workticket_id"/>
                                             </group>
                                             <group>
                                                 <field name="badmode_id"/>
                                                 <field name="badmode_qty"/>
+                                                <field name="serialnumber_id"/>
                                             </group>
                                         </group>
                                         <notebook>

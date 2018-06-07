@@ -679,6 +679,7 @@ class AASProductionBadmode(models.Model):
     workcenter_id = fields.Many2one(comodel_name='aas.mes.routing.line', string=u'工序', index=True)
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', index=True)
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'设备', index=True)
+    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号')
 
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', index=True)
     workticket_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'工票', index=True)

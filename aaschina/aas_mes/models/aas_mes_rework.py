@@ -103,24 +103,38 @@ class AASMESRework(models.Model):
     def action_commit(self, serialnumber_id, workstation_id, badmode_id, commiter_id, mesline_id=False):
         tserialnumber = self.env['aas.mes.serialnumber'].browse(serialnumber_id)
         meslineid = mesline_id if mesline_id else tserialnumber.mesline_id.id
+        workorderid = False if not tserialnumber.workorder_id else tserialnumber.workorder_id.id
         reworking = self.env['aas.mes.rework'].create({
-            'mesline_id': meslineid,
+            'mesline_id': meslineid, 'workorder_id': workorderid,
             'serialnumber_id': tserialnumber.id, 'workstation_id': workstation_id, 'state': 'repair',
-            'badmode_id': badmode_id, 'commiter_id': commiter_id, 'commit_time': fields.Datetime.now(),
-            'workorder_id': False if not tserialnumber.workorder_id else tserialnumber.workorder_id.id
+            'badmode_id': badmode_id, 'commiter_id': commiter_id, 'commit_time': fields.Datetime.now()
         })
         operation = self.env['aas.mes.operation'].search([('serialnumber_id', '=', tserialnumber.id)], limit=1)
         operation.write({
             'function_test': False, 'functiontest_record_id': False,
             'final_quality_check': False, 'fqccheck_record_id': False,
-            'gp12_check': False, 'gp12_record_id': False,
             'commit_badness': True, 'commit_badness_count': operation.commit_badness_count + 1,
-            'dorework': False, 'ipqc_check': False
+            'dorework': False, 'ipqc_check': False, 'gp12_check': False, 'gp12_record_id': False
         })
-        tserialnumber.write({
-            'qualified': False, 'reworked': True,
-            'reworksource': 'produce', 'badmode_name': reworking.badmode_id.name
+        serialvals = {'qualified': False, 'reworksource': 'produce', 'badmode_name': reworking.badmode_id.name}
+        if not tserialnumber.reworked:
+            serialvals.update({'reworked': True, 'rework_count': 1})
+        else:
+            serialvals['rework_count'] = tserialnumber.rework_count + 1
+        tserialnumber.write(serialvals)
+        if not tserialnumber.workorder_id:
+            return True
+        workorder = tserialnumber.workorder_id
+        self.env['aas.production.badmode'].create({
+            'workorder_id': workorder.id,  'mesline_id': meslineid,
+            'workstation_id': workstation_id, 'serialnumber_id': serialnumber_id,
+            'product_id': workorder.product_id.id, 'badmode_id': badmode_id,
+            'badmode_qty': 1.0, 'badmode_date': reworking.badmode_date
         })
+        if tserialnumber.rework_count <= 1:
+            workorder.write({'badmode_qty': workorder.badmode_qty + 1})
+
+
 
 
     @api.model
