@@ -124,7 +124,7 @@ class AASProductionProduct(models.Model):
         :return:
         """
         values = {'success': True, 'message': '', 'label_id': '0', 'production_id': '0'}
-        if workorder.state == 'done':
+        if workorder.state == 'done' and (not serialnumber or not serialnumber.reworked):
             values.update({'success': False, 'message': u'工单%s已完工，不可以继续产出！'% workorder.name})
             return values
         _logger.info(u'工单%s开始产出时间:%s', workorder.name, fields.Datetime.now())

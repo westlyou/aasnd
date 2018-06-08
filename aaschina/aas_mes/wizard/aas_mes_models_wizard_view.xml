@@ -90,5 +90,25 @@
         <menuitem id="menu_aas_mes_feedmaterial_transfer"  name="上料信息转移" sequence="10"
                   parent="menu_aas_mes_material" action="action_aas_mes_feedmaterial_transfer_wizard" groups="group_aas_manufacture_user"/>
 
+
+        <record id="view_form_aas_mes_badmaterial_ipqcheck_wizard" model="ir.ui.view">
+            <field name="name">aas.mes.badmaterial.ipqcheck.wizard</field>
+            <field name="model">aas.mes.badmaterial.ipqcheck.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="ipqchecker_id" required="1"
+                                   options="{'no_create':true,'no_open':true}" domain="[('job','=','ipqc')]"/>
+                        </group>
+                    </group>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
     </data>
 </odoo>

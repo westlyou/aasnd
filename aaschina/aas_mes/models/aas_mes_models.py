@@ -10,12 +10,115 @@
 from odoo import api, fields, models, _
 from odoo.addons import decimal_precision as dp
 from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
-from odoo.tools.float_utils import float_compare, float_is_zero
+from odoo.tools.float_utils import float_compare, float_repr
 from odoo.exceptions import UserError, ValidationError
 
 import logging
 
 _logger = logging.getLogger(__name__)
+
+# 不良物料挑选
+class AASMESBadMaterialSelection(models.Model):
+    _name = 'aas.mes.badmaterial.selection'
+    _description = 'AAS MES Bad Material Selection'
+    _order = 'id desc'
+    _rec_name = 'internal_material_id'
+
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线')
+    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次')
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'问题工位')
+    selector_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'挑选员工')
+    selector_code = fields.Char(string=u'员工工号', compute='_compute_selector_code', store=True)
+    ipqchecker_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'IPQC员工')
+    ipqchecker_code = fields.Char(string=u'IPQC工号')
+    ipqcheck_time = fields.Datetime(string=u'IPQC确认时间')
+    internal_material_id = fields.Many2one(comodel_name='product.product', string=u'内部料号')
+    customer_material_code = fields.Char(string=u'客户料号', compute='_compute_cusmtomer_code', store=True)
+    badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式')
+    product_qty = fields.Float(string=u'总数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    material_yield = fields.Float(string=u'良率', compute='_compute_material_yield', store=True)
+    action_start = fields.Datetime(string=u'开始时间', copy=False)
+    action_finish = fields.Datetime(string=u'结束时间', copy=False)
+    action_worktime = fields.Float(string=u'总工时(H)', default=0.0)
+    state = fields.Selection(selection=[('select', u'挑选'), ('done', u'完成')], string=u'状态', default='select')
+
+    @api.multi
+    def unlink(self):
+        for record in self:
+            if record.state == 'done':
+                raise UserError(u'请仔细检查，已完成的记录是不可以删除的！')
+        return super(AASMESBadMaterialSelection, self).unlink()
+
+
+    @api.depends('product_qty', 'badmode_qty')
+    def _compute_material_yield(self):
+        for record in self:
+            pdtflag = record.product_qty and float_compare(record.product_qty, 0.0, precision_rounding=0.000001) > 0.0
+            badflag = record.badmode_qty and float_compare(record.badmode_qty, 0.0, precision_rounding=0.000001) > 0.0
+            if pdtflag and badflag:
+                material_yield = (record.product_qty - record.badmode_qty) / record.product_qty * 100.0
+                record.material_yield = float_repr(material_yield, 2)
+            else:
+                record.material_yield = 0.00
+
+
+    @api.onchange('selector_id')
+    def action_change_selector(self):
+        if not self.selector_id:
+            self.selector_code = False
+        else:
+            self.selector_code = self.selector_id.code
+
+    @api.depends('selector_id')
+    def _compute_selector_code(self):
+        for record in self:
+            record.selector_code = False if not record.selector_id else record.selector_id.code
+
+    @api.depends('internal_material_id')
+    def _compute_cusmtomer_code(self):
+        for record in self:
+            material = record.internal_material_id
+            record.customer_material_code = False if not material else material.customer_product_code
+
+
+    @api.one
+    @api.constrains('product_qty', 'badmode_qty')
+    def action_check_selection_qty(self):
+        if float_compare(self.product_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+            raise ValidationError(u'总数量必须是大于0的数！')
+        if float_compare(self.badmode_qty, 0.0, precision_rounding=0.000001) <= 0.0:
+            raise ValidationError(u'不良数量必须是大于0的数！')
+        if float_compare(self.badmode_qty, self.product_qty, precision_rounding=0.000001) > 0.0:
+            raise ValidationError(u'不良数量不能大于总数量！')
+
+    @api.one
+    @api.constrains('action_start', 'action_finish')
+    def action_check_action_time(self):
+        if self.action_start and self.action_finish and self.action_finish <= self.action_start:
+            raise ValidationError(u'结束时间必须大于开始时间！')
+
+    @api.multi
+    def action_ipqchecking(self):
+        """IPQC确认
+        :return:
+        """
+        self.ensure_one()
+        wizard = self.env['aas.mes.badmaterial.ipqcheck.wizard'].create({'selection_id': self.id})
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_badmaterial_ipqcheck_wizard')
+        return {
+            'name': u"IPQC确认",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.mes.badmaterial.ipqcheck.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
 
 
 class AASHREmployee(models.Model):
@@ -47,8 +150,6 @@ class AASHREmployee(models.Model):
             'res_id': wizard.id,
             'context': self.env.context
         }
-
-
 
 
 # 库存盘点
@@ -238,12 +339,6 @@ class AASStockInventory(models.Model):
             'location_name': ilabel.location_id.name, 'label_name': '', 'container_name': ilabel.container_id.name
         }
         return values
-
-
-
-
-
-
 
 
 class AASStockInventoryLabel(models.Model):

@@ -115,3 +115,23 @@ class AASMESFeedmaterialTransferWizard(models.TransientModel):
             for mline in movelines:
                 movelist |= self.env['stcok.move'].create(mline)
             movelist.action_done()
+
+
+# 挑选记录ipqc确认
+class AASMESBadMaterialIPQCheckWizard(models.TransientModel):
+    _name = 'aas.mes.badmaterial.ipqcheck.wizard'
+    _description = 'AAS MES Bad Material IPQCheck Wizard'
+
+    selection_id = fields.Many2one(comodel_name='aas.mes.badmaterial.selection', string=u'挑选记录')
+    ipqchecker_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'IPQC员工')
+
+    @api.one
+    def action_done(self):
+        tselection = self.selection_id
+        actionstart = fields.Datetime.from_string(tselection.action_start)
+        actionfinish = fields.Datetime.from_string(tselection.action_finish)
+        worktime = (actionfinish - actionstart).total_seconds() / 3600.0
+        tselection.write({
+            'ipqchecker_id': self.ipqchecker_id.id, 'ipqchecker_code': self.ipqchecker_id.code,
+            'action_worktime': worktime, 'state': 'done', 'ipqcheck_time': fields.Datetime.now()
+        })

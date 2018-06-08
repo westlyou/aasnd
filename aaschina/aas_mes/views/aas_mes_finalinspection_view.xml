@@ -124,7 +124,7 @@
         </record>
 
         <menuitem id="menu_aas_mes_finalinspection"  name="最终检查" action="action_aas_mes_finalinspection"
-                          parent="menu_aas_mes_manufacture" sequence="20" groups="group_aas_manufacture_user"/>
+                          parent="menu_aas_mes_manufacture" sequence="21" groups="group_aas_manufacture_user"/>
 
     </data>
 </odoo>

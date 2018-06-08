@@ -89,3 +89,6 @@ access_aas_mes_workorder_consume_quality_manager,aas.mes.workorder.consume quali
 access_aas_mes_workticket_quality_user,aas.mes.workticket quality_user,aas_mes.model_aas_mes_workticket,group_aas_quality_user,1,0,0,0
 access_aas_mes_workticket_quality_manager,aas.mes.workticket quality_manager,aas_mes.model_aas_mes_workticket,group_aas_quality_manager,1,0,0,0
 
+access_aas_mes_badmaterial_selection_quality_user,aas.mes.badmaterial.selection quality_user,aas_mes.model_aas_mes_badmaterial_selection,group_aas_quality_user,1,1,0,0
+access_aas_mes_badmaterial_selection_quality_manager,aas.mes.badmaterial.selection quality_manager,aas_mes.model_aas_mes_badmaterial_selection,group_aas_quality_manager,1,1,0,0
+
