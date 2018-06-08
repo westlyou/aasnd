@@ -689,6 +689,7 @@ class AASProductionBadmode(models.Model):
     badmode_date = fields.Char(string=u'不良日期', copy=False)
     badmode_time = fields.Datetime(string=u'不良时间', default=fields.Datetime.now, copy=False)
     company_id = fields.Many2one('res.company', string=u'公司', default=lambda self: self.env.user.company_id)
+    badmode_note = fields.Text(string=u'备注')
 
     material_lines = fields.One2many(comodel_name='aas.production.badmode.material', inverse_name='production_badmode_id', string=u'原料清单')
 

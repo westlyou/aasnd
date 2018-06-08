@@ -4,6 +4,15 @@
 
 $(function() {
 
+    var serialprinterstr = localStorage.getItem('serialprinter');
+    if(serialprinterstr!=null && serialprinterstr!=''){
+        var serialprinter = JSON.parse(serialprinterstr);
+        $('#printerlist').val(serialprinter.printer_id);
+        $('#printerlist').html("<option value="+serialprinter.printer_id+">"+serialprinter.printer_name+"</option>");
+    }
+
+
+
     function isAboveZeroFloat(val){
         var reg = /^(\d+)(\.\d+)?$/;
         if (reg.test(val)){ return true; }
@@ -102,6 +111,13 @@ $(function() {
                 };
             }
         }
+    });
+
+    $('#printerlist').on('select2:select', function(event){
+        var selectedatas = $('#printerlist').select2('data');
+        var printerobj = selectedatas[0];
+        var printer = {'printer_id': printerobj.id, 'printer_name': printerobj.text};
+        localStorage.setItem('serialprinter', JSON.stringify(printer));
     });
 
     //打印标签

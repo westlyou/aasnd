@@ -60,13 +60,15 @@
         'views/aas_prepare_material_view.xml',
         'wizard/aas_mes_models_wizard_view.xml',
         'views/aas_mes_yieldreport_templates.xml',
+        'views/aas_mes_finalinspection_view.xml',
 
         'oracle/aas_ebs_mainorder_view.xml',
         'wechat/views/aas_wechat_mes_template.xml',
         'wechat/views/aas_wechat_mes_feedmaterial_template.xml',
         'wechat/views/aas_wechat_mes_workorder_template.xml',
         'wechat/views/aas_wechat_mes_container_template.xml',
-        'wechat/views/aas_wechat_mes_label_template.xml'
+        'wechat/views/aas_wechat_mes_label_template.xml',
+        'wechat/views/aas_wechat_mes_finalinspection_template.xml'
     ],
     'qweb':[],
     'installable': True,

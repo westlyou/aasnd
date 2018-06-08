@@ -185,5 +185,8 @@ access_aas_mes_produce_output_report_all_user,aas.mes.produce.output.report all_
 access_aas_mes_rework_report_all_user,aas.mes.rework.report all_user,model_aas_mes_rework_report,base.group_user,1,0,0,0
 access_aas_mes_producttest_locking_all_user,aas.mes.producttest.locking all_user,model_aas_mes_producttest_locking,base.group_user,1,0,1,0
 
+access_aas_mes_finalinspection_manufacture_user,aas.mes.finalinspection manufacture_user,model_aas_mes_finalinspection,group_aas_manufacture_user,1,1,1,1
+access_aas_mes_finalinspection_manufacture_forman,aas.mes.finalinspection manufacture_forman,model_aas_mes_finalinspection,group_aas_manufacture_foreman,1,1,1,1
+
 
 

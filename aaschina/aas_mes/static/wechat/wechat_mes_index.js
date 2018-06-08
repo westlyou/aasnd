@@ -63,4 +63,17 @@ mui.ready(function(){
         mui.openWindow({'url': '/aaswechat/mes/container', 'id': 'workcontainer'});
     });
 
+    //最终检查
+    document.getElementById('finalinspection').addEventListener('tap', function(){
+        wx.scanQRCode({
+            needResult: 1,
+            desc: '终检扫描',
+            scanType: ["qrCode"],
+            success: function (result) {
+                window.location.replace('/aaswechat/mes/finalinspection/'+result.resultStr);
+            },
+            fail: function (result) {mui.toast(result.errMsg);}
+        });
+    });
+
 });

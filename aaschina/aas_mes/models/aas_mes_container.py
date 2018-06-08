@@ -21,6 +21,16 @@ _logger = logging.getLogger(__name__)
 class AASContainer(models.Model):
     _inherit = 'aas.container'
 
+    @api.model
+    def action_print_label(self, printer_id, ids=[], domain=[]):
+        currentuser = self.env.user
+        values = {'success': True, 'message': ''}
+        if not currentuser.has_group('aas_mes.group_aas_manufacture_foreman'):
+            values.update({'success': False, 'message': u'领班级别以上才可以打印容器二维码！'})
+            return values
+        values = super(AASContainer, self).action_print_label(printer_id, ids, domain)
+        return values
+
     @api.multi
     def action_surplus(self):
         """

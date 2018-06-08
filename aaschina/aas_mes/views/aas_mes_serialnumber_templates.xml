@@ -216,7 +216,7 @@
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/underscore/underscore-1.8.3.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
-                <script src="/aas_mes/static/src/js/mes_serialnumber_creation.js"></script>
+                <script src="/aas_mes/static/src/js/mes_serialnumber_creation.js?ver=20180608180036"></script>
             </body>
         </html>
     </template>

@@ -45,6 +45,13 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form create="false" edit="false" delete="false">
+                    <header>
+                        <button name="action_update_serialnumber" type="object" string="更新序列号" class="oe_highlight"
+                                groups="aas_quality.group_aas_quality_manager"/>
+
+                        <button name="action_destroy" type="object" string="解除绑定" class="oe_highlight"
+                                groups="aas_quality.group_aas_quality_manager"/>
+                    </header>
                     <sheet>
                         <div class="oe_right oe_button_box" style="width: 300px;" name="buttons">
                             <button type="object" name="action_show_serialnumbers"
