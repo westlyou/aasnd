@@ -70,15 +70,17 @@ class AASMESFinalCheckingController(http.Controller):
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', loginuser.id)], limit=1)
         if not lineuser:
             return values
-        mesline = lineuser.mesline_id
-        if not mesline:
+        mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
+        if not mesline or not workstation:
             return values
         workorder = mesline.workorder_id
         if not workorder:
             return values
-        tempvalues = request.env['aas.mes.operation'].action_loading_serialcount(mesline.id)
-        values['serialcount'] = tempvalues['serialcount']
-        return values
+        productid = workorder.product_id.id
+        scheduleid = False if not mesline.schedule_id else mesline.schedule_id.id
+        outputdate = fields.Datetime.to_china_today() if not mesline.workdate else mesline.workdate
+        return request.env['aas.production.product'].loading_serialcount(productid, mesline.id, workstation.id,
+                                                                         outputdate, scheduleid=scheduleid)
 
 
 
@@ -156,9 +158,14 @@ class AASMESFinalCheckingController(http.Controller):
         return values
 
 
-    def loading_serial_record_rework_and_count(self, mesline, soperation):
+    def loading_serial_record_rework_and_count(self, mesline, soperation, workstation):
+        productid = soperation.product_id.id
+        meslineid, workstationid = mesline.id, workstation.id
+        scheduleid = False if not mesline.schedule_id else mesline.schedule_id.id
+        outputdate = fields.Datetime.to_china_today() if not mesline.workdate else mesline.workdate
         orvalues = request.env['aas.mes.operation'].action_loading_operation_rework_list(soperation.id)
-        scvalues = request.env['aas.mes.operation'].action_loading_serialcount(mesline.id)
+        scvalues = request.env['aas.production.product'].loading_serialcount(productid, meslineid, workstationid,
+                                                                             outputdate, scheduleid=scheduleid)
         return {
             'serialcount': scvalues['serialcount'],
             'recordlist': orvalues['recordlist'], 'reworklist': orvalues['reworklist']
@@ -209,7 +216,7 @@ class AASMESFinalCheckingController(http.Controller):
             values['badmode_name'] = '' if not serialnumber.badmode_name else serialnumber.badmode_name
             values['message'] = u'%s返工，请仔细检查确认'% values['badmode_name']
             # 加载操作记录返工记录以及产出数量
-            values.update(self.loading_serial_record_rework_and_count(mesline, tempoperation))
+            values.update(self.loading_serial_record_rework_and_count(mesline, tempoperation, workstation))
             return values
         if workorder:
             if serialnumber.product_id.id != workorder.product_id.id:
@@ -222,7 +229,7 @@ class AASMESFinalCheckingController(http.Controller):
                     return values
         tempoperation.action_finalcheck(mesline, workstation)
         # 加载操作记录返工记录以及产出数量
-        values.update(self.loading_serial_record_rework_and_count(mesline, tempoperation))
+        values.update(self.loading_serial_record_rework_and_count(mesline, tempoperation, workstation))
         serialnumber.write({'stocked': True})
         logger.info(u'扫描序列号%s结束时间：%s'% (barcode, fields.Datetime.now()))
         return values
@@ -250,7 +257,8 @@ class AASMESFinalCheckingController(http.Controller):
             values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位！'})
             return values
         tempoperation = request.env['aas.mes.operation'].browse(operationid)
-        workorder, tserialnumber = mesline.workorder_id, tempoperation.serialnumber_id
+        tserialnumber = tempoperation.serialnumber_id
+        workorder = mesline.workorder_id if not tserialnumber.workorder_id else tserialnumber.workorder_id
         if workorder and not tserialnumber.stocked:
             if tserialnumber.product_id.id != workorder.product_id.id:
                 values.update({'success': False, 'message': u'扫描异常，当前产品型号与产线正在生产的型号不符！'})

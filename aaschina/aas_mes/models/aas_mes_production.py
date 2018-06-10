@@ -640,6 +640,23 @@ class AASProductionProduct(models.Model):
                     productkeys.append(pkey)
                     self.action_loading_materialist_oneinall(tproduction, productkeys, materialkeys)
 
+    @api.model
+    def loading_serialcount(self, productid, meslineid, workstationid, outputdate, scheduleid=False):
+        """查询产线工位的产品的产出数量
+        :param productid:
+        :param meslineid:
+        :param workstationid:
+        :param outputdate:
+        :param scheduleid:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'serialcount': 0}
+        tempdomain = [('product_id', '=', productid), ('output_date', '=', outputdate)]
+        tempdomain += [('mesline_id', '=', meslineid), ('workstation_id', '=', workstationid)]
+        if scheduleid:
+            tempdomain.append(('schedule_id', '=', scheduleid))
+        values['serialcount'] = self.env['aas.production.product'].search_count(tempdomain)
+        return values
 
 
 

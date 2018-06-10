@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_aas_hr_employee_base_user,as.hr.employee base_user,model_aas_hr_employee,base.group_user,1,0,0,0
 access_aas_hr_employee_hr_user,aas.hr.employee hr_user,model_aas_hr_employee,group_aas_hr_user,1,1,1,0
 access_aas_hr_employee_hr_manager,aas.hr.employee hr_manager,model_aas_hr_employee,group_aas_hr_manager,1,1,1,1

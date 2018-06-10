@@ -121,6 +121,7 @@ class AASMESSerialnumber(models.Model):
             'operation_id': toperation.id, 'operate_result': 'PASS', 'operate_type': 'functiontest'
         })
         toperation.write({'function_test': True, 'functiontest_record_id': trecord.id})
+        # self.write({'workorder_id': 7014})
 
 
     @api.multi
