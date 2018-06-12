@@ -280,7 +280,12 @@ class AASProductionProduct(models.Model):
                 'produce_start': fields.Datetime.now(), 'produce_date': fields.Datetime.to_china_today()
             })
         if finaloutput:
-            workordervals['output_qty'] = workorder.output_qty + currentoutput.product_qty
+            tempoutqty = workorder.output_qty + currentoutput.product_qty
+            if workorder.plan_finish and workorder.plan_finish >= workordervals['output_time']:
+                workordervals['ontime_qty'] = tempoutqty
+                if float_compare(tempoutqty, workorder.input_qty, precision_rounding=0.000001) >= 0.0:
+                    workordervals['finishontime'] = True
+            workordervals['output_qty'] = tempoutqty
         if product.id == workorder.product_id.id and float_compare(currentoutput.badmode_qty, 0.0, precision_rounding=0.000001) > 0.0:
             workordervals['badmode_qty'] = workorder.badmode_qty + currentoutput.badmode_qty
         # 兼容下线产出

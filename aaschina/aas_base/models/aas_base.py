@@ -3,7 +3,7 @@
 from odoo import api, fields, models
 import logging
 import pytz
-from datetime import datetime
+from datetime import timedelta
 
 _logger = logging.getLogger(__name__)
 
@@ -131,6 +131,7 @@ class AASBaseCron(models.Model):
         tempcron = self.env['aas.base.cron'].create({'cron_method': 'action_month_cron'})
         self.action_month_cron()
         tempcron.write({'thend_time': fields.Datetime.now()})
+        self.action_clear_cron_records()
 
     @api.model
     def action_month_cron(self):
@@ -144,7 +145,6 @@ class AASBaseCron(models.Model):
         """
         tempcron = self.env['aas.base.cron'].create({'cron_method': 'action_day_cron'})
         self.action_day_cron()
-        self.action_clear_cron_records()
         tempcron.write({'thend_time': fields.Datetime.now()})
 
     @api.model
@@ -166,9 +166,17 @@ class AASBaseCron(models.Model):
         pass
 
     @api.model
-    def action_clear_cron_records(self, days=180):
+    def action_clear_cron_records(self):
         # 清理days天之前的记录,默认半年
-        pass
+        _logger.info(u'清理半年前任务开始时间：'+fields.Datetime.now())
+        currenttime = fields.Datetime.from_string(fields.Datetime.now())
+        temptime = fields.Datetime.to_string(currenttime - timedelta(days=180))
+        tasklist = self.env['aas.base.cron'].search([('thend_time', '<=', temptime)])
+        if tasklist and len(tasklist) > 0:
+            tasklist.unlink()
+        _logger.info(u'清理半年前任务结束时间：'+fields.Datetime.now())
+
+
 
     @api.model
     def excute_minute_cron(self):
@@ -181,6 +189,22 @@ class AASBaseCron(models.Model):
 
     @api.model
     def action_minute_cron(self):
+        pass
+
+
+    @api.model
+    def excute_five_minutes_cron(self):
+        """
+        每5分钟执行一次
+        :return:
+        """
+        tempcron = self.env['aas.base.cron'].create({'cron_method': 'action_five_minutes_cron'})
+        self.action_five_minutes_cron()
+        tempcron.write({'thend_time': fields.Datetime.now()})
+
+
+    @api.model
+    def action_five_minutes_cron(self):
         pass
 
 

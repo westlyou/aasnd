@@ -189,6 +189,9 @@ class AASMESFinalCheckingController(http.Controller):
         if not mesline or not workstation:
             values.update({'success': False, 'message': u'当前登录员工还未绑定产线工位'})
             return values
+        checkervals = self.action_checking_finalchecker(mesline.id, workstation.id)
+        if not checkervals.get('success', False):
+            return checkervals
         serialnumber = request.env['aas.mes.serialnumber'].search([('name', '=', barcode)], limit=1)
         if not serialnumber:
             values.update({'success': False, 'message': u'请仔细检查是否是有效条码'})
@@ -198,19 +201,20 @@ class AASMESFinalCheckingController(http.Controller):
             'rework': isreworked, 'operationid': tempoperation.id,
             'internal_code': serialnumber.internal_product_code, 'customer_code': serialnumber.customer_product_code
         })
-        workorder = mesline.workorder_id if not serialnumber.workorder_id else serialnumber.workorder_id
-        if not isreworked and workorder and workorder.state == 'done':
-            values.update({'success': False, 'message': u'当前工单已完工；继续生产请开新工单'})
-            return values
-        checkervals = self.action_checking_finalchecker(mesline.id, workstation.id)
-        if not checkervals.get('success', False):
-            return checkervals
-        if not tempoperation.function_test:
-            values.update({'success': False, 'message': u'功能测试未完成或未通过'})
-            return values
         if tempoperation.final_quality_check:
             values['rescan'] = True
             values.update({'message': u'已扫描，请不要重复操作'})
+            return values
+        mworkorder, sworkorder = mesline.workorder_id, serialnumber.workorder_id
+        workorder = mworkorder if not sworkorder else sworkorder
+        if not workorder:
+            values.update({'success': False, 'message': u'当前序列号还未绑定工单'})
+            return values
+        if serialnumber.product_id.id != workorder.product_id.id:
+            values.update({'success': False, 'message': u'扫描序列号异常，此序列号产品与当前产线上生产的产品不相符！'})
+            return values
+        if not tempoperation.function_test:
+            values.update({'success': False, 'message': u'功能测试未完成或未通过'})
             return values
         if isreworked:
             values['badmode_name'] = '' if not serialnumber.badmode_name else serialnumber.badmode_name
@@ -218,15 +222,11 @@ class AASMESFinalCheckingController(http.Controller):
             # 加载操作记录返工记录以及产出数量
             values.update(self.loading_serial_record_rework_and_count(mesline, tempoperation, workstation))
             return values
-        if workorder:
-            if serialnumber.product_id.id != workorder.product_id.id:
-                values.update({'success': False, 'message': u'扫描序列号异常，此序列号产品与当前产线上生产的产品不相符！'})
+        if not serialnumber.stocked:
+            tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, workstation, serialnumber)
+            if not tvalues.get('success', False):
+                values.update(tvalues)
                 return values
-            if not serialnumber.stocked:
-                tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, workstation, serialnumber)
-                if not tvalues.get('success', False):
-                    values.update(tvalues)
-                    return values
         tempoperation.action_finalcheck(mesline, workstation)
         # 加载操作记录返工记录以及产出数量
         values.update(self.loading_serial_record_rework_and_count(mesline, tempoperation, workstation))
@@ -248,21 +248,25 @@ class AASMESFinalCheckingController(http.Controller):
         if not lineuser:
             values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
             return values
-        values['mesline_name'] = lineuser.mesline_id.name
         if lineuser.mesrole != 'fqcchecker':
             values.update({'success': False, 'message': u'当前登录账号还未授权终检'})
             return values
         mesline, workstation = lineuser.mesline_id, lineuser.workstation_id
-        if not workstation:
-            values.update({'success': False, 'message': u'当前登录账号还未绑定终检工位！'})
+        if not mesline or not workstation:
+            values.update({'success': False, 'message': u'当前登录账号还未绑定产线工位！'})
             return values
+        values['mesline_name'] = mesline.name
         tempoperation = request.env['aas.mes.operation'].browse(operationid)
         tserialnumber = tempoperation.serialnumber_id
-        workorder = mesline.workorder_id if not tserialnumber.workorder_id else tserialnumber.workorder_id
-        if workorder and not tserialnumber.stocked:
-            if tserialnumber.product_id.id != workorder.product_id.id:
-                values.update({'success': False, 'message': u'扫描异常，当前产品型号与产线正在生产的型号不符！'})
-                return values
+        mworkorder, sworkorder = mesline.workorder_id, tserialnumber.workorder_id
+        workorder = mworkorder if not sworkorder else sworkorder
+        if not workorder:
+            values.update({'success': False, 'message': u'扫描异常，当前序列号还未绑定工单！'})
+            return values
+        if tserialnumber.product_id.id != workorder.product_id.id:
+            values.update({'success': False, 'message': u'扫描异常，当前产品型号与产线正在生产的型号不符！'})
+            return values
+        if not tserialnumber.stocked:
             tvalues = request.env['aas.mes.workorder'].action_flowingline_output(workorder, workstation, tserialnumber)
             if not tvalues.get('success', False):
                 values.update(tvalues)

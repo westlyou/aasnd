@@ -29,9 +29,14 @@ class AASBaseCron(models.Model):
     def action_thirty_minutes_cron(self):
         # 清理待完成的出勤记录
         self.env['aas.mes.work.attendance'].action_done_attendances()
-        # 切换产线班次
-        self.env['aas.mes.line'].action_switch_schedule()
 
+
+    @api.model
+    def action_five_minutes_cron(self):
+        # 切换产线班次
+        _logger.info(u'班次刷新开始时间：' + fields.Datetime.now())
+        self.env['aas.mes.line'].action_switch_schedule()
+        _logger.info(u'班次刷新结束时间：' + fields.Datetime.now())
 
 
 
@@ -87,12 +92,9 @@ class AASMESLine(models.Model):
     def action_refresh_schedule(self):
         if not self.schedule_lines or len(self.schedule_lines) <= 0:
             return
+        dayfinish = self.workday_finish
         refresh_flag, current_time = False, fields.Datetime.now()
-        if not self.workdate:
-            refresh_flag = True
-        if not self.workday_finish:
-            refresh_flag = True
-        elif self.workday_finish < current_time:
+        if not self.workdate or not dayfinish or dayfinish < current_time:
             refresh_flag = True
         if not refresh_flag:
             return
@@ -124,18 +126,18 @@ class AASMESLine(models.Model):
     def action_refresh(self):
         olddate = fields.Datetime.to_china_today() if not self.workdate else self.workdate
         self.action_refresh_schedule()
-        currenttime = fields.Datetime.now()
+        currenttime, cschedule = fields.Datetime.now(), self.schedule_id
         searchdomain = [('mesline_id', '=', self.id)]
         searchdomain += [('actual_start', '<=', currenttime), ('actual_finish', '>', currenttime)]
-        schedule = self.env['aas.mes.schedule'].search(searchdomain, limit=1)
-        if not schedule or not self.schedule_id or schedule.id != self.schedule_id.id:
+        tschedule = self.env['aas.mes.schedule'].search(searchdomain, limit=1)
+        if not tschedule or not cschedule or tschedule.id != cschedule.id:
             ordervals, oldscheduleid = {'schedule_id': False}, False
-            if self.schedule_id:
-                self.schedule_id.write({'state': 'break'})
-                oldscheduleid = self.schedule_id.id
-            if schedule:
-                ordervals['schedule_id'] = schedule.id
-                schedule.write({'state': 'working'})
+            if cschedule:
+                oldscheduleid = cschedule.id
+                cschedule.write({'state': 'break'})
+            if tschedule:
+                tschedule.write({'state': 'working'})
+                ordervals['schedule_id'] = tschedule.id
             self.write(ordervals)
             # 关闭上个班次工单
             self.env['aas.mes.workorder'].action_close_schedule_workorders(self.id, olddate, oldscheduleid)
