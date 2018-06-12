@@ -371,7 +371,11 @@ class AASMESWorkticket(models.Model):
             return values
         # 消耗物料并产出
         try:
+            temployee = wemployees[0].employee_id
             workticket.action_doing_commit(commit_qty, badmode_lines, container_id=container_id, equipment=equipment)
+            workorder = workticket.workorder_id
+            # 更新工单上最近一次报工员工和设备
+            workorder.write({'producer_id': temployee.id, 'equipment_id': equipment_id})
         except UserError, ue:
             values.update({'success': False, 'message': ue.name})
             return values

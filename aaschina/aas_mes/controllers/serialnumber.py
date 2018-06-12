@@ -107,8 +107,8 @@ class AASMESSerialnumberController(http.Controller):
             temp_name = customercode + sequence_code
             tserialnumber = request.env['aas.mes.serialnumber'].create({
                 'regular_code': regular_code, 'sequence': sequence,
-                'action_date': current_date, 'product_id': values.get('product_id', False),
-                'sequence_code': sequence_code, 'name': temp_name, 'mesline_id': values.get('mesline_id', False),
+                'name': temp_name, 'product_id': values.get('product_id', False),
+                'sequence_code': sequence_code, 'mesline_id': values.get('mesline_id', False),
                 'internal_product_code': values['product_code'], 'customer_product_code': values['customer_code']
             })
             lastserialnumber = tserialnumber.name

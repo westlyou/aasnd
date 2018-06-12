@@ -493,6 +493,21 @@ class AASMESWireOrder(models.Model):
         }
 
 
+    @api.multi
+    def action_auto_done(self):
+        """系统切换班次自动关闭线材工单
+        :return:
+        """
+        for record in self:
+            tempdomain = [('wireorder_id', '=', record.id), ('state', 'not in', ['draft', 'done'])]
+            workorderlist = self.env['aas.mes.workorder'].search(tempdomain)
+            if not workorderlist or len(workorderlist) <= 0:
+                continue
+            workorderlist.action_auto_done()
+        self.write({'produce_finish': fields.Datetime.now(), 'state': 'done'})
+
+
+
 
 
 class AASMESWireorderCloseWizard(models.TransientModel):

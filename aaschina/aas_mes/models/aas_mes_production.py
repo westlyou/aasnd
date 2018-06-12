@@ -124,8 +124,7 @@ class AASProductionProduct(models.Model):
         :return:
         """
         values = {'success': True, 'message': '', 'label_id': '0', 'production_id': '0'}
-        linetype = workorder.mesline_id.line_type
-        if workorder.state == 'done' and linetype == 'station':
+        if workorder.state == 'done' and not serialnumber:
             values.update({'success': False, 'message': u'工单%s已完工，不可以继续产出！'% workorder.name})
             return values
         _logger.info(u'工单%s开始产出时间:%s', workorder.name, fields.Datetime.now())
@@ -281,7 +280,12 @@ class AASProductionProduct(models.Model):
                 'produce_start': fields.Datetime.now(), 'produce_date': fields.Datetime.to_china_today()
             })
         if finaloutput:
-            workordervals['output_qty'] = workorder.output_qty + currentoutput.product_qty
+            tempoutqty = workorder.output_qty + currentoutput.product_qty
+            if workorder.plan_finish and workorder.plan_finish >= workordervals['output_time']:
+                workordervals['ontime_qty'] = tempoutqty
+                if float_compare(tempoutqty, workorder.input_qty, precision_rounding=0.000001) >= 0.0:
+                    workordervals['finishontime'] = True
+            workordervals['output_qty'] = tempoutqty
         if product.id == workorder.product_id.id and float_compare(currentoutput.badmode_qty, 0.0, precision_rounding=0.000001) > 0.0:
             workordervals['badmode_qty'] = workorder.badmode_qty + currentoutput.badmode_qty
         # 兼容下线产出

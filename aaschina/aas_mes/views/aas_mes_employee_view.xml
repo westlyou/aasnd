@@ -167,5 +167,6 @@
         <menuitem id="menu_aas_hr_employee_employee_mes"  name="员工" action="action_aas_hr_employee_mes"
                   parent="menu_aas_mes_employee" sequence="1" groups="group_aas_manufacture_foreman"/>
 
+
     </data>
 </odoo>

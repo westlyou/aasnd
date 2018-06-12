@@ -33,6 +33,8 @@ class AASMESSettings(models.TransientModel):
                                              help=u'正常工作时数，超过则即为加班；默认为8小时')
     default_worktime_advance = fields.Float(string=u'提前工时', default=0.5, default_model='aas.mes.settings',
                                             help=u'提前班次开始时间段，在此时间段都默认为接下来的班次')
+    default_worktime_delay = fields.Float(string=u'延迟工时', default=0.5, default_model='aas.mes.settings',
+                                            help=u'延迟离岗时间')
 
     default_closeorder_method = fields.Selection(selection=[('total', u'实做总数与计划数相同即可结单'), ('equal', u'合格品数与计划数相同才可结单')],
                                                  string=u'结单方式', default='equal', copy=False, default_model='aas.mes.settings')

@@ -41,6 +41,7 @@ class AASMESWorkorder(models.Model):
     state = fields.Selection(selection=ORDERSTATES, string=u'状态', default='draft', copy=False)
     output_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    ontime_qty = fields.Float(string=u'准时产出', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     mainorder_id = fields.Many2one(comodel_name='aas.mes.mainorder', string=u'主工单', ondelete='cascade', index=True)
     wireorder_id = fields.Many2one(comodel_name='aas.mes.wireorder', string=u'线材工单', ondelete='cascade', index=True)
 
@@ -77,6 +78,7 @@ class AASMESWorkorder(models.Model):
     close_time = fields.Datetime(string=u'手工关单时间', copy=False)
     producer_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'报工员', help=u'最近一次报工员工')
     equipment_id = fields.Many2one(comodel_name='aas.equipment.equipment', string=u'产出设备', help=u'最近一次产出设备')
+    order_note = fields.Text(string=u'备注')
 
     workticket_lines = fields.One2many(comodel_name='aas.mes.workticket', inverse_name='workorder_id', string=u'工票明细')
     production_lines = fields.One2many(comodel_name='aas.production.product', inverse_name='workorder_id', string=u'产出明细')
@@ -393,27 +395,6 @@ class AASMESWorkorder(models.Model):
             'res_id': wizard.id,
             'context': self.env.context
         }
-
-
-    @api.one
-    def action_done(self):
-        self.action_workorder_over()
-
-
-    @api.one
-    def action_workorder_over(self):
-        currenttime = fields.Datetime.now()
-        workordervals = {'state': 'done', 'produce_finish': currenttime}
-        finishontime = float_compare(self.output_qty, self.input_qty, precision_rounding=0.000001) >= 0.0
-        if self.plan_start and self.plan_finish:
-            finishontime = True if self.plan_start <= currenttime <= self.plan_finish else False
-        workordervals['finishontime'] = finishontime
-        self.write(workordervals)
-        if not self.mainorder_id:
-            return
-        maindomain = [('mainorder_id', '=', self.mainorder_id.id), ('state', '!=', 'done')]
-        if self.env['aas.mes.workorder'].search_count(maindomain) <= 0:
-           self.mainorder_id.write({'state': 'done', 'produce_finish': currenttime})
 
 
     @api.multi
@@ -817,6 +798,52 @@ class AASMESWorkorder(models.Model):
         return values
 
 
+    @api.one
+    def action_done(self):
+        self.action_workorder_over()
+
+
+    @api.one
+    def action_workorder_over(self):
+        currenttime = fields.Datetime.now()
+        workordervals = {'state': 'done', 'produce_finish': currenttime}
+        finishontime = float_compare(self.output_qty, self.input_qty, precision_rounding=0.000001) >= 0.0
+        if self.plan_start and self.plan_finish:
+            finishontime = True if self.plan_start <= currenttime <= self.plan_finish else False
+        workordervals['finishontime'] = finishontime
+        self.write(workordervals)
+        if not self.mainorder_id:
+            return
+        maindomain = [('mainorder_id', '=', self.mainorder_id.id), ('state', '!=', 'done')]
+        if self.env['aas.mes.workorder'].search_count(maindomain) <= 0:
+           self.mainorder_id.write({'state': 'done', 'produce_finish': currenttime})
+
+
+    @api.multi
+    def action_auto_done(self):
+        """切换班次自动关闭工单
+        :return:
+        """
+        currenttime = fields.Datetime.now()
+        ordervals = {'state': 'done', 'produce_finish': currenttime}
+        workorderlist, mainorderlist = self.env['aas.mes.workorder'], self.env['aas.mes.mainorder']
+        for workorder in self:
+            if workorder.state == 'done':
+                continue
+            workorderlist |= workorder
+            mainorder = workorder.mainorder_id
+            if not mainorder:
+                continue
+            maindomain = [('mainorder_id', '=', mainorder.id), ('state', '!=', 'done')]
+            if self.env['aas.mes.workorder'].search_count(maindomain) <= 0:
+                mainorderlist |= mainorder
+        if workorderlist and len(workorderlist) > 0:
+            workorderlist.write(ordervals)
+        if mainorderlist and len(mainorderlist) > 0:
+            mainorderlist.write(ordervals)
+
+
+
     @api.model
     def action_close_schedule_workorders(self, meslineid, workdate, scheduleid):
         """切换班次时关闭当前班次的工单
@@ -829,10 +856,14 @@ class AASMESWorkorder(models.Model):
         if scheduleid:
             orderdomain.append(('plan_schedule', '=', scheduleid))
         orderdomain += [('state', 'not in', ['draft', 'done'])]
+        # 关闭线材工单
+        wireorderlist = self.env['aas.mes.wireorder'].search(orderdomain)
+        if wireorderlist and len(wireorderlist) > 0:
+            wireorderlist.action_auto_done()
+        # 关闭产线子工单
         workorderlist = self.env['aas.mes.workorder'].search(orderdomain)
         if workorderlist or len(workorderlist):
-            for workorder in workorderlist:
-                workorder.action_done()
+            workorderlist.action_auto_done()
 
 
 

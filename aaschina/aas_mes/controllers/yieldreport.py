@@ -149,6 +149,11 @@ class AASMESYieldReportController(http.Controller):
             return values
         workorderlist, mesline = [], False
         for workorder in workorderlines:
+            employee_name, equipment_name, producer, equipment = '', '', workorder.producer_id, workorder.equipment_id
+            if producer:
+                employee_name = producer.name + '[' + producer.code + ']'
+            if equipment:
+                equipment_name = equipment.name + '[' + equipment.code + ']'
             ordervals = {
                 'plan_date': '' if not workorder.plan_date else workorder.plan_date,
                 'plan_schedule': '' if not workorder.plan_schedule else workorder.plan_schedule.name,
@@ -160,7 +165,8 @@ class AASMESYieldReportController(http.Controller):
                 'input_qty': workorder.input_qty, 'output_qty': workorder.output_qty,
                 'reach_rate': workorder.output_qty / workorder.input_qty * 100.0,
                 'badmode_qty': workorder.badmode_qty, 'yield_actual': 100.0,
-                'badmodes': {}, 'once_qty': 0, 'twice_qty': 0, 'more_qty': 0
+                'badmodes': {}, 'once_qty': 0, 'twice_qty': 0, 'more_qty': 0,
+                'employee_name': employee_name, 'equipment_name': equipment_name
             }
             tempbadmodevals = self.action_loading_workorder_badmodelist(workorder)
             ordervals.update({
@@ -223,29 +229,45 @@ class AASMESYieldReportController(http.Controller):
             if workdate:
                 tempdomain += [('plan_date', '=', workdate)]
             workorderlist = request.env['aas.mes.workorder'].search(tempdomain)
-
-
         workbook = xlwt.Workbook(style_compression=2)
         worksheet = workbook.add_sheet(u'良率报表')
         base_style = xlwt.easyxf('align: wrap yes')
-        worksheet.write(0, 0, u'日期', base_style)
-        worksheet.write(0, 1, u'班次', base_style)
-        worksheet.write(0, 2, u'主工单', base_style)
-        worksheet.write(0, 3, u'子工单', base_style)
-        worksheet.write(0, 4, u'生产品种', base_style)
-        worksheet.write(0, 5, u'开始时间', base_style)
-        worksheet.write(0, 6, u'结束时间', base_style)
-        worksheet.write(0, 7, u'计划产出', base_style)
-        worksheet.write(0, 8, u'实际产出', base_style)
-        worksheet.write(0, 9, u'达成率', base_style)
-        worksheet.write(0, 10, u'不良数量', base_style)
-        worksheet.write(0, 11, u'工单良率', base_style)
-        wkcolumnindex = 11
+        wkcolumnindex = 0
+        worksheet.write(0, wkcolumnindex, u'日期', base_style)
+        wkcolumnindex += 1
+        worksheet.write(0, wkcolumnindex, u'班次', base_style)
+        wkcolumnindex += 1
+        if mesline.id == 5:
+            worksheet.write(0, wkcolumnindex, u'员工', base_style)
+            wkcolumnindex += 1
+            worksheet.write(0, wkcolumnindex, u'设备', base_style)
+            wkcolumnindex += 1
+        worksheet.write(0, wkcolumnindex, u'主工单', base_style)
+        wkcolumnindex += 1
+        worksheet.write(0, wkcolumnindex, u'子工单', base_style)
+        wkcolumnindex += 1
+        worksheet.write(0, wkcolumnindex, u'生产品种', base_style)
+        wkcolumnindex += 1
+        worksheet.write(0, wkcolumnindex, u'开始时间', base_style)
+        wkcolumnindex += 1
+        worksheet.write(0, wkcolumnindex, u'结束时间', base_style)
+        wkcolumnindex += 1
+        worksheet.write(0, wkcolumnindex, u'计划产出', base_style)
+        wkcolumnindex += 1
+        worksheet.write(0, wkcolumnindex, u'实际产出', base_style)
+        wkcolumnindex += 1
+        worksheet.write(0, wkcolumnindex, u'达成率', base_style)
+        wkcolumnindex += 1
+        worksheet.write(0, wkcolumnindex, u'不良数量', base_style)
+        wkcolumnindex += 1
+        worksheet.write(0, wkcolumnindex, u'工单良率', base_style)
+        wkcolumnindex += 1
         if mesline.line_type == 'flowing':
-            worksheet.write(0, 12, u'一次不良', base_style)
-            worksheet.write(0, 13, u'二次不良', base_style)
-            worksheet.write(0, 14, u'三次不良', base_style)
-            wkcolumnindex = 14
+            worksheet.write(0, wkcolumnindex, u'一次不良', base_style)
+            wkcolumnindex += 1
+            worksheet.write(0, wkcolumnindex, u'二次不良', base_style)
+            wkcolumnindex += 1
+            worksheet.write(0, wkcolumnindex, u'三次不良', base_style)
         badcolumnindex = 1
         if badmodelist and len(badmodelist) > 0:
             for badmode in badmodelist:
@@ -261,30 +283,53 @@ class AASMESYieldReportController(http.Controller):
                 produce_start = '' if not workorder.produce_start else fields.Datetime.to_china_string(workorder.produce_start)
                 produce_finish = '' if not workorder.produce_finish else fields.Datetime.to_china_string(workorder.produce_finish)
                 reach_rate = workorder.output_qty / workorder.input_qty * 100.0
-                worksheet.write(rowindex, 0, plan_date, base_style)
-                worksheet.write(rowindex, 1, plan_schedule, base_style)
-                worksheet.write(rowindex, 2, mainorder_name, base_style)
-                worksheet.write(rowindex, 3, workorder.name, base_style)
-                worksheet.write(rowindex, 4, workorder.product_code, base_style)
-                worksheet.write(rowindex, 5, produce_start, base_style)
-                worksheet.write(rowindex, 6, produce_finish, base_style)
-                worksheet.write(rowindex, 7, workorder.input_qty, base_style)
-                worksheet.write(rowindex, 8, workorder.output_qty, base_style)
-                worksheet.write(rowindex, 9, float_repr(reach_rate, 2), base_style)
+                employee_name, equipment_name, producer, equipment = '', '', workorder.producer_id, workorder.equipment_id
+                if producer:
+                    employee_name = producer.name + '[' + producer.code + ']'
+                if equipment:
+                    equipment_name = equipment.name + '[' + equipment.code + ']'
+                wkcolumnindex = 0
+                worksheet.write(rowindex, wkcolumnindex, plan_date, base_style)
+                wkcolumnindex += 1
+                worksheet.write(rowindex, wkcolumnindex, plan_schedule, base_style)
+                wkcolumnindex += 1
+                if mesline.id == 5:
+                    worksheet.write(rowindex, wkcolumnindex, employee_name, base_style)
+                    wkcolumnindex += 1
+                    worksheet.write(rowindex, wkcolumnindex, equipment_name, base_style)
+                    wkcolumnindex += 1
+                worksheet.write(rowindex, wkcolumnindex, mainorder_name, base_style)
+                wkcolumnindex += 1
+                worksheet.write(rowindex, wkcolumnindex, workorder.name, base_style)
+                wkcolumnindex += 1
+                worksheet.write(rowindex, wkcolumnindex, workorder.product_code, base_style)
+                wkcolumnindex += 1
+                worksheet.write(rowindex, wkcolumnindex, produce_start, base_style)
+                wkcolumnindex += 1
+                worksheet.write(rowindex, wkcolumnindex, produce_finish, base_style)
+                wkcolumnindex += 1
+                worksheet.write(rowindex, wkcolumnindex, workorder.input_qty, base_style)
+                wkcolumnindex += 1
+                worksheet.write(rowindex, wkcolumnindex, workorder.output_qty, base_style)
+                wkcolumnindex += 1
+                worksheet.write(rowindex, wkcolumnindex, float_repr(reach_rate, 2), base_style)
+                wkcolumnindex += 1
                 tempbadmodevals = self.action_loading_workorder_badmodelist(workorder)
                 badmode_qty = tempbadmodevals['total_qty']
-                worksheet.write(rowindex, 10, badmode_qty, base_style)
+                worksheet.write(rowindex, wkcolumnindex, badmode_qty, base_style)
+                wkcolumnindex += 1
                 if float_compare(workorder.output_qty, 0.0, precision_rounding=0.000001) <= 0.0:
                     yield_actual = 0.0
                 else:
                     yield_actual = workorder.output_qty / (badmode_qty + workorder.output_qty) * 100.0
-                worksheet.write(rowindex, 11, float_repr(yield_actual, 2), base_style)
-                wkcolumnindex = 11
+                worksheet.write(rowindex, wkcolumnindex, float_repr(yield_actual, 2), base_style)
+                wkcolumnindex += 1
                 if mesline.line_type == 'flowing':
-                    worksheet.write(rowindex, 12, tempbadmodevals['once_qty'], base_style)
-                    worksheet.write(rowindex, 13, tempbadmodevals['twice_qty'], base_style)
-                    worksheet.write(rowindex, 14, tempbadmodevals['more_qty'], base_style)
-                    wkcolumnindex = 14
+                    worksheet.write(rowindex, wkcolumnindex, tempbadmodevals['once_qty'], base_style)
+                    wkcolumnindex += 1
+                    worksheet.write(rowindex, wkcolumnindex, tempbadmodevals['twice_qty'], base_style)
+                    wkcolumnindex += 1
+                    worksheet.write(rowindex, wkcolumnindex, tempbadmodevals['more_qty'], base_style)
                 badcolumnindex = 1
                 badmodes = tempbadmodevals['badmodes']
                 if not badmodeids or len(badmodeids) <= 0:
