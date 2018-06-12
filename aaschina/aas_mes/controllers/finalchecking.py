@@ -198,8 +198,9 @@ class AASMESFinalCheckingController(http.Controller):
             'rework': isreworked, 'operationid': tempoperation.id,
             'internal_code': serialnumber.internal_product_code, 'customer_code': serialnumber.customer_product_code
         })
-        workorder = mesline.workorder_id if not serialnumber.workorder_id else serialnumber.workorder_id
-        if not isreworked and workorder and workorder.state == 'done':
+        mworkorder = mesline.workorder_id
+        workorder = mworkorder if not serialnumber.workorder_id else serialnumber.workorder_id
+        if not isreworked and workorder and mworkorder and workorder.state == 'done' and mworkorder.id == workorder.id:
             values.update({'success': False, 'message': u'当前工单已完工；继续生产请开新工单'})
             return values
         checkervals = self.action_checking_finalchecker(mesline.id, workstation.id)
