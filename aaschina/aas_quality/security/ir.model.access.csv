@@ -91,4 +91,6 @@ access_aas_mes_workticket_quality_manager,aas.mes.workticket quality_manager,aas
 
 access_aas_mes_badmaterial_selection_quality_user,aas.mes.badmaterial.selection quality_user,aas_mes.model_aas_mes_badmaterial_selection,group_aas_quality_user,1,1,0,0
 access_aas_mes_badmaterial_selection_quality_manager,aas.mes.badmaterial.selection quality_manager,aas_mes.model_aas_mes_badmaterial_selection,group_aas_quality_manager,1,1,0,0
+access_aas_mes_rework_material_quality_user,aas.mes.rework.material quality_user,aas_mes.model_aas_mes_rework_material,group_aas_quality_user,1,0,0,0
+access_aas_mes_rework_material_quality_manager,aas.mes.rework.material quality_manager,aas_mes.model_aas_mes_rework_material,group_aas_quality_manager,1,0,0,0
 
