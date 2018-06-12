@@ -17,7 +17,7 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-REWORKSTATES = [('commit', u'不良上报'), ('repair', u'返工维修'), ('ipqc', u'IPQC确认'), ('done', u'完成')]
+REWORKSTATES = [('commit', u'不良上报'), ('repair', u'返工维修'), ('ipqc', u'IPQC确认'), ('done', u'完成'), ('closed', u'关闭')]
 
 class AASMESRework(models.Model):
     _name = 'aas.mes.rework'
@@ -249,6 +249,27 @@ class AASMESRework(models.Model):
         operation.write({'ipqc_check': True, 'ipqc_check_count': operation.ipqc_check_count + 1})
         self.serialnumber_id.write({'qualified': True})
 
+    @api.multi
+    def action_close_rework(self):
+        """关闭返工单
+        :return:
+        """
+        self.ensure_one()
+        wizard = self.env['aas.mes.rework.close.wizard'].create({'rework_id': self.id})
+        view_form = self.env.ref('aas_mes.view_form_aas_mes_rework_close_wizard')
+        return {
+            'name': u"关闭返工单",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.mes.rework.close.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
 
 
 class AASMESReworkConsumeMaterial(models.Model):
@@ -265,3 +286,17 @@ class AASMESReworkConsumeMaterial(models.Model):
     material_qty = fields.Float(string=u'消耗数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
 
 
+class AASMESReworkCloseWizard(models.TransientModel):
+    _name = 'aas.mes.rework.close.wizard'
+    _description = 'AAS MES Rework Close Wizard'
+
+    rework_id = fields.Many2one(comodel_name='aas.mes.rework', string=u'返工单', ondelete='cascade')
+    ipqccheck_id = fields.Many2one(comodel_name='aas.hr.employee', string='IPQC', ondelete='cascade')
+    close_note = fields.Text(string=u'备注')
+
+    @api.one
+    def action_done(self):
+        self.rework_id.write({
+            'ipqcchecker_id': self.ipqccheck_id.id, 'state': 'closed',
+            'ipqccheck_time': fields.Datetime.now(), 'ipqccheck_note': self.close_note
+        })

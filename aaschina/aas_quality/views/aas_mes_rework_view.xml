@@ -33,7 +33,9 @@
             <field name="arch" type="xml">
                 <form create="false" edit="false" delete="false">
                     <header>
-                        <field name="state" widget="statusbar" statusbar_visible="commit,repair,ipqc,done"/>
+                        <button name="action_close_rework" type="object" string="关闭工单"
+                                class="oe_highlight" states="commit,repair,ipqc"/>
+                        <field name="state" widget="statusbar" statusbar_visible="commit,repair,ipqc,done,closed"/>
                     </header>
                     <sheet>
                         <group>
