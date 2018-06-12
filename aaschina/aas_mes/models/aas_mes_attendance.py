@@ -38,6 +38,7 @@ class AASMESWorkAttendance(models.Model):
     worktime_max = fields.Float(string=u'最长工时')
     worktime_standard = fields.Float(string=u'标准工时')
     worktime_advance = fields.Float(string=u'提前工时')
+    worktime_delay = fields.Float(string=u'延迟工时')
     company_id = fields.Many2one('res.company', string=u'公司', index=True, default=lambda self: self.env.user.company_id)
 
     leave_hours = fields.Float(string=u'离岗工时', default=0.0, copy=False)
@@ -165,9 +166,10 @@ class AASMESWorkAttendance(models.Model):
         worktime_max = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'worktime_max')
         worktime_advance = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'worktime_advance')
         worktime_standard = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'worktime_standard')
+        worktime_delay = self.env['ir.values'].sudo().get_default('aas.mes.settings', 'worktime_delay')
         attendancevals.update({
-            'worktime_min': worktime_min, 'worktime_max': worktime_max,
-            'worktime_advance': worktime_advance, 'worktime_standard': worktime_standard
+            'worktime_advance': worktime_advance, 'worktime_delay': worktime_delay,
+            'worktime_min': worktime_min, 'worktime_max': worktime_max, 'worktime_standard': worktime_standard
         })
         if not mesline.schedule_lines and len(mesline.schedule_lines) <= 0:
             values.update({'success': False, 'message': u'产线%s还未设置班次，请联系管理员设置班次信息！'% mesline.name})
@@ -201,7 +203,10 @@ class AASMESWorkAttendance(models.Model):
         for record in self:
             starttime = fields.Datetime.from_string(record.attendance_start)
             timeinterval = (currenttime - starttime).total_seconds() / 3600.0
-            unfinished = float_compare(timeinterval, record.worktime_max, precision_rounding=0.000001) < 0.0
+            maxworktime = record.worktime_max
+            if record.worktime_delay and float_compare(record.worktime_delay, 0.0, precision_rounding=0.000001) >= 0.0:
+                maxworktime += record.worktime_delay
+            unfinished = float_compare(timeinterval, maxworktime, precision_rounding=0.000001) < 0.0
             if not donedirectly and unfinished:
                 continue
             linedomain = [('attendance_id', '=', record.id), ('attend_done', '=', False)]
