@@ -129,6 +129,10 @@ $(function() {
                     $('<td></td>').html('<input type="checkbox" orderid="'+workorder.workorder_id+'"/>').appendTo(wkline);
                     $('<td></td>').html(workorder.plan_date).appendTo(wkline);
                     $('<td></td>').html(workorder.plan_schedule).appendTo(wkline);
+                    if(meslineid == 5){
+                        $('<td></td>').html(workorder.employee_name).appendTo(wkline);
+                        $('<td></td>').html(workorder.equipment_name).appendTo(wkline);
+                    }
                     $('<td></td>').html(workorder.mainorder_name).appendTo(wkline);
                     $('<td></td>').html(workorder.workorder_name).appendTo(wkline);
                     $('<td></td>').html(workorder.product_code).appendTo(wkline);

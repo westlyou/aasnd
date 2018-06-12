@@ -12,6 +12,7 @@ from odoo.addons import decimal_precision as dp
 from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.tools.float_utils import float_compare, float_is_zero
 from odoo.exceptions import UserError, ValidationError
+from odoo.tools.sql import drop_view_if_exists
 
 import logging
 
@@ -453,5 +454,64 @@ class AASMESWorkAttendanceLeave(models.Model):
     name = fields.Char(string=u'名称', required=True, copy=False, index=True)
     active = fields.Boolean(string=u'是否有效', default=True)
     operate_time = fields.Datetime(string=u'创建时间', default=fields.Datetime.now)
-    operator_id = fields.Many2one(comodel_name='res.users', string=u'创建人', ondelete='restrict', default=lambda self: self.env.user)
-    company_id = fields.Many2one(comodel_name='res.company', string=u'公司', ondelete='restrict', default=lambda self:self.env.user.company_id)
+    operator_id = fields.Many2one('res.users', string=u'创建人', ondelete='restrict', default=lambda self: self.env.user)
+    company_id = fields.Many2one('res.company', string=u'公司', ondelete='restrict', default=lambda self:self.env.user.company_id)
+
+
+
+
+class AASMESWorkAttendanceReport(models.Model):
+    _auto = False
+    _name = 'aas.mes.work.attendance.report'
+    _description = 'AAS MES Work Attendance Report'
+    _order = 'attendance_date desc, attendance_finish desc'
+    _rec_name = 'employee_id'
+
+
+    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工', readonly=True)
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', readonly=True)
+    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次', readonly=True)
+    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', readonly=True)
+    attendance_date = fields.Char(string=u'出勤日期', readonly=True)
+    attendance_start = fields.Datetime(string=u'开始时间', readonly=True)
+    attendance_finish = fields.Datetime(string=u'结束时间', readonly=True)
+    actual_hours = fields.Float(string=u'总工时', default=0.0, readonly=True)
+    overtime_hours = fields.Float(string=u'加班工时', default=0.0, readonly=True)
+    standard_hours = fields.Float(string=u'正常工时', default=0.0, readonly=True)
+
+    def _select_sql(self):
+        _select_sql = """
+        SELECT id,
+        employee_id,
+        mesline_id,
+        schedule_id,
+        workstation_id,
+        attendance_date,
+        attendance_start,
+        attendance_finish,
+        actual_hours,
+        CASE WHEN overtime_hours > 0 THEN 8 ELSE actual_hours END AS standard_hours,
+        CASE WHEN overtime_hours > 0 THEN overtime_hours ELSE 0 END AS overtime_hours
+        FROM (
+        SELECT min(id) AS id,
+        employee_id,
+        mesline_id,
+        schedule_id,
+        workstation_id,
+        attendance_date,
+        min(attendance_start) AS attendance_start,
+        max(attendance_finish) AS attendance_finish,
+        round((date_part('epoch', max(attendance_finish) - min(attendance_start)) / 3600.0)::numeric, 3) AS actual_hours,
+        round((date_part('epoch', max(attendance_finish) - min(attendance_start)) / 3600.0)::numeric, 3) - 8 AS overtime_hours
+        FROM aas_mes_work_attendance_line
+        WHERE attend_done = true
+        GROUP BY employee_id, mesline_id, schedule_id, workstation_id, attendance_date
+        ) AS wattendance
+        """
+        return _select_sql
+
+
+    @api.model_cr
+    def init(self):
+        drop_view_if_exists(self._cr, self._table)
+        self._cr.execute("""CREATE or REPLACE VIEW %s as ( %s )""" % (self._table, self._select_sql()))

@@ -123,6 +123,10 @@
                                                     <th></th>
                                                     <th>日期</th>
                                                     <th>班次</th>
+                                                    <t t-if="mesline_id == 5">
+                                                        <th>员工</th>
+                                                        <th>设备</th>
+                                                    </t>
                                                     <th>主工单</th>
                                                     <th>子工单</th>
                                                     <th>生产品种</th>
@@ -165,7 +169,7 @@
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
                 <script src="/aas_base/static/libs/datepicker/bootstrap-datepicker.js"></script>
                 <script src="/aas_base/static/libs/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>
-                <script src="/aas_mes/static/src/js/mes_yield_report.js?ver=20180602172726"></script>
+                <script src="/aas_mes/static/src/js/mes_yield_report.js?ver=20180611174726"></script>
             </body>
         </html>
     </template>

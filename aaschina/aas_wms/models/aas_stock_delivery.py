@@ -480,6 +480,8 @@ class AASStockDeliveryLine(models.Model):
         :return:
         """
         self.ensure_one()
+        if self.delivery_type == 'sales':
+            raise UserError(u'销售发货不可以添加优先标签！')
         wizard = self.env['aas.stock.picking.prioritizedlabel.wizard'].create({
             'deliveryline_id': self.id, 'product_id': self.product_id.id
         })
