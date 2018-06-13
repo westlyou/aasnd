@@ -35,7 +35,7 @@ class AASProductionProduct(models.Model):
 
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', index=True)
     workticket_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'工票', index=True)
-    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', index=True)
+    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号')
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', index=True)
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', index=True)
     product_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
