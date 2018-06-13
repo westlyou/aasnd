@@ -360,10 +360,11 @@ class AASMESWorkticket(models.Model):
         values = {'success': True, 'message': '', 'label_id': 0}
         equipment = self.env['aas.equipment.equipment'].browse(equipment_id)
         meslineid, workstationid = equipment.mesline_id.id, equipment.workstation_id.id
-        tempdomain = [('mesline_id', '=', meslineid), ('workstation_id', '=', workstationid)]
+        tempdomain = [('equipment_id', '=', equipment_id)]
+        tempdomain += [('mesline_id', '=', meslineid), ('workstation_id', '=', workstationid)]
         wemployees = self.env['aas.mes.workstation.employee'].search(tempdomain)
         if not wemployees or len(wemployees) <= 0:
-            values.update({'success': False, 'message': u'当前工位上还没有员工上岗，请先让员工上岗再进行其他操作！'})
+            values.update({'success': False, 'message': u'当前工位设备上还没有员工上岗，请先让员工上岗再进行其他操作！'})
             return values
         workticket = self.env['aas.mes.workticket'].browse(workticket_id)
         if not workticket:

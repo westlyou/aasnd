@@ -184,11 +184,17 @@ class AASMESWorkAttendance(models.Model):
             return values
         nextschedule = nextvalues['schedule']
         temptimes = fields.Datetime.from_string(nextschedule['actual_start']) - fields.Datetime.from_string(timestart)
-        if float_compare((temptimes.total_seconds() / 3600.00), worktime_advance, precision_rounding=0.000001) <= 0.0:
+        tempinterval = temptimes.total_seconds() / 3600.00
+        if float_compare(tempinterval, 0.0, precision_rounding=0.000001) < 0.0:
             attendancevals.update({
-                'attendance_start': nextschedule['actual_start'], 'attendance_date': nextschedule['workdate']
+                'attendance_start': timestart,
+                'attendance_date': nextschedule['workdate'], 'scheduleid': nextschedule['schedule_id']
             })
-            values['scheduleid'] = nextschedule['schedule_id']
+        elif float_compare(tempinterval, worktime_advance, precision_rounding=0.000001) <= 0.0:
+            attendancevals.update({
+                'attendance_start': nextschedule['actual_start'],
+                'attendance_date': nextschedule['workdate'], 'scheduleid': nextschedule['schedule_id']
+            })
         values['attendance'] = self.env['aas.mes.work.attendance'].create(attendancevals)
         return values
 
