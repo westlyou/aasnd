@@ -781,6 +781,10 @@ class AASMESWorkorder(models.Model):
         """
         values = {'success': True, 'message': ''}
         workorder = self.env['aas.mes.workorder'].browse(workorder_id)
+        mesline = workorder.mesline_id
+        if not mesline.location_material_list or len(mesline.location_material_list) <= 0:
+            values.update({'success': False, 'message': u'当前产线还未设置原料库位！'})
+            return values
         workstation = self.env['aas.mes.workstation'].browse(workstation_id)
         product = self.env['product.product'].browse(product_id)
         equipment = False if not equipment_id else self.env['aas.equipment.equipment'].browse(equipment_id)
@@ -795,7 +799,42 @@ class AASMESWorkorder(models.Model):
                                                                                tracing=True, product_lot=productlot)
         if not csvalues.get('success', False):
             values.update(csvalues)
+        # 虚拟半成品产出并上料
+        self.action_virtualmaterial_ouputandfeeding(mesline, product, productlot, csvalues['production_qty'])
         return values
+
+
+    @api.model
+    def action_virtualmaterial_ouputandfeeding(self, mesline, product, plot, qty):
+        if not product.virtual_material:
+            return
+        # 虚拟件产出计入库存
+        production_location_id = self.env.ref('stock.location_production').id
+        material_location_id = mesline.location_material_list[0].location_id.id
+        self.env['stock.move'].create({
+            'name': u'半成品%s产出'% product.default_code,
+            'product_id': product.id,  'product_uom': product.uom_id.id,
+            'restrict_lot_id': plot.id, 'product_uom_qty': qty,
+            'location_id': production_location_id, 'location_dest_id': material_location_id,
+            'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id
+        }).action_done()
+        # 自动上料
+        feedomain = [('mesline_id', '=', mesline.id)]
+        feedomain += [('material_id', '=', product.id), ('material_lot', '=', plot.id)]
+        feeding = self.env['aas.mes.feedmaterial'].search(feedomain, limit=1)
+        if feeding:
+            feeding.write({'material_qty': feeding.material_qty+qty})
+        else:
+            feeding = self.env['aas.mes.feedmaterial'].create({
+                'mesline_id': mesline.id, 'material_qty': qty,
+                'material_id': product.id, 'material_lot': plot.id
+            })
+        self.env['aas.mes.feedmaterial.list'].create({
+            'feedmaterial_id': feeding.id, 'mesline_id': mesline.id,
+            'material_id': product.id, 'material_lot': plot.id,
+            'material_qty': qty, 'toatal_qty': feeding.material_qty,
+            'feeder_id': self.env.user.id, 'feed_note': u'半成品%s自动上料'% product.default_code
+        })
 
 
     @api.one
