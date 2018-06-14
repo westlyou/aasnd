@@ -28,22 +28,33 @@ class AASProductionProductMaterialReport(models.Model):
     _order = 'mesline_id,product_id,product_lot,material_id,material_lot'
 
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线')
+    mesline_name = fields.Char(string=u'产线名称')
     product_id = fields.Many2one(comodel_name='product.product', string=u'成品')
+    product_code = fields.Char(string=u'产品编码')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'成品批次')
+    protlot_code = fields.Char(string=u'成品批次')
     material_id = fields.Many2one(comodel_name='product.product', string=u'原料')
+    material_code = fields.Char(string=u'原料编码')
     material_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'原料批次')
+    matllot_code = fields.Char(string=u'原料批次')
 
     def _select_sql(self):
         _select_sql = """
         SELECT MIN(pmaterial.id) AS id,
         pproduct.mesline_id AS mesline_id,
+        pproduct.mesline_name AS mesline_name,
         pproduct.product_id AS product_id,
+        pproduct.product_code AS product_code,
         pproduct.product_lot AS product_lot,
+        pproduct.protlot_code AS protlot_code,
         pmaterial.material_id AS material_id,
-        pmaterial.material_lot AS material_lot
+        pmaterial.material_code AS material_code,
+        pmaterial.material_lot AS material_lot,
+        pmaterial.matllot_code AS matllot_code
         FROM aas_production_product pproduct join aas_production_material pmaterial on pproduct.id = pmaterial.production_id
         WHERE pproduct.tracing = true
-        GROUP BY pproduct.mesline_id, pproduct.product_id, pproduct.product_lot, pmaterial.material_id, pmaterial.material_lot
+        GROUP BY pproduct.mesline_id, pproduct.mesline_name, pproduct.product_id, pproduct.product_code,
+        pproduct.product_lot, pproduct.protlot_code, pmaterial.material_id, pmaterial.material_code, pmaterial.material_lot, pmaterial.matllot_code
         """
         return _select_sql
 
@@ -52,6 +63,38 @@ class AASProductionProductMaterialReport(models.Model):
     def init(self):
         drop_view_if_exists(self._cr, self._table)
         self._cr.execute("""CREATE or REPLACE VIEW %s as ( %s )""" % (self._table, self._select_sql()))
+
+
+
+    @api.model
+    def action_loading_materiallist(self, productid, protlotid):
+        """根据成品批次信息后院原料批次信息
+        :param productid:
+        :param protlotid:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'materiallist': []}
+        sql_query = """
+            SELECT mesline_id, mesline_name, material_id, material_code, material_lot, matllot_code
+            FROM aas_production_product_material_report
+            WHERE product_id = %s AND product_lot = %s
+            """
+        self.env.cr.execute(sql_query, (productid, protlotid))
+        materials = self.env.cr.dictfetchall()
+        if materials and len(materials) > 0:
+            values['materiallist'] = [{
+                'mesline_id': material['mesline_id'], 'mesline_name': material['mesline_name'],
+                'material_id': material['material_id'], 'material_code': material['material_code'],
+                'material_lot': material['material_lot'], 'matllot_code': material['matllot_code']
+            } for material in materials]
+        return values
+
+
+
+
+
+
+
 
 
     @api.multi

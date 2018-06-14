@@ -35,7 +35,7 @@ class AASProductionProduct(models.Model):
 
     workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', index=True)
     workticket_id = fields.Many2one(comodel_name='aas.mes.workticket', string=u'工票', index=True)
-    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号')
+    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', index=True)
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', index=True)
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', index=True)
     product_qty = fields.Float(string=u'产出数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
@@ -61,6 +61,7 @@ class AASProductionProduct(models.Model):
     workstation_name = fields.Char(string=u'工位名称', copy=False)
     schedule_name = fields.Char(string=u'班次名称', copy=False)
     workorder_name = fields.Char(string=u'工单编号', copy=False)
+    protlot_code = fields.Char(string=u'批次名称', copy=False)
 
     material_lines = fields.One2many(comodel_name='aas.production.material', inverse_name='production_id', string=u'原料清单')
     employee_lines = fields.One2many(comodel_name='aas.production.employee', inverse_name='production_id', string=u'员工清单')
@@ -88,6 +89,8 @@ class AASProductionProduct(models.Model):
             productvals['schedule_name'] = record.schedule_id.name
         if record.workorder_id:
             productvals['workorder_name'] = record.workorder_id.name
+        if record.product_lot:
+            productvals['protlot_code'] = record.product_lot.name
         chinatime = fields.Datetime.to_china_string(fields.Datetime.now())
         try:
             currenthour = int(chinatime[11:13])
