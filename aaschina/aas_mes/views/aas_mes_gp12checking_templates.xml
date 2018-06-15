@@ -291,7 +291,7 @@
                 <script src="/aas_base/static/libs/datepicker/bootstrap-datepicker.js"></script>
                 <script src="/aas_base/static/libs/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
-                <script src="/aas_mes/static/src/js/mes_gp12_checking.js?ver=20180615141826"></script>
+                <script src="/aas_mes/static/src/js/mes_gp12_checking.js?ver=20180615150015"></script>
             </body>
         </html>
     </template>
