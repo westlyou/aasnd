@@ -64,6 +64,116 @@ class AASProductionProductMaterialReport(models.Model):
         drop_view_if_exists(self._cr, self._table)
         self._cr.execute("""CREATE or REPLACE VIEW %s as ( %s )""" % (self._table, self._select_sql()))
 
+    @api.model
+    def action_serialnumber_forward_tracing(self, productionid):
+        """根据序列号逐级追溯
+        :param productionid:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'materiallist': []}
+        production = self.env['aas.production.product'].browse(productionid)
+        if not production:
+            return values
+        if production.material_lines and len(production.material_lines) > 0:
+            values['materiallist'] = [{
+                'mesline_id': production.mesline_id.id, 'mesline_name': production.mesline_id.name,
+                'material_id': matline.material_id.id, 'material_code': matline.material_code,
+                'material_lot': matline.material_lot.id, 'matllot_code': matline.matllot_code
+            } for matline in production.material_lines]
+        return values
+
+
+    @api.model
+    def action_serialnumber_forward_oneinall(self, productionid):
+        """根据序列号已检追溯原材料
+        :param productionid:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'materiallist': []}
+        production = self.env['aas.production.product'].browse(productionid)
+        if not production.material_lines or len(production.material_lines) <= 0:
+            return values
+        materiallist = []
+        for matline in production.material_lines:
+            meslineid, meslinename = production.mesline_id.id, production.mesline_id.name
+            materialid, materialcode = matline.material_id.id, matline.material_code
+            materiallotid, matllotcode = matline.material_lot.id, matline.matllot_code
+            if matline.material_id.ismaterial:
+                materiallist.append({
+                    'mesline_id': meslineid, 'mesline_name': meslinename,
+                    'material_id': materialid, 'material_code': materialcode,
+                    'material_lot': materiallotid, 'matllot_code': matllotcode
+                })
+            else:
+                materiallist += self.action_loading_oneinall_materiallist(materialid, materialcode, materiallotid,
+                                                                          matllotcode, meslineid, meslinename)
+        values['materiallist'] = materiallist
+        return values
+
+    @api.model
+    def action_product_forward_oneinall(self, productid, protlotid):
+        """根据成品信息已检追溯原材料
+        :param productid:
+        :param protlotid:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'materiallist': []}
+        tempdomain = [('product_id', '=', productid), ('product_lot', '=', protlotid)]
+        reportlist = self.env['aas.production.product.material.report'].search(tempdomain)
+        if not reportlist or len(reportlist) <= 0:
+            return values
+        materiallist = []
+        for report in reportlist:
+            meslineid, meslinename = report.mesline_id.id, report.mesline_id.name
+            materialid, materialcode = report.material_id.id, report.material_code
+            materiallotid, matllotcode = report.material_lot.id, report.matllot_code
+            if report.material_id.ismaterial:
+                materiallist.append({
+                    'mesline_id': meslineid, 'mesline_name': meslinename,
+                    'material_id': materialid, 'material_code': materialcode,
+                    'material_lot': materiallotid, 'matllot_code': matllotcode
+                })
+            else:
+                materiallist += self.action_loading_oneinall_materiallist(materialid, materialcode, materiallotid,
+                                                                          matllotcode, meslineid, meslinename)
+        values['materiallist'] = materiallist
+        return values
+
+
+
+    @api.model
+    def action_loading_oneinall_materiallist(self, productid, protcode, protlotid, lotcode, meslineid, meslinename):
+        """递归获取最终原材料信息
+        :param productid:
+        :param protcode:
+        :param protlotid:
+        :param lotcode:
+        :param meslineid:
+        :param meslinename:
+        :return:
+        """
+        materiallist = []
+        sql_query = """
+            SELECT mesline_id, mesline_name, material_id, material_code, material_lot, matllot_code
+            FROM aas_production_product_material_report
+            WHERE product_id = %s AND product_lot = %s
+            """
+        self.env.cr.execute(sql_query, (productid, protlotid))
+        materials = self.env.cr.dictfetchall()
+        if not materials or len(materials) <= 0:
+            materiallist.append({
+                'mesline_id': meslineid, 'mesline_name': meslinename,
+                'material_id': productid, 'material_code': protcode,
+                'material_lot': protlotid, 'matllot_code': lotcode
+            })
+        else:
+            for material in materials:
+                materialid, materialcode = material['material_id'], material['material_code']
+                matllotid, matllotcode = material['material_lot'], material['matllot_code']
+                meslineid, meslinename = material['mesline_id'], material['mesline_name']
+                materiallist += self.action_loading_oneinall_materiallist(materialid, materialcode, matllotid,
+                                                                          matllotcode, meslineid, meslinename)
+        return materiallist
 
 
     @api.model
@@ -88,6 +198,95 @@ class AASProductionProductMaterialReport(models.Model):
                 'material_lot': material['material_lot'], 'matllot_code': material['matllot_code']
             } for material in materials]
         return values
+
+
+
+    @api.model
+    def action_loading_productlist(self, materialid, matllotid):
+        """根据原料批次获取成品批次信息
+        :param materialid:
+        :param matllotid:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'productlist': []}
+        sql_query = """
+            SELECT mesline_id, mesline_name, product_id, product_code, product_lot, protlot_code
+            FROM aas_production_product_material_report
+            WHERE material_id = %s AND material_lot = %s
+            """
+        self.env.cr.execute(sql_query, (materialid, matllotid))
+        products = self.env.cr.dictfetchall()
+        if products and len(products) > 0:
+            values['productlist'] = [{
+                'mesline_id': product['mesline_id'], 'mesline_name': product['mesline_name'],
+                'product_id': product['product_id'], 'product_code': product['product_code'],
+                'product_lot': product['product_lot'], 'protlot_code': product['protlot_code']
+            } for product in products]
+        return values
+
+
+    @api.model
+    def action_loading_oneinall_productlist(self, materialid, matlcode, matllotid, lotcode, meslineid, meslinename):
+        """根据原料信息递归追溯成品信息
+        :param materialid:
+        :param matlcode:
+        :param matllotid:
+        :param lotcode:
+        :param meslineid:
+        :param meslinename:
+        :return:
+        """
+        productlist = []
+        sql_query = """
+            SELECT mesline_id, mesline_name, product_id, product_code, product_lot, protlot_code
+            FROM aas_production_product_material_report
+            WHERE material_id = %s AND material_lot = %s
+            """
+        templotid = False if not matllotid else matllotid
+        self.env.cr.execute(sql_query, (materialid, templotid))
+        products = self.env.cr.dictfetchall()
+        if not products or len(products) <= 0:
+            productlist.append({
+                'mesline_id': meslineid, 'mesline_name': meslinename,
+                'product_id': materialid, 'material_code': matlcode,
+                'product_lot': matllotid, 'protlot_code': lotcode
+            })
+        else:
+            for product in products:
+                productid, productcode = product['material_id'], product['material_code']
+                protlotid, protlotcode = product['material_lot'], product['matllot_code']
+                meslineid, meslinename = product['mesline_id'], product['mesline_name']
+                productlist += self.action_loading_oneinall_productlist(productid, productcode, protlotid,
+                                                                          protlotcode, meslineid, meslinename)
+        return productlist
+
+
+    @api.model
+    def action_product_reverse_oneinall(self, materialid, matllotid):
+        """根据原材料反向已检追溯成品
+        :param materialid:
+        :param matllotid:
+        :return:
+        """
+        values = {'success': True, 'message': '', 'productlist': []}
+        tempdomain = [('material_id', '=', materialid), ('material_lot', '=', matllotid)]
+        reportlist = self.env['aas.production.product.material.report'].search(tempdomain)
+        if not reportlist or len(reportlist) <= 0:
+            return values
+        productlist = []
+        for report in reportlist:
+            productid, productcode = report.product_id.id, report.product_code
+            if report.product_lot:
+                protlotid, protlotcode = report.product_lot.id, report.protlot_code
+            else:
+                protlotid, protlotcode = '', ''
+            meslineid, meslinename = report.mesline_id.id, report.mesline_id.name
+            productlist += self.action_loading_oneinall_productlist(productid, productcode, protlotid,
+                                                                          protlotcode, meslineid, meslinename)
+        return productlist
+
+
+
 
 
 
