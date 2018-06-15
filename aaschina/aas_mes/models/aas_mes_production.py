@@ -282,10 +282,7 @@ class AASProductionProduct(models.Model):
         if consumelines and len(consumelines) > 0:
             workordervals['consume_lines'] = consumelines
         if workorder.state == 'confirm':
-            workordervals.update({
-                'state': 'producing', 'produce_start': fields.Datetime.now(),
-                'produce_date': fields.Datetime.to_china_today()
-            })
+            workordervals.update({'state': 'producing', 'produce_start': fields.Datetime.now()})
         if production.finaloutput:
             tempoutqty = workorder.output_qty + production.product_qty
             if workorder.plan_finish and workorder.plan_finish >= workordervals['output_time']:
