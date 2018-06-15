@@ -140,7 +140,7 @@
                                                     <select id="mes_printer" class="form-control select2" style="width: 100%;"></select>
                                                 </li>
                                                 <li> <a id="mes_label" href="javascript:void(0);">显示当前标签</a></li>
-                                                <li> <button id="mes_printbtn" class="btn btn-block btn-primary" waitcount="0">打印标签</button></li>
+                                                <li> <button id="mes_printbtn" class="btn btn-block btn-primary" waitcount="0" doing="0">打印标签</button></li>
                                             </ul>
                                         </div>
                                     </div>
@@ -291,7 +291,7 @@
                 <script src="/aas_base/static/libs/datepicker/bootstrap-datepicker.js"></script>
                 <script src="/aas_base/static/libs/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
-                <script src="/aas_mes/static/src/js/mes_gp12_checking.js"></script>
+                <script src="/aas_mes/static/src/js/mes_gp12_checking.js?ver=20180615141826"></script>
             </body>
         </html>
     </template>

@@ -324,3 +324,4 @@ class AASMESFeedmaterialList(models.Model):
     feeder_id = fields.Many2one(comodel_name='res.users', string=u'上料员')
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签')
     container_id = fields.Many2one(comodel_name='aas.container', string=u'容器')
+    feed_note = fields.Text(string=u'备注')

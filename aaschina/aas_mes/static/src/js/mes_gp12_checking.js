@@ -297,12 +297,18 @@ $(function() {
 
     //自动生成标签并打印
     function action_print_label(serialcount){
+        if(parseInt($('#mes_printbtn').attr('doing')) == 1){
+            layer.msg('操作正在进行，请耐心等待！', {icon: 5});
+            return ;
+        }
         var serialnumberlist = $('.aas-unpack');
         if(serialnumberlist.length <= 0){
+            $('#mes_printbtn').attr('doing', '0');
             layer.msg('没有成品可以打印标签！', {icon: 5});
             return ;
         }
         if(serialcount <= 0){
+            $('#mes_printbtn').attr('doing', '0');
             layer.msg('没有成品可以打印标签！', {icon: 5});
             return ;
         }
@@ -316,9 +322,11 @@ $(function() {
         });
         var printerid = parseInt($('#mes_printer').val());
         if(printerid==0){
+            $('#mes_printbtn').attr('doing', '0');
             layer.msg('您还未选择标签打印机，请先设置好标签打印机！', {icon: 5});
             return ;
         }
+        $('#mes_printbtn').attr('doing', '1');
         var scanparams = {'serialnumberids': serialnumberids, 'printer_id': printerid};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
@@ -327,6 +335,7 @@ $(function() {
             type: 'post', timeout:10000, dataType: 'json',
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scanparams, id: access_id}),
             success:function(data){
+                $('#mes_printbtn').attr('doing', '0');
                 var dresult = data.result;
                 if(!dresult.success){
                     layer.msg(dresult.message, {icon: 5});
@@ -346,6 +355,7 @@ $(function() {
             error:function(xhr,type,errorThrown){
                 scanable = true;
                 console.log(type);
+                $('#mes_printbtn').attr('doing', '0');
             }
         });
     }
