@@ -370,3 +370,40 @@ class AASStockInventoryLabel(models.Model):
             raise ValidationError(u'请仔细检查，标签库位不在盘点范围！')
 
 
+
+
+
+
+# 生产盘点导出
+class AASMESInventoryExportWizard(models.TransientModel):
+    _name = 'aas.mes.inventory.export.wizard'
+    _description = 'AAS MES Inventory Export Wizard'
+
+    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线', ondelete='cascade')
+    inventory_start = fields.Datetime(string=u'开始时间', copy=False)
+    inventory_finish = fields.Datetime(string=u'结束时间', copy=False)
+
+    @api.multi
+    def action_export(self):
+        self.ensure_one()
+        if self.inventory_finish <= self.inventory_start:
+            raise UserError(u'结束时间不可以小于开始时间！')
+        meslineid = 0 if not self.mesline_id else self.mesline_id.id
+        tempdomain = [('create_time', '>=', self.inventory_start), ('create_time', '<=', self.inventory_finish)]
+        tempdomain.append(('isproductionline', '=', True))
+        if self.mesline_id:
+            tempdomain.append(('mesline_id', '=', self.mesline_id.id))
+        if self.env['aas.stock.inventory'].search_count(tempdomain) <= 0:
+            raise UserError(u'当前区间没有搜索到相应的盘点信息')
+        firstinventory = self.env['aas.stock.inventory'].search(tempdomain, order='id asc', limit=1)
+        lastinventory = self.env['aas.stock.inventory'].search(tempdomain, order='id desc', limit=1)
+        tempidstr = str(meslineid) + '/' + str(firstinventory.id) + '/' + str(lastinventory.id)
+        return {'type': 'ir.actions.act_url', 'target': 'new', 'url': '/aasmes/inventory/export/'+tempidstr}
+
+
+
+
+
+
+
+
