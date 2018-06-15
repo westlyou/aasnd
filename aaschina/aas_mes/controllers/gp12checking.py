@@ -281,6 +281,10 @@ class AASMESGP12CheckingController(http.Controller):
         if not mesline.location_production_id:
             values.update({'success': False, 'message': u'当前产线还未设置成品库位！'})
             return values
+        tempdomain = [('id', 'in', serialnumberids), ('label_id', '!=', False)]
+        if request.env['aas.mes.serialnumber'].search_count(tempdomain) > 0:
+            values.update({'success': False, 'message': u'请仔细检查，您是在否在重复打印标签！'})
+            return values
         serialnumberlist = request.env['aas.mes.serialnumber'].browse(serialnumberids)
         if not serialnumberlist or len(serialnumberlist) <= 0:
             values.update({'success': False, 'message': u'序列号获取异常，请仔细检查！'})
