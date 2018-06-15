@@ -332,7 +332,7 @@ $(function() {
         $.ajax({
             url: '/aasmes/gp12/dolabel',
             headers:{'Content-Type':'application/json'},
-            type: 'post', timeout:10000, dataType: 'json',
+            type: 'post', timeout:60000, dataType: 'json',
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: scanparams, id: access_id}),
             success:function(data){
                 $('#mes_printbtn').attr('doing', '0');
