@@ -174,7 +174,7 @@ class AASMESFinalCheckingController(http.Controller):
 
     @http.route('/aasmes/finalchecking/scanserialnumber', type='json', auth="user")
     def aasmes_finalchecking_scanserialnumber(self, barcode):
-        logger.info(u'扫描序列号%s开始时间：%s'% (barcode, fields.Datetime.now()))
+        logger.info(u'主线终检扫描序列号%s开始时间：%s'% (barcode, fields.Datetime.now()))
         values = {
             'success': True, 'message': '', 'serialnumber': barcode, 'done': False,
             'recordlist': [], 'reworklist': [], 'rework': False, 'serialcount': 0,
@@ -231,7 +231,7 @@ class AASMESFinalCheckingController(http.Controller):
         # 加载操作记录返工记录以及产出数量
         values.update(self.loading_serial_record_rework_and_count(mesline, tempoperation, workstation))
         serialnumber.write({'stocked': True})
-        logger.info(u'扫描序列号%s结束时间：%s'% (barcode, fields.Datetime.now()))
+        logger.info(u'主线终检扫描序列号%s结束时间：%s'% (barcode, fields.Datetime.now()))
         return values
 
 
