@@ -177,8 +177,6 @@ access_aas_production_badmode_material_manufacture_user,aas.production.badmode.m
 
 
 access_aas_production_product_material_report_all_user,aas.production.product.material.report all_user,model_aas_production_product_material_report,base.group_user,1,0,0,0
-access_aas_production_final_product_report_all_user,aas.production.final.product.report all_user,model_aas_production_final_product_report,base.group_user,1,0,0,0
-access_aas_production_final_material_report_all_user,aas.production.final.material.report all_user,model_aas_production_final_material_report,base.group_user,1,0,0,0
 
 
 access_aas_mes_produce_plan_report_all_user,aas.mes.produce.plan.report all_user,model_aas_mes_produce_plan_report,base.group_user,1,0,0,0

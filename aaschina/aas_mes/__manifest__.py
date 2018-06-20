@@ -61,6 +61,7 @@
         'views/aas_mes_yieldreport_templates.xml',
         'views/aas_mes_finalinspection_view.xml',
         'wizard/aas_mes_models_wizard_view.xml',
+        'views/aas_mes_tracing_templates.xml',
 
         'oracle/aas_ebs_mainorder_view.xml',
         'wechat/views/aas_wechat_mes_template.xml',
