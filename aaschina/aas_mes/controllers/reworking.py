@@ -235,6 +235,9 @@ class AASMESReworkingController(http.Controller):
         if not employee:
             values.update({'success': False, 'message': u'员工卡扫描异常，请检查系统中是否存在该员工！'})
             return values
+        if employee.job != 'ipqc':
+            values.update({'success': False, 'message': u'员工卡扫描异常，当前员工的岗位不是IPQC！'})
+            return values
         values.update({'employee_id': employee.id, 'employee_name': employee.name})
         return values
 
