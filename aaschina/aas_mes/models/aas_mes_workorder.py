@@ -906,6 +906,104 @@ class AASMESWorkorder(models.Model):
 
 
 
+
+    @api.one
+    def action_workorder_production_consume(self):
+        """清理工单上已产出未消耗的库存信息
+        :return:
+        """
+        _logger.info(u'处理消耗开始时间： '+fields.Datetime.now())
+        sql_query = """
+            select pproduct.id
+            from aas_production_product pproduct left join aas_production_material pmaterial on pproduct.id = pmaterial.production_id
+            where pproduct.finaloutput=true and pproduct.workorder_id=%s and pmaterial.production_id is null
+            """
+        self.env.cr.execute(sql_query, (self.id,))
+        tempdtids = self.env.cr.dictfetchall()
+        if not tempdtids or len(tempdtids) <= 0:
+            return
+        tempqty, productionids = 0.0, []
+        for pdtid in tempdtids:
+            productionid = pdtid['id']
+            productionids.append(productionid)
+            production = self.env['aas.production.product'].browse(productionid)
+            tempvals = self.action_production_consume(production)
+            if not tempvals.get('success', False):
+                raise UserError(tempvals.get('message', ''))
+            tempqty += production.product_qty
+
+        _logger.info(u'消耗清单更新开始时间： '+fields.Datetime.now())
+        consumedomain = [('workorder_id', '=', self.id), ('product_id', '=', self.product_id.id)]
+        consumelines = self.env['aas.mes.workorder.consume'].search(consumedomain)
+        if consumelines and len(consumelines) > 0:
+            consumelist = []
+            for consume in consumelines:
+                consumelist.append((1, consume.id, {'consume_qty': consume.consume_qty + consume.consume_unit*tempqty}))
+            self.write({'consume_lines': consumelist})
+
+        self.action_workorder_production_consume_movelist(productionids)
+
+        _logger.info(u'处理消耗结束时间： '+fields.Datetime.now())
+
+
+    @api.one
+    def action_workorder_production_consume_movelist(self, productionids):
+        _logger.info(u'库存更新开始时间： '+fields.Datetime.now())
+        srclocationid = self.mesline_id.location_material_list[0].location_id.id
+        destlocationid = self.env.ref('stock.location_production').id
+        sql_query = """
+            select pmaterial.material_id, pmaterial.material_lot, pmaterial.material_qty, ptemplate.uom_id
+            from (
+                select material_id, material_lot, sum(material_qty) as material_qty
+                from aas_production_material
+                where production_id in %s
+                group by material_id, material_lot
+            ) pmaterial join product_product pproduct on pproduct.id=pmaterial.material_id
+            join product_template ptemplate on ptemplate.id=pproduct.product_tmpl_id
+        """
+        self.env.cr.execute(sql_query, (tuple(productionids), ))
+        materiallist = self.env.cr.dictfetchall()
+        if materiallist and len(materiallist) > 0:
+            movelist = self.env['stock.move']
+            for tmaterial in materiallist:
+                movelist |= self.env['stock.move'].create({
+                    'name': self.name,
+                    'product_id': tmaterial['material_id'], 'product_uom': tmaterial['uom_id'],
+                    'restrict_lot_id': tmaterial['material_lot'], 'product_uom_qty': tmaterial['material_qty'],
+                    'location_id': srclocationid, 'location_dest_id': destlocationid,
+                    'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id
+                })
+            movelist.action_done()
+        _logger.info(u'库存更新结束时间： '+fields.Datetime.now())
+
+
+    @api.model
+    def action_production_consume(self, production):
+        """清理已产出未消耗的库存信息
+        :param production:
+        :return:
+        """
+        _logger.info(u'%s消耗开始时间：%s'% (production.serialnumber_id.name, fields.Datetime.now()))
+        values = {'success': True, 'message': ''}
+        if production.material_lines and len(production.material_lines) > 0:
+            _logger.info(u'%s消耗结束时间：%s'% (production.serialnumber_id.name, fields.Datetime.now()))
+            return values
+        workorder, product, output_qty = production.workorder_id, production.product_id, production.product_qty
+        workcenter = False if not production.workticket_id else production.workticket_id.workcenter_id
+        # 加载消耗清单
+        tempvals = self.env['aas.production.product'].action_loading_material_move_lines(workorder, product, output_qty, workcenter=workcenter)
+        if not tempvals.get('success', False):
+            values.update({'success': False, 'message': tempvals['message']})
+            return values
+        materiallines = tempvals.get('material_lines', [])
+        if materiallines and len(materiallines) > 0:
+            production.write({'material_lines': materiallines, 'handwork': True})
+        _logger.info(u'%s消耗结束时间：%s'% (production.serialnumber_id.name, fields.Datetime.now()))
+        return values
+
+
+
+
 class AASMESWorkorderConsume(models.Model):
     _name = 'aas.mes.workorder.consume'
     _description = 'AAS MES Work Order Consume'

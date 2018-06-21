@@ -62,6 +62,7 @@ class AASProductionProduct(models.Model):
     schedule_name = fields.Char(string=u'班次名称', copy=False)
     workorder_name = fields.Char(string=u'工单编号', copy=False)
     protlot_code = fields.Char(string=u'批次名称', copy=False)
+    handwork = fields.Boolean(string=u'手工处理', default=False, help=u'手工处理消耗')
 
     material_lines = fields.One2many(comodel_name='aas.production.material', inverse_name='production_id', string=u'原料清单')
     employee_lines = fields.One2many(comodel_name='aas.production.employee', inverse_name='production_id', string=u'员工清单')

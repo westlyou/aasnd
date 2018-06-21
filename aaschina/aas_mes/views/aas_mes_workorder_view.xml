@@ -34,6 +34,7 @@
             <field name="arch" type="xml">
                 <form labelprint="true" create="false" delete="false">
                     <header>
+                        <!-- <button name="action_workorder_production_consume" type="object" string="消耗处理" class="oe_highlight"/> -->
                         <button name="action_confirm" type="object" string="确认工单" class="oe_highlight" states="draft"/>
                         <button name="action_producing" type="object" string="开始生产" class="oe_highlight"
                                 attrs="{'invisible':['|','|',('mesline_type','=','station'),('isproducing','=',True),('state','in',['draft','done'])]}"/>
