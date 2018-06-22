@@ -135,10 +135,13 @@ class AASStockReceipt(models.Model):
         outlabels, internallabels = self.env['aas.product.label'], self.env['aas.product.label']
         if self.label_lines and len(self.label_lines) > 0:
             for rlabel in self.label_lines:
+                label = rlabel.label_id
                 if rlabel.label_location.usage != 'internal':
-                    outlabels |= rlabel.label_id
+                    outlabels |= label
                 else:
-                    internallabels |= rlabel.label_id
+                    internallabels |= label
+                if rlabel.label_location and rlabel.label_location.id != label.location_id.id:
+                    label.write({'location_id': rlabel.label_location.id})
             if outlabels and len(outlabels) > 0:
                 outlabels.write({'state': 'over', 'locked': False, 'locked_order': False})
             if internallabels and len(internallabels) > 0:
