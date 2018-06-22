@@ -71,19 +71,6 @@ class AASMESBadMaterialSelection(models.Model):
             else:
                 record.material_yield = 0.00
 
-
-    @api.onchange('selector_id')
-    def action_change_selector(self):
-        if not self.selector_id:
-            self.selector_code = False
-        else:
-            self.selector_code = self.selector_id.code
-
-    @api.depends('selector_id')
-    def _compute_selector_code(self):
-        for record in self:
-            record.selector_code = False if not record.selector_id else record.selector_id.code
-
     @api.depends('internal_material_id')
     def _compute_cusmtomer_code(self):
         for record in self:
