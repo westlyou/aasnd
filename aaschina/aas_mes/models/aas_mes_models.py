@@ -27,8 +27,6 @@ class AASMESBadMaterialSelection(models.Model):
     mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线')
     schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次')
     workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'问题工位')
-    selector_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'挑选员工')
-    selector_code = fields.Char(string=u'员工工号', compute='_compute_selector_code', store=True)
     ipqchecker_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'IPQC员工')
     ipqchecker_code = fields.Char(string=u'IPQC工号')
     ipqcheck_time = fields.Datetime(string=u'IPQC确认时间')
@@ -42,6 +40,17 @@ class AASMESBadMaterialSelection(models.Model):
     action_finish = fields.Datetime(string=u'结束时间', copy=False)
     action_worktime = fields.Float(string=u'总工时(H)', default=0.0)
     state = fields.Selection(selection=[('select', u'挑选'), ('done', u'完成')], string=u'状态', default='select')
+
+    selection_employees = fields.Text(string=u'挑选员工', compute='_compute_selection_employees', store=True)
+    employee_lines = fields.One2many('aas.mes.badmaterial.selection.employee', inverse_name='selection_id', string=u'挑选员工')
+
+
+    @api.depends('employee_lines')
+    def _compute_selection_employees(self):
+        for record in self:
+            if record.employee_lines and len(record.employee_lines) > 0:
+                employees = [tempe.employee_id.name+'['+tempe.employee_code+']' for tempe in record.employee_lines]
+                record.selection_employees = ','.join(employees)
 
     @api.multi
     def unlink(self):
@@ -118,6 +127,32 @@ class AASMESBadMaterialSelection(models.Model):
             'res_id': wizard.id,
             'context': self.env.context
         }
+
+    @api.model
+    def create(self, vals):
+        employeelines = vals.get('employee_lines', [])
+        if not employeelines or len(employeelines) <= 0:
+            raise UserError(u'请先添加挑拣员工信息！')
+        return super(AASMESBadMaterialSelection, self).create(vals)
+
+
+class AASMESBadMaterialSelectionEmployee(models.Model):
+    _name = 'aas.mes.badmaterial.selection.employee'
+    _description = 'AAS MES Bad Material Selection Employee'
+    _order = 'id desc'
+    _rec_name = 'employee_id'
+
+    selection_id = fields.Many2one(comodel_name='aas.mes.badmaterial.selection', string=u'挑选单', ondelete='cascade')
+    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'员工名称', ondelete='restrict')
+    employee_code = fields.Char(string=u'员工编码', compute="_compute_employee_code", store=True)
+
+    @api.depends('employee_id')
+    def _compute_employee_code(self):
+        for record in self:
+            if record.employee_id:
+                record.employee_code = record.employee_id.code
+            else:
+                record.employee_code = False
 
 
 

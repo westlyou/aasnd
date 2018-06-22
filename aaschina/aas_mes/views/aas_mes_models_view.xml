@@ -267,8 +267,6 @@
                     <field name="mesline_id"/>
                     <field name="schedule_id"/>
                     <field name="workstation_id"/>
-                    <field name="selector_id"/>
-                    <field name="selector_code"/>
                     <field name="ipqchecker_id"/>
                     <field name="ipqchecker_code"/>
                     <field name="internal_material_id"/>
@@ -281,6 +279,7 @@
                     <field name="action_finish"/>
                     <field name="action_worktime" widget="float_time"/>
                     <field name="state"/>
+                    <field name="selection_employees"/>
                 </tree>
             </field>
         </record>
@@ -304,9 +303,7 @@
                                        attrs="{'readonly':[('state','=','done')]}"/>
                                 <field name="workstation_id" required="1"
                                        options="{'no_create':true}" attrs="{'readonly':[('state','=','done')]}"/>
-                                <field name="selector_id" required="1" options="{'no_create':true}"
-                                       domain="[('job','=','worker')]" attrs="{'readonly':[('state','=','done')]}"/>
-                                <field name="selector_code" readonly="1"/>
+                                <field name="product_qty" required="1" attrs="{'readonly':[('state','=','done')]}"/>
                                 <field name="ipqchecker_id" readonly="1"/>
                                 <field name="ipqchecker_code" readonly="1"/>
                             </group>
@@ -316,7 +313,6 @@
                                 <field name="customer_material_code" readonly="1"/>
                                 <field name="badmode_id" required="1"
                                        options="{'no_create':true}" attrs="{'readonly':[('state','=','done')]}"/>
-                                <field name="product_qty" required="1" attrs="{'readonly':[('state','=','done')]}"/>
                                 <field name="badmode_qty" required="1" attrs="{'readonly':[('state','=','done')]}"/>
                                 <field name="action_start" required="1" attrs="{'readonly':[('state','=','done')]}"/>
                                 <field name="action_finish" required="1" attrs="{'readonly':[('state','=','done')]}"/>
@@ -329,6 +325,16 @@
                                 <field name="ipqcheck_time" readonly="1"/>
                             </group>
                         </group>
+                        <notebook>
+                            <page string="挑选员工">
+                                <field name="employee_lines" required="1" attrs="{'readonly':[('state','=','done')]}">
+                                    <tree editable="bottom">
+                                        <field name="employee_id" required="1" options="{'no_create':true}" domain="[('job','=','worker')]"/>
+                                        <field name="employee_code" readonly="1"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>
@@ -341,7 +347,6 @@
                 <search>
                     <field name="mesline_id" string="产线" filter_domain="[('mesline_id','ilike',self)]"/>
                     <field name="workstation_id" string="工位" filter_domain="[('workstation_id','ilike',self)]"/>
-                    <field name="selector_id" string="挑选员工" filter_domain="[('selector_id','ilike',self)]"/>
                     <field name="ipqchecker_id" string="IPQC" filter_domain="[('ipqchecker_id','ilike',self)]"/>
                     <field name="internal_material_id" string="内部料号" filter_domain="[('internal_material_id','ilike',self)]"/>
                     <field name="badmode_id" string="不良模式" filter_domain="[('badmode_id','ilike',self)]"/>
@@ -349,7 +354,6 @@
                     <group expand="0" string="分组">
                         <filter string="产线" context="{'group_by':'mesline_id'}"/>
                         <filter string="工位" context="{'group_by':'workstation_id'}"/>
-                        <filter string="挑选员工" context="{'group_by':'selector_id'}"/>
                         <filter string="IPQC" context="{'group_by':'ipqchecker_id'}"/>
                         <filter string="内部料号" context="{'group_by':'internal_material_id'}"/>
                         <filter string="不良模式" context="{'group_by':'badmode_id'}"/>
