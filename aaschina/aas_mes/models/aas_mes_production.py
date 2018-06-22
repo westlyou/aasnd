@@ -204,10 +204,10 @@ class AASProductionProduct(models.Model):
         # 加载原料不良详情
         currentoutput.action_compute_badmode_detail_materialist()
         # 刷新上料记录
-        # if feedids and len(feedids) > 0:
-        #     feedinglist = self.env['aas.mes.feedmaterial'].browse(feedids)
-        #     if feedinglist and len(feedinglist) > 0:
-        #         feedinglist.action_freshandclear()
+        if feedids and len(feedids) > 0:
+            feedinglist = self.env['aas.mes.feedmaterial'].browse(feedids)
+            if feedinglist and len(feedinglist) > 0:
+                feedinglist.action_freshandclear()
         # 更新产出库存
         ticketvals = self.action_workticket_output(workticket, currentoutput, container=container)
         if ticketvals.get('label_id', False):

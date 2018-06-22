@@ -11,8 +11,8 @@
                 <meta name="apple-mobile-web-app-capable" content="yes"/>
                 <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/bootstrap/css/bootstrap.min.css"/>
-                <link rel="stylesheet" href="/aas_base/static/libs/datepicker/datepicker3.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/font-awesome/css/font-awesome.min.css"/>
+                <link rel="stylesheet" href="/aas_base/static/libs/daterangepicker/daterangepicker.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/iCheck/flat/blue.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/AdminLTE.min.css"/>
                 <link rel="stylesheet" href="/aas_base/static/libs/adminlte/css/skins/skin-blue.min.css"/>
@@ -167,9 +167,9 @@
                 <script src="/aas_base/static/libs/iCheck/icheck.min.js"></script>
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
-                <script src="/aas_base/static/libs/datepicker/bootstrap-datepicker.js"></script>
-                <script src="/aas_base/static/libs/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>
-                <script src="/aas_mes/static/src/js/mes_yield_report.js?ver=20180611174726"></script>
+                <script src="/aas_base/static/libs/daterangepicker/moment.min.js"></script>
+                <script src="/aas_base/static/libs/daterangepicker/daterangepicker.js"></script>
+                <script src="/aas_mes/static/src/js/mes_yield_report.js?ver=20180622102906"></script>
             </body>
         </html>
     </template>
