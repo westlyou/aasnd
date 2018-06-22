@@ -23,7 +23,10 @@ class AASMESYieldReportController(http.Controller):
 
     def action_loading_badmodelist(self, mesline, workdate):
         badmodeids, badmodelist = [], []
-        orderdomain = [('mesline_id', '=', mesline.id), ('plan_date', '=', workdate), ('state', '!=', 'draft')]
+        orderdomain = [('mesline_id', '=', mesline.id), ('state', '!=', 'draft')]
+        if workdate:
+            tempdates = workdate.split('~')
+            orderdomain += [('plan_date', '>=', tempdates[0]), ('plan_date', '<=', tempdates[1])]
         workorderlist = request.env['aas.mes.workorder'].search(orderdomain)
         if not workorderlist or len(workorderlist) <= 0:
             return badmodelist
@@ -136,7 +139,8 @@ class AASMESYieldReportController(http.Controller):
         if workorder:
             tempdomain.append(('name', 'ilike', '%'+workorder+'%'))
         if workdate:
-            tempdomain.append(('plan_date', '=', workdate))
+            tempdates = workdate.split('~')
+            tempdomain += [('plan_date', '>=', tempdates[0]), ('plan_date', '<=', tempdates[1])]
         totalcount = request.env['aas.mes.workorder'].search_count(tempdomain)
         values['total'] = totalcount
         if totalcount < lastindex:
@@ -204,7 +208,8 @@ class AASMESYieldReportController(http.Controller):
         if workorder:
             tempdomain.append(('name', 'ilike', '%'+workorder+'%'))
         if workdate:
-            tempdomain += [('plan_date', '=', workdate)]
+            tempdates = workdate.split('~')
+            tempdomain += [('plan_date', '>=', tempdates[0]), ('plan_date', '<=', tempdates[1])]
         totalcount = request.env['aas.mes.workorder'].search_count(tempdomain)
         if totalcount <= 0:
             values.update({'success': False, 'message': u'未获取需要导出的数据！'})
@@ -227,7 +232,8 @@ class AASMESYieldReportController(http.Controller):
             if workorder:
                 tempdomain.append(('name', 'ilike', '%'+workorder+'%'))
             if workdate:
-                tempdomain += [('plan_date', '=', workdate)]
+                tempdates = workdate.split('~')
+                tempdomain += [('plan_date', '>=', tempdates[0]), ('plan_date', '<=', tempdates[1])]
             workorderlist = request.env['aas.mes.workorder'].search(tempdomain)
         workbook = xlwt.Workbook(style_compression=2)
         worksheet = workbook.add_sheet(u'良率报表')
@@ -348,6 +354,6 @@ class AASMESYieldReportController(http.Controller):
         filename = mesline.name+fields.Datetime.to_china_today().replace('-', '')
         xlshttpheaders = [
             ('Content-Type', 'application/vnd.ms-excel'), ('Content-Length', len(outvalues)),
-            (u'Content-Disposition', 'attachment; filename=%s.xls;'% filename)
+            ('Content-Disposition', 'attachment; filename=%s.xls;'% filename)
         ]
         return request.make_response(outvalues, headers=xlshttpheaders)
