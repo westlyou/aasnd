@@ -46,7 +46,7 @@ class AASMESInventoryExportController(http.Controller):
                 if not tinventory.inventory_lines or len(tinventory.inventory_lines) <= 0:
                     continue
                 for invenline in tinventory.inventory_lines:
-                    product = tinventory.product_id
+                    product = invenline.product_id
                     customercode = '' if not product.customer_product_code else product.customer_product_code
                     worksheet.write(rowindex, 0, tinventory.mesline_id.name, base_style)
                     worksheet.write(rowindex, 1, tinventory.name, base_style)
