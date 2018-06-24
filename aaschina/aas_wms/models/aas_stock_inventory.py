@@ -34,6 +34,7 @@ class AASStockInventory(models.Model):
     create_time = fields.Datetime(string=u'创建时间', default=fields.Datetime.now)
     create_user = fields.Many2one(comodel_name='res.users', string=u'创建人员', default=lambda self: self.env.user)
     isstock = fields.Boolean(string=u'仓库盘点', default=False, copy=False)
+    doexcuted = fields.Boolean(string=u'已执行', default=False, copy=False)
 
 
     inventory_lines = fields.One2many(comodel_name='aas.stock.inventory.line', inverse_name='inventory_id', string=u'盘点明细')
@@ -154,6 +155,9 @@ class AASStockInventory(models.Model):
         完成盘点
         :return:
         """
+        if self.doexcuted:
+            return
+        self.write({'doexcuted': True})
         location_inventory = self.env.ref('stock.location_inventory')
         movelines , current_time = [], fields.Datetime.now()
         if self.inventory_lines and len(self.inventory_lines) > 0:

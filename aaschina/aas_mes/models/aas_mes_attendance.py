@@ -317,6 +317,8 @@ class AASMESWorkAttendanceLine(models.Model):
     mesline_name = fields.Char(string=u'产线名称', copy=False)
     schedule_name = fields.Char(string=u'班次名称', copy=False)
     employee_name = fields.Char(string=u'员工名称', copy=False)
+    leave_hours = fields.Float(string=u'离岗工时', default=0.0, copy=False)
+    recentlyleave = fields.Boolean(string=u'最近离开', default=False, copy=False)
 
     @api.depends('attendance_start', 'attendance_finish')
     def _compute_attend_hours(self):
@@ -352,10 +354,24 @@ class AASMESWorkAttendanceLine(models.Model):
         # 更新工位员工信息
         self.action_update_workstationemployee()
         attendance = self.attendance_id
+        # 计算当前工位上的离岗工时
+        linedomain = [('attendance_id', '=', attendance.id), ('recentlyleave', '=', True), ('attend_done', '=', True)]
+        linedomain += [('workstation_id', '=', workstation.id), ('mesline_id', '=', mesline.id)]
+        templine = self.env['aas.mes.work.attendance.line'].search(linedomain, limit=1)
+        if templine:
+            currenttime = fields.Datetime.from_string(fields.Datetime.now())
+            leavetime = fields.Datetime.from_string(templine.attendance_finish)
+            templine.write({
+                'recentlyleave': False,
+                'leave_hours': (currenttime - leavetime).total_seconds() / 3600.00
+            })
+        # 更新员工当日的出勤信息和离岗工时
         if attendance.attendance_finish:
-            temptimes = fields.Datetime.from_string(fields.Datetime.now()) - fields.Datetime.from_string(attendance.attendance_finish)
-            leave_hours = temptimes.total_seconds() / 3600.00 + attendance.leave_hours
+            tempstart = fields.Datetime.from_string(attendance.attendance_finish)
+            tempfinish = fields.Datetime.from_string(fields.Datetime.now())
+            leave_hours = (tempfinish - tempstart).total_seconds() / 3600.00 + attendance.leave_hours
             attendance.write({'attendance_finish': False, 'leave_id': False, 'leave_hours': leave_hours})
+
 
 
 
@@ -394,7 +410,7 @@ class AASMESWorkAttendanceLine(models.Model):
             if record.attendance_id and record.attendance_id.id not in attendanceids:
                 attendanceids.append(record.attendance_id.id)
         currenttime = fields.Datetime.now()
-        attendancevals = {'attendance_finish': currenttime, 'attend_done': True}
+        attendancevals = {'attendance_finish': currenttime, 'attend_done': True, 'recentlyleave': True}
         if attendlines and len(attendlines) > 0:
             attendlines.write(attendancevals)
         if attendanceids and len(attendanceids) > 0:
@@ -489,6 +505,7 @@ class AASMESWorkAttendanceReport(models.Model):
     actual_hours = fields.Float(string=u'总工时', default=0.0, readonly=True)
     overtime_hours = fields.Float(string=u'加班工时', default=0.0, readonly=True)
     standard_hours = fields.Float(string=u'正常工时', default=0.0, readonly=True)
+    leave_hours = fields.Float(string=u'离岗工时', default=0.0, readonly=True)
 
     def _select_sql(self):
         _select_sql = """
@@ -501,17 +518,19 @@ class AASMESWorkAttendanceReport(models.Model):
         attendance_start,
         attendance_finish,
         actual_hours,
+        leave_hours,
         CASE WHEN overtime_hours > 0 THEN 8 ELSE actual_hours END AS standard_hours,
         CASE WHEN overtime_hours > 0 THEN overtime_hours ELSE 0 END AS overtime_hours
         FROM (
-        SELECT min(id) AS id,
+        SELECT MIN(id) AS id,
         employee_id,
         mesline_id,
         schedule_id,
         workstation_id,
         attendance_date,
-        min(attendance_start) AS attendance_start,
-        max(attendance_finish) AS attendance_finish,
+        SUM(leave_hours) AS leave_hours,
+        MIN(attendance_start) AS attendance_start,
+        MAX(attendance_finish) AS attendance_finish,
         round((date_part('epoch', max(attendance_finish) - min(attendance_start)) / 3600.0)::numeric, 3) AS actual_hours,
         round((date_part('epoch', max(attendance_finish) - min(attendance_start)) / 3600.0)::numeric, 3) - 8 AS overtime_hours
         FROM aas_mes_work_attendance_line
