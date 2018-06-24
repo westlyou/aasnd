@@ -58,6 +58,7 @@
                                         <field name="attendance_finish"/>
                                         <field name="attend_hours" widget="float_time"/>
                                         <field name="leave_id"/>
+                                        <field name="leave_hours" widget="float_time"/>
                                     </tree>
                                     <form>
                                         <group>
@@ -143,6 +144,7 @@
                     <field name="attendance_finish"/>
                     <field name="attend_hours" widget="float_time"/>
                     <field name="leave_id"/>
+                    <field name="leave_hours" widget="float_time"/>
                 </tree>
             </field>
         </record>
@@ -168,6 +170,11 @@
                                 <field name="attendance_finish"/>
                                 <field name="attend_hours" widget="float_time"/>
                                 <field name="leave_id"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="leave_hours" widget="float_time"/>
                             </group>
                         </group>
                     </sheet>
@@ -319,6 +326,7 @@
                     <field name="standard_hours" widget="float_time"/>
                     <field name="overtime_hours" widget="float_time"/>
                     <field name="actual_hours" widget="float_time"/>
+                    <field name="leave_hours" widget="float_time"/>
                 </tree>
             </field>
         </record>
