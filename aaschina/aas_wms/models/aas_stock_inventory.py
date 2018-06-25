@@ -325,6 +325,23 @@ class AASStockInventory(models.Model):
 
 
 
+    @api.multi
+    def action_select_product(self):
+        self.ensure_one()
+        wizard = self.env['aas.stock.inventory.product.wizard'].create({'inventory_id': self.id})
+        view_form = self.env.ref('aas_wms.view_form_aas_stock_inventory_product_selection_wizard')
+        return {
+            'name': u"产品选择",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.stock.inventory.product.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
 
 
 
@@ -554,3 +571,76 @@ class AASStockInventoryMove(models.Model):
     def create(self, vals):
         self.action_before_create(vals)
         return super(AASStockInventoryMove, self).create(vals)
+
+
+
+
+
+
+
+
+
+####################################单品盘点##################################
+
+class AASStockInventoryProductWizard(models.TransientModel):
+    _name = 'aas.stock.inventory.product.wizard'
+    _description = 'ASS Stock Inventory Product Wizard'
+
+    inventory_id = fields.Many2one(comodel_name='aas.stock.inventory', string=u'盘点单', ondelete='cascade')
+    product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
+    productlot_lines = fields.One2many(comodel_name='aas.stock.inventory.product.lotline.wizard', inverse_name='wizard_id', string=u'批次明细')
+
+    @api.multi
+    def action_inventory_product(self):
+        self.ensure_one()
+        if not self.product_id:
+            raise UserError(u'请先选择盘点产品！')
+        linedomain = [('inventory_id', '=', self.inventory_id.id), ('product_id', '=', self.product_id.id)]
+        inventorylines = self.env['aas.stock.inventory.line'].search(linedomain)
+        if not inventorylines or len(inventorylines) <= 0:
+            raise UserError(u'未获取到当前产品的盘点明细！')
+        self.write({
+            'productlot_lines': [(0, 0, {
+                'iline_id': iline.id, 'location_id': iline.location_id.id,
+                'product_lot': iline.product_lot.id, 'stock_qty': iline.stock_qty, 'actual_qty': iline.actual_qty
+            }) for iline in inventorylines]
+        })
+
+        view_form = self.env.ref('aas_wms.view_form_aas_stock_inventory_product_doadjust_wizard')
+        return {
+            'name': u"单品盘点",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.stock.inventory.product.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': self.id,
+            'context': self.env.context
+        }
+
+    @api.one
+    def action_done(self):
+        templines  = []
+        for plline in self.productlot_lines:
+            templine = plline.iline_id
+            if float_compare(templine.actual_qty, plline.actual_qty, precision_rounding=0.000001) != 0.0:
+                templines.append((1, templine.id, {'actual_qty': plline.actual_qty}))
+        if templines and len(templines) > 0:
+            self.inventory_id.write({'inventory_lines': templines})
+
+
+
+
+class AASStockInventoryProductLotlineWizard(models.TransientModel):
+    _name = 'aas.stock.inventory.product.lotline.wizard'
+    _description = 'ASS Stock Inventory Product Lot line Wizard'
+
+
+    wizard_id = fields.Many2one(comodel_name='aas.stock.inventory.product.wizard', string='Wizard', ondelete='cascade')
+    iline_id = fields.Many2one(comodel_name='aas.stock.inventory.line', string='Line', ondelete='cascade')
+    location_id = fields.Many2one(comodel_name='stock.location', string=u'库位', ondelete='restrict')
+    product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
+    stock_qty = fields.Float(string=u'账存数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    actual_qty = fields.Float(string=u'实盘数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)

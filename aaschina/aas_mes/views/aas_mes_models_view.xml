@@ -132,6 +132,10 @@
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done"/>
                     </header>
                     <sheet>
+                        <div class="oe_right oe_button_box" style="width: 300px;" name="buttons">
+                            <button type="object" name="action_select_product" class="oe_stat_button" icon="fa-list"
+                                        string="单品盘点" attrs="{'invisible':[('state','!=','confirm')]}"/>
+                        </div>
                         <group>
                             <group colspan="4">
                                 <field name="id" invisible="1"/>
