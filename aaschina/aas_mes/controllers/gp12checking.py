@@ -247,6 +247,9 @@ class AASMESGP12CheckingController(http.Controller):
     @http.route('/aasmes/gp12/rework/actioncommit', type='json', auth="user")
     def aasmes_gp12_rework_actioncommit(self, employee_id, badmode_id, serialnumberlist):
         values = {'success': True, 'message': ''}
+        if not badmode_id:
+            values.update({'success': False, 'message': u'请先设置好不良模式！'})
+            return values
         lineuser = request.env['aas.mes.lineusers'].search([('lineuser_id', '=', request.env.user.id)], limit=1)
         if not lineuser:
             values.update({'success': False, 'message': u'当前登录账号还未绑定产线和工位，无法继续其他操作！'})
