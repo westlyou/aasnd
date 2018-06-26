@@ -51,10 +51,15 @@ class AASStockInventory(models.Model):
 
     @api.multi
     def unlink(self):
+        ilabelist = self.env['aas.stock.inventory.label']
         for record in self:
-            if record.state != 'done':
-                continue
-            raise UserError(u'盘点%s已完成不可以删除！'% record.name)
+            if record.state == 'done':
+                raise UserError(u'盘点%s已完成不可以删除！'% record.name)
+            if record.inventory_labels and len(record.inventory_labels) > 0:
+                for ilabel in record.inventory_labels:
+                    ilabelist |= ilabel
+        if ilabelist and len(ilabelist) > 0:
+            ilabelist.unlink()
         return super(AASStockInventory, self).unlink()
 
 
@@ -483,12 +488,13 @@ class AASStockInventoryLabel(models.Model):
                 inventorylinedict[ikey] = {'line': record.line_id, 'qty': record.product_qty}
             else:
                 inventorylinedict[ikey]['qty'] += record.product_qty
+        if labellist and len(labellist) > 0:
+            labellist.write({'locked': False, 'locked_order': False})
         result = super(AASStockInventoryLabel, self).unlink()
         for lkey, lval in inventorylinedict.items():
             inventoryline, temp_qty = lval['line'], lval['qty']
             inventoryline.write({'actual_qty': inventoryline.actual_qty - temp_qty})
-        if labellist and len(labellist) > 0:
-            labellist.write({'locked': False, 'locked_order': False})
+
         return result
 
 
