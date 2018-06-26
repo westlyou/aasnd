@@ -120,7 +120,12 @@ $(function() {
                 return ;
             }
             commitparams['employee_id'] = employeeid;
-            var badmodeid = parseInt($('#mes_badmode').val());
+            var badmodeidstr = $('#mes_badmode').val();
+            if(badmodeidstr==null || badmodeidstr==''){
+                layer.msg('请先设置好不良模式', {icon: 5});
+                return ;
+            }
+            var badmodeid = parseInt(badmodeidstr);
             if(badmodeid==0){
                 layer.msg('请先选择不良模式！', {icon: 5});
                 return ;
