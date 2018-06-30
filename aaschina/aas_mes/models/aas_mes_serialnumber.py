@@ -48,6 +48,7 @@ class AASMESSerialnumber(models.Model):
     consumed = fields.Boolean(string=u'已消耗', default=False, copy=False, help=u'是否已消耗原材料')
     reworked = fields.Boolean(string=u'是否返工', default=False, copy=False)
     rework_count = fields.Integer(string=u'返工次数', default=0)
+    rework_id = fields.Many2one(comodel_name='aas.mes.rework', string=u'当前返工')
 
     lastone_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'上一个', index=True, ondelete='restrict')
     output_time = fields.Datetime(string=u'产出时间', copy=False)

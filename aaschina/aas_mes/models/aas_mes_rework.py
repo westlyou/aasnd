@@ -93,10 +93,12 @@ class AASMESRework(models.Model):
         tempdomain = [('serialnumber_id', '=', tserialnumber.id)]
         tempdomain += [('mesline_id', '=', tmesline.id), ('workstation_id', '=', workstation.id)]
         tempoutput = self.env['aas.production.product'].search(tempdomain, order='output_time desc', limit=1)
+        serialvals = {'rework_id': self.id}
         if tempoutput:
-            tserialnumber.write({'qualified': False})
+            serialvals['qualified'] = False
             tempoutput.write({'onepass': False, 'qualified': False})
         self.write(repairvals)
+        tserialnumber.write(serialvals)
 
 
     @api.model
