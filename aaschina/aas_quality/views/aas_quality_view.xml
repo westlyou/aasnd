@@ -13,10 +13,16 @@
         <menuitem id="menu_quality_serialnumber"  name="序列号" parent="menu_aas_quality" sequence="3"
                   groups="group_aas_quality_user,group_aas_quality_manager"/>
 
-        <menuitem id="menu_aas_mes_producttest_quality"  name="生产检测" parent="menu_aas_quality" sequence="4"
+        <menuitem id="menu_quality_badmode"  name="不良模式" parent="menu_aas_quality" sequence="4"
+                  groups="group_aas_quality_manager"/>
+
+        <menuitem id="menu_quality_badmode_list"  name="不良模式" action="aas_mes.action_aas_mes_badmode"
+                          parent="menu_quality_badmode" sequence="1" groups="group_aas_quality_manager"/>
+
+        <menuitem id="menu_aas_mes_producttest_quality"  name="生产检测" parent="menu_aas_quality" sequence="5"
                   groups="group_aas_quality_user,group_aas_quality_manager"/>
 
-        <menuitem id="menu_aas_mes_tracing_quality"  name="生产追溯" parent="menu_aas_quality" sequence="5"
+        <menuitem id="menu_aas_mes_tracing_quality"  name="生产追溯" parent="menu_aas_quality" sequence="6"
                   groups="group_aas_quality_user,group_aas_quality_manager"/>
 
         <menuitem id="menu_production_forward_tracing_quality"  name="正向追溯"

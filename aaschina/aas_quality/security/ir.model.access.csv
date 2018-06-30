@@ -97,3 +97,5 @@ access_aas_mes_badmaterial_selection_employee_quality_manager,aas.mes.badmateria
 access_aas_mes_rework_material_quality_user,aas.mes.rework.material quality_user,aas_mes.model_aas_mes_rework_material,group_aas_quality_user,1,0,0,0
 access_aas_mes_rework_material_quality_manager,aas.mes.rework.material quality_manager,aas_mes.model_aas_mes_rework_material,group_aas_quality_manager,1,0,0,0
 
+access_aas_mes_badmode_quality_manager,aas.mes.badmode quality_manager,aas_mes.model_aas_mes_badmode,group_aas_quality_manager,1,1,1,1
+
