@@ -62,6 +62,9 @@ class AASQualityOQCCheckingController(http.Controller):
         if label.state != 'normal':
             values.update({'success': False, 'message': u'标签状态异常，只有正常状态的标签才可以报检！'})
             return values
+        if label.oqcpass:
+            values.update({'success': False, 'message': u'标签已报检，请不要重复重复操作！'})
+            return values
         dldomain = [('delivery_id', '=', deliveryid), ('product_id', '=', label.product_id.id)]
         dldomain.append(('state', 'not in', ['done', 'cancel']))
         if request.env['aas.stock.delivery.line'].search_count(dldomain) <= 0:
