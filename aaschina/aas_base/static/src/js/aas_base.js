@@ -29,6 +29,16 @@ odoo.define('aas.base', function (require) {
         }
     });
 
+    Dialog.include({
+        open: function () {
+            this._super.apply(this, arguments);
+            this._opened.done(function(){
+                $(".modal.in").draggable({handle: ".modal-header"});
+            });
+            return this;
+        }
+    });
+
 
     Sidebar.include({
         add_items: function(section_code, items) {
