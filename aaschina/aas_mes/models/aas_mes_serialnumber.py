@@ -186,7 +186,7 @@ class AASMESSerialnumber(models.Model):
         # 更新产出信息上的批次信息
         productionlist = self.env['aas.production.product'].search([('serialnumber_id', 'in', self.ids)])
         if productionlist and len(productionlist) > 0:
-            productionlist.write({'product_lot': productlot.id})
+            productionlist.write({'product_lot': productlot.id, 'protlot_code': productlot.name})
         values.update({'label_id': label.id, 'label_name': label.name})
         return values
 
