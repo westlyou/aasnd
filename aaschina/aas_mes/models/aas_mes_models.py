@@ -64,7 +64,7 @@ class AASMESBadMaterialSelection(models.Model):
     def _compute_material_yield(self):
         for record in self:
             pdtflag = record.product_qty and float_compare(record.product_qty, 0.0, precision_rounding=0.000001) > 0.0
-            badflag = record.badmode_qty and float_compare(record.badmode_qty, 0.0, precision_rounding=0.000001) > 0.0
+            badflag = record.badmode_qty and float_compare(record.badmode_qty, 0.0, precision_rounding=0.000001) >= 0.0
             if pdtflag and badflag:
                 material_yield = (record.product_qty - record.badmode_qty) / record.product_qty * 100.0
                 record.material_yield = float_repr(material_yield, 2)
