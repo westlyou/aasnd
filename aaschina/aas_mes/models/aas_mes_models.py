@@ -83,8 +83,8 @@ class AASMESBadMaterialSelection(models.Model):
     def action_check_selection_qty(self):
         if float_compare(self.product_qty, 0.0, precision_rounding=0.000001) <= 0.0:
             raise ValidationError(u'总数量必须是大于0的数！')
-        if float_compare(self.badmode_qty, 0.0, precision_rounding=0.000001) <= 0.0:
-            raise ValidationError(u'不良数量必须是大于0的数！')
+        if float_compare(self.badmode_qty, 0.0, precision_rounding=0.000001) < 0.0:
+            raise ValidationError(u'不良数量不可以是小于0的数！')
         if float_compare(self.badmode_qty, self.product_qty, precision_rounding=0.000001) > 0.0:
             raise ValidationError(u'不良数量不能大于总数量！')
 
