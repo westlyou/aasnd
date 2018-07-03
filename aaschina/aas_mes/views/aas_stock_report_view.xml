@@ -65,5 +65,10 @@
         <menuitem id="menu_stock_quant_aas_mes"  name="库存查询" action="action_stock_quant_aas_mes"
                           parent="menu_aas_stock_report" sequence="4" groups="aas_mes.group_aas_manufacture_user"/>
 
+
+        <menuitem id="menu_mes_stock_move"  name="库存移动" action="stock.stock_move_action"
+                  parent="menu_aas_stock_report" sequence="10"
+                  groups="aas_mes.group_aas_manufacture_foreman,aas_mes.group_aas_manufacture_manager"/>
+
     </data>
 </odoo>
