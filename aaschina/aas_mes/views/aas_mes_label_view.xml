@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_tree_aas_mes_label" model="ir.ui.view">
+            <field name="name">aas.mes.label.tree</field>
+            <field name="model">aas.mes.label</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="employee_id"/>
+                    <field name="location_id"/>
+                    <field name="operator_id"/>
+                    <field name="operation_time"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+
+
+        <record id="view_form_aas_mes_label" model="ir.ui.view">
+            <field name="name">aas.mes.label.form</field>
+            <field name="model">aas.mes.label</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <!--<button name="button_name" type="object" string="按钮名称" class="oe_highlight"/>-->
+                        <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group><field name="name" required="1"/></group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="location_id" required="1"/>
+                                <field name="employee_id" required="1"/>
+                            </group>
+                            <group>
+                                <field name="operator_id" readonly="1"/>
+                                <field name="operation_time" readonly="1"/>
+                            </group>
+                        </group>
+
+                        <notebook>
+                            <page string="生产现场标签明细">
+                                <field name="product_lines" >
+                                    <tree editable="bottom">
+                                        <field name="product_id"/>
+                                        <field name="product_qty"/>
+                                        <field name="product_lot"/>
+                                        <field name="label_id"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <group>
+                                                <field name="product_id"/>
+                                                <field name="product_qty"/>
+                                            </group>
+                                            <group>
+                                                <field name="product_lot"/>
+                                                <field name="label_id"/>
+                                            </group>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="view_search_aas_mes_label" model="ir.ui.view">
+            <field name="name">aas.mes.label.search</field>
+            <field name="model">aas.mes.label</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" string="名称" filter_domain="[('name','ilike',self)]"/>
+                    <field name="location_id" string="库位" filter_domain="[('location_id','ilike',self)]"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aas_mes_label" model="ir.actions.act_window">
+            <field name="name">生产标签</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">aas.mes.label</field>
+            <field name="limit">50</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_tree_aas_mes_label"/>
+            <field name="search_view_id" ref="view_search_aas_mes_label"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> 单击添加标签记录</p>
+            </field>
+        </record>
+
+        <menuitem id="menu_aas_mes_label"  name="生产标签" action="action_aas_mes_label"
+                  parent="menu_aas_mes_manufacture" sequence="22" groups="group_aas_manufacture_foreman"/>
+
+    </data>
+</odoo>

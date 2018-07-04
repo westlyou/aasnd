@@ -62,3 +62,4 @@ import aas_mes_producttest
 import aas_mes_tracing
 import aas_prepare_material
 import aas_mes_finalinspection
+import aas_mes_label

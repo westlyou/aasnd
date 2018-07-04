@@ -69,7 +69,9 @@
         'wechat/views/aas_wechat_mes_workorder_template.xml',
         'wechat/views/aas_wechat_mes_container_template.xml',
         'wechat/views/aas_wechat_mes_label_template.xml',
-        'wechat/views/aas_wechat_mes_finalinspection_template.xml'
+        'wechat/views/aas_wechat_mes_finalinspection_template.xml',
+
+        'views/aas_mes_label_view.xml'
     ],
     'qweb':[],
     'installable': True,
