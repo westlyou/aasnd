@@ -231,7 +231,7 @@ class AASBaseRedis(models.Model):
         try:
             tvalue = rconnection.rpop(name) if right else rconnection.lpop(name)
             if tvalue:
-                _logger.info("Redis Pop Key(%s) Value(%s)" % (name, tvalue))
+                # _logger.info("Redis Pop Key(%s) Value(%s)" % (name, tvalue))
                 result = json.loads(tvalue.decode('raw_unicode-escape'))
             else:
                 result = None
