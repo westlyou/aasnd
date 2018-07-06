@@ -416,7 +416,7 @@ class AASMESOperationRecord(models.Model):
             if workorder.product_id.id != tserialnumber.product_id.id:
                 result.update({
                     'success': False,
-                    'message': u'当前产品料号与工单产品料号不一致，请刷新客户端以保证将工单切换成当前产线正在生产的工单！'
+                    'message': u'测试产品与当前工单不符，请刷新工单！'
                 })
                 return result
         tempdomain = [('serialnumber_id', '=', tserialnumber.id)]
