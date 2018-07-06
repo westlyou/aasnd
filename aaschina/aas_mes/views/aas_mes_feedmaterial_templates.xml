@@ -34,7 +34,7 @@
 
                                 <div class="navbar-custom-menu">
                                     <ul class="nav navbar-nav">
-                                        <li id="action_dofeeding" class="notifications-menu">
+                                        <li id="action_dofeeding" class="notifications-menu" doing="0">
                                             <a href="javascript:void(0);"> <i class="fa fa-send"></i> 确认上料 </a>
                                         </li>
                                         <li class="dropdown notifications-menu">
@@ -123,9 +123,8 @@
                 <script src="/aas_base/static/libs/slimscroll/jquery.slimscroll.min.js"></script>
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
-                <script src="/aas_base/static/libs/speech/js/jQuery.sougou.speech.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
-                <script src="/aas_mes/static/src/js/mes_feedmaterial.js"></script>
+                <script src="/aas_mes/static/src/js/mes_feedmaterial.js?ver=20180706150816"></script>
             </body>
         </html>
     </template>

@@ -395,6 +395,8 @@ class AASMESOperationRecord(models.Model):
         toperation = self.env['aas.mes.operation'].search([('serialnumber_name', '=', serialnumber)], limit=1)
         if toperation:
             operationid = toperation.id
+        else:
+            return result
         functiontestvals = {
             'employee_id': employeeid, 'operation_id': operationid, 'equipment_id': equipment.id,
             'operate_type': 'functiontest', 'serialnumber': serialnumber,
@@ -409,6 +411,14 @@ class AASMESOperationRecord(models.Model):
         if not tserialnumber:
             return result
         workorderid = workorder_id if not tserialnumber.workorder_id else tserialnumber.workorder_id.id
+        if workorderid:
+            workorder = self.env['aas.mes.workorder'].browse(workorderid)
+            if workorder.product_id.id != tserialnumber.product_id.id:
+                result.update({
+                    'success': False,
+                    'message': u'当前产品料号与工单产品料号不一致，请刷新客户端以保证将工单切换成当前产线正在生产的工单！'
+                })
+                return result
         tempdomain = [('serialnumber_id', '=', tserialnumber.id)]
         tempdomain += [('mesline_id', '=', mesline.id), ('workstation_id', '=', workstation.id)]
         tempoutput = self.env['aas.production.product'].search(tempdomain, order='output_time desc', limit=1)

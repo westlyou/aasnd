@@ -37,7 +37,7 @@
         <record id="seq_aas_mes_label" model="ir.sequence">
             <field name="name">生产标签</field>
             <field name="code">aas.mes.label</field>
-            <field name="prefix">%(year)s%(month)s%(day)s</field>
+            <field name="prefix">PL%(year)s%(month)s%(day)s</field>
             <field name="number_increment">1</field>
             <field name="number_next">1</field>
             <field name="padding">5</field>

@@ -93,6 +93,8 @@ class AASMESAllocation(models.Model):
 
     @api.one
     def action_done(self):
+        if self.state == 'done':
+            return
         if not self.allocation_lines or len(self.allocation_lines) <= 0:
             raise UserError(u'当前还未添加调拨明细，不可以结束调拨操作！')
         if not self.mesline_id.location_material_list or len(self.mesline_id.location_material_list) <= 0:
@@ -145,6 +147,7 @@ class AASMESAllocation(models.Model):
                         'container_id': container.id, 'location_id': container.location_id.id
                     }))
         if labelids and len(labelids) > 0:
+            stockdict = {}
             labellist = self.env['aas.product.label'].browse(labelids)
             for tlabel in labellist:
                 productlines.append((0, 0, {
@@ -152,6 +155,36 @@ class AASMESAllocation(models.Model):
                     'product_lot': tlabel.product_lot.id, 'product_qty': tlabel.product_qty,
                     'label_id': tlabel.id, 'location_id': tlabel.location_id.id
                 }))
+                skey = 'P-'+str(tlabel.product_id.id)+'-'+str(tlabel.product_lot.id)+'-'+str(tlabel.location_id.id)
+                if skey in stockdict:
+                    stockdict[skey]['product_qty'] += tlabel.product_qty
+                else:
+                    stockdict[skey] = {
+                        'product_code': tlabel.product_id.default_code,
+                        'prolot_code': tlabel.product_lot.name, 'location_name': tlabel.location_id.name,
+                        'product_id': tlabel.product_id.id, 'product_lot': tlabel.product_lot.id,
+                        'product_qty': tlabel.product_qty, 'location_id': tlabel.location_id.id
+                    }
+            # 验证是否有足够的库存
+            for tkey, tval in stockdict.items():
+                tempdomain = [('location_id', '=', tval['location_id'])]
+                tempdomain += [('product_id', '=', tval['product_id']), ('lot_id', '=', tval['product_lot'])]
+                stocklist = self.env['stock.quant'].search(tempdomain)
+                if not stocklist.exists():
+                    values = {
+                        'success': False,
+                        'message': u'请仔细检查; 库位%s上的%s调拨批次%s没有库存！'%
+                                   (tval['location_name'], tval['product_code'], tval['prolot_code'])
+                    }
+                    return values
+                stock_qty = sum([stock.qty for stock in stocklist])
+                if float_compare(stock_qty, tval['product_qty'], precision_rounding=0.000001) < 0.0:
+                    values = {
+                        'success': False,
+                        'message': u'请仔细检查; 库位%s上的%s调拨批次%s库存不足调拨数量！'%
+                                   (tval['location_name'], tval['product_code'], tval['prolot_code'])
+                    }
+                    return values
         self.env['aas.mes.allocation'].create({
             'mesline_id': mesline_id, 'operator_id': operator_id, 'allocation_lines': productlines
         }).action_done()

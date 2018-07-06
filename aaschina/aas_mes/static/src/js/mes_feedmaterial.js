@@ -83,36 +83,40 @@ $(function(){
     }
 
     //提交上料信息
-    var commitflag = false;
     $('#action_dofeeding').click(function(){
-        if(commitflag){
-           layer.msg('操作正在处理，请耐心等待！', {icon: 5});
+        var doing = parseInt($('#action_dofeeding').attr('doing'));
+        if(doing==1){
+            layer.msg('操作正在处理，请耐心等待！', {icon: 5});
             return ;
         }
         var materialist = $('.aas-material');
         if (materialist==undefined || materialist==null || materialist.length<=0){
+            $('#action_dofeeding').attr('doing', '0');
             layer.msg('当前还没有扫描上料记录！', {icon: 5});
             return ;
         }
         var meslineid = parseInt($('#currentline').attr('meslineid'));
         if (meslineid==0){
+            $('#action_dofeeding').attr('doing', '0');
             layer.msg('当前还未设置产线信息，请设置需要上料的产线！', {icon: 5});
             return ;
         }
-        commitflag = true;
         var barcodes = [];
         $.each(materialist, function(index, temptr){
             barcodes.push($(temptr).attr('barcode'));
         });
+        $('#action_dofeeding').attr('doing', '1');
         var doparams = {'barcodes': barcodes, 'meslineid': meslineid};
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
+        var doneindex = layer.load(0, {shade: [0.2,'#000000']});
         $.ajax({
             url: '/aasmes/feedmaterial/dofeeding',
             headers:{'Content-Type':'application/json'},
-            type: 'post', timeout:50000, dataType: 'json',
+            type: 'post', timeout:60000, dataType: 'json',
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: doparams, id: access_id}),
             success:function(data){
-                commitflag = false;
+                layer.close(doneindex);
+                $('#action_dofeeding').attr('doing', '0');
                 var dresult = data.result;
                 if(!dresult.success){
                     layer.msg(dresult.message, {icon: 5});
@@ -121,8 +125,9 @@ $(function(){
                 $('#feedmaterialist').html('');
             },
             error:function(xhr,type,errorThrown){
-                commitflag = false;
                 console.log(type);
+                layer.close(doneindex);
+                $('#action_dofeeding').attr('doing', '0');
             }
         });
 

@@ -284,23 +284,31 @@ class AASProductionProduct(models.Model):
         for tconsume in consumes:
             material, wait_qty = tconsume.material_id, tconsume.consume_unit * output_qty
             # 虚拟件，超声波焊接
-            if material.virtual_material:
-                stockvals = self.action_loading_consume_materiallist(material, wait_qty, workorder.mesline_id)
-                stocklist = stockvals.get('stocklist', [])
-                if stocklist and len(stocklist) > 0:
-                    tempdict[material.id] = {
-                        'material_code': material.default_code,
-                        'virtual': True, 'uom_id': material.uom_id.id, 'stocklist': stocklist
-                    }
-            else:
-                stockvals = self.action_loading_consume_materiallist(material, wait_qty, workorder.mesline_id)
-                if not stockvals.get('success', False):
-                    values.update(stockvals)
-                    return values
-                tempdict[material.id] = {
-                    'material_code': material.default_code,
-                    'virtual': False, 'stocklist': stockvals['stocklist'], 'uom_id': material.uom_id.id
-                }
+            # if material.virtual_material:
+            #     stockvals = self.action_loading_consume_materiallist(material, wait_qty, workorder.mesline_id)
+            #     stocklist = stockvals.get('stocklist', [])
+            #     if stocklist and len(stocklist) > 0:
+            #         tempdict[material.id] = {
+            #             'material_code': material.default_code,
+            #             'virtual': True, 'uom_id': material.uom_id.id, 'stocklist': stocklist
+            #         }
+            # else:
+            #     stockvals = self.action_loading_consume_materiallist(material, wait_qty, workorder.mesline_id)
+            #     if not stockvals.get('success', False):
+            #         values.update(stockvals)
+            #         return values
+            #     tempdict[material.id] = {
+            #         'material_code': material.default_code,
+            #         'virtual': False, 'stocklist': stockvals['stocklist'], 'uom_id': material.uom_id.id
+            #     }
+            stockvals = self.action_loading_consume_materiallist(material, wait_qty, workorder.mesline_id)
+            if not stockvals.get('success', False):
+                values.update({'success': False, 'message': stockvals.get('message', '')})
+                return values
+            tempdict[material.id] = {
+                'material_code': material.default_code, 'stocklist': stockvals['stocklist'],
+                'uom_id': material.uom_id.id, 'virtual': material.virtual_material
+            }
             # 更新消耗清单信息
             temp_qty = output_qty * tconsume.consume_unit + tconsume.consume_qty
             consumelines.append((1, tconsume.id, {'consume_qty': temp_qty}))

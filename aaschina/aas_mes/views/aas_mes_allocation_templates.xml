@@ -34,7 +34,7 @@
 
                                 <div class="navbar-custom-menu">
                                     <ul class="nav navbar-nav">
-                                        <li id="action_done" class="notifications-menu">
+                                        <li id="action_done" class="notifications-menu" doing="0">
                                             <a href="javascript:void(0);"> <i class="fa fa-send"></i> 确认调拨 </a>
                                         </li>
                                         <li class="dropdown notifications-menu">
@@ -141,7 +141,7 @@
                 <script src="/aas_base/static/libs/adminlte/js/app.min.js"></script>
                 <script src="/aas_base/static/libs/layer/layer.js"></script>
                 <script src="/aas_base/static/libs/vscanner.js"></script>
-                <script src="/aas_mes/static/src/js/mes_allocation.js"></script>
+                <script src="/aas_mes/static/src/js/mes_allocation.js?ver=20180706111248"></script>
             </body>
         </html>
     </template>

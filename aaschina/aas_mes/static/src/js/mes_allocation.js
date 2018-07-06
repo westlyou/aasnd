@@ -167,6 +167,11 @@ $(function(){
 
 
     $('#action_done').click(function(){
+        var doing = parseInt($('#action_done').attr('doing'));
+        if(doing==1){
+            layer.msg('操作正在执行，请耐心等待！', {icon: 5});
+            return ;
+        }
         var labellist = $('.aas-label');
         var containerlist = $('.aas-container');
         var labelids = [];
@@ -205,6 +210,11 @@ $(function(){
 
 
     function action_doallocate(meslineid, operatorid, containerids, labelids){
+        var doing = parseInt($('#action_done').attr('doing'));
+        if(doing==1){
+            layer.msg('操作正在执行，请耐心等待！', {icon: 5});
+            return ;
+        }
         var doparams = {'meslineid': meslineid, 'operatorid': operatorid};
         if(containerids.length > 0){
             doparams['containerids'] = containerids;
@@ -212,13 +222,15 @@ $(function(){
         if(labelids.length > 0){
             doparams['labelids'] = labelids;
         }
+        $('#action_done').attr('doing', '1');
         var access_id = Math.floor(Math.random() * 1000 * 1000 * 1000);
         $.ajax({
             url: '/aasmes/allocation/doallocate',
             headers:{'Content-Type':'application/json'},
-            type: 'post', timeout:10000, dataType: 'json',
+            type: 'post', timeout:60000, dataType: 'json',
             data: JSON.stringify({ jsonrpc: "2.0", method: 'call', params: doparams, id: access_id}),
             success:function(data){
+                $('#action_done').attr('doing', '0');
                 scanable = true;
                 var dresult = data.result;
                 if(!dresult.success){
@@ -232,6 +244,7 @@ $(function(){
             error:function(xhr,type,errorThrown){
                 scanable = true;
                 console.log(type);
+                $('#action_done').attr('doing', '0');
             }
         });
     }

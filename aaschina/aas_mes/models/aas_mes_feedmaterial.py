@@ -46,7 +46,7 @@ class AASMESFeedmaterial(models.Model):
         materialdomain = [('product_id', '=', material.id), ('lot_id', '=', materialot.id)]
         locationids = [mesline.location_production_id.id]
         locationids += [mlocation.location_id.id for mlocation in mesline.location_material_list]
-        materialdomain.append(('location_id', 'child_of', locationids))
+        materialdomain.append(('location_id', 'in', locationids))
         quants = self.env['stock.quant'].search(materialdomain)
         if quants and len(quants) > 0:
             material_qty = sum([quant.qty for quant in quants])
@@ -69,7 +69,7 @@ class AASMESFeedmaterial(models.Model):
         quantdomain = [('product_id', '=', material.id), ('lot_id', '=', mtlot.id)]
         locationids = [mesline.location_production_id.id]
         locationids += [mlocation.location_id.id for mlocation in mesline.location_material_list]
-        quantdomain += [('location_id', 'child_of', locationids)]
+        quantdomain += [('location_id', 'in', locationids)]
         quants = self.env['stock.quant'].search(quantdomain)
         if quants and len(quants) > 0:
             temp_qty = sum([quant.qty for quant in quants])
@@ -319,7 +319,7 @@ class AASMESFeedmaterialList(models.Model):
     material_id = fields.Many2one(comodel_name='product.product', string=u'原料', ondelete='restrict')
     material_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='restrict')
     material_qty = fields.Float(string=u'本次上料数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
-    toatal_qty = fields.Float(string=u'已上料总数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    toatal_qty = fields.Float(string=u'当前产线库存', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     feed_time = fields.Datetime(string=u'上料时间', default=fields.Datetime.now, copy=False)
     feeder_id = fields.Many2one(comodel_name='res.users', string=u'上料员')
     label_id = fields.Many2one(comodel_name='aas.product.label', string=u'标签')
