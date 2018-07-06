@@ -25,28 +25,31 @@ class AASMESLabel(models.Model):
 
     @api.model
     def create(self,vals):
-        sequence = self.env['ir.sequence'].next_by_code('aas.mes.label')
-        vals['name'] = sequence
+        vals['name'] = self.env['ir.sequence'].next_by_code('aas.mes.label')
         return super(AASMESLabel, self).create(vals)
 
-    #实现按钮的事件，遍历所有记录 create
+
     @api.one
     def action_create_label(self):
-        if not self.product_lines or len(self.product_lines)<=0:
+        if not self.product_lines or len(self.product_lines) <= 0:
             raise UserError(u'请先添加产品明细')
         for record in self.product_lines:
+            if record.label_id:
+                continue
+            product = record.product_id
             label = self.env['aas.product.label'].create({
-                'product_id':record.product_id.id,'product_qty':record.product_qty,'product_lot':record.product_lot.id,
-                'product_uom': record.product_id.uom_id.id,'location_id':self.location_id.id
+                'location_id': self.location_id.id,
+                'product_id': product.id, 'product_uom': product.uom_id.id,
+                'product_lot': record.product_lot.id, 'product_qty': record.product_qty
             })
-            record.write({'label_id':label.id})
-        self.write({'state':'done'})
+            record.write({'label_id': label.id})
+        self.write({'state': 'done'})
 
     @api.multi
     def unlink(self):
         for record in self:
             if record.state == 'done':
-                raise UserError(u'仔细检查单据，已完成不可以删除')
+                raise UserError(u'%s已完成不可以删除'% record.name)
         return super(AASMESLabel, self).unlink()
 
 class AASMESLabelLine(models.Model):
@@ -64,13 +67,13 @@ class AASMESLabelLine(models.Model):
     @api.constrains('product_qty')
     def action_constrains_product_qty(self):
         if float_compare(self.product_qty, 0.0, precision_rounding=0.000001) <= 0.0:
-            raise ValidationError(u'数量必须大于零')
+            raise ValidationError(u'%s数量必须大于零'% self.product_id.default_code)
 
     @api.model
     def create(self,vals):
         record = super(AASMESLabelLine, self).create(vals)
-        locationid = record.mlabel_id.location_id.id
-        domain = [('product_id', '=', record.product_id.id), ('lot_id', '=', record.product_lot.id), ('location_id', '=', locationid)]
+        domain = [('location_id', '=', record.mlabel_id.location_id.id)]
+        domain += [('product_id', '=', record.product_id.id), ('lot_id', '=', record.product_lot.id)]
         stocklist = self.env['stock.quant'].search(domain)
         if not stocklist or len(stocklist) <= 0:
             raise UserError(u'系统中%s没有库存！'% record.product_id.default_code)
