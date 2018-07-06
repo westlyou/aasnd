@@ -42,7 +42,7 @@ class AASProductionProduct(models.Model):
     badmode_qty = fields.Float(string=u'不良数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     consumed_qty = fields.Float(string=u'消耗数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     finaloutput = fields.Boolean(string=u'最终产出', default=False, copy=False, help=u'是否最终的成品产出')
-    output_date = fields.Char(string=u'产出日期', copy=False)
+    output_date = fields.Char(string=u'产出日期', index=True)
     output_hour = fields.Integer(string=u'产出小时')
     output_time = fields.Datetime(string=u'产出时间', default=fields.Datetime.now, copy=False)
     onepass = fields.Boolean(string=u'一次通过', default=True, copy=False)

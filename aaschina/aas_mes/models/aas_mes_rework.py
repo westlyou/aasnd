@@ -25,15 +25,15 @@ class AASMESRework(models.Model):
     _order = 'commit_time desc'
     _rec_name = 'serialnumber_id'
 
-    serialnumber_id = fields.Many2one(comodel_name='aas.mes.serialnumber', string=u'序列号', ondelete='restrict')
+    serialnumber_id = fields.Many2one('aas.mes.serialnumber', string=u'序列号', ondelete='restrict', index=True)
     internalpn = fields.Char(string=u'内部料号', copy=False)
     customerpn = fields.Char(string=u'客户料号', copy=False)
-    mesline_id = fields.Many2one(comodel_name='aas.mes.line', string=u'产线')
-    schedule_id = fields.Many2one(comodel_name='aas.mes.schedule', string=u'班次')
-    workorder_id = fields.Many2one(comodel_name='aas.mes.workorder', string=u'工单', ondelete='restrict')
-    workstation_id = fields.Many2one(comodel_name='aas.mes.workstation', string=u'工位', ondelete='restrict')
-    badmode_id = fields.Many2one(comodel_name='aas.mes.badmode', string=u'不良模式', ondelete='restrict')
-    badmode_date = fields.Char(string=u'不良日期')
+    mesline_id = fields.Many2one('aas.mes.line', string=u'产线', index=True)
+    schedule_id = fields.Many2one('aas.mes.schedule', string=u'班次', index=True)
+    workorder_id = fields.Many2one('aas.mes.workorder', string=u'工单', ondelete='restrict', index=True)
+    workstation_id = fields.Many2one('aas.mes.workstation', string=u'工位', ondelete='restrict', index=True)
+    badmode_id = fields.Many2one('aas.mes.badmode', string=u'不良模式', ondelete='restrict', index=True)
+    badmode_date = fields.Char(string=u'不良日期', index=True)
     commit_time = fields.Datetime(string=u'上报时间', default=fields.Datetime.now, copy=False)
     commiter_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'上报员工', ondelete='restrict')
     repair_time = fields.Datetime(string=u'维修时间', copy=False)

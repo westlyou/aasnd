@@ -316,7 +316,7 @@ class AASMESOperationRecord(models.Model):
     serialnumber = fields.Char(string=u'序列号', copy=False)
     scanning_employee = fields.Char(string=u'扫描员工', copy=False, index=True)
     checking_employee = fields.Char(string=u'检查员工', copy=False, index=True)
-    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', ondelete='restrict')
+    employee_id = fields.Many2one(comodel_name='aas.hr.employee', string=u'操作员工', index=True)
     operate_date = fields.Char(string=u'操作日期', copy=False)
     operate_time = fields.Datetime(string=u'操作时间', default=fields.Datetime.now, copy=False)
     operator_id = fields.Many2one(comodel_name='res.users', string=u'操作用户', default=lambda self: self.env.user)
