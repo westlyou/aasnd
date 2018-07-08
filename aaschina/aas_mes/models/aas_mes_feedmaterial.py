@@ -215,14 +215,14 @@ class AASMESFeedmaterial(models.Model):
                     'material_id': pline.product_id.id, 'material_lot': pline.product_lot.id,
                     'material_uom': pline.product_id.uom_id.id, 'material_qty': pline.stock_qty
                 }
-        for mline in productdict.values():
+        for mkey, mline in productdict.items():
             temp_qty = mline['material_qty']
             material_id, material_lot = mline['material_id'], mline['material_lot']
             # 将库存自动移动到线边库上
             self.env['stock.move'].create({
-                'name': container.name, 'product_id': mline['material_id'], 'product_uom': mline['material_uom'],
+                'name': container.name, 'product_id': material_id, 'product_uom': mline['material_uom'],
                 'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id,
-                'restrict_lot_id': mline['material_lot'], 'location_id': container.stock_location_id.id,
+                'restrict_lot_id': material_lot, 'location_id': container.stock_location_id.id,
                 'location_dest_id': materiallocation.id, 'product_uom_qty': temp_qty
             }).action_done()
             # 新建或刷新上料信息
@@ -264,8 +264,7 @@ class AASMESFeedmaterial(models.Model):
             return values
         locationids = [mlocation.location_id.id for mlocation in mesline.location_material_list]
         locationids.append(mesline.location_production_id.id)
-        locationlist = self.env['stock.location'].search([('id', 'child_of', locationids)])
-        if label.location_id.id not in locationlist.ids:
+        if label.location_id.id not in locationids:
             values.update({'success': False, 'message': u'标签%s不在产线%s的线边库下，不可以投料！'% (label.name, mesline.name)})
             return values
         feeddomain = [('mesline_id', '=', mesline.id)]
