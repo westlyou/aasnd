@@ -192,27 +192,27 @@ class AASBaseRedis(models.Model):
         value = rconnection.get(name)
         if value:
                 value = value.decode('raw_unicode-escape')
-        _logger.info("Redis Get Key(%s) : Value(%s)" % (name, value))
+        # _logger.info("Redis Get Key(%s) : Value(%s)" % (name, value))
         return value
 
 
     def set_value(self, name, value):
         rconnection = self._get_pool_redis()
         tvalue = self.json_dumps(value)
-        _logger.info("Redis Set Key(%s) Value(%s)" % (name, tvalue))
+        # _logger.info("Redis Set Key(%s) Value(%s)" % (name, tvalue))
         try:
             result = rconnection.set(name, tvalue)
         except Exception, e:
             _logger.error("Redis Error: %s" % e)
             raise UserError(u"Redis Set错误，请检查配置")
-        _logger.info("Redis Set Key(%s) Ret(%s) : Value(%s)" % (name, result, tvalue))
+        # _logger.info("Redis Set Key(%s) Ret(%s) : Value(%s)" % (name, result, tvalue))
         return result
 
 
     def push_value(self, name, value, left=True):
         rconnection = self._get_pool_redis()
         tvalue = self.json_dumps(value)
-        _logger.info("Redis Put Key(%s) Value(%s)" % (name, tvalue))
+        # _logger.info("Redis Put Key(%s) Value(%s)" % (name, tvalue))
         try:
             if left:
                 result = rconnection.lpush(name, tvalue)
@@ -221,7 +221,7 @@ class AASBaseRedis(models.Model):
         except Exception, e:
             _logger.error("Redis Error: %s" % e)
             raise UserError(u"Redis Put错误，请检查配置")
-        _logger.info("Redis Put Key(%s) Ret(%s) : Value(%s)" % (name, result, tvalue))
+        # _logger.info("Redis Put Key(%s) Ret(%s) : Value(%s)" % (name, result, tvalue))
         return result
 
 
