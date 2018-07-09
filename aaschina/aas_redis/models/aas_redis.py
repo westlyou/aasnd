@@ -227,7 +227,7 @@ class AASBaseRedis(models.Model):
 
     def pop_value(self, name, right=True):
         rconnection = self._get_pool_redis()
-        redisflag = True
+        redisflag, tvalue = True, False
         try:
             tvalue = rconnection.rpop(name) if right else rconnection.lpop(name)
             if tvalue:

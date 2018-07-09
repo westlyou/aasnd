@@ -120,7 +120,7 @@
                     </div>
                     <footer>
                         <button name="action_tracing" string="逐级追溯" type="object" class="btn-primary"/>
-                        <button name="action_trace_oneinall" string="原料追溯" type="object" class="btn-primary"/>
+                        <!--<button name="action_trace_oneinall" string="原料追溯" type="object" class="btn-primary"/>-->
                         <button string="取消" class="btn-default" special="cancel"/>
                     </footer>
                 </form>
@@ -159,7 +159,7 @@
                     </div>
                     <footer>
                         <button name="action_tracing" string="逐级追溯" type="object" class="btn-primary"/>
-                        <button name="action_trace_oneinall" string="成品追溯" type="object" class="btn-primary"/>
+                        <!--<button name="action_trace_oneinall" string="成品追溯" type="object" class="btn-primary"/>-->
                         <button string="取消" class="btn-default" special="cancel"/>
                     </footer>
                 </form>

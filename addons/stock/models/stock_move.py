@@ -12,6 +12,9 @@ from odoo.exceptions import UserError
 from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.tools.float_utils import float_compare, float_round, float_is_zero
 
+import logging
+_logger = logging.getLogger(__name__)
+
 
 class StockMove(models.Model):
     _name = "stock.move"
@@ -880,9 +883,13 @@ class StockMove(models.Model):
                 quants = Quant.quants_get_preferred_domain(
                     remaining_move_qty[move.id], move, domain=[('qty', '>', 0)],
                     preferred_domain_list=preferred_domain_list)
+                _logger.info(u'移库开始：%s; product:%s; lot:%s; qty:%s; destloc:%s; srcloc:%s'%
+                             (fields.Datetime.now(), move.product_id.id, move.restrict_lot_id.id, move.product_uom_qty, move.location_dest_id.id, move.location_id.id))
                 Quant.quants_move(
                     quants, move, move.location_dest_id,
                     lot_id=move.restrict_lot_id.id, owner_id=move.restrict_partner_id.id)
+                _logger.info(u'移库结束：%s; product:%s; lot:%s; qty:%s; destloc:%s; srcloc:%s'%
+                             (fields.Datetime.now(), move.product_id.id, move.restrict_lot_id.id, move.product_uom_qty, move.location_dest_id.id, move.location_id.id))
 
             # If the move has a destination, add it to the list to reserve
             if move.move_dest_id and move.move_dest_id.state in ('waiting', 'confirmed'):
