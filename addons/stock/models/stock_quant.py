@@ -182,16 +182,20 @@ class Quant(models.Model):
         quants_reconcile_sudo = self.env['stock.quant'].sudo()
         quants_move_sudo = self.env['stock.quant'].sudo()
         check_lot = False
+        _logger.info('Quant update start:%s'% fields.Datetime.now())
         for quant, qty in quants:
             if not quant:
                 #If quant is None, we will create a quant to move (and potentially a negative counterpart too)
                 quant = self._quant_create_from_move(
                     qty, move, lot_id=lot_id, owner_id=owner_id, src_package_id=src_package_id, dest_package_id=dest_package_id, force_location_from=location_from, force_location_to=location_to)
                 check_lot = True
+                _logger.info('Quant create id:%s, qty:%s'% (quant.id, qty))
             else:
                 quant._quant_split(qty)
                 quants_move_sudo |= quant
+                _logger.info('Quant split id:%s, qty:%s'% (quant.id, qty))
             quants_reconcile_sudo |= quant
+        _logger.info('Quant update done:%s'% fields.Datetime.now())
 
         if quants_move_sudo:
             moves_recompute = quants_move_sudo.filtered(lambda self: self.reservation_id != move).mapped('reservation_id')
