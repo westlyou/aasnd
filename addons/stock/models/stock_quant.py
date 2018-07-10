@@ -200,6 +200,7 @@ class Quant(models.Model):
         if quants_move_sudo:
             moves_recompute = quants_move_sudo.filtered(lambda self: self.reservation_id != move).mapped('reservation_id')
             quants_move_sudo._quant_update_from_move(move, location_to, dest_package_id, lot_id=lot_id, entire_pack=entire_pack)
+            _logger.info('Quant update ids:%s, location:%s'% (quants_move_sudo.ids, location_to.id))
             moves_recompute.recalculate_move_state()
 
         if location_to.usage == 'internal':
