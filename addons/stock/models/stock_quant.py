@@ -564,6 +564,7 @@ class Quant(models.Model):
     @api.multi
     def _quant_split(self, qty):
         self.ensure_one()
+        _logger.info('quant information, id:%s, qty:%s, code:%s, lot:%s, location:%s'% (self.id, self.qty, self.product_id.default_code, self.lot_id.name, self.location_id.name))
         rounding = self.product_id.uom_id.rounding
         if float_compare(abs(self.qty), abs(qty), precision_rounding=rounding) <= 0: # if quant <= qty in abs, take it entirely
             return False
@@ -573,7 +574,9 @@ class Quant(models.Model):
         self._cr.execute("""SELECT move_id FROM stock_quant_move_rel WHERE quant_id = %s""", (self.id,))
         res = self._cr.fetchall()
         new_quant = self.sudo().copy(default={'qty': new_qty_round, 'history_ids': [(4, x[0]) for x in res]})
+        _logger.info('remain quant information, id:%s, qty:%s, code:%s, lot:%s, location:%s'% (new_quant.id, new_quant.qty, new_quant.product_id.default_code, new_quant.lot_id.name, new_quant.location_id.name))
         self.sudo().write({'qty': qty_round})
+        _logger.info('consume quant information, id:%s, qty:%s, code:%s, lot:%s, location:%s'% (self.id, self.qty, self.product_id.default_code, self.lot_id.name, self.location_id.name))
         return new_quant
 
 
