@@ -469,7 +469,9 @@ class Quant(models.Model):
             else:
                 domain += [('package_id', '=', False)]
         else:
-            domain += [('location_id', 'child_of', move.location_id.id)]
+            # luforn update for aaschina on 2018-07-13 17:56:28
+            domain += [('location_id', '=', move.location_id.id)]
+            # domain += [('location_id', 'child_of', move.location_id.id)]
             if move.restrict_partner_id:
                 domain += [('owner_id', '=', move.restrict_partner_id.id)]
 
@@ -477,7 +479,6 @@ class Quant(models.Model):
             domain += [('company_id', '=', company_id)]
         else:
             domain += [('company_id', '=', move.company_id.id)]
-
         return domain
 
     @api.model
