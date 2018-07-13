@@ -238,7 +238,7 @@ class AASBaseRedis(models.Model):
                 if rconnection.llen(name) == 0:
                     redisflag = False
         except Exception, e:
-            _logger.info("Redis Pop Key(%s) Value(%s)" % (name, tvalue))
+            # _logger.info("Redis Pop Key(%s) Value(%s)" % (name, tvalue))
             raise UserError(u"Redis Pop错误，请检查配置")
         # _logger.info("Redis Pop Key(%s) Ret(%s)" % (name, result))
         if not redisflag:
