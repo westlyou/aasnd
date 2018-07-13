@@ -113,7 +113,7 @@ class AASMESFeedmaterialTransferWizard(models.TransientModel):
         if movelines and len(movelines) > 0:
             movelist = self.env['stock.move']
             for mline in movelines:
-                movelist |= self.env['stcok.move'].create(mline)
+                movelist |= self.env['stock.move'].create(mline)
             movelist.action_done()
 
 
