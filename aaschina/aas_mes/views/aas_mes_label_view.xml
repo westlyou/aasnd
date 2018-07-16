@@ -6,7 +6,7 @@
             <field name="model">aas.mes.label</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree labelprint="true">
                     <field name="name"/>
                     <field name="employee_id"/>
                     <field name="location_id"/>
@@ -22,7 +22,7 @@
             <field name="model">aas.mes.label</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form>
+                <form labelprint="true">
                     <header>
                         <button name="action_create_label" type="object" string="生成标签" class="oe_highlight" attrs="{'invisible':[('state','=','done')]}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,done"/>

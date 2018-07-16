@@ -22,8 +22,9 @@
             <field name="arch" type="xml">
                 <form labelprint="true">
                     <header>
+
                         <button name="action_adjust" type="object" string="库存调整" class="oe_highlight"/>
-                        <button name="action_move" type="object" string="调拨" class="oe_highlight"/>
+                        <button name="action_move" type="object" string="容器调拨" class="oe_highlight"/>
                     </header>
                     <sheet>
                         <div class="oe_button_box" name="button_box">
@@ -278,6 +279,27 @@
                             <field name="adjust_note"/>
                         </page>
                     </notebook>
+                    <footer>
+                        <button name="action_done" string="确认" type="object" class="btn-primary"/>
+                        <button string="取消" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_form_aas_container_clean_wizard" model="ir.ui.view">
+            <field name="name">aas.container.clean.wizard</field>
+            <field name="model">aas.container.clean.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="container_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <div>
+                        <p> 清理容器会清理掉容器里的内容，但不会发生库存移动；请谨慎使用！ </p>
+                    </div>
                     <footer>
                         <button name="action_done" string="确认" type="object" class="btn-primary"/>
                         <button string="取消" class="btn-default" special="cancel"/>

@@ -283,24 +283,6 @@ class AASProductionProduct(models.Model):
         tempdict, consumelines = {}, []
         for tconsume in consumes:
             material, wait_qty = tconsume.material_id, tconsume.consume_unit * output_qty
-            # 虚拟件，超声波焊接
-            # if material.virtual_material:
-            #     stockvals = self.action_loading_consume_materiallist(material, wait_qty, workorder.mesline_id)
-            #     stocklist = stockvals.get('stocklist', [])
-            #     if stocklist and len(stocklist) > 0:
-            #         tempdict[material.id] = {
-            #             'material_code': material.default_code,
-            #             'virtual': True, 'uom_id': material.uom_id.id, 'stocklist': stocklist
-            #         }
-            # else:
-            #     stockvals = self.action_loading_consume_materiallist(material, wait_qty, workorder.mesline_id)
-            #     if not stockvals.get('success', False):
-            #         values.update(stockvals)
-            #         return values
-            #     tempdict[material.id] = {
-            #         'material_code': material.default_code,
-            #         'virtual': False, 'stocklist': stockvals['stocklist'], 'uom_id': material.uom_id.id
-            #     }
             stockvals = self.action_loading_consume_materiallist(material, wait_qty, workorder.mesline_id)
             if not stockvals.get('success', False):
                 values.update({'success': False, 'message': stockvals.get('message', '')})
@@ -532,6 +514,10 @@ class AASProductionProduct(models.Model):
         })
         containerline.action_stock(production.product_qty)
         production.write({'product_lot': productlot.id, 'container_id': container.id})
+        if production.employee_lines and len(production.employee_lines) > 0:
+            container.write({
+                'operator': '.'.join([pemployee.employee_id.name for pemployee in production.employee_lines])
+            })
         return values
 
 

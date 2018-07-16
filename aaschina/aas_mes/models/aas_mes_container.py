@@ -21,6 +21,8 @@ _logger = logging.getLogger(__name__)
 class AASContainer(models.Model):
     _inherit = 'aas.container'
 
+    operator = fields.Char(string=u'操作员')
+
     @api.model
     def action_print_label(self, printer_id, ids=[], domain=[]):
         currentuser = self.env.user
@@ -65,6 +67,7 @@ class AASContainerSurplusWizard(models.TransientModel):
     product_id = fields.Many2one(comodel_name='product.product', string=u'产品', ondelete='cascade')
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
     product_qty = fields.Float(string=u'数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+    isstockmove = fields.Boolean(string=u'库存移动', default=True)
 
 
     @api.one
@@ -83,10 +86,13 @@ class AASContainerSurplusWizard(models.TransientModel):
                 'product_lot': self.product_lot.id, 'stock_qty': self.product_qty
             })
         srclocation = self.mesline_id.location_material_list[0].location_id
-        destlocation = container.stock_location_id
-        self.env['stock.move'].create({
-            'name': container.name, 'product_id': product.id, 'product_uom': product.uom_id.id,
-            'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id,
-            'restrict_lot_id': self.product_lot.id, 'location_id': srclocation.id,
-            'location_dest_id': destlocation.id, 'product_uom_qty': self.product_qty
-        }).action_done()
+        container.write({'location_id': srclocation.id})
+        if self.isstockmove:
+            # 是否有库存移动
+            destlocation = container.stock_location_id
+            self.env['stock.move'].create({
+                'name': container.name, 'product_id': product.id, 'product_uom': product.uom_id.id,
+                'create_date': fields.Datetime.now(), 'company_id': self.env.user.company_id.id,
+                'restrict_lot_id': self.product_lot.id, 'location_id': srclocation.id,
+                'location_dest_id': destlocation.id, 'product_uom_qty': self.product_qty
+            }).action_done()

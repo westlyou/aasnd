@@ -233,6 +233,29 @@ class AASContainer(models.Model):
         return values
 
 
+    @api.multi
+    def action_doclean(self):
+        """
+        容器清空
+        :return:
+        """
+        self.ensure_one()
+        wizard = self.env['aas.container.clean.wizard'].create({'container_id': self.id})
+        view_form = self.env.ref('aas_wms.view_form_aas_container_clean_wizard')
+        return {
+            'name': u"清理容器",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'aas.container.clean.wizard',
+            'views': [(view_form.id, 'form')],
+            'view_id': view_form.id,
+            'target': 'new',
+            'res_id': wizard.id,
+            'context': self.env.context
+        }
+
+
 
 
 # 容器调拨记录
@@ -390,6 +413,19 @@ class AASContainerAdjustLineWizard(models.TransientModel):
     product_lot = fields.Many2one(comodel_name='stock.production.lot', string=u'批次', ondelete='cascade')
     stock_qty = fields.Float(string=u'库存数量', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
     temp_qty = fields.Float(string=u'未入库数', digits=dp.get_precision('Product Unit of Measure'), default=0.0)
+
+
+class AASContainerCleanWizard(models.TransientModel):
+    _name = 'aas.container.clean.wizard'
+    _description = 'AAS Container Clean Wizard'
+
+    container_id = fields.Many2one(comodel_name='aas.container', string=u'容器', ondelete='cascade')
+
+    @api.one
+    def action_done(self):
+        productlines = self.env['aas.container.product'].search([('container_id', '=', self.container_id.id)])
+        if productlines and len(productlines) > 0:
+            productlines.unlink()
 
 
 

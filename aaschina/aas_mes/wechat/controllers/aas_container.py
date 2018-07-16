@@ -71,8 +71,12 @@ class AASContainerController(http.Controller):
             tcontainer = request.env['aas.container'].browse(containerid)
         else:
             tcontainer = request.env['aas.container'].search([('barcode', '=', barcode)], limit=1)
-        values = {'cid': tcontainer.id, 'name': tcontainer.name, 'alias': tcontainer.alias, 'productlist': []}
-        values['location'] = tcontainer.location_id.name
+        values = {
+            'cid': tcontainer.id, 'name': tcontainer.name,
+            'alias': tcontainer.alias, 'productlist': [],
+            'location': tcontainer.location_id.name,
+            'operator': '' if not tcontainer.operator else tcontainer.operator
+        }
         if tcontainer.product_lines and len(tcontainer.product_lines) > 0:
             values['productlist'] = [{
                 'product_code': pline.product_id.default_code,

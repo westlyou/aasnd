@@ -98,6 +98,10 @@
                                     <span class="mui-pull-left">容器库位</span>
                                     <span class="mui-pull-right"><t t-esc="location"/></span>
                                 </li>
+                                <li class="mui-table-view-cell">
+                                    <span class="mui-pull-left">操作员</span>
+                                    <span class="mui-pull-right"><t t-esc="operator"/></span>
+                                </li>
                             </ul>
 
                             <div class="mui-card" style="margin-left:0;margin-right:0;">
