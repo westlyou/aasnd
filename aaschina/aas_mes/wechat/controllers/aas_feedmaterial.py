@@ -36,7 +36,7 @@ class AASFeedmaterialWechatController(http.Controller):
             return request.render('aas_mes.wechat_mes_message', values)
         feedinglist = request.env['aas.mes.feedmaterial'].search([('mesline_id', '=', mesline.id)])
         if not feedinglist or len(feedinglist) <= 0:
-            return values
+            return request.render('aas_mes.wechat_mes_linefeeding', values)
         keylist, materialdict, todelfeedlist = [], {}, request.env['aas.mes.feedmaterial']
         for feedmaterial in feedinglist:
             fkey = 'F-'+str(mesline.id)+'-'+str(feedmaterial.material_id.id)+'-'+str(feedmaterial.material_lot.id)
